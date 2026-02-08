@@ -1,6 +1,6 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { Database } from '@/lib/db/schema'; // We will define this later, or use 'any' for now if not ready
+// import { Database } from '@/lib/db/schema'; // We will define this later, or use 'any' for now if not ready
 
 /**
  * Server-side Supabase Client
