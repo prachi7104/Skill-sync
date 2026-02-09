@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
+import AuthProvider from "@/components/providers/auth-provider";
+
 export const metadata: Metadata = {
   title: 'SkillSync',
   description: 'AI-powered placement preparation and interview assistant',
@@ -17,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-background text-foreground">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   )

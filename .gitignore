@@ -48,3 +48,8 @@ Thumbs.db
 
 # typescript
 *.tsbuildinfo
+
+# temporary output files
+dev.err
+dev.out
+tsc_output.txt

@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
     session: {
         strategy: "jwt",
     },
-    debug: true,
+    debug: false,
     callbacks: {
         async signIn({ user, account }: { user: import("next-auth").User, account: import("next-auth").Account | null }) {
             if (!user.email) return false;
@@ -71,7 +71,6 @@ export const authOptions: NextAuthOptions = {
 
                 return true;
             } catch (error) {
-                console.error("Error during sign in:", error);
                 return false;
             }
         },
