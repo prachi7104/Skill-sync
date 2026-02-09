@@ -1,4 +1,4 @@
-# Placement Copilot - Production-Grade MVP
+# SkillSync - Production-Grade MVP
 
 A free-tier friendly, AI-powered placement preparation and interview assistant built with Next.js 14, TypeScript, and modern cloud infrastructure.
 
@@ -28,7 +28,7 @@ npm run dev
 ### Folder Structure
 
 ```
-placement-copilot/
+skillsync/
 ├── app/                  # Next.js 14 App Router
 │   ├── (auth)/          # Authentication flows (login, signup, reset)
 │   ├── (student)/       # Student-facing features

@@ -15,7 +15,7 @@
 | TypeScript | ✅ Better inference | Good |
 | Future Support | ✅ Active development | Maintenance mode |
 
-### Key Advantages for Placement Copilot
+### Key Advantages for SkillSync
 
 1. **Real-Time AI Responses**
    - Server Components allow streaming AI responses directly from server

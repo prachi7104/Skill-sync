@@ -1,14 +1,14 @@
-# Placement Copilot - Setup Verification Report
+# SkillSync - Setup Verification Report
 
 **Date**: February 8, 2026  
-**Project**: placement-copilot (Next.js 14 + TypeScript + Tailwind CSS)  
+**Project**: skillsync (Next.js 14 + TypeScript + Tailwind CSS)  
 **Status**: ✅ Production-Ready
 
 ---
 
 ## Executive Summary
 
-The `placement-copilot` MVP has been successfully initialized as a production-grade Next.js 14 application with:
+The `skillsync` MVP has been successfully initialized as a production-grade Next.js 14 application with:
 - ✅ 46 production dependencies (optimized for free-tier deployment)
 - ✅ 12 development dependencies (testing & type checking)
 - ✅ Full TypeScript support with zero type errors
@@ -102,7 +102,7 @@ The `placement-copilot` MVP has been successfully initialized as a production-gr
 ## Folder Structure Created
 
 ```
-placement-copilot/
+skillsync/
 ├── app/                          # Next.js 14 App Router (Server Components by default)
 │   ├── (auth)/                   # Route group: /login, /signup, /forgot-password
 │   ├── (student)/                # Route group: Student dashboard & features
@@ -167,7 +167,7 @@ placement-copilot/
 
 ### Running the App
 ```bash
-cd placement-copilot
+cd skillsync
 npm run dev
 # Server starts at http://localhost:3000
 ```
@@ -270,7 +270,7 @@ The following warnings are expected and do not affect functionality:
 
 ## Summary
 
-**placement-copilot** is ready for **feature development**. The development environment is fully functional with:
+**skillsync** is ready for **feature development**. The development environment is fully functional with:
 
 - Zero TypeScript errors
 - Zero ESLint errors
