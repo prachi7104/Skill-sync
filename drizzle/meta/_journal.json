@@ -8,6 +8,27 @@
       "when": 1770601604638,
       "tag": "0000_conscious_excalibur",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770688004638,
+      "tag": "0001_add_missing_student_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770655067345,
+      "tag": "0002_aberrant_purifiers",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770658478191,
+      "tag": "0003_same_shiver_man",
+      "breakpoints": true
     }
   ]
 }

@@ -150,11 +150,11 @@ export const students = pgTable("students", {
 
   // ── Identity ──────────────────────────────────────────────────────────────
 
-  /** University SAP ID (e.g., "500123456"). */
-  sapId: varchar("sap_id", { length: 20 }).unique(),
+  /** University SAP ID (e.g., "500123456"). Strict 9 digits. */
+  sapId: varchar("sap_id", { length: 9 }).unique(),
 
-  /** University roll number. */
-  rollNo: varchar("roll_no", { length: 30 }).unique(),
+  /** University roll number (e.g., "R2142233333"). Strict 11 chars. */
+  rollNo: varchar("roll_no", { length: 11 }).unique(),
 
   /** Phone with country code (e.g., "+919876543210"). */
   phone: varchar("phone", { length: 20 }),
@@ -219,6 +219,18 @@ export const students = pgTable("students", {
   /** Supabase Storage path to uploaded resume PDF. */
   resumeUrl: text("resume_url"),
 
+  /** Original filename of the uploaded resume. */
+  resumeFilename: varchar("resume_filename", { length: 255 }),
+
+  /** MIME type of the uploaded resume (application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document). */
+  resumeMime: varchar("resume_mime", { length: 100 }),
+
+  /** Timestamp when the resume was last uploaded. */
+  resumeUploadedAt: timestamp("resume_uploaded_at", { withTimezone: true }),
+
+  /** Structured data extracted from the resume. */
+  parsedResumeJson: jsonb("parsed_resume_json"),
+
   /** Plain-text content extracted from the resume via pdf-parse. */
   resumeText: text("resume_text"),
 
@@ -258,8 +270,14 @@ export const students = pgTable("students", {
   /** Number of AI sandbox calls used today. */
   sandboxUsageToday: integer("sandbox_usage_today").notNull().default(0),
 
-  /** Date (YYYY-MM-DD) of last sandbox usage reset. */
+  /** Date (YYYY-MM-DD) of last daily sandbox usage reset. */
   sandboxResetDate: varchar("sandbox_reset_date", { length: 10 }),
+
+  /** Number of AI sandbox calls used this calendar month. */
+  sandboxUsageMonth: integer("sandbox_usage_month").notNull().default(0),
+
+  /** Month (YYYY-MM) of last monthly sandbox usage reset. */
+  sandboxMonthResetDate: varchar("sandbox_month_reset_date", { length: 7 }),
 
   // ── Timestamps ────────────────────────────────────────────────────────────
 

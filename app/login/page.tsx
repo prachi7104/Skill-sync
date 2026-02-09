@@ -4,8 +4,24 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function LoginPage() {
+const AUTH_ERRORS: Record<string, string> = {
+    AccessDenied: "Access denied. Your account is not authorized for this application.",
+    NotAuthorized: "Your account is not registered. Students must use their @stu.upes.ac.in account. Faculty/admin accounts must be pre-registered by an administrator.",
+    Configuration: "There is a problem with the server configuration. Please contact support.",
+    Verification: "The verification link has expired or has already been used.",
+    OAuthAccountNotLinked: "This email is already linked to another sign-in method.",
+    Default: "An authentication error occurred. Please try again.",
+};
+
+function LoginForm() {
+    const searchParams = useSearchParams();
+    const callbackUrl = searchParams.get("callbackUrl") || "/";
+    const errorType = searchParams.get("error");
+    const errorMessage = errorType ? (AUTH_ERRORS[errorType] ?? AUTH_ERRORS.Default) : null;
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
             <Card className="w-full max-w-md">
@@ -32,10 +48,15 @@ export default function LoginPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    {errorMessage && (
+                        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
+                            {errorMessage}
+                        </div>
+                    )}
                     <Button
                         variant="outline"
                         className="w-full py-6 text-base"
-                        onClick={() => signIn("azure-ad", { callbackUrl: "/" })}
+                        onClick={() => signIn("azure-ad", { callbackUrl })}
                     >
                         <div className="mr-2 h-5 w-5">
                             <svg
@@ -61,5 +82,13 @@ export default function LoginPage() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+            <LoginForm />
+        </Suspense>
     );
 }

@@ -1,48 +1,50 @@
-"use client";
-
-import { useRequireRole } from "@/lib/auth/hooks";
+import { requireRole } from "@/lib/auth/helpers";
 import Header from "@/components/shared/header";
+import Link from "next/link";
 
-export default function AdminLayout({
+const adminLinks = [
+    { href: "/admin/health", label: "System Health" },
+    { href: "/admin/drives", label: "All Drives" },
+    { href: "/admin/users", label: "User Management" },
+];
+
+/**
+ * AdminLayout - Server Component
+ * 
+ * All auth/role checks happen server-side. No client-side hydration mismatch
+ * because we're not using useState/useEffect for auth rendering logic.
+ */
+export default async function AdminLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const { isLoading } = useRequireRole(["admin"]);
-
-    if (isLoading) {
-        return (
-            <div className="flex h-screen items-center justify-center">
-                <div className="text-lg text-gray-500">Loading admin portal...</div>
-            </div>
-        );
-    }
+    // Server-side auth check - throws error if not authenticated/authorized
+    await requireRole(["admin"]);
 
     return (
         <div className="min-h-screen bg-gray-50">
             <Header />
             <div className="flex h-[calc(100vh-64px)]">
-                {/* Placeholder Sidebar */}
                 <aside className="w-64 border-r bg-white p-6 hidden md:block">
                     <nav className="space-y-4">
                         <h2 className="px-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
                             Admin Menu
                         </h2>
                         <div className="space-y-1">
-                            <div className="rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
-                                Overview
-                            </div>
-                            <div className="px-3 py-2 text-sm font-medium text-gray-600">
-                                System Settings
-                            </div>
-                            <div className="px-3 py-2 text-sm font-medium text-gray-600">
-                                User Management
-                            </div>
+                            {adminLinks.map((link) => (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    className="block rounded-md px-3 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
                         </div>
                     </nav>
                 </aside>
 
-                {/* Main Content */}
                 <main className="flex-1 overflow-auto bg-gray-50 p-8">
                     {children}
                 </main>

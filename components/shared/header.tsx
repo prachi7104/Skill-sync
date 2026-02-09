@@ -4,8 +4,14 @@ import { useAuth } from "@/lib/auth/hooks";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 
+/**
+ * App header. 
+ * Uses suppressHydrationWarning on the user section because auth state
+ * differs between server (no session) and client (cached session).
+ * This is the correct Next.js pattern for auth-dependent UI.
+ */
 export default function Header() {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, isLoading } = useAuth();
 
     return (
         <header className="border-b bg-white p-4">
@@ -16,8 +22,10 @@ export default function Header() {
                     </Link>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    {isAuthenticated && user ? (
+                <div className="flex items-center gap-4" suppressHydrationWarning>
+                    {isLoading ? (
+                        <div className="h-8 w-20 bg-gray-100 animate-pulse rounded" />
+                    ) : isAuthenticated && user ? (
                         <>
                             <span className="text-sm text-gray-600">
                                 {user.name} ({user.role})
