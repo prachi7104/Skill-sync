@@ -1,5 +1,5 @@
 {
-  "name": "placement-copilot",
+  "name": "skillsync",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,7 +11,16 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "drizzle:generate": "drizzle-kit generate",
-    "drizzle:push": "drizzle-kit push"
+    "drizzle:push": "drizzle-kit push",
+    "db:index": "npx tsx scripts/apply-indexes.ts",
+    "db:analyze": "npx tsx scripts/analyze-queries.ts",
+    "seed:jds": "npx tsx scripts/seed-sample-jds.ts",
+    "apply-rls": "npx tsx scripts/apply-rls.ts",
+    "verify-rls": "npx tsx scripts/verify-rls.ts",
+    "test-rls": "npx tsx scripts/test-rls.ts",
+    "rls:setup": "npx tsx scripts/apply-rls.ts && npx tsx scripts/verify-rls.ts",
+    "rls:check": "npx tsx scripts/verify-rls.ts",
+    "rls:test": "npx tsx scripts/test-rls.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.22",
@@ -66,6 +75,7 @@
     "jsdom": "^28.0.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"

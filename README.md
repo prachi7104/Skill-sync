@@ -186,7 +186,42 @@ npm run type-check  # TypeScript validation
 npm run test        # Run tests with Vitest
 npm run test:ui     # Interactive test UI
 npm run lint        # ESLint validation
+
+# RLS (Row-Level Security)
+npm run apply-rls   # Apply all 23 RLS policies to database
+npm run verify-rls  # Verify policies exist and RLS is enabled
+npm run test-rls    # Run automated RLS access tests
+npm run rls:setup   # Apply + verify in one step
 ```
+
+### Row-Level Security (RLS)
+
+All database access is secured at the PostgreSQL level via Supabase RLS.
+
+**Three user roles**: `student`, `faculty`, `admin`
+
+| Table | Students | Faculty | Admin |
+| --- | --- | --- | --- |
+| users | Own row only | Own row only | All |
+| students | Own record | — | All |
+| drives | Active only (read) | Own drives (CRUD) | All |
+| rankings | Own rankings | Own-drive rankings | All |
+| jobs | — | Create/read/update | All |
+| sample_jds | Read all | Full CRUD | All |
+
+**Setup:**
+```bash
+npm run rls:setup  # Apply policies + verify
+```
+
+**Key files:**
+- `scripts/setup-rls.sql` — All 23 policies + helper function + indexes
+- `scripts/apply-rls.ts` — Executes SQL against database
+- `scripts/verify-rls.ts` — Verifies all policies exist
+- `scripts/test-rls.ts` — Automated access control tests
+- `scripts/ARCHITECTURE.md` — Full RLS design documentation
+- `scripts/QUICK_REFERENCE.md` — Role matrix & API patterns
+- `scripts/SECURITY_CHECKLIST.md` — Pre-deployment audit
 
 ### Environment Variables
 
