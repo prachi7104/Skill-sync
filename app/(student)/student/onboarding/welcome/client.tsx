@@ -2,18 +2,21 @@
 
 import { Button } from "@/components/ui/button";
 import { updateOnboardingStep } from "@/app/actions/onboarding";
+import { useStudent } from "@/app/(student)/providers/student-provider";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useState } from "react";
 
 export default function OnboardingWelcomeClient() {
     const router = useRouter();
+    const { refresh } = useStudent();
     const [isLoading, setIsLoading] = useState(false);
 
     const onStart = async () => {
         setIsLoading(true);
         try {
             await updateOnboardingStep(1);
+            await refresh(); // Sync client cache so resume page sees step=1
             router.push("/student/onboarding/resume");
         } catch (error) {
             console.error("Failed to start onboarding:", error);

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useStudent } from "@/app/(student)/providers/student-provider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,7 @@ import { Skill } from "@/lib/db/schema";
 // This duplicates some logic from ProfileView to ensure isolation and independence for the onboarding flow
 export default function OnboardingSkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
     const router = useRouter();
+    const { refresh } = useStudent();
     const [skills, setSkills] = useState<Skill[]>(initialSkills || []);
     const [newSkill, setNewSkill] = useState("");
     const [newLevel, setNewLevel] = useState(1);
@@ -56,6 +58,7 @@ export default function OnboardingSkillsClient({ initialSkills }: { initialSkill
 
             // 2. Update Step
             await updateOnboardingStep(5);
+            await refresh();
             router.push("/student/onboarding/projects");
         } catch (error) {
             console.error(error);
@@ -68,6 +71,7 @@ export default function OnboardingSkillsClient({ initialSkills }: { initialSkill
         setIsLoading(true);
         try {
             await updateOnboardingStep(5);
+            await refresh();
             router.push("/student/onboarding/projects");
         } catch (error) {
             console.error(error);

@@ -1,34 +1,30 @@
 /**
  * Background worker for processing parse_resume jobs.
  *
- * Primary resume parsing now happens client-side (browser) via
- * pdfjs-dist + mammoth.  This worker serves as a fallback for
- * any legacy jobs still in the queue.
+ * Uses the AI-powered parser (direct Gemini/Groq calls) with 2-second
+ * delays between jobs to respect API rate limits.
  *
- * Audit fixes applied:
- *  - Filters by type = 'parse_resume' (was picking up ALL pending jobs)
- *  - Atomic claim via UPDATE … WHERE status='pending' (race-safe)
- *  - Retry logic that respects maxRetries
- *  - Processes up to MAX_JOBS_PER_TICK per invocation
- *  - Uses pdfjs-dist legacy build (replaces pdf-parse)
- *  - Uses shared parseResumeText from lib/resume/parser
+ * Job lifecycle:  pending → processing → completed | failed
+ * Atomic claim:   UPDATE … WHERE status='pending' prevents double-processing.
+ * Rate limiting:  2-second gap between consecutive AI calls.
  */
 
 import { db } from "@/lib/db";
 import { jobs, students } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
-import mammoth from "mammoth";
-import { extractTextFromPDFServer, cleanResumeText } from "@/lib/resume/text-extractor";
-import { parseResumeText } from "@/lib/resume/parser";
+import { eq, and, asc, desc } from "drizzle-orm";
+import { parseResumeWithAI, mapParsedResumeToProfile } from "@/lib/resume/ai-parser";
+import { computeCompleteness } from "@/lib/profile/completeness";
 import { logger } from "@/lib/logger";
 
 const MAX_JOBS_PER_TICK = 5;
+const RATE_LIMIT_DELAY_MS = 2000; // 2s gap between AI calls
 
-export async function processResumeParseJobs() {
-    logger.info("Checking for pending resume parse jobs");
+export async function processResumeParseJobs(): Promise<number> {
+    logger.info("[ResumeWorker] Checking for pending resume parse jobs");
+    let processed = 0;
 
     for (let i = 0; i < MAX_JOBS_PER_TICK; i++) {
-        // 1. Find one pending parse_resume job
+        // 1. Find one pending parse_resume job (highest priority first, oldest first)
         const [pendingJob] = await db
             .select({ id: jobs.id })
             .from(jobs)
@@ -38,6 +34,7 @@ export async function processResumeParseJobs() {
                     eq(jobs.status, "pending"),
                 ),
             )
+            .orderBy(desc(jobs.priority), asc(jobs.createdAt))
             .limit(1);
 
         if (!pendingJob) break; // queue drained
@@ -60,92 +57,123 @@ export async function processResumeParseJobs() {
         const processingStart = Date.now();
 
         try {
-            const { resumeUrl, mimeType, studentId } = job.payload as {
-                resumeUrl: string;
-                mimeType: string;
+            const payload = job.payload as {
                 studentId: string;
+                resumeText: string;
+                resumeUrl?: string;
+                mimeType?: string;
             };
 
-            console.log(`Processing job ${job.id} for student ${studentId}`);
+            const { studentId, resumeText } = payload;
 
-            // 3. Check if the student already has extracted text (from client-side)
-            const student = await db.query.students.findFirst({
-                where: eq(students.id, studentId),
-                columns: { resumeText: true },
-            });
-
-            let textContent = student?.resumeText ?? "";
-
-            // 4. If no text yet, download and extract server-side
-            if (!textContent) {
-                const response = await fetch(resumeUrl);
-                if (!response.ok) {
-                    throw new Error(
-                        `Failed to download resume: ${response.statusText}`,
-                    );
-                }
-                const arrayBuffer = await response.arrayBuffer();
-
-                if (mimeType === "application/pdf") {
-                    textContent = await extractTextFromPDFServer(arrayBuffer);
-                } else if (
-                    mimeType ===
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                ) {
-                    const result = await mammoth.extractRawText({
-                        buffer: Buffer.from(arrayBuffer),
-                    });
-                    textContent = result.value;
-                } else {
-                    throw new Error(`Unsupported MIME type: ${mimeType}`);
-                }
-
-                textContent = cleanResumeText(textContent);
+            if (!resumeText || resumeText.length < 50) {
+                throw new Error("Resume text too short or missing");
             }
 
-            // 5. Structured parsing
-            const parsedData = parseResumeText(textContent);
+            logger.info("[ResumeWorker] Processing job", { jobId: job.id, studentId, textLength: resumeText.length });
 
-            // 6. Update student profile
-            await db
-                .update(students)
-                .set({
+            // 3. AI-powered structured parsing
+            const parsedData = await parseResumeWithAI(resumeText);
+            const mappedProfile = mapParsedResumeToProfile(parsedData);
+            const latencyMs = Date.now() - processingStart;
+
+            logger.info("[ResumeWorker] Parsing complete", {
+                jobId: job.id,
+                latencyMs,
+                skills: mappedProfile.skills.length,
+                projects: mappedProfile.projects.length,
+                experience: mappedProfile.workExperience.length,
+            });
+
+            // 4. Update student profile — auto-fill empty fields only
+            const currentProfile = await db.query.students.findFirst({
+                where: eq(students.id, studentId),
+            });
+
+            if (currentProfile) {
+                const updateData: Record<string, any> = {
                     parsedResumeJson: parsedData,
-                    resumeText: textContent,
                     resumeParsedAt: new Date(),
-                })
-                .where(eq(students.id, studentId));
+                    updatedAt: new Date(),
+                };
 
-            // 7. Mark job complete
+                // Auto-fill only empty fields
+                if (!currentProfile.phone && mappedProfile.phone) updateData.phone = mappedProfile.phone;
+                if (!currentProfile.linkedin && mappedProfile.linkedin) updateData.linkedin = mappedProfile.linkedin;
+                if (!currentProfile.tenthPercentage && mappedProfile.tenthPercentage) updateData.tenthPercentage = mappedProfile.tenthPercentage;
+                if (!currentProfile.twelfthPercentage && mappedProfile.twelfthPercentage) updateData.twelfthPercentage = mappedProfile.twelfthPercentage;
+                if (!currentProfile.cgpa && mappedProfile.cgpa) updateData.cgpa = mappedProfile.cgpa;
+                if ((!currentProfile.skills || currentProfile.skills.length === 0) && mappedProfile.skills.length > 0) updateData.skills = mappedProfile.skills;
+                if ((!currentProfile.projects || currentProfile.projects.length === 0) && mappedProfile.projects.length > 0) updateData.projects = mappedProfile.projects;
+                if ((!currentProfile.workExperience || currentProfile.workExperience.length === 0) && mappedProfile.workExperience.length > 0) updateData.workExperience = mappedProfile.workExperience;
+                if ((!currentProfile.codingProfiles || currentProfile.codingProfiles.length === 0) && mappedProfile.codingProfiles.length > 0) updateData.codingProfiles = mappedProfile.codingProfiles;
+                if ((!currentProfile.certifications || currentProfile.certifications.length === 0) && mappedProfile.certifications.length > 0) updateData.certifications = mappedProfile.certifications;
+                if ((!currentProfile.researchPapers || currentProfile.researchPapers.length === 0) && mappedProfile.researchPapers.length > 0) updateData.researchPapers = mappedProfile.researchPapers;
+                if ((!currentProfile.achievements || currentProfile.achievements.length === 0) && mappedProfile.achievements.length > 0) updateData.achievements = mappedProfile.achievements;
+                if ((!currentProfile.softSkills || currentProfile.softSkills.length === 0) && mappedProfile.softSkills.length > 0) updateData.softSkills = mappedProfile.softSkills;
+
+                await db.update(students).set(updateData).where(eq(students.id, studentId));
+
+                // Recompute profile completeness
+                const freshProfile = await db.query.students.findFirst({ where: eq(students.id, studentId) });
+                if (freshProfile) {
+                    const user = await db.query.users.findFirst({
+                        where: eq(students.id, studentId),
+                        columns: { name: true, email: true },
+                    });
+                    if (user) {
+                        const { score } = computeCompleteness({ ...freshProfile, name: user.name, email: user.email });
+                        await db.update(students).set({ profileCompleteness: score, updatedAt: new Date() }).where(eq(students.id, studentId));
+                    }
+                }
+            }
+
+            // 5. Mark job complete
             await db
                 .update(jobs)
                 .set({
                     status: "completed",
                     result: parsedData,
-                    latencyMs: Date.now() - processingStart,
+                    latencyMs,
+                    modelUsed: "groq-llama-3.3-70b",
                     updatedAt: new Date(),
                 })
                 .where(eq(jobs.id, job.id));
 
-            logger.info("Resume parse job completed", { jobId: job.id, studentId });
+            processed++;
+            logger.info("[ResumeWorker] ✅ Job completed", { jobId: job.id, studentId, latencyMs });
+
         } catch (error: unknown) {
-            const message =
-                error instanceof Error ? error.message : "Unknown error";
-            logger.error("Resume parse job failed", { jobId: job.id, error: message });
+            const message = error instanceof Error ? error.message : "Unknown error";
+            const latencyMs = Date.now() - processingStart;
+            logger.error("[ResumeWorker] ❌ Job failed", {
+                jobId: job.id,
+                error: message,
+                stack: error instanceof Error ? error.stack : undefined,
+                latencyMs
+            });
 
             const newRetryCount = (job.retryCount ?? 0) + 1;
             const maxRetries = job.maxRetries ?? 3;
 
-            // Re-queue if retries remaining, else mark permanently failed
             await db
                 .update(jobs)
                 .set({
                     status: newRetryCount < maxRetries ? "pending" : "failed",
                     error: message,
                     retryCount: newRetryCount,
+                    latencyMs,
                     updatedAt: new Date(),
                 })
                 .where(eq(jobs.id, job.id));
         }
+
+        // 6. Rate-limit delay between jobs (avoid hammering AI APIs)
+        if (i < MAX_JOBS_PER_TICK - 1) {
+            await new Promise(r => setTimeout(r, RATE_LIMIT_DELAY_MS));
+        }
     }
+
+    logger.info(`[ResumeWorker] Finished — processed ${processed} jobs`);
+    return processed;
 }

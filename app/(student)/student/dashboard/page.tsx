@@ -11,6 +11,7 @@ import { FileText, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
+import { getOnboardingRoute, TOTAL_ONBOARDING_STEPS } from "@/lib/onboarding/config";
 
 export default function StudentDashboard() {
     const { user, student, isLoading } = useStudent();
@@ -19,8 +20,8 @@ export default function StudentDashboard() {
 
     useEffect(() => {
         if (!isLoading && student) {
-            if (student.onboardingStep < 7) {
-                router.push("/student/onboarding/welcome");
+            if (student.onboardingStep < TOTAL_ONBOARDING_STEPS) {
+                router.push(getOnboardingRoute(student.onboardingStep));
             }
         }
     }, [isLoading, student, router]);

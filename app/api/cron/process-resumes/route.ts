@@ -30,9 +30,9 @@ export async function GET(req: NextRequest) {
         }
 
         console.log("Triggering resume parse worker...");
-        await processResumeParseJobs();
+        const processed = await processResumeParseJobs();
 
-        return NextResponse.json({ message: "Worker executed" }, { status: 200 });
+        return NextResponse.json({ message: "Worker executed", processed }, { status: 200 });
     } catch (error: any) {
         console.error("Worker failed:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useStudent } from "@/app/(student)/providers/student-provider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -20,16 +21,17 @@ const PLATFORMS = [
     { id: "hackerearth", name: "HackerEarth", urlPrefix: "https://www.hackerearth.com/@" },
 ];
 
-export default function OnboardingCodingProfilesClient({ 
-    initialProfiles 
-}: { 
-    initialProfiles: CodingProfile[] 
+export default function OnboardingCodingProfilesClient({
+    initialProfiles
+}: {
+    initialProfiles: CodingProfile[]
 }) {
     const router = useRouter();
+    const { refresh } = useStudent();
     const [isLoading, setIsLoading] = useState(false);
     const [profiles, setProfiles] = useState<CodingProfile[]>(
-        initialProfiles.length > 0 
-            ? initialProfiles 
+        initialProfiles.length > 0
+            ? initialProfiles
             : [{ platform: "", username: "", url: "" }]
     );
 
@@ -49,7 +51,7 @@ export default function OnboardingCodingProfilesClient({
     const updateProfile = (index: number, field: keyof CodingProfile, value: string | number) => {
         const updated = [...profiles];
         updated[index] = { ...updated[index], [field]: value };
-        
+
         // Auto-generate URL when platform and username are set
         if (field === "platform" || field === "username") {
             const platform = PLATFORMS.find(p => p.id === (field === "platform" ? value : updated[index].platform));
@@ -58,7 +60,7 @@ export default function OnboardingCodingProfilesClient({
                 updated[index].url = `${platform.urlPrefix}${username}`;
             }
         }
-        
+
         setProfiles(updated);
     };
 
@@ -72,6 +74,7 @@ export default function OnboardingCodingProfilesClient({
 
             await updateCodingProfiles(validProfiles);
             await updateOnboardingStep(8);
+            await refresh();
             router.push("/student/onboarding/soft-skills");
         } catch (error: any) {
             toast.error(error.message || "Failed to save coding profiles");
@@ -83,6 +86,7 @@ export default function OnboardingCodingProfilesClient({
         setIsLoading(true);
         try {
             await updateOnboardingStep(8);
+            await refresh();
             router.push("/student/onboarding/soft-skills");
         } catch (error: any) {
             toast.error(error.message || "Failed to proceed");
@@ -119,8 +123,8 @@ export default function OnboardingCodingProfilesClient({
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Platform</Label>
-                                <Select 
-                                    value={profile.platform} 
+                                <Select
+                                    value={profile.platform}
                                     onValueChange={(value) => updateProfile(index, "platform", value)}
                                 >
                                     <SelectTrigger>

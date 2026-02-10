@@ -11,16 +11,8 @@ import { redirect } from "next/navigation";
  * 
  * PERFORMANCE: Uses cached session to avoid redundant NextAuth calls.
  */
-import { headers } from "next/headers";
-
-/**
- * Retrieves the currently authenticated user from the database.
- * Returns null if not authenticated or user not found.
- * Use this in Server Components and Route Handlers.
- * 
- * PERFORMANCE: Uses cached session to avoid redundant NextAuth calls.
- */
 export async function getCurrentUser() {
+
     const session = await getCachedSession();
 
     if (!session?.user?.email) {

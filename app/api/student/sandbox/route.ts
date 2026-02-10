@@ -11,7 +11,7 @@ import {
   type StudentProfile,
   type EligibilityCriteria,
 } from "@/lib/matching";
-import { extractStudentSkillNames } from "@/lib/embeddings";
+import { extractStudentSkillNames, generateEmbedding } from "@/lib/embeddings";
 import { z } from "zod";
 import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
 
@@ -78,13 +78,10 @@ export async function POST(req: NextRequest) {
     };
 
     // 6. Compute scores
-    // Use the student's embedding and a zero-vector for JD (since we don't
-    // generate JD embeddings in the sandbox — the semantic score will be
-    // based on skill overlap and structured scoring alone).
     const studentEmbedding = (profile.embedding as number[] | null) ?? new Array(384).fill(0);
-    // For sandbox, use a zero vector to effectively disable semantic scoring
-    // unless we have an actual JD embedding. The structured score carries the analysis.
-    const jdEmbedding = new Array(384).fill(0);
+
+    // Generate actual JD embedding for sandbox analysis
+    const jdEmbedding = await generateEmbedding(jdText, "jd");
 
     // If student has no embedding, structured scoring still works
     const scoringResult = computeAllScores(

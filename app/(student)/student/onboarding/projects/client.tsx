@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useStudent } from "@/app/(student)/providers/student-provider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,7 +15,26 @@ import { Project } from "@/lib/db/schema";
 
 export default function OnboardingProjectsClient({ initialProjects }: { initialProjects: Project[] }) {
     const router = useRouter();
-    const [projects, setProjects] = useState<Project[]>(initialProjects || []);
+    const { refresh } = useStudent();
+
+    // Helper to fix potential bad date formats
+    const normalizeProject = (p: Project) => {
+        const fixDate = (d?: string) => {
+            if (!d) return undefined;
+            if (/^\d{4}-\d{2}$/.test(d)) return d;
+            const parsed = new Date(d);
+            return !isNaN(parsed.getTime()) ? parsed.toISOString().slice(0, 7) : undefined;
+        };
+        return {
+            ...p,
+            startDate: fixDate(p.startDate),
+            endDate: fixDate(p.endDate),
+        };
+    };
+
+    const [projects, setProjects] = useState<Project[]>(
+        (initialProjects || []).map(normalizeProject)
+    );
     const [isLoading, setIsLoading] = useState(false);
 
     // Form State
@@ -68,6 +88,7 @@ export default function OnboardingProjectsClient({ initialProjects }: { initialP
 
             // 2. Update Step (5 → 6: Projects → Experience)
             await updateOnboardingStep(6);
+            await refresh();
             router.push("/student/onboarding/experience");
         } catch (error) {
             console.error(error);
@@ -80,6 +101,7 @@ export default function OnboardingProjectsClient({ initialProjects }: { initialP
         setIsLoading(true);
         try {
             await updateOnboardingStep(6);
+            await refresh();
             router.push("/student/onboarding/experience");
         } catch (error) {
             console.error(error);

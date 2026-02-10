@@ -9,12 +9,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Plus, ArrowLeft, ArrowRight, Loader2, Trash2 } from "lucide-react";
 import { updateOnboardingStep } from "@/app/actions/onboarding";
+import { useStudent } from "@/app/(student)/providers/student-provider";
 import { toast } from "sonner";
 import { WorkExperience } from "@/lib/db/schema";
 
 export default function OnboardingExperienceClient({ initialWork }: { initialWork: WorkExperience[] }) {
     const router = useRouter();
-    const [works, setWorks] = useState<WorkExperience[]>(initialWork || []);
+    const { refresh } = useStudent();
+
+    // Helper to fix potential bad date formats from AI parser (e.g. "Jan 2022" -> "2022-01")
+    const normalizeWorkDate = (w: WorkExperience) => {
+        const fixDate = (d: string) => {
+            if (!d) return "";
+            if (/^\d{4}-\d{2}$/.test(d)) return d; // already YYYY-MM
+            const parsed = new Date(d);
+            return !isNaN(parsed.getTime()) ? parsed.toISOString().slice(0, 7) : "";
+        };
+        return {
+            ...w,
+            startDate: fixDate(w.startDate),
+            endDate: w.endDate ? fixDate(w.endDate) : undefined,
+        };
+    };
+
+    const [works, setWorks] = useState<WorkExperience[]>(
+        (initialWork || []).map(normalizeWorkDate)
+    );
     const [isLoading, setIsLoading] = useState(false);
 
     // Form State
@@ -80,6 +100,7 @@ export default function OnboardingExperienceClient({ initialWork }: { initialWor
 
             // 2. Update Step (6 → 7: Experience → Coding Profiles)
             await updateOnboardingStep(7);
+            await refresh();
             router.push("/student/onboarding/coding-profiles");
         } catch (error) {
             console.error(error);

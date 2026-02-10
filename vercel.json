@@ -1,0 +1,72 @@
+{
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "framework": "nextjs",
+    "regions": [
+        "bom1"
+    ],
+    "functions": {
+        "app/api/**/*.ts": {
+            "runtime": "nodejs20.x",
+            "maxDuration": 30
+        },
+        "app/api/cron/**/*.ts": {
+            "runtime": "nodejs20.x",
+            "maxDuration": 60
+        }
+    },
+    "crons": [
+        {
+            "path": "/api/cron/process-resumes",
+            "schedule": "*/10 * * * *"
+        },
+        {
+            "path": "/api/cron/process-embeddings",
+            "schedule": "*/15 * * * *"
+        },
+        {
+            "path": "/api/cron/process-jd-enhancement",
+            "schedule": "*/15 * * * *"
+        },
+        {
+            "path": "/api/cron/process-rankings",
+            "schedule": "0 */2 * * *"
+        }
+    ],
+    "headers": [
+        {
+            "source": "/api/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "no-store, max-age=0"
+                }
+            ]
+        },
+        {
+            "source": "/(.*)",
+            "headers": [
+                {
+                    "key": "X-Content-Type-Options",
+                    "value": "nosniff"
+                },
+                {
+                    "key": "X-Frame-Options",
+                    "value": "DENY"
+                },
+                {
+                    "key": "Referrer-Policy",
+                    "value": "strict-origin-when-cross-origin"
+                }
+            ]
+        },
+        {
+            "source": "/_next/static/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=31536000, immutable"
+                }
+            ]
+        }
+    ]
+}

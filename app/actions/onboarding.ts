@@ -8,6 +8,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { computeCompleteness } from "@/lib/profile/completeness";
 import { academicsSchema } from "@/lib/validations/student-profile";
+import { processEmbeddingJobs } from "@/lib/workers/generate-embedding";
 import { TOTAL_ONBOARDING_STEPS } from "@/lib/onboarding/config";
 
 /**
@@ -50,6 +51,11 @@ export async function updateOnboardingStep(step: number) {
     const allowedNextStep = VALID_TRANSITIONS[currentStep];
 
     // Only allow moving to the exact next step in sequence
+    // Idempotent: if already on the requested step, treat as no-op
+    if (step === currentStep) {
+        return { success: true };
+    }
+
     if (step !== allowedNextStep) {
         throw new Error(
             `Invalid step transition: cannot go from step ${currentStep} to step ${step}. ` +
@@ -152,6 +158,12 @@ export async function completeOnboarding() {
 
     // Validate we're on the review step (9) ready to complete (10)
     const currentStep = profile.onboardingStep;
+
+    // Idempotent: allow re-calling if already complete
+    if (currentStep === TOTAL_ONBOARDING_STEPS) {
+        return { success: true, completeness: profile.profileCompleteness };
+    }
+
     if (currentStep !== 9) {
         throw new Error(
             `Cannot complete onboarding from step ${currentStep}. Must be at step 9 (Review).`
@@ -187,6 +199,7 @@ export async function completeOnboarding() {
         .where(eq(students.id, user.id));
 
     // Queue embedding generation when profile is sufficiently complete
+    // Queue embedding generation when profile is sufficiently complete
     if (completeness >= 50) {
         const existingJob = await db.query.jobs.findFirst({
             where: and(
@@ -206,6 +219,11 @@ export async function completeOnboarding() {
                     targetId: user.id,
                 },
             });
+
+            // Fire-and-forget: trigger worker immediately
+            processEmbeddingJobs().catch(err =>
+                console.error("[Onboarding] Inline embedding generation failed:", err)
+            );
         }
     }
 

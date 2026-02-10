@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateOnboardingStep } from "@/app/actions/onboarding";
+import { useStudent } from "@/app/(student)/providers/student-provider";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -26,6 +27,7 @@ export default function OnboardingBasicClient({
     initialLinkedin,
 }: OnboardingBasicClientProps) {
     const router = useRouter();
+    const { refresh } = useStudent();
     const [rollNo, setRollNo] = useState(initialRollNo);
     const [sapId, setSapId] = useState(initialSapId);
     const [phone, setPhone] = useState(initialPhone);
@@ -51,8 +53,8 @@ export default function OnboardingBasicClient({
             const res = await fetch("/api/student/profile", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    rollNo, 
+                body: JSON.stringify({
+                    rollNo,
                     sapId,
                     phone: phone || null,
                     linkedin: linkedin || null,
@@ -71,6 +73,7 @@ export default function OnboardingBasicClient({
 
             // Update onboarding step
             await updateOnboardingStep(3);
+            await refresh();
             router.push("/student/onboarding/academics");
         } catch (err) {
             setError(err instanceof Error ? err.message : "An error occurred");

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, ArrowRight, Loader2, GraduationCap } from "lucide-react";
 import { updateOnboardingStep, updateAcademics } from "@/app/actions/onboarding";
+import { useStudent } from "@/app/(student)/providers/student-provider";
 import { toast } from "sonner";
 
 interface AcademicsData {
@@ -39,6 +40,7 @@ export default function OnboardingAcademicsClient({
     initialData: AcademicsData
 }) {
     const router = useRouter();
+    const { refresh } = useStudent();
     const [isLoading, setIsLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -86,6 +88,7 @@ export default function OnboardingAcademicsClient({
             });
 
             await updateOnboardingStep(4);
+            await refresh();
             router.push("/student/onboarding/skills");
         } catch (error: any) {
             toast.error(error.message || "Failed to save academic details");
@@ -97,6 +100,7 @@ export default function OnboardingAcademicsClient({
         setIsLoading(true);
         try {
             await updateOnboardingStep(4);
+            await refresh();
             router.push("/student/onboarding/skills");
         } catch (error: any) {
             toast.error(error.message || "Failed to proceed");

@@ -243,7 +243,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
     maxLatency: 60000, // 60s
     description: "Full resume parsing including projects, education, skills",
   },
-  
+
   parse_resume_fast: {
     priority: ["gemini_2_5_flash_lite", "groq_llama_3_1_8b"],
     requiresLongContext: false,
@@ -280,7 +280,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
 
   // Embeddings
   embed_profile: {
-    priority: ["gemini_embedding", "local_minilm"],
+    priority: ["local_minilm"],
     requiresLongContext: false,
     requiresStructured: false,
     maxLatency: 300,
@@ -288,7 +288,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
 
   embed_jd: {
-    priority: ["gemini_embedding", "local_minilm"],
+    priority: ["local_minilm"],
     requiresLongContext: false,
     requiresStructured: false,
     maxLatency: 500,
@@ -372,7 +372,7 @@ class RateLimiter {
     const rpdLimit = this.getLimit(model.rpd);
 
     if (rpmLimit === Infinity && rpdLimit === Infinity) {
-        return { rpm: 999999, rpd: 999999 };
+      return { rpm: 999999, rpd: 999999 };
     }
 
     const now = Date.now();
@@ -507,33 +507,33 @@ export class AntigravityRouter {
     // (Skipped only if the task IS 'sanitize_input', to avoid recursion loop)
     const guardKey = "groq_prompt_guard";
     if (taskType !== "sanitize_input" && MODEL_REGISTRY[guardKey]) {
-        const guardModel = MODEL_REGISTRY[guardKey];
-        
-        // Strict: Guard must be available and allowed
-        if (!this.rateLimiter.canMakeRequest(guardKey)) {
-             console.warn(`[antigravity] ⚠️ Prompt Guard rate-limited.`);
-             return { success: false, error: "Safety Guard Unavailable (Rate Limit)" };
-        }
+      const guardModel = MODEL_REGISTRY[guardKey];
 
-        this.rateLimiter.recordRequest(guardKey);
-        
-        try {
-            // Execute guard - specialized short context call
-            // We use ExecuteGroq directly to leverage specific guard model ID
-            const guardOut = await this.executeGroq(guardModel.id, prompt, { maxTokens: 32, temperature: 0.0 });
-            
-            // Check output for unsafe triggers
-            if (typeof guardOut === "string" && /unsafe|block|reject/i.test(guardOut)) {
-                 if (this.enableLogging) {
-                    console.warn(`[antigravity] 🛡️ Blocked by Prompt Guard: ${guardOut}`);
-                 }
-                 return { success: false, error: "Blocked by Safety Guard", blocked: true };
-            }
-        } catch (e: any) {
-            console.warn(`[antigravity] ⚠️ Prompt Guard check failed: ${e.message}`);
-            // Strict enforcement: Fail safe if guard cannot verify
-            return { success: false, error: "Safety Check Failed (Guard Execution Error)" };
+      // Strict: Guard must be available and allowed
+      if (!this.rateLimiter.canMakeRequest(guardKey)) {
+        console.warn(`[antigravity] ⚠️ Prompt Guard rate-limited.`);
+        return { success: false, error: "Safety Guard Unavailable (Rate Limit)" };
+      }
+
+      this.rateLimiter.recordRequest(guardKey);
+
+      try {
+        // Execute guard - specialized short context call
+        // We use ExecuteGroq directly to leverage specific guard model ID
+        const guardOut = await this.executeGroq(guardModel.id, prompt, { maxTokens: 32, temperature: 0.0 });
+
+        // Check output for unsafe triggers
+        if (typeof guardOut === "string" && /unsafe|block|reject/i.test(guardOut)) {
+          if (this.enableLogging) {
+            console.warn(`[antigravity] 🛡️ Blocked by Prompt Guard: ${guardOut}`);
+          }
+          return { success: false, error: "Blocked by Safety Guard", blocked: true };
         }
+      } catch (e: any) {
+        console.warn(`[antigravity] ⚠️ Prompt Guard check failed: ${e.message}`);
+        // Strict enforcement: Fail safe if guard cannot verify
+        return { success: false, error: "Safety Check Failed (Guard Execution Error)" };
+      }
     }
 
 
@@ -553,13 +553,13 @@ export class AntigravityRouter {
 
         if (model.provider === "google") {
           if (taskType.startsWith("embed_")) {
-             result = await this.embedGoogle(model.id, prompt);
+            result = await this.embedGoogle(model.id, prompt);
           } else {
-             result = await this.executeGoogle(model.id, prompt, options);
+            result = await this.executeGoogle(model.id, prompt, options);
           }
         } else if (model.provider === "groq") {
-            // Assume text generation for Groq unless specific embedding support added later
-            result = await this.executeGroq(model.id, prompt, options);
+          // Assume text generation for Groq unless specific embedding support added later
+          result = await this.executeGroq(model.id, prompt, options);
         } else if (model.provider === "local") {
           result = await this.executeLocal(prompt);
         } else {
@@ -597,25 +597,25 @@ export class AntigravityRouter {
     }
 
     try {
-        const model = this.googleAI.getGenerativeModel({
-          model: modelId,
-          generationConfig: {
-            temperature: options.temperature ?? 0.7,
-            maxOutputTokens: options.maxTokens ?? 2048,
-            ...(options.responseFormat === "json" && {
-              responseMimeType: "application/json",
-            }),
-          },
-          ...(options.systemPrompt && {
-            systemInstruction: options.systemPrompt,
+      const model = this.googleAI.getGenerativeModel({
+        model: modelId,
+        generationConfig: {
+          temperature: options.temperature ?? 0.7,
+          maxOutputTokens: options.maxTokens ?? 2048,
+          ...(options.responseFormat === "json" && {
+            responseMimeType: "application/json",
           }),
-        });
-    
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
-        return text;
-    } catch(e: any) {
-        throw new Error(`Google Generation Error: ${e.message}`);
+        },
+        ...(options.systemPrompt && {
+          systemInstruction: options.systemPrompt,
+        }),
+      });
+
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      return text;
+    } catch (e: any) {
+      throw new Error(`Google Generation Error: ${e.message}`);
     }
   }
 
@@ -627,14 +627,14 @@ export class AntigravityRouter {
       throw new Error("Google AI not initialized — missing API key");
     }
     try {
-        const model = this.googleAI.getGenerativeModel({ model: modelId });
-        const result = await model.embedContent(text);
-        if (!result.embedding || !result.embedding.values) {
-            throw new Error("No embedding returned");
-        }
-        return result.embedding.values;
-    } catch(e: any) {
-        throw new Error(`Google Embedding Error: ${e.message}`);
+      const model = this.googleAI.getGenerativeModel({ model: modelId });
+      const result = await model.embedContent(text);
+      if (!result.embedding || !result.embedding.values) {
+        throw new Error("No embedding returned");
+      }
+      return result.embedding.values;
+    } catch (e: any) {
+      throw new Error(`Google Embedding Error: ${e.message}`);
     }
   }
 
@@ -648,47 +648,47 @@ export class AntigravityRouter {
     }
 
     try {
-        const messages: Array<{ role: "system" | "user"; content: string }> = [];
-    
-        if (options.systemPrompt) {
-          messages.push({ role: "system", content: options.systemPrompt });
-        }
-        messages.push({ role: "user", content: prompt });
-    
-        const completion = await this.groqClient.chat.completions.create({
-          model: modelId,
-          messages,
-          temperature: options.temperature ?? 0.7,
-          max_tokens: options.maxTokens ?? 2048,
-          ...(options.responseFormat === "json" && {
-            response_format: { type: "json_object" as const },
-          }),
-        });
-    
-        return completion.choices[0]?.message?.content || "";
+      const messages: Array<{ role: "system" | "user"; content: string }> = [];
+
+      if (options.systemPrompt) {
+        messages.push({ role: "system", content: options.systemPrompt });
+      }
+      messages.push({ role: "user", content: prompt });
+
+      const completion = await this.groqClient.chat.completions.create({
+        model: modelId,
+        messages,
+        temperature: options.temperature ?? 0.7,
+        max_tokens: options.maxTokens ?? 2048,
+        ...(options.responseFormat === "json" && {
+          response_format: { type: "json_object" as const },
+        }),
+      });
+
+      return completion.choices[0]?.message?.content || "";
     } catch (e: any) {
-        throw new Error(`Groq Error: ${e.message}`);
+      throw new Error(`Groq Error: ${e.message}`);
     }
   }
 
   private async executeLocal(text: string): Promise<number[]> {
     try {
-        if (!this.embeddingPipeline) {
-          const { pipeline } = await import("@xenova/transformers");
-          this.embeddingPipeline = await pipeline(
-            "feature-extraction",
-            "Xenova/all-MiniLM-L6-v2",
-          );
-        }
-    
-        const output = await this.embeddingPipeline(text, {
-          pooling: "mean",
-          normalize: true,
-        });
-    
-        return Array.from(output.data) as number[];
+      if (!this.embeddingPipeline) {
+        const { pipeline } = await import("@xenova/transformers");
+        this.embeddingPipeline = await pipeline(
+          "feature-extraction",
+          "Xenova/all-MiniLM-L6-v2",
+        );
+      }
+
+      const output = await this.embeddingPipeline(text, {
+        pooling: "mean",
+        normalize: true,
+      });
+
+      return Array.from(output.data) as number[];
     } catch (e: any) {
-         throw new Error(`Local Embedding Error: ${e.message}`);
+      throw new Error(`Local Embedding Error: ${e.message}`);
     }
   }
 
@@ -735,11 +735,11 @@ export class AntigravityRouter {
 
 // Helper to clean JSON
 function cleanJSONString(text: string): string {
-    let clean = text.trim();
-    if (clean.startsWith("```json")) clean = clean.slice(7);
-    else if (clean.startsWith("```")) clean = clean.slice(3);
-    if (clean.endsWith("```")) clean = clean.slice(0, -3);
-    return clean.trim();
+  let clean = text.trim();
+  if (clean.startsWith("```json")) clean = clean.slice(7);
+  else if (clean.startsWith("```")) clean = clean.slice(3);
+  if (clean.endsWith("```")) clean = clean.slice(0, -3);
+  return clean.trim();
 }
 
 /**
@@ -788,10 +788,10 @@ Return ONLY valid JSON. No markdown, no explanations.`;
 
   let cleanedText = resumeText;
   try {
-      const { sanitizeInput } = await import("./sanitize");
-      cleanedText = sanitizeInput(resumeText);
+    const { sanitizeInput } = await import("./sanitize");
+    cleanedText = sanitizeInput(resumeText);
   } catch (e) {
-     // Safe to proceed if sanitizer missing, guard will catch strict issues
+    // Safe to proceed if sanitizer missing, guard will catch strict issues
   }
 
   const result = await router.execute(
@@ -855,10 +855,10 @@ Normalize all skill names. Return ONLY valid JSON.`;
 
   let cleanedJd = jdText;
   try {
-      const { sanitizeInput } = await import("./sanitize");
-      cleanedJd = sanitizeInput(jdText);
-  } catch(e) {
-     // Safe fallback
+    const { sanitizeInput } = await import("./sanitize");
+    cleanedJd = sanitizeInput(jdText);
+  } catch (e) {
+    // Safe fallback
   }
 
   const result = await router.execute(

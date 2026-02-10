@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useStudent } from "@/app/(student)/providers/student-provider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,21 +28,32 @@ const SOFT_SKILL_OPTIONS = [
     "Emotional Intelligence",
 ];
 
-export default function OnboardingSoftSkillsClient({ 
+export default function OnboardingSoftSkillsClient({
     initialSoftSkills,
     initialAchievements,
-}: { 
+}: {
     initialSoftSkills: string[];
     initialAchievements: Achievement[];
 }) {
     const router = useRouter();
+    const { refresh } = useStudent();
     const [isLoading, setIsLoading] = useState(false);
     const [selectedSkills, setSelectedSkills] = useState<string[]>(
         initialSoftSkills.slice(0, 3)
     );
+    const normalizeAchievement = (a: Achievement) => {
+        const fixDate = (d?: string) => {
+            if (!d) return "";
+            if (/^\d{4}-\d{2}$/.test(d)) return d;
+            const parsed = new Date(d);
+            return !isNaN(parsed.getTime()) ? parsed.toISOString().slice(0, 7) : "";
+        };
+        return { ...a, date: fixDate(a.date) };
+    };
+
     const [achievements, setAchievements] = useState<Achievement[]>(
-        initialAchievements.length > 0 
-            ? initialAchievements 
+        initialAchievements.length > 0
+            ? initialAchievements.map(normalizeAchievement)
             : [{ title: "", description: "", date: "", issuer: "" }]
     );
 
@@ -86,6 +98,7 @@ export default function OnboardingSoftSkillsClient({
             });
 
             await updateOnboardingStep(9);
+            await refresh();
             router.push("/student/onboarding/review");
         } catch (error: any) {
             toast.error(error.message || "Failed to save");
@@ -97,6 +110,7 @@ export default function OnboardingSoftSkillsClient({
         setIsLoading(true);
         try {
             await updateOnboardingStep(9);
+            await refresh();
             router.push("/student/onboarding/review");
         } catch (error: any) {
             toast.error(error.message || "Failed to proceed");

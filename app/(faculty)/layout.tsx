@@ -3,7 +3,7 @@ import Header from "@/components/shared/header";
 import Link from "next/link";
 
 const facultyLinks = [
-    { href: "/faculty/dashboard", label: "Dashboard" },
+    { href: "/faculty", label: "Dashboard" },
     { href: "/faculty/drives", label: "Drives" },
     { href: "/faculty/drives/new", label: "Create Drive" },
 ];

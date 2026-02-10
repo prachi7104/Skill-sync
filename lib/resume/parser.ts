@@ -35,6 +35,53 @@ export function parseResumeText(text: string): ParsedResume {
     const linkedinMatch = text.match(linkedinRegex);
 
     // ── Section detection ───────────────────────────────────────────────
+    // Section keywords mapped to canonical section names.
+    // Order matters: longer/more-specific keywords first to avoid partial matches.
+
+    const sectionKeywords: [string, string][] = [
+        // Skills
+        ["technical skills", "skills"],
+        ["core competencies", "skills"],
+        ["tools & technologies", "skills"],
+        ["tools and technologies", "skills"],
+        ["key skills", "skills"],
+        ["skills", "skills"],
+
+        // Projects
+        ["personal projects", "projects"],
+        ["academic projects", "projects"],
+        ["key projects", "projects"],
+        ["projects", "projects"],
+
+        // Work Experience
+        ["professional experience", "workExperience"],
+        ["work experience", "workExperience"],
+        ["internships", "workExperience"],
+        ["internship", "workExperience"],
+        ["experience", "workExperience"],
+
+        // Education
+        ["academic background", "education"],
+        ["qualifications", "education"],
+        ["education", "education"],
+
+        // Certifications (fold into education for now)
+        ["certifications", "education"],
+        ["courses", "education"],
+
+        // Sections to skip (reset to summary)
+        ["summary", "summary"],
+        ["objective", "summary"],
+        ["about me", "summary"],
+        ["achievements", "achievements"],
+        ["awards", "achievements"],
+        ["extracurricular", "extracurricular"],
+        ["hobbies", "extracurricular"],
+        ["interests", "extracurricular"],
+        ["languages", "extracurricular"],
+        ["references", "references"],
+        ["declaration", "references"],
+    ];
 
     const sections: Record<string, string[]> = {
         skills: [],
@@ -45,35 +92,40 @@ export function parseResumeText(text: string): ParsedResume {
 
     let currentSection = "summary";
 
-    const sectionKeywords: Record<string, string> = {
-        skills: "skills",
-        "technical skills": "skills",
-        "core competencies": "skills",
-        projects: "projects",
-        "personal projects": "projects",
-        "academic projects": "projects",
-        experience: "workExperience",
-        "work experience": "workExperience",
-        "professional experience": "workExperience",
-        internships: "workExperience",
-        education: "education",
-        qualifications: "education",
-        "academic background": "education",
-    };
-
     for (const line of lines) {
-        const lowerLine = line.toLowerCase().replace(/:$/, "").trim();
-        let isHeader = false;
+        // Normalize: lowercase, strip trailing colon/dashes, collapse whitespace
+        const lowerLine = line
+            .toLowerCase()
+            .replace(/[:–—\-]+$/, "")
+            .replace(/\s+/g, " ")
+            .trim();
 
-        for (const [key, sectionName] of Object.entries(sectionKeywords)) {
-            if (lowerLine === key) {
+        let isHeader = false;
+        let remainder = "";
+
+        for (const [keyword, sectionName] of sectionKeywords) {
+            // Match if the line starts with or exactly equals the keyword
+            if (lowerLine === keyword || lowerLine.startsWith(keyword + " ") || lowerLine.startsWith(keyword + ":")) {
                 currentSection = sectionName;
                 isHeader = true;
+
+                // Capture content after the header keyword on the same line
+                // e.g. "Technical Skills Languages: Python, JS" → "Languages: Python, JS"
+                const afterKeyword = line.substring(keyword.length).replace(/^[\s:–—\-]+/, "").trim();
+                if (afterKeyword.length > 2) {
+                    remainder = afterKeyword;
+                }
                 break;
             }
         }
 
-        if (!isHeader && currentSection !== "summary") {
+        // Push remainder from merged header+content lines
+        if (isHeader && remainder && sections[currentSection]) {
+            sections[currentSection].push(remainder);
+        }
+
+        // Push non-header lines into the current section
+        if (!isHeader && currentSection !== "summary" && sections[currentSection]) {
             sections[currentSection].push(line);
         }
     }
@@ -82,9 +134,9 @@ export function parseResumeText(text: string): ParsedResume {
 
     const skillsRaw = sections.skills.join(" ");
     const skillsList = skillsRaw
-        .split(/[,|•·–\-]/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 2 && s.length < 40);
+        .split(/[,|•·;]/)
+        .map((s) => s.replace(/^[\s\-–—:]+|[\s\-–—:]+$/g, "").trim())
+        .filter((s) => s.length > 1 && s.length < 50);
 
     return {
         email: emailMatch ? emailMatch[0] : null,
@@ -96,3 +148,4 @@ export function parseResumeText(text: string): ParsedResume {
         education: sections.education,
     };
 }
+

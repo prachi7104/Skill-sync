@@ -5,8 +5,7 @@ import { db } from "@/lib/db";
 import { students, jobs } from "@/lib/db/schema";
 import { requireStudentProfile } from "@/lib/auth/helpers";
 import { eq, and, sql } from "drizzle-orm";
-import { parseResumeWithAI, mapParsedResumeToProfile } from "@/lib/resume/ai-parser";
-import { computeCompleteness } from "@/lib/profile/completeness";
+import { processResumeParseJobs } from "@/lib/workers/parse-resume";
 
 // Configure Cloudinary
 cloudinary.config({
@@ -74,7 +73,7 @@ export async function POST(req: NextRequest) {
         }
         if (
             file.type ===
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document" &&
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" &&
             !isZipMagic
         ) {
             return NextResponse.json(
@@ -110,160 +109,89 @@ export async function POST(req: NextRequest) {
             uploadStream.end(buffer);
         });
 
-        // Cloudinary 'raw' resources might not include extension in secure_url automatically if format wasn't respected strictly
-        // But usually it does: .../resumes/user_resume_12345.pdf
         const resumeUrl = uploadResult.secure_url;
 
-        // 5. Accept client-extracted text and parse with AI
+        // 5. Get client-extracted text
         const resumeText = formData.get("resumeText") as string | null;
 
-        // Run AI-powered structured parsing on extracted text
-        let parsedResumeJson = null;
-        let mappedProfile: ReturnType<typeof mapParsedResumeToProfile> | null = null;
-        
-        if (resumeText && resumeText.length >= 50) {
-            try {
-                console.log("[Resume API] Starting AI parsing...");
-                parsedResumeJson = await parseResumeWithAI(resumeText);
-                mappedProfile = mapParsedResumeToProfile(parsedResumeJson);
-                console.log("[Resume API] AI parsing complete:", {
-                    skillsCount: mappedProfile.skills.length,
-                    projectsCount: mappedProfile.projects.length,
-                    experienceCount: mappedProfile.workExperience.length,
-                    codingProfilesCount: mappedProfile.codingProfiles.length,
-                });
-            } catch (error) {
-                console.error("[Resume API] AI parsing failed:", error);
-            }
-        }
-
-        // 6. Update DB — store URL, raw text, structured parse, AND auto-fill profile fields
-        const updateData: Record<string, any> = {
-            resumeUrl: resumeUrl,
-            resumeFilename: file.name,
-            resumeMime: file.type,
-            resumeUploadedAt: new Date(),
-            resumeText: resumeText || null,
-            parsedResumeJson,
-            resumeParsedAt: resumeText ? new Date() : null,
-        };
-        
-        // Only auto-fill if profile fields are currently empty and we have AI-parsed data
-        const currentProfile = await db.query.students.findFirst({
-            where: eq(students.id, user.id),
-        });
-        
-        if (currentProfile && mappedProfile) {
-            // Auto-fill phone & linkedin if not set
-            if (!currentProfile.phone && mappedProfile.phone) {
-                updateData.phone = mappedProfile.phone;
-            }
-            if (!currentProfile.linkedin && mappedProfile.linkedin) {
-                updateData.linkedin = mappedProfile.linkedin;
-            }
-            
-            // Auto-fill academic scores if not set
-            if (!currentProfile.tenthPercentage && mappedProfile.tenthPercentage) {
-                updateData.tenthPercentage = mappedProfile.tenthPercentage;
-            }
-            if (!currentProfile.twelfthPercentage && mappedProfile.twelfthPercentage) {
-                updateData.twelfthPercentage = mappedProfile.twelfthPercentage;
-            }
-            if (!currentProfile.cgpa && mappedProfile.cgpa) {
-                updateData.cgpa = mappedProfile.cgpa;
-            }
-            
-            // Auto-fill skills only if currently empty
-            if ((!currentProfile.skills || currentProfile.skills.length === 0) && mappedProfile.skills.length > 0) {
-                updateData.skills = mappedProfile.skills;
-            }
-            
-            // Auto-fill projects only if currently empty
-            if ((!currentProfile.projects || currentProfile.projects.length === 0) && mappedProfile.projects.length > 0) {
-                updateData.projects = mappedProfile.projects;
-            }
-            
-            // Auto-fill work experience only if currently empty
-            if ((!currentProfile.workExperience || currentProfile.workExperience.length === 0) && mappedProfile.workExperience.length > 0) {
-                updateData.workExperience = mappedProfile.workExperience;
-            }
-            
-            // Auto-fill coding profiles only if currently empty
-            if ((!currentProfile.codingProfiles || currentProfile.codingProfiles.length === 0) && mappedProfile.codingProfiles.length > 0) {
-                updateData.codingProfiles = mappedProfile.codingProfiles;
-            }
-            
-            // Auto-fill certifications only if currently empty
-            if ((!currentProfile.certifications || currentProfile.certifications.length === 0) && mappedProfile.certifications.length > 0) {
-                updateData.certifications = mappedProfile.certifications;
-            }
-            
-            // Auto-fill research papers only if currently empty
-            if ((!currentProfile.researchPapers || currentProfile.researchPapers.length === 0) && mappedProfile.researchPapers.length > 0) {
-                updateData.researchPapers = mappedProfile.researchPapers;
-            }
-            
-            // Auto-fill achievements only if currently empty
-            if ((!currentProfile.achievements || currentProfile.achievements.length === 0) && mappedProfile.achievements.length > 0) {
-                updateData.achievements = mappedProfile.achievements;
-            }
-            
-            // Auto-fill soft skills only if currently empty
-            if ((!currentProfile.softSkills || currentProfile.softSkills.length === 0) && mappedProfile.softSkills.length > 0) {
-                updateData.softSkills = mappedProfile.softSkills;
-            }
-        }
-        
+        // 6. Update DB — store URL and raw text immediately (fast response)
         await db
             .update(students)
-            .set(updateData)
+            .set({
+                resumeUrl: resumeUrl,
+                resumeFilename: file.name,
+                resumeMime: file.type,
+                resumeUploadedAt: new Date(),
+                resumeText: resumeText || null,
+                updatedAt: new Date(),
+            })
             .where(eq(students.id, user.id));
 
-        // 7. Check profile completeness and queue embedding if ready
-        const freshProfile = await db.query.students.findFirst({
-            where: eq(students.id, user.id),
-        });
+        // 7. Enqueue AI parsing job (processed by cron worker)
+        let jobId: string | null = null;
 
-        if (freshProfile) {
-            const { score: completeness } = computeCompleteness({
-                ...freshProfile,
-                name: user.name,
-                email: user.email,
+        if (resumeText && resumeText.length >= 50) {
+            // Check for existing pending parse job for this student (dedup)
+            const existingJob = await db.query.jobs.findFirst({
+                where: and(
+                    eq(jobs.type, "parse_resume"),
+                    eq(jobs.status, "pending"),
+                    sql`${jobs.payload}->>'studentId' = ${user.id}`,
+                ),
             });
 
-            // Persist updated completeness
-            await db
-                .update(students)
-                .set({ profileCompleteness: completeness, updatedAt: new Date() })
-                .where(eq(students.id, user.id));
-
-            // Queue embedding generation when profile is >= 50% complete
-            if (completeness >= 50) {
-                const existingJob = await db.query.jobs.findFirst({
-                    where: and(
-                        eq(jobs.type, "generate_embedding"),
-                        eq(jobs.status, "pending"),
-                        sql`${jobs.payload}->>'targetId' = ${user.id}`,
-                    ),
-                });
-
-                if (!existingJob) {
-                    await db.insert(jobs).values({
-                        type: "generate_embedding",
-                        status: "pending",
-                        priority: 5,
+            if (existingJob) {
+                // Update existing pending job with new text
+                await db
+                    .update(jobs)
+                    .set({
                         payload: {
-                            targetType: "student",
-                            targetId: user.id,
+                            studentId: user.id,
+                            resumeText,
+                            resumeUrl,
+                            mimeType: file.type,
                         },
-                    });
-                }
+                        updatedAt: new Date(),
+                    })
+                    .where(eq(jobs.id, existingJob.id));
+                jobId = existingJob.id;
+                console.log(`[Resume API] Updated existing job ${jobId} for student ${user.id}`);
+            } else {
+                // Insert new job
+                const [newJob] = await db
+                    .insert(jobs)
+                    .values({
+                        type: "parse_resume",
+                        status: "pending",
+                        priority: 7, // Resume parsing is high priority
+                        payload: {
+                            studentId: user.id,
+                            resumeText,
+                            resumeUrl,
+                            mimeType: file.type,
+                        },
+                    })
+                    .returning({ id: jobs.id });
+                jobId = newJob.id;
+                console.log(`[Resume API] Enqueued new job ${jobId} for student ${user.id}`);
             }
+
+            // Fire-and-forget: trigger worker immediately so the job is processed
+            // without waiting for the external cron. Errors are caught silently.
+            processResumeParseJobs().catch((err) =>
+                console.error("[Resume API] Background parse failed:", err)
+            );
         }
 
         return NextResponse.json(
-            { message: "Resume uploaded and parsed successfully.", url: resumeUrl },
-            { status: 200 }
+            {
+                success: true,
+                message: "Resume uploaded. AI parsing queued.",
+                url: resumeUrl,
+                jobId,
+                status: jobId ? "queued" : "uploaded",
+            },
+            { status: 202 }
         );
 
     } catch (error) {

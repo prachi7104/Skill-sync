@@ -5,11 +5,16 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { DefaultLogger, LogWriter } from 'drizzle-orm/logger';
 import * as schema from "./schema";
 import { incrementDbQuery } from "@/lib/request-context";
+import { logger } from "@/lib/logger";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   throw new Error("DATABASE_URL is not set");
 }
+
+// ── Pool Configuration ──────────────────────────────────────────────────────
+const SLOW_QUERY_THRESHOLD_MS = 1000; // Log queries slower than 1 second
+const MAX_POOL_SIZE = 5;
 
 // Singleton connection pattern for Next.js HMR
 declare global {
@@ -19,40 +24,79 @@ declare global {
 
 const client = globalThis._postgresClient || postgres(connectionString, {
   prepare: false,
-  max: 5, // Limit to 5 connections as requested
-  idle_timeout: 20, // 20 seconds idle timeout
-  connect_timeout: 10, // 10 seconds connection timeout
+  max: MAX_POOL_SIZE,
+  idle_timeout: 20,
+  connect_timeout: 10,
   connection: {
     application_name: "skillsync_app",
-    statement_timeout: 30000, // 30 seconds statement timeout
-  }
+    statement_timeout: 30000,
+  },
+  onnotice: (notice) => {
+    // Postgres advisory notices (e.g., from RLS policies, warnings)
+    logger.warn("DB notice received", { message: notice.message, severity: notice.severity });
+  },
 });
 
 if (process.env.NODE_ENV !== "production") {
   globalThis._postgresClient = client;
 }
 
-// Logger interface for Drizzle
+// ── Query Logger with Slow Query Tracking ───────────────────────────────────
 class QueryLogger implements LogWriter {
   write(message: string) {
-    // console.log(message); // Verbose query logging
     incrementDbQuery();
+
+    // Extract timing from Drizzle's log message if available
+    // Drizzle logs look like: "Query: SELECT ... -- params: [...] -- duration: 123ms"
+    const durationMatch = message.match(/(\d+)ms/);
+    const durationMs = durationMatch ? parseInt(durationMatch[1]) : null;
+
+    if (durationMs && durationMs > SLOW_QUERY_THRESHOLD_MS) {
+      logger.warn("Slow query detected", {
+        durationMs,
+        query: message.substring(0, 200), // Truncate for readability
+        threshold: SLOW_QUERY_THRESHOLD_MS,
+      });
+    }
   }
 }
-const logger = new DefaultLogger({ writer: new QueryLogger() });
+const queryLogger = new DefaultLogger({ writer: new QueryLogger() });
 
-export const db = drizzle(client, { schema, logger });
+export const db = drizzle(client, { schema, logger: queryLogger });
 
+// ── Pool Health Monitor ─────────────────────────────────────────────────────
 export async function getDbStats() {
-  const result = await client`
-    SELECT count(*)::int as total_connections,
-           count(*) filter (where state = 'active')::int as active_connections,
-           count(*) filter (where state = 'idle')::int as idle_connections
-    FROM pg_stat_activity
-    WHERE application_name = 'skillsync_app'
-  `;
+  try {
+    const result = await client`
+      SELECT count(*)::int as total_connections,
+             count(*) filter (where state = 'active')::int as active_connections,
+             count(*) filter (where state = 'idle')::int as idle_connections,
+             count(*) filter (where wait_event_type = 'Lock')::int as waiting_on_lock
+      FROM pg_stat_activity
+      WHERE application_name = 'skillsync_app'
+    `;
 
-  const stats = result[0];
-  console.log('DB Pool Stats:', stats);
-  return stats;
+    const stats = result[0] as {
+      total_connections: number;
+      active_connections: number;
+      idle_connections: number;
+      waiting_on_lock: number;
+    };
+
+    // ⚠️ Pool exhaustion warning
+    if (stats.active_connections >= MAX_POOL_SIZE - 1) {
+      logger.error("Connection pool near exhaustion", {
+        active: stats.active_connections,
+        max: MAX_POOL_SIZE,
+        idle: stats.idle_connections,
+        waiting: stats.waiting_on_lock,
+      });
+    }
+
+    return stats;
+  } catch (err: any) {
+    logger.error("Failed to query pool stats", { error: err.message });
+    return null;
+  }
 }
+
