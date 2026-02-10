@@ -1,5 +1,7 @@
-import { requireStudentProfile } from "@/lib/auth/helpers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useStudent } from "@/app/(student)/providers/student-provider";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -8,34 +10,44 @@ import { computeCompleteness } from "@/lib/profile/completeness";
 import { FileText, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { db } from "@/lib/db";
-import { drives, rankings } from "@/lib/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { useEffect, useState } from "react";
 
-export default async function StudentDashboard() {
-    const { user, profile } = await requireStudentProfile();
+export default function StudentDashboard() {
+    const { user, student, isLoading } = useStudent();
+    const router = useRouter();
+    const [stats, setStats] = useState({ activeDrivesCount: 0, rankingsCount: 0 });
 
-    // Enforcement: If not fully onboarded (step < 7), redirect to onboarding
-    if (profile.onboardingStep < 7) {
-        redirect("/student/onboarding/welcome");
+    useEffect(() => {
+        if (!isLoading && student) {
+            if (student.onboardingStep < 7) {
+                router.push("/student/onboarding/welcome");
+            }
+        }
+    }, [isLoading, student, router]);
+
+    useEffect(() => {
+        async function fetchStats() {
+            try {
+                const res = await fetch("/api/student/dashboard/stats");
+                if (res.ok) {
+                    const data = await res.json();
+                    setStats(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch dashboard stats", error);
+            }
+        }
+        if (student) {
+            fetchStats();
+        }
+    }, [student]);
+
+    if (isLoading || !student || !user) {
+        return <div className="p-8">Loading dashboard...</div>;
     }
 
-    const { score, missing } = computeCompleteness(profile);
-
-    // Fetch real stats
-    const [activeDrivesResult] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(drives)
-        .where(eq(drives.isActive, true));
-    const activeDrivesCount = activeDrivesResult?.count ?? 0;
-
-    const [rankingsResult] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(rankings)
-        .where(eq(rankings.studentId, user.id));
-    const rankingsCount = rankingsResult?.count ?? 0;
-
-    const sandboxUsageToday = profile.sandboxUsageToday ?? 0;
+    const { score, missing } = computeCompleteness(student);
+    const sandboxUsageToday = student.sandboxUsageToday ?? 0;
     const profileCompleteness = score;
 
     return (
@@ -55,7 +67,7 @@ export default async function StudentDashboard() {
                         <BriefcaseIcon className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{activeDrivesCount}</div>
+                        <div className="text-2xl font-bold">{stats.activeDrivesCount}</div>
                         <p className="text-xs text-muted-foreground">Active now</p>
                     </CardContent>
                 </Card>
@@ -65,7 +77,7 @@ export default async function StudentDashboard() {
                         <SendIcon className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{rankingsCount}</div>
+                        <div className="text-2xl font-bold">{stats.rankingsCount}</div>
                         <p className="text-xs text-muted-foreground">Received</p>
                     </CardContent>
                 </Card>
@@ -104,17 +116,17 @@ export default async function StudentDashboard() {
                             <CardDescription>Your current resume on file.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {profile.resumeUrl ? (
+                            {student.resumeUrl ? (
                                 <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/10">
                                     <div className="space-y-1">
-                                        <p className="font-medium text-sm truncate max-w-[200px]">{profile.resumeFilename}</p>
+                                        <p className="font-medium text-sm truncate max-w-[200px]">{student.resumeFilename}</p>
                                         <p className="text-xs text-muted-foreground">
-                                            Uploaded {profile.resumeUploadedAt ? format(new Date(profile.resumeUploadedAt), "MMM d, yyyy") : "Unknown"}
+                                            Uploaded {student.resumeUploadedAt ? format(new Date(student.resumeUploadedAt), "MMM d, yyyy") : "Unknown"}
                                         </p>
                                     </div>
                                     <div className="flex gap-2">
                                         <Button variant="outline" size="sm" asChild>
-                                            <a href={profile.resumeUrl} target="_blank">View</a>
+                                            <a href={student.resumeUrl} target="_blank">View</a>
                                         </Button>
                                         <Button variant="secondary" size="sm" asChild>
                                             <Link href="/student/profile">Update</Link>
@@ -140,10 +152,10 @@ export default async function StudentDashboard() {
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-2 gap-4">
-                                <SectionStatus label="Skills" count={profile.skills?.length || 0} min={5} />
-                                <SectionStatus label="Projects" count={profile.projects?.length || 0} min={2} />
-                                <SectionStatus label="Work Exp" count={profile.workExperience?.length || 0} min={0} optional />
-                                <SectionStatus label="Certifications" count={profile.certifications?.length || 0} min={0} optional />
+                                <SectionStatus label="Skills" count={student.skills?.length || 0} min={5} />
+                                <SectionStatus label="Projects" count={student.projects?.length || 0} min={2} />
+                                <SectionStatus label="Work Exp" count={student.workExperience?.length || 0} min={0} optional />
+                                <SectionStatus label="Certifications" count={student.certifications?.length || 0} min={0} optional />
                             </div>
 
                             <div className="mt-6 flex justify-end">
@@ -314,3 +326,5 @@ function CheckIcon(props: any) {
         </svg>
     )
 }
+
+

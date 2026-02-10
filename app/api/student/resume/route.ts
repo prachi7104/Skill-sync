@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { students, jobs } from "@/lib/db/schema";
 import { requireStudentProfile } from "@/lib/auth/helpers";
 import { eq, and, sql } from "drizzle-orm";
-import { parseResumeText } from "@/lib/resume/parser";
+import { parseResumeWithAI, mapParsedResumeToProfile } from "@/lib/resume/ai-parser";
 import { computeCompleteness } from "@/lib/profile/completeness";
 
 // Configure Cloudinary
@@ -114,37 +114,26 @@ export async function POST(req: NextRequest) {
         // But usually it does: .../resumes/user_resume_12345.pdf
         const resumeUrl = uploadResult.secure_url;
 
-        // 5. Accept client-extracted text and parse inline
+        // 5. Accept client-extracted text and parse with AI
         const resumeText = formData.get("resumeText") as string | null;
 
-        // Run deterministic structured parsing on extracted text
+        // Run AI-powered structured parsing on extracted text
         let parsedResumeJson = null;
-        let extractedSkills: { name: string; proficiency: 1 | 2 | 3 | 4 | 5 }[] = [];
-        let extractedProjects: { title: string; description: string; techStack: string[]; url?: string }[] = [];
+        let mappedProfile: ReturnType<typeof mapParsedResumeToProfile> | null = null;
         
-        if (resumeText && resumeText.length >= 20) {
+        if (resumeText && resumeText.length >= 50) {
             try {
-                parsedResumeJson = parseResumeText(resumeText);
-                
-                // Auto-fill skills from parsed resume (default proficiency = 3)
-                if (parsedResumeJson.skills && Array.isArray(parsedResumeJson.skills)) {
-                    extractedSkills = parsedResumeJson.skills.slice(0, 25).map((name: string) => ({
-                        name: name.trim(),
-                        proficiency: 3 as const,
-                    }));
-                }
-                
-                // Auto-fill projects from parsed resume
-                if (parsedResumeJson.projects && Array.isArray(parsedResumeJson.projects)) {
-                    extractedProjects = parsedResumeJson.projects.slice(0, 5).map((desc: string, idx: number) => ({
-                        title: `Project ${idx + 1}`,
-                        description: desc.trim(),
-                        techStack: [],
-                        url: undefined,
-                    }));
-                }
-            } catch {
-                console.error("Resume text parsing failed, storing raw text only");
+                console.log("[Resume API] Starting AI parsing...");
+                parsedResumeJson = await parseResumeWithAI(resumeText);
+                mappedProfile = mapParsedResumeToProfile(parsedResumeJson);
+                console.log("[Resume API] AI parsing complete:", {
+                    skillsCount: mappedProfile.skills.length,
+                    projectsCount: mappedProfile.projects.length,
+                    experienceCount: mappedProfile.workExperience.length,
+                    codingProfilesCount: mappedProfile.codingProfiles.length,
+                });
+            } catch (error) {
+                console.error("[Resume API] AI parsing failed:", error);
             }
         }
 
@@ -159,20 +148,69 @@ export async function POST(req: NextRequest) {
             resumeParsedAt: resumeText ? new Date() : null,
         };
         
-        // Only auto-fill if profile fields are currently empty
+        // Only auto-fill if profile fields are currently empty and we have AI-parsed data
         const currentProfile = await db.query.students.findFirst({
             where: eq(students.id, user.id),
         });
         
-        if (currentProfile) {
+        if (currentProfile && mappedProfile) {
+            // Auto-fill phone & linkedin if not set
+            if (!currentProfile.phone && mappedProfile.phone) {
+                updateData.phone = mappedProfile.phone;
+            }
+            if (!currentProfile.linkedin && mappedProfile.linkedin) {
+                updateData.linkedin = mappedProfile.linkedin;
+            }
+            
+            // Auto-fill academic scores if not set
+            if (!currentProfile.tenthPercentage && mappedProfile.tenthPercentage) {
+                updateData.tenthPercentage = mappedProfile.tenthPercentage;
+            }
+            if (!currentProfile.twelfthPercentage && mappedProfile.twelfthPercentage) {
+                updateData.twelfthPercentage = mappedProfile.twelfthPercentage;
+            }
+            if (!currentProfile.cgpa && mappedProfile.cgpa) {
+                updateData.cgpa = mappedProfile.cgpa;
+            }
+            
             // Auto-fill skills only if currently empty
-            if ((!currentProfile.skills || currentProfile.skills.length === 0) && extractedSkills.length > 0) {
-                updateData.skills = extractedSkills;
+            if ((!currentProfile.skills || currentProfile.skills.length === 0) && mappedProfile.skills.length > 0) {
+                updateData.skills = mappedProfile.skills;
             }
             
             // Auto-fill projects only if currently empty
-            if ((!currentProfile.projects || currentProfile.projects.length === 0) && extractedProjects.length > 0) {
-                updateData.projects = extractedProjects;
+            if ((!currentProfile.projects || currentProfile.projects.length === 0) && mappedProfile.projects.length > 0) {
+                updateData.projects = mappedProfile.projects;
+            }
+            
+            // Auto-fill work experience only if currently empty
+            if ((!currentProfile.workExperience || currentProfile.workExperience.length === 0) && mappedProfile.workExperience.length > 0) {
+                updateData.workExperience = mappedProfile.workExperience;
+            }
+            
+            // Auto-fill coding profiles only if currently empty
+            if ((!currentProfile.codingProfiles || currentProfile.codingProfiles.length === 0) && mappedProfile.codingProfiles.length > 0) {
+                updateData.codingProfiles = mappedProfile.codingProfiles;
+            }
+            
+            // Auto-fill certifications only if currently empty
+            if ((!currentProfile.certifications || currentProfile.certifications.length === 0) && mappedProfile.certifications.length > 0) {
+                updateData.certifications = mappedProfile.certifications;
+            }
+            
+            // Auto-fill research papers only if currently empty
+            if ((!currentProfile.researchPapers || currentProfile.researchPapers.length === 0) && mappedProfile.researchPapers.length > 0) {
+                updateData.researchPapers = mappedProfile.researchPapers;
+            }
+            
+            // Auto-fill achievements only if currently empty
+            if ((!currentProfile.achievements || currentProfile.achievements.length === 0) && mappedProfile.achievements.length > 0) {
+                updateData.achievements = mappedProfile.achievements;
+            }
+            
+            // Auto-fill soft skills only if currently empty
+            if ((!currentProfile.softSkills || currentProfile.softSkills.length === 0) && mappedProfile.softSkills.length > 0) {
+                updateData.softSkills = mappedProfile.softSkills;
             }
         }
         

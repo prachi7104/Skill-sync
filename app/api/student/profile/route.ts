@@ -7,6 +7,21 @@ import { studentProfileSchema } from "@/lib/validations/student-profile";
 import { computeCompleteness } from "@/lib/profile/completeness";
 import { z } from "zod";
 
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+    try {
+        const { user, profile } = await requireStudentProfile();
+        return NextResponse.json({ user, profile });
+    } catch (error) {
+        if (error instanceof Error && (error.message.includes("Unauthorized") || error.message.includes("Forbidden"))) {
+            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        }
+        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    }
+}
+
+
 export async function PATCH(req: NextRequest) {
     try {
         const { user, profile } = await requireStudentProfile();
@@ -14,8 +29,8 @@ export async function PATCH(req: NextRequest) {
         // Parse Body
         const body = await req.json();
 
-        // Validate
-        const validatedData = studentProfileSchema.parse(body);
+        // Validate - allow partial updates for PATCH
+        const validatedData = studentProfileSchema.partial().parse(body);
 
         // Build update object
         const updateData: Record<string, unknown> = {};

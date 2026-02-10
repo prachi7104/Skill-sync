@@ -55,3 +55,27 @@ export const CLOUDINARY_API_SECRET = optionalEnv("CLOUDINARY_API_SECRET");
 // ── Supabase ────────────────────────────────────────────────────────────────
 export const SUPABASE_URL = optionalEnv("NEXT_PUBLIC_SUPABASE_URL");
 export const SUPABASE_ANON_KEY = optionalEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+
+// ── AI Providers (Free Tier) ────────────────────────────────────────────────
+export const GROQ_API_KEY = optionalEnv("GROQ_API_KEY");
+export const MISTRAL_API_KEY = optionalEnv("MISTRAL_API_KEY");
+export const GOOGLE_GENERATIVE_AI_API_KEY = optionalEnv("GOOGLE_GENERATIVE_AI_API_KEY");
+
+// ── Convenience export for all env vars ─────────────────────────────────────
+export const env = {
+    MICROSOFT_CLIENT_ID,
+    MICROSOFT_CLIENT_SECRET,
+    MICROSOFT_TENANT_ID,
+    DATABASE_URL,
+    NEXTAUTH_SECRET,
+    NEXTAUTH_URL,
+    STUDENT_EMAIL_DOMAIN,
+    CLOUDINARY_CLOUD_NAME,
+    CLOUDINARY_API_KEY,
+    CLOUDINARY_API_SECRET,
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    GROQ_API_KEY,
+    MISTRAL_API_KEY,
+    GOOGLE_GENERATIVE_AI_API_KEY,
+};

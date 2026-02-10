@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Sparkles, Check, RefreshCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, Check, RefreshCw } from "lucide-react";
 import { completeOnboarding } from "@/app/actions/onboarding";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -141,8 +141,11 @@ export default function OnboardingReviewClient({ profile }: { profile: any }) {
                 </Card>
             </div>
 
-            <div className="flex justify-center pt-4">
-                <Button size="lg" onClick={handleFinish} disabled={isFinishing} className="w-full md:w-auto px-8">
+            <div className="flex justify-between pt-4">
+                <Button variant="ghost" onClick={() => router.push("/student/onboarding/soft-skills")} disabled={isFinishing}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                <Button size="lg" onClick={handleFinish} disabled={isFinishing} className="px-8">
                     {isFinishing ? "Finalizing..." : "Finish Onboarding"}
                     {!isFinishing && <ArrowRight className="ml-2 h-4 w-4" />}
                 </Button>

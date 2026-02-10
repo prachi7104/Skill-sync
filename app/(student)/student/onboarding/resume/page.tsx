@@ -1,14 +1,26 @@
-import { requireStudentProfile } from "@/lib/auth/helpers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useStudent } from "@/app/(student)/providers/student-provider";
+import { useRouter } from "next/navigation";
+import { getOnboardingRoute } from "@/lib/onboarding/config";
 import OnboardingResumeClient from "./client";
+import { useEffect } from "react";
 
-export default async function OnboardingResumePage() {
-    const { profile } = await requireStudentProfile();
+const EXPECTED_STEP = 1;
 
-    // Must have completed welcome step (step 1)
-    if (profile.onboardingStep < 1) {
-        redirect("/student/onboarding/welcome");
-    }
+export default function OnboardingResumePage() {
+    const { student, isLoading } = useStudent();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && student) {
+            if (student.onboardingStep !== EXPECTED_STEP) {
+                router.push(getOnboardingRoute(student.onboardingStep));
+            }
+        }
+    }, [student, isLoading, router]);
+
+    if (isLoading || !student) return null;
 
     return <OnboardingResumeClient />;
 }

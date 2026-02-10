@@ -1,31 +1,26 @@
-import { requireStudentProfile } from "@/lib/auth/helpers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useStudent } from "@/app/(student)/providers/student-provider";
+import { useRouter } from "next/navigation";
+import { getOnboardingRoute } from "@/lib/onboarding/config";
 import OnboardingProjectsClient from "./client";
+import { useEffect } from "react";
 
-export default async function OnboardingProjectsPage() {
-    const { profile } = await requireStudentProfile();
+const EXPECTED_STEP = 5;
 
-    // Must have completed skills step (step 5)
-    if (profile.onboardingStep < 5) {
-        redirect("/student/onboarding/skills");
-    }
+export default function OnboardingProjectsPage() {
+    const { student, isLoading } = useStudent();
+    const router = useRouter();
 
-    // Pass projects from resume parsing as initial data for autofill
-    let initialProjects = profile.projects || [];
-    
-    // If resume was parsed and no projects in profile yet, extract from parsedResumeJson
-    if (profile.parsedResumeJson && initialProjects.length === 0) {
-        const parsed = profile.parsedResumeJson as { projects?: string[] };
-        if (parsed.projects && Array.isArray(parsed.projects)) {
-            // Convert string project descriptions to Project objects
-            initialProjects = parsed.projects.slice(0, 5).map((desc, idx) => ({
-                title: `Project ${idx + 1}`,
-                description: desc.trim(),
-                techStack: [],
-                url: undefined,
-            }));
+    useEffect(() => {
+        if (!isLoading && student) {
+            if (student.onboardingStep !== EXPECTED_STEP) {
+                router.push(getOnboardingRoute(student.onboardingStep));
+            }
         }
-    }
+    }, [student, isLoading, router]);
 
-    return <OnboardingProjectsClient initialProjects={initialProjects} />;
+    if (isLoading || !student) return null;
+
+    return <OnboardingProjectsClient initialProjects={student.projects || []} />;
 }

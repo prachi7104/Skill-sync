@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, ArrowRight, Loader2 } from "lucide-react";
+import { X, Plus, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { updateOnboardingStep } from "@/app/actions/onboarding";
 import { toast } from "sonner";
 import { Skill } from "@/lib/db/schema";
-import { cn } from "@/lib/utils";
+
 
 // This duplicates some logic from ProfileView to ensure isolation and independence for the onboarding flow
 export default function OnboardingSkillsClient({ initialSkills }: { initialSkills: Skill[] }) {
@@ -43,18 +43,13 @@ export default function OnboardingSkillsClient({ initialSkills }: { initialSkill
     };
 
     const handleContinue = async () => {
-        if (skills.length < 5) {
-            toast.error(`Please add at least ${5 - skills.length} more skills.`);
-            return;
-        }
-
         setIsLoading(true);
         try {
-            // 1. Save Skills to Profile
+            // 1. Save Skills to Profile (even if empty)
             const res = await fetch("/api/student/profile", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ skills }), // Only updating skills
+                body: JSON.stringify({ skills }),
             });
 
             if (!res.ok) throw new Error("Failed to save skills");
@@ -69,12 +64,24 @@ export default function OnboardingSkillsClient({ initialSkills }: { initialSkill
         }
     };
 
+    const handleSkip = async () => {
+        setIsLoading(true);
+        try {
+            await updateOnboardingStep(5);
+            router.push("/student/onboarding/projects");
+        } catch (error) {
+            console.error(error);
+            toast.error("Something went wrong");
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="space-y-2">
                 <h2 className="text-xl font-semibold">Review Your Skills</h2>
                 <p className="text-sm text-muted-foreground">
-                    {initialSkills.length > 0 
+                    {initialSkills.length > 0
                         ? "We've pre-filled skills from your resume. Review, adjust proficiency levels, or add more."
                         : "Add at least 5 skills to proceed. This helps us match you with relevant drives."
                     }
@@ -140,14 +147,22 @@ export default function OnboardingSkillsClient({ initialSkills }: { initialSkill
                 )}
             </div>
 
-            <div className="flex justify-between items-center">
-                <p className={cn("text-sm font-medium", skills.length >= 5 ? "text-green-600" : "text-amber-600")}>
-                    {skills.length} / 5 required skills
-                </p>
-                <Button onClick={handleContinue} disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Continue <ArrowRight className="ml-2 h-4 w-4" />
+            <div className="flex justify-between items-center pt-4 border-t">
+                <Button variant="ghost" onClick={() => router.push("/student/onboarding/academics")} disabled={isLoading}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
+                <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground italic hidden md:block">
+                        {skills.length === 0 ? "Optional - you can skip this" : `${skills.length} skill(s) added`}
+                    </p>
+                    <Button variant="ghost" onClick={handleSkip} disabled={isLoading}>
+                        Skip
+                    </Button>
+                    <Button onClick={handleContinue} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {skills.length === 0 ? "Skip" : "Continue"} <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                </div>
             </div>
         </div>
     );

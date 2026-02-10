@@ -1,30 +1,26 @@
-import { requireStudentProfile } from "@/lib/auth/helpers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useStudent } from "@/app/(student)/providers/student-provider";
+import { useRouter } from "next/navigation";
+import { getOnboardingRoute } from "@/lib/onboarding/config";
 import OnboardingSkillsClient from "./client";
+import { useEffect } from "react";
 
-export default async function OnboardingSkillsPage() {
-    const { profile } = await requireStudentProfile();
+const EXPECTED_STEP = 4;
 
-    // Must have completed academics step (step 4)
-    if (profile.onboardingStep < 4) {
-        redirect("/student/onboarding/academics");
-    }
+export default function OnboardingSkillsPage() {
+    const { student, isLoading } = useStudent();
+    const router = useRouter();
 
-    // Pass skills from resume parsing as initial data for autofill
-    const initialSkills = profile.skills || [];
-    
-    // If resume was parsed, also extract skills from parsedResumeJson
-    if (profile.parsedResumeJson && initialSkills.length === 0) {
-        const parsed = profile.parsedResumeJson as { skills?: string[] };
-        if (parsed.skills && Array.isArray(parsed.skills)) {
-            // Convert string skills to Skill objects with default proficiency
-            const resumeSkills = parsed.skills.slice(0, 20).map(name => ({
-                name: name.trim(),
-                proficiency: 3 as const, // Default to mid-level
-            }));
-            return <OnboardingSkillsClient initialSkills={resumeSkills} />;
+    useEffect(() => {
+        if (!isLoading && student) {
+            if (student.onboardingStep !== EXPECTED_STEP) {
+                router.push(getOnboardingRoute(student.onboardingStep));
+            }
         }
-    }
+    }, [student, isLoading, router]);
 
-    return <OnboardingSkillsClient initialSkills={initialSkills} />;
+    if (isLoading || !student) return null;
+
+    return <OnboardingSkillsClient initialSkills={student.skills || []} />;
 }

@@ -7,11 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Plus, ArrowRight, Loader2, Trash2 } from "lucide-react";
+import { Plus, ArrowLeft, ArrowRight, Loader2, Trash2 } from "lucide-react";
 import { updateOnboardingStep } from "@/app/actions/onboarding";
 import { toast } from "sonner";
 import { Project } from "@/lib/db/schema";
-import { cn } from "@/lib/utils";
 
 export default function OnboardingProjectsClient({ initialProjects }: { initialProjects: Project[] }) {
     const router = useRouter();
@@ -56,14 +55,9 @@ export default function OnboardingProjectsClient({ initialProjects }: { initialP
     };
 
     const handleContinue = async () => {
-        if (projects.length < 1) {
-            toast.error("Please add at least 1 project.");
-            return;
-        }
-
         setIsLoading(true);
         try {
-            // 1. Save Projects
+            // 1. Save Projects (even if empty)
             const res = await fetch("/api/student/profile", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
@@ -72,9 +66,21 @@ export default function OnboardingProjectsClient({ initialProjects }: { initialP
 
             if (!res.ok) throw new Error("Failed to save projects");
 
-            // 2. Update Step
+            // 2. Update Step (5 → 6: Projects → Experience)
             await updateOnboardingStep(6);
-            router.push("/student/onboarding/coding-profiles");
+            router.push("/student/onboarding/experience");
+        } catch (error) {
+            console.error(error);
+            toast.error("Something went wrong");
+            setIsLoading(false);
+        }
+    };
+
+    const handleSkip = async () => {
+        setIsLoading(true);
+        try {
+            await updateOnboardingStep(6);
+            router.push("/student/onboarding/experience");
         } catch (error) {
             console.error(error);
             toast.error("Something went wrong");
@@ -87,7 +93,7 @@ export default function OnboardingProjectsClient({ initialProjects }: { initialP
             <div className="space-y-2">
                 <h2 className="text-xl font-semibold">Review Your Projects</h2>
                 <p className="text-sm text-muted-foreground">
-                    {initialProjects.length > 0 
+                    {initialProjects.length > 0
                         ? "We've pre-filled projects from your resume. Edit titles, add details, or add more."
                         : "Add at least 1 project (academic or personal) to verify your hands-on experience."
                     }
@@ -163,13 +169,21 @@ export default function OnboardingProjectsClient({ initialProjects }: { initialP
             )}
 
             <div className="flex justify-between items-center pt-4 border-t">
-                <p className={cn("text-sm font-medium", projects.length >= 1 ? "text-green-600" : "text-amber-600")}>
-                    {projects.length} / 1 required project
-                </p>
-                <Button onClick={handleContinue} disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Continue <ArrowRight className="ml-2 h-4 w-4" />
+                <Button variant="ghost" onClick={() => router.push("/student/onboarding/skills")} disabled={isLoading}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
+                <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground italic hidden md:block">
+                        {projects.length === 0 ? "Optional - you can skip this" : `${projects.length} project(s) added`}
+                    </p>
+                    <Button variant="ghost" onClick={handleSkip} disabled={isLoading}>
+                        Skip
+                    </Button>
+                    <Button onClick={handleContinue} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {projects.length === 0 ? "Skip" : "Continue"} <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                </div>
             </div>
         </div>
     );

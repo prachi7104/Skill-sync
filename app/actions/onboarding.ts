@@ -8,33 +8,37 @@ import { eq, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { computeCompleteness } from "@/lib/profile/completeness";
 import { academicsSchema } from "@/lib/validations/student-profile";
+import { TOTAL_ONBOARDING_STEPS } from "@/lib/onboarding/config";
 
 /**
  * Valid onboarding step transitions.
  * Each key is the current step, the value is the allowed next step.
  * This ensures strict sequential progression without skipping.
  * 
- * NEW FLOW (Resume-first autofill approach):
+ * COMPLETE FLOW (Resume-first autofill approach):
  * 0: Welcome
- * 1: Resume Upload (parse → populate skills, projects, experience)
- * 2: Basic Info (pre-filled from auth, confirm)
- * 3: Academics (10th, 12th, CGPA, branch)
- * 4: Skills (PRE-FILLED from resume parse)
- * 5: Projects (PRE-FILLED from resume parse)
- * 6: Coding Profiles
- * 7: Soft Skills + Achievements
- * 8: Review → Complete
+ * 1: Resume Upload (AI parse → autofill all subsequent steps)
+ * 2: Basic Info (SAP ID*, Roll No*, Phone, LinkedIn) - *required
+ * 3: Academics (optional)
+ * 4: Skills (prefilled from resume) - optional
+ * 5: Projects (prefilled from resume) - optional
+ * 6: Experience/Work (prefilled from resume) - optional
+ * 7: Coding Profiles (prefilled from resume) - optional
+ * 8: Soft Skills & Achievements (prefilled from resume) - optional
+ * 9: Review & Submit
+ * 10: Complete (dashboard redirect)
  */
 const VALID_TRANSITIONS: Record<number, number> = {
-    0: 1, // Welcome → Resume Upload
-    1: 2, // Resume → Basic Info
-    2: 3, // Basic → Academics
-    3: 4, // Academics → Skills
-    4: 5, // Skills → Projects
-    5: 6, // Projects → Coding Profiles
-    6: 7, // Coding Profiles → Soft Skills
-    7: 8, // Soft Skills → Review
-    8: 9, // Review → Complete
+    0: 1,  // Welcome → Resume Upload
+    1: 2,  // Resume → Basic Info
+    2: 3,  // Basic → Academics
+    3: 4,  // Academics → Skills
+    4: 5,  // Skills → Projects
+    5: 6,  // Projects → Experience
+    6: 7,  // Experience → Coding Profiles
+    7: 8,  // Coding Profiles → Soft Skills
+    8: 9,  // Soft Skills → Review
+    9: 10, // Review → Complete
 };
 
 export async function updateOnboardingStep(step: number) {
@@ -140,17 +144,17 @@ export async function updateSoftSkillsAndAchievements(data: {
 }
 
 /**
- * Complete onboarding: transitions step 8 → 9, computes profile completeness,
+ * Complete onboarding: transitions step 9 → 10, computes profile completeness,
  * and queues a generate_embedding job when the profile is sufficiently complete.
  */
 export async function completeOnboarding() {
     const { user, profile } = await requireStudentProfile();
 
-    // Validate we're on the review step (8) ready to complete (9)
+    // Validate we're on the review step (9) ready to complete (10)
     const currentStep = profile.onboardingStep;
-    if (currentStep !== 8) {
+    if (currentStep !== 9) {
         throw new Error(
-            `Cannot complete onboarding from step ${currentStep}. Must be at step 8 (Review).`
+            `Cannot complete onboarding from step ${currentStep}. Must be at step 9 (Review).`
         );
     }
 
@@ -172,11 +176,11 @@ export async function completeOnboarding() {
 
     const { score: completeness } = computeCompleteness(profileForCompleteness);
 
-    // Update step to 9 (complete) and persist completeness
+    // Update step to 10 (complete) and persist completeness
     await db
         .update(students)
         .set({
-            onboardingStep: 9,
+            onboardingStep: TOTAL_ONBOARDING_STEPS,
             profileCompleteness: completeness,
             updatedAt: new Date(),
         })

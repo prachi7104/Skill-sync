@@ -1,7 +1,7 @@
 /**
  * Client-side resume text extraction.
  *
- * Uses pdfjs-dist (Mozilla PDF.js) for PDFs and mammoth for DOCX.
+ * Uses PDF.js loaded from CDN for PDFs and mammoth for DOCX.
  * Designed to run in the browser so parsing happens before upload,
  * eliminating the need for a server-side background job.
  *
@@ -12,25 +12,42 @@
 import mammoth from "mammoth";
 
 // ---------------------------------------------------------------------------
+// PDF.js CDN loader (avoids webpack bundling issues)
+// ---------------------------------------------------------------------------
+
+const PDFJS_VERSION = "4.4.168"; // Stable version with good ESM support
+const PDFJS_CDN_URL = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.min.mjs`;
+const PDFJS_WORKER_URL = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.mjs`;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let pdfjsLibCache: any = null;
+
+async function loadPdfJs() {
+    if (pdfjsLibCache) return pdfjsLibCache;
+    
+    if (typeof window === "undefined") {
+        throw new Error("PDF extraction requires browser environment");
+    }
+    
+    // Dynamic import from CDN
+    const pdfjsLib = await import(/* webpackIgnore: true */ PDFJS_CDN_URL);
+    pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+    pdfjsLibCache = pdfjsLib;
+    return pdfjsLib;
+}
+
+// ---------------------------------------------------------------------------
 // Client-side (browser) extraction
 // ---------------------------------------------------------------------------
 
 /**
- * Extract text from a PDF ArrayBuffer using pdfjs-dist (browser build).
- * Dynamically imports pdfjs-dist to avoid SSR issues in Next.js.
+ * Extract text from a PDF ArrayBuffer using PDF.js loaded from CDN.
+ * This avoids webpack ESM bundling issues with pdfjs-dist.
  */
 export async function extractTextFromPDF(
     arrayBuffer: ArrayBuffer,
 ): Promise<string> {
-    const pdfjsLib = await import("pdfjs-dist");
-
-    // Configure worker only in browser
-    if (
-        typeof window !== "undefined" &&
-        !pdfjsLib.GlobalWorkerOptions.workerSrc
-    ) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-    }
+    const pdfjsLib = await loadPdfJs();
 
     const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) })
         .promise;
@@ -40,7 +57,8 @@ export async function extractTextFromPDF(
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
         const pageText = content.items
-            .map((item) => ("str" in item ? item.str : ""))
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .map((item: any) => (item.str ?? ""))
             .join(" ");
         pages.push(pageText);
     }

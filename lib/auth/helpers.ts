@@ -1,16 +1,27 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/config";
+import { getCachedSession } from "@/lib/auth/session-cache";
 import { db } from "@/lib/db";
 import { users, students } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
 
 /**
  * Retrieves the currently authenticated user from the database.
  * Returns null if not authenticated or user not found.
  * Use this in Server Components and Route Handlers.
+ * 
+ * PERFORMANCE: Uses cached session to avoid redundant NextAuth calls.
+ */
+import { headers } from "next/headers";
+
+/**
+ * Retrieves the currently authenticated user from the database.
+ * Returns null if not authenticated or user not found.
+ * Use this in Server Components and Route Handlers.
+ * 
+ * PERFORMANCE: Uses cached session to avoid redundant NextAuth calls.
  */
 export async function getCurrentUser() {
-    const session = await getServerSession(authOptions);
+    const session = await getCachedSession();
 
     if (!session?.user?.email) {
         return null;
@@ -24,28 +35,28 @@ export async function getCurrentUser() {
 }
 
 /**
- * Enforces authentication. Throws user-friendly error if not logged in.
- * Use this to protect Server Actions or specific component logic.
+ * Enforces authentication. Redirects to login if not logged in.
+ * Use this in Server Components (layouts, pages).
  */
 export async function requireAuth() {
     const user = await getCurrentUser();
 
     if (!user) {
-        throw new Error("Unauthorized: You must be signed in to perform this action.");
+        redirect("/login");
     }
 
     return user;
 }
 
 /**
- * Enforces specific roles. Throws if user is not authenticated OR lacks role.
+ * Enforces specific roles. Redirects if user is not authenticated OR lacks role.
  * @param allowedRoles Array of allowed roles ('student', 'faculty', 'admin')
  */
 export async function requireRole(allowedRoles: ("student" | "faculty" | "admin")[]) {
     const user = await requireAuth();
 
     if (!allowedRoles.includes(user.role)) {
-        throw new Error("Forbidden: You do not have permission to perform this action.");
+        redirect("/unauthorized");
     }
 
     return user;
@@ -65,7 +76,7 @@ export async function getStudentProfile(userId: string) {
 
 /**
  * Enforces that the current user is a 'student' AND has a student profile.
- * Throws if authentication fails, role mismatch, or profile missing.
+ * Redirects if authentication fails, role mismatch, or profile missing.
  * Returns both user and profile.
  */
 export async function requireStudentProfile() {
@@ -74,7 +85,7 @@ export async function requireStudentProfile() {
     const profile = await getStudentProfile(user.id);
 
     if (!profile) {
-        throw new Error("Student profile not found. Please complete onboarding.");
+        redirect("/student/onboarding/welcome");
     }
 
     return { user, profile };

@@ -2,7 +2,7 @@
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import { db } from "@/lib/db";
-import { users, students } from "@/lib/db/schema";
+import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import {
     MICROSOFT_CLIENT_ID,
@@ -36,9 +36,10 @@ export const authOptions: NextAuthOptions = {
     ],
     session: {
         strategy: "jwt",
+        maxAge: 30 * 24 * 60 * 60, // 30 days
     },
-    // Enable debug in development to trace OAuth failures
-    debug: process.env.NODE_ENV === "development",
+    // Disable debug to prevent [next-auth][warn][DEBUG_ENABLED] spam
+    debug: false,
     callbacks: {
         async signIn({ user, account }: { user: import("next-auth").User, account: import("next-auth").Account | null }) {
             if (!user.email) {

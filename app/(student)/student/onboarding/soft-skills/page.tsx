@@ -1,19 +1,31 @@
-import { requireStudentProfile } from "@/lib/auth/helpers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useStudent } from "@/app/(student)/providers/student-provider";
+import { useRouter } from "next/navigation";
+import { getOnboardingRoute } from "@/lib/onboarding/config";
 import OnboardingSoftSkillsClient from "./client";
+import { useEffect } from "react";
 
-export default async function OnboardingSoftSkillsPage() {
-    const { profile } = await requireStudentProfile();
+const EXPECTED_STEP = 8;
 
-    // Must have completed coding profiles step (step 7)
-    if (profile.onboardingStep < 7) {
-        redirect("/student/onboarding/coding-profiles");
-    }
+export default function OnboardingSoftSkillsPage() {
+    const { student, isLoading } = useStudent();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && student) {
+            if (student.onboardingStep !== EXPECTED_STEP) {
+                router.push(getOnboardingRoute(student.onboardingStep));
+            }
+        }
+    }, [student, isLoading, router]);
+
+    if (isLoading || !student) return null;
 
     return (
-        <OnboardingSoftSkillsClient 
-            initialSoftSkills={profile.softSkills || []}
-            initialAchievements={profile.achievements || []}
+        <OnboardingSoftSkillsClient
+            initialSoftSkills={student.softSkills || []}
+            initialAchievements={student.achievements || []}
         />
     );
 }

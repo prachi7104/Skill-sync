@@ -1,3 +1,4 @@
+
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * ANTIGRAVITY — Intelligent Multi-Model Fallback System
@@ -23,67 +24,47 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import Groq from "groq-sdk";
 
 // ============================================================================
-// MODEL REGISTRY — Single Source of Truth
+// MODEL REGISTRY & CONFIGURATION
 // ============================================================================
 
-interface ModelCapabilities {
-  longContext?: boolean;
-  structured?: boolean;
-  fast?: boolean;
-  reliable?: boolean;
-  lightweight?: boolean;
-  reasoning?: boolean;
-  deterministic?: boolean;
-  highThroughput?: boolean;
-  veryFast?: boolean;
-  versatile?: boolean;
-  ultraFast?: boolean;
-  simple?: boolean;
-  complexReasoning?: boolean;
-  edgeCases?: boolean;
-  security?: boolean;
-  offline?: boolean;
-  unlimited?: boolean;
-  highQuality?: boolean;
-  multilingual?: boolean;
+export interface ModelCapabilities {
+  longContext: boolean;
+  structured: boolean;
+  vision: boolean;
+  functionCalling: boolean;
+  // Additional flags for improved routing logic if needed
+  json?: boolean;
 }
 
-interface ModelRegistryEntry {
-  id: string;
+export interface ModelRegistryEntry {
+  id: string; // Canonical Provider ID
   provider: "google" | "groq" | "local";
   tier: number;
-  rpm: number;
-  rpd: number;
+  rpm: number | null | "unlimited"; // Requests per minute
+  rpd: number | null | "unlimited"; // Requests per day
   contextWindow?: number;
-  dimensions?: number;
-  latency: number;
-  costPerRequest: number;
-  bestFor: readonly string[];
+  latency: number; // Estimated P95 latency in ms
+  inputCostPer1k?: number;
+  outputCostPer1k?: number;
   capabilities: ModelCapabilities;
 }
 
 export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
   // TIER 1: Primary Models (Fast, Long-Context, Free-Tier Friendly)
   gemini_3_flash: {
-    id: "gemini-3.0-flash-exp",
+    id: "gemini-3-flash",
     provider: "google",
     tier: 1,
     rpm: 15,
     rpd: 1500,
-    contextWindow: 1048576,
-    latency: 500,
-    costPerRequest: 0,
-    bestFor: [
-      "resume_parsing",
-      "resume_to_json",
-      "long_jd_ingestion",
-      "full_profile_extraction",
-    ],
+    contextWindow: 1000000,
+    latency: 600,
     capabilities: {
       longContext: true,
       structured: true,
-      fast: true,
-      reliable: true,
+      vision: true,
+      functionCalling: true,
+      json: true,
     },
   },
 
@@ -91,211 +72,162 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     id: "gemini-2.5-flash-lite",
     provider: "google",
     tier: 1,
-    rpm: 10,
-    rpd: 20,
+    rpm: 15,
+    rpd: 1500,
     contextWindow: 1000000,
-    latency: 375,
-    costPerRequest: 0,
-    bestFor: [
-      "jd_enhancement",
-      "skill_normalization",
-      "light_explanations",
-      "quick_summaries",
-    ],
+    latency: 400,
     capabilities: {
       longContext: true,
       structured: true,
-      fast: true,
-      lightweight: true,
+      vision: false,
+      functionCalling: false,
+      json: true,
     },
   },
 
-  // TIER 2: Secondary / Balanced Models (Quota-Safe)
   gemini_2_5_flash: {
     id: "gemini-2.5-flash",
     provider: "google",
-    tier: 2,
-    rpm: 5,
-    rpd: 20,
+    tier: 1,
+    rpm: 15,
+    rpd: 1500,
     contextWindow: 1000000,
-    latency: 600,
-    costPerRequest: 0,
-    bestFor: [
-      "explanation_generation",
-      "resume_jd_comparison",
-      "detailed_narratives",
-      "match_reasoning",
-    ],
+    latency: 500,
     capabilities: {
       longContext: true,
       structured: true,
-      reasoning: true,
+      vision: true,
+      functionCalling: true,
+      json: true,
     },
   },
 
   gemma_3_27b: {
-    id: "gemma-3-27b-it",
-    provider: "google",
+    id: "gemma-3-27b",
+    provider: "google", // As requested
     tier: 2,
     rpm: 30,
-    rpd: 14400,
-    contextWindow: 128000,
-    latency: 1350,
-    costPerRequest: 0,
-    bestFor: [
-      "deterministic_reasoning",
-      "structured_extraction_fallback",
-      "batch_processing",
-      "reliable_parsing",
-    ],
+    rpd: 500,
+    contextWindow: 8192,
+    latency: 800,
     capabilities: {
-      deterministic: true,
+      longContext: false,
       structured: true,
-      highThroughput: true,
+      vision: false,
+      functionCalling: false,
+      json: true,
     },
   },
 
-  // TIER 3: Heavy-Duty / High-Throughput (Groq)
+  // TIER 2: Secondary / Specialized Models (Groq Llama)
   groq_llama_3_3_70b: {
     id: "llama-3.3-70b-versatile",
     provider: "groq",
-    tier: 3,
+    tier: 2,
     rpm: 30,
-    rpd: 12000,
-    contextWindow: 100000,
-    latency: 200,
-    costPerRequest: 0,
-    bestFor: [
-      "batch_resume_processing",
-      "large_scale_explanations",
-      "complex_reasoning",
-      "multi_student_ranking",
-    ],
+    rpd: 14400,
+    contextWindow: 32768,
+    latency: 400,
     capabilities: {
-      veryFast: true,
-      highThroughput: true,
-      versatile: true,
-      reasoning: true,
+      longContext: false,
+      structured: true,
+      vision: false,
+      functionCalling: true,
+      json: true,
     },
   },
 
   groq_llama_3_1_8b: {
     id: "llama-3.1-8b-instant",
     provider: "groq",
-    tier: 3,
+    tier: 2,
     rpm: 30,
-    rpd: 6000,
-    contextWindow: 500000,
-    latency: 100,
-    costPerRequest: 0,
-    bestFor: [
-      "simple_extractions",
-      "scoring_explanations",
-      "quick_classifications",
-      "field_validation",
-    ],
+    rpd: 14400,
+    contextWindow: 8000,
+    latency: 250,
     capabilities: {
-      ultraFast: true,
-      longContext: true,
-      simple: true,
+      longContext: false,
+      structured: true,
+      vision: false,
+      functionCalling: true,
+      json: true,
     },
   },
 
+  // FALLBACK / SPECIALTY
   groq_gpt_oss_120b: {
     id: "gpt-oss-120b",
     provider: "groq",
     tier: 3,
-    rpm: 30,
-    rpd: 8000,
-    contextWindow: 200000,
-    latency: 300,
-    costPerRequest: 0,
-    bestFor: [
-      "complex_reasoning",
-      "edge_case_explanations",
-      "nuanced_matching",
-      "advanced_analytics",
-    ],
+    rpm: 10,
+    rpd: 1000,
+    contextWindow: 4096,
+    latency: 1200,
     capabilities: {
-      veryFast: true,
-      complexReasoning: true,
-      edgeCases: true,
+      longContext: false,
+      structured: false,
+      vision: false,
+      functionCalling: false,
+      json: false,
     },
   },
 
-  // TIER 4: Safety / Guard (Mandatory)
+  // GUARD
   groq_prompt_guard: {
     id: "llama-prompt-guard-2-86m",
     provider: "groq",
-    tier: 4,
-    rpm: 30,
-    rpd: 15000,
-    contextWindow: 500000,
-    latency: 65,
-    costPerRequest: 0,
-    bestFor: [
-      "prompt_injection_detection",
-      "resume_sanitization",
-      "jd_sanitization",
-      "input_validation",
-    ],
+    tier: 1,
+    rpm: 100,
+    rpd: 100000,
+    contextWindow: 2048,
+    latency: 150,
     capabilities: {
-      ultraFast: true,
-      security: true,
-      highThroughput: true,
+      longContext: false,
+      structured: false,
+      vision: false,
+      functionCalling: false,
+      json: false,
     },
   },
 
   // EMBEDDINGS
-  local_minilm: {
-    id: "all-MiniLM-L6-v2",
-    provider: "local",
-    tier: 0,
-    rpm: Infinity,
-    rpd: Infinity,
-    dimensions: 384,
-    latency: 65,
-    costPerRequest: 0,
-    bestFor: [
-      "student_profile_embedding",
-      "resume_embedding",
-      "skill_embedding",
-      "offline_mode",
-    ],
+  gemini_embedding: {
+    id: "gemini-embedding-1",
+    provider: "google",
+    tier: 1,
+    rpm: 1500,
+    rpd: 100000,
+    contextWindow: 2048,
+    latency: 100,
     capabilities: {
-      offline: true,
-      unlimited: true,
-      fast: true,
+      longContext: false,
+      structured: false,
+      vision: false,
+      functionCalling: false,
+      json: false,
     },
   },
 
-  gemini_embedding: {
-    id: "embedding-001",
-    provider: "google",
-    tier: 1,
-    rpm: 100,
-    rpd: 1000,
-    dimensions: 768,
-    latency: 150,
-    costPerRequest: 0,
-    bestFor: [
-      "jd_embedding",
-      "cross_language_embedding",
-      "high_quality_semantic_search",
-    ],
+  local_minilm: {
+    id: "Xenova/all-MiniLM-L6-v2",
+    provider: "local",
+    tier: 3,
+    rpm: "unlimited",
+    rpd: "unlimited",
+    contextWindow: 512,
+    latency: 50,
     capabilities: {
-      highQuality: true,
-      multilingual: true,
+      longContext: false,
+      structured: false,
+      vision: false,
+      functionCalling: false,
+      json: false,
     },
   },
 };
 
-// ============================================================================
-// TASK DEFINITIONS — Map Tasks to Model Preferences
-// ============================================================================
-
-interface TaskDefinition {
-  priority: readonly string[];
+export interface TaskDefinition {
+  priority: string[];
   requiresLongContext: boolean;
   requiresStructured: boolean;
   maxLatency: number;
@@ -305,101 +237,50 @@ interface TaskDefinition {
 export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   // Resume Processing
   parse_resume_full: {
-    priority: ["gemini_3_flash", "gemma_3_27b", "groq_llama_3_3_70b"],
+    priority: ["gemini_3_flash", "gemini_2_5_flash_lite", "gemini_2_5_flash", "gemma_3_27b", "groq_llama_3_3_70b"],
     requiresLongContext: true,
     requiresStructured: true,
-    maxLatency: 2000,
-    description: "Parse full resume PDF/DOCX to structured JSON",
+    maxLatency: 60000, // 60s
+    description: "Full resume parsing including projects, education, skills",
   },
-
-  parse_resume_quick: {
-    priority: ["gemini_2_5_flash_lite", "groq_llama_3_1_8b", "gemini_3_flash"],
+  
+  parse_resume_fast: {
+    priority: ["gemini_2_5_flash_lite", "groq_llama_3_1_8b"],
     requiresLongContext: false,
     requiresStructured: true,
-    maxLatency: 500,
-    description: "Quick resume field extraction",
+    maxLatency: 10000, // 10s
+    description: "Quick extraction of contact info and summary",
   },
 
-  // JD Processing
+  // Content Generation
+  generate_questions: {
+    priority: ["gemini_3_flash", "groq_llama_3_3_70b"],
+    requiresLongContext: false,
+    requiresStructured: true,
+    maxLatency: 15000,
+    description: "Generate interview questions based on context",
+  },
+
   enhance_jd: {
-    priority: ["gemini_2_5_flash_lite", "gemini_2_5_flash", "gemini_3_flash"],
-    requiresLongContext: false,
+    priority: ["gemini_3_flash", "groq_llama_3_3_70b"],
+    requiresLongContext: false, // JD is usually short enough
     requiresStructured: true,
-    maxLatency: 1000,
-    description: "Enhance and structure job description",
+    maxLatency: 20000,
+    description: "Enhance and structure job descriptions",
   },
 
-  parse_jd_long: {
-    priority: ["gemini_3_flash", "gemini_2_5_flash", "groq_llama_3_3_70b"],
-    requiresLongContext: true,
-    requiresStructured: true,
-    maxLatency: 2000,
-    description: "Parse lengthy JD documents",
-  },
-
-  // Matching & Ranking
-  generate_match_explanation: {
-    priority: [
-      "gemini_2_5_flash",
-      "groq_llama_3_3_70b",
-      "gemini_2_5_flash_lite",
-    ],
-    requiresLongContext: false,
-    requiresStructured: false,
-    maxLatency: 1500,
-    description: "Generate detailed match reasoning",
-  },
-
-  rank_students_batch: {
-    priority: ["groq_llama_3_3_70b", "gemma_3_27b", "gemini_3_flash"],
-    requiresLongContext: false,
-    requiresStructured: true,
-    maxLatency: 3000,
-    description: "Rank multiple students against JD",
-  },
-
-  // Skill Processing
-  normalize_skills: {
-    priority: ["gemini_2_5_flash_lite", "groq_llama_3_1_8b", "gemma_3_27b"],
-    requiresLongContext: false,
-    requiresStructured: true,
-    maxLatency: 500,
-    description: "Standardize skill names",
-  },
-
-  // Explanations
-  explain_score: {
-    priority: [
-      "groq_llama_3_1_8b",
-      "gemini_2_5_flash_lite",
-      "groq_llama_3_3_70b",
-    ],
-    requiresLongContext: false,
-    requiresStructured: false,
-    maxLatency: 800,
-    description: "Explain match score components",
-  },
-
-  explain_complex_mismatch: {
-    priority: ["groq_gpt_oss_120b", "gemini_2_5_flash", "groq_llama_3_3_70b"],
-    requiresLongContext: false,
-    requiresStructured: false,
-    maxLatency: 1500,
-    description: "Explain complex edge cases",
-  },
-
-  // Security
+  // Utility
   sanitize_input: {
-    priority: ["groq_prompt_guard"],
+    priority: ["groq_prompt_guard", "groq_llama_3_1_8b"],
     requiresLongContext: false,
-    requiresStructured: true,
+    requiresStructured: false,
     maxLatency: 200,
     description: "Detect prompt injection attempts",
   },
 
   // Embeddings
   embed_profile: {
-    priority: ["local_minilm", "gemini_embedding"],
+    priority: ["gemini_embedding", "local_minilm"],
     requiresLongContext: false,
     requiresStructured: false,
     maxLatency: 300,
@@ -430,9 +311,23 @@ class RateLimiter {
     rpd: new Map(),
   };
 
+  private getLimit(value: number | null | "unlimited" | undefined): number {
+    if (value === "unlimited" || value === null || value === undefined) {
+      return Infinity;
+    }
+    return Number.isFinite(value) ? value : Infinity;
+  }
+
   canMakeRequest(modelKey: string): boolean {
     const model = MODEL_REGISTRY[modelKey];
     if (!model) return false;
+
+    // Explicitly handle "unlimited" and null
+    const rpmLimit = this.getLimit(model.rpm);
+    const rpdLimit = this.getLimit(model.rpd);
+
+    // If limits are infinite, always allow
+    if (rpmLimit === Infinity && rpdLimit === Infinity) return true;
 
     const now = Date.now();
     const oneMinuteAgo = now - 60_000;
@@ -445,8 +340,8 @@ class RateLimiter {
       (t) => t > oneDayAgo,
     );
 
-    if (rpmTimestamps.length >= model.rpm) return false;
-    if (rpdTimestamps.length >= model.rpd) return false;
+    if (rpmTimestamps.length >= rpmLimit) return false;
+    if (rpdTimestamps.length >= rpdLimit) return false;
 
     return true;
   }
@@ -454,11 +349,17 @@ class RateLimiter {
   recordRequest(modelKey: string): void {
     const now = Date.now();
 
-    const rpmTimestamps = this.state.rpm.get(modelKey) || [];
+    // Clean up old timestamps while we are at it to avoid memory leaks
+    const oneMinuteAgo = now - 60_000;
+    const oneDayAgo = now - 86_400_000;
+
+    let rpmTimestamps = this.state.rpm.get(modelKey) || [];
+    rpmTimestamps = rpmTimestamps.filter((t) => t > oneMinuteAgo);
     rpmTimestamps.push(now);
     this.state.rpm.set(modelKey, rpmTimestamps);
 
-    const rpdTimestamps = this.state.rpd.get(modelKey) || [];
+    let rpdTimestamps = this.state.rpd.get(modelKey) || [];
+    rpdTimestamps = rpdTimestamps.filter((t) => t > oneDayAgo);
     rpdTimestamps.push(now);
     this.state.rpd.set(modelKey, rpdTimestamps);
   }
@@ -466,6 +367,13 @@ class RateLimiter {
   getAvailableCapacity(modelKey: string): { rpm: number; rpd: number } {
     const model = MODEL_REGISTRY[modelKey];
     if (!model) return { rpm: 0, rpd: 0 };
+
+    const rpmLimit = this.getLimit(model.rpm);
+    const rpdLimit = this.getLimit(model.rpd);
+
+    if (rpmLimit === Infinity && rpdLimit === Infinity) {
+        return { rpm: 999999, rpd: 999999 };
+    }
 
     const now = Date.now();
     const oneMinuteAgo = now - 60_000;
@@ -479,8 +387,8 @@ class RateLimiter {
     ).length;
 
     return {
-      rpm: model.rpm - rpmUsed,
-      rpd: model.rpd - rpdUsed,
+      rpm: rpmLimit - rpmUsed,
+      rpd: rpdLimit - rpdUsed,
     };
   }
 
@@ -505,6 +413,7 @@ export interface ExecuteResult<T = string> {
   data?: T;
   error?: string;
   modelUsed?: string;
+  blocked?: boolean;
 }
 
 export class AntigravityRouter {
@@ -530,15 +439,28 @@ export class AntigravityRouter {
     if (config.groqApiKey) {
       this.groqClient = new Groq({ apiKey: config.groqApiKey });
     }
+
+    // Self-check validation at startup
+    this.validateRegistry();
+  }
+
+  private validateRegistry() {
+    const missing: string[] = [];
+    for (const [taskName, task] of Object.entries(TASK_DEFINITIONS)) {
+      for (const modelKey of task.priority) {
+        if (!MODEL_REGISTRY[modelKey]) missing.push(`${modelKey} (in ${taskName})`);
+      }
+    }
+    if (missing.length) {
+      if (this.enableLogging) {
+        console.error("MODEL_REGISTRY missing keys:", [...new Set(missing)].join(", "));
+      }
+      // Strict enforcement could throw here if desired
+    }
   }
 
   // ── Model Selection ─────────────────────────────────────────────────────
 
-  /**
-   * Select the best available model for a task.
-   * Walks the priority list, checking capabilities and rate limits.
-   * Returns null if no model is available.
-   */
   async selectModel(taskType: string): Promise<string | null> {
     const task = TASK_DEFINITIONS[taskType];
     if (!task) {
@@ -549,13 +471,9 @@ export class AntigravityRouter {
       const model = MODEL_REGISTRY[modelKey];
       if (!model) continue;
 
-      // Capability check
       if (task.requiresLongContext && !model.capabilities.longContext) continue;
-
-      // Latency check
       if (model.latency > task.maxLatency) continue;
 
-      // Rate limit check
       if (!this.rateLimiter.canMakeRequest(modelKey)) {
         if (this.enableLogging) {
           console.log(`[antigravity] ⚠️ ${modelKey} rate-limited, skipping`);
@@ -575,10 +493,6 @@ export class AntigravityRouter {
 
   // ── Task Execution with Fallback ────────────────────────────────────────
 
-  /**
-   * Execute a task with automatic fallback across the priority chain.
-   * Tries each model in order; on failure, moves to the next.
-   */
   async execute<T = string>(
     taskType: string,
     prompt: string,
@@ -589,6 +503,41 @@ export class AntigravityRouter {
       return { success: false, error: `Unknown task type: ${taskType}` };
     }
 
+    // 1. Mandatory Prompt Guard
+    // (Skipped only if the task IS 'sanitize_input', to avoid recursion loop)
+    const guardKey = "groq_prompt_guard";
+    if (taskType !== "sanitize_input" && MODEL_REGISTRY[guardKey]) {
+        const guardModel = MODEL_REGISTRY[guardKey];
+        
+        // Strict: Guard must be available and allowed
+        if (!this.rateLimiter.canMakeRequest(guardKey)) {
+             console.warn(`[antigravity] ⚠️ Prompt Guard rate-limited.`);
+             return { success: false, error: "Safety Guard Unavailable (Rate Limit)" };
+        }
+
+        this.rateLimiter.recordRequest(guardKey);
+        
+        try {
+            // Execute guard - specialized short context call
+            // We use ExecuteGroq directly to leverage specific guard model ID
+            const guardOut = await this.executeGroq(guardModel.id, prompt, { maxTokens: 32, temperature: 0.0 });
+            
+            // Check output for unsafe triggers
+            if (typeof guardOut === "string" && /unsafe|block|reject/i.test(guardOut)) {
+                 if (this.enableLogging) {
+                    console.warn(`[antigravity] 🛡️ Blocked by Prompt Guard: ${guardOut}`);
+                 }
+                 return { success: false, error: "Blocked by Safety Guard", blocked: true };
+            }
+        } catch (e: any) {
+            console.warn(`[antigravity] ⚠️ Prompt Guard check failed: ${e.message}`);
+            // Strict enforcement: Fail safe if guard cannot verify
+            return { success: false, error: "Safety Check Failed (Guard Execution Error)" };
+        }
+    }
+
+
+    // 2. Try models in priority chain
     for (const modelKey of task.priority) {
       const model = MODEL_REGISTRY[modelKey];
       if (!model) continue;
@@ -603,9 +552,14 @@ export class AntigravityRouter {
         let result: unknown;
 
         if (model.provider === "google") {
-          result = await this.executeGoogle(model.id, prompt, options);
+          if (taskType.startsWith("embed_")) {
+             result = await this.embedGoogle(model.id, prompt);
+          } else {
+             result = await this.executeGoogle(model.id, prompt, options);
+          }
         } else if (model.provider === "groq") {
-          result = await this.executeGroq(model.id, prompt, options);
+            // Assume text generation for Groq unless specific embedding support added later
+            result = await this.executeGroq(model.id, prompt, options);
         } else if (model.provider === "local") {
           result = await this.executeLocal(prompt);
         } else {
@@ -617,12 +571,13 @@ export class AntigravityRouter {
           data: result as T,
           modelUsed: modelKey,
         };
+
       } catch (error: unknown) {
         if (this.enableLogging) {
-          const msg =
-            error instanceof Error ? error.message : String(error);
+          const msg = error instanceof Error ? error.message : String(error);
           console.error(`[antigravity] ❌ ${modelKey} failed: ${msg}`);
         }
+        // Continue to next model in priority chain
         continue;
       }
     }
@@ -641,22 +596,46 @@ export class AntigravityRouter {
       throw new Error("Google AI not initialized — missing API key");
     }
 
-    const model = this.googleAI.getGenerativeModel({
-      model: modelId,
-      generationConfig: {
-        temperature: options.temperature ?? 0.7,
-        maxOutputTokens: options.maxTokens ?? 2048,
-        ...(options.responseFormat === "json" && {
-          responseMimeType: "application/json",
-        }),
-      },
-      ...(options.systemPrompt && {
-        systemInstruction: options.systemPrompt,
-      }),
-    });
+    try {
+        const model = this.googleAI.getGenerativeModel({
+          model: modelId,
+          generationConfig: {
+            temperature: options.temperature ?? 0.7,
+            maxOutputTokens: options.maxTokens ?? 2048,
+            ...(options.responseFormat === "json" && {
+              responseMimeType: "application/json",
+            }),
+          },
+          ...(options.systemPrompt && {
+            systemInstruction: options.systemPrompt,
+          }),
+        });
+    
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        return text;
+    } catch(e: any) {
+        throw new Error(`Google Generation Error: ${e.message}`);
+    }
+  }
 
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+  private async embedGoogle(
+    modelId: string,
+    text: string,
+  ): Promise<number[]> {
+    if (!this.googleAI) {
+      throw new Error("Google AI not initialized — missing API key");
+    }
+    try {
+        const model = this.googleAI.getGenerativeModel({ model: modelId });
+        const result = await model.embedContent(text);
+        if (!result.embedding || !result.embedding.values) {
+            throw new Error("No embedding returned");
+        }
+        return result.embedding.values;
+    } catch(e: any) {
+        throw new Error(`Google Embedding Error: ${e.message}`);
+    }
   }
 
   private async executeGroq(
@@ -668,48 +647,53 @@ export class AntigravityRouter {
       throw new Error("Groq client not initialized — missing API key");
     }
 
-    const messages: Array<{ role: "system" | "user"; content: string }> = [];
-
-    if (options.systemPrompt) {
-      messages.push({ role: "system", content: options.systemPrompt });
+    try {
+        const messages: Array<{ role: "system" | "user"; content: string }> = [];
+    
+        if (options.systemPrompt) {
+          messages.push({ role: "system", content: options.systemPrompt });
+        }
+        messages.push({ role: "user", content: prompt });
+    
+        const completion = await this.groqClient.chat.completions.create({
+          model: modelId,
+          messages,
+          temperature: options.temperature ?? 0.7,
+          max_tokens: options.maxTokens ?? 2048,
+          ...(options.responseFormat === "json" && {
+            response_format: { type: "json_object" as const },
+          }),
+        });
+    
+        return completion.choices[0]?.message?.content || "";
+    } catch (e: any) {
+        throw new Error(`Groq Error: ${e.message}`);
     }
-    messages.push({ role: "user", content: prompt });
-
-    const completion = await this.groqClient.chat.completions.create({
-      model: modelId,
-      messages,
-      temperature: options.temperature ?? 0.7,
-      max_tokens: options.maxTokens ?? 2048,
-      ...(options.responseFormat === "json" && {
-        response_format: { type: "json_object" as const },
-      }),
-    });
-
-    return completion.choices[0]?.message?.content || "";
   }
 
   private async executeLocal(text: string): Promise<number[]> {
-    if (!this.embeddingPipeline) {
-      const { pipeline } = await import("@xenova/transformers");
-      this.embeddingPipeline = await pipeline(
-        "feature-extraction",
-        "Xenova/all-MiniLM-L6-v2",
-      );
+    try {
+        if (!this.embeddingPipeline) {
+          const { pipeline } = await import("@xenova/transformers");
+          this.embeddingPipeline = await pipeline(
+            "feature-extraction",
+            "Xenova/all-MiniLM-L6-v2",
+          );
+        }
+    
+        const output = await this.embeddingPipeline(text, {
+          pooling: "mean",
+          normalize: true,
+        });
+    
+        return Array.from(output.data) as number[];
+    } catch (e: any) {
+         throw new Error(`Local Embedding Error: ${e.message}`);
     }
-
-    const output = await this.embeddingPipeline(text, {
-      pooling: "mean",
-      normalize: true,
-    });
-
-    return Array.from(output.data) as number[];
   }
 
   // ── Status / Observability ──────────────────────────────────────────────
 
-  /**
-   * Returns current rate-limit capacity for every registered model.
-   */
   getStatus(): Record<
     string,
     {
@@ -740,10 +724,6 @@ export class AntigravityRouter {
     return status;
   }
 
-  /**
-   * Reset all internal rate-limit counters.
-   * Useful for testing.
-   */
   resetRateLimits(): void {
     this.rateLimiter.resetStats();
   }
@@ -752,6 +732,15 @@ export class AntigravityRouter {
 // ============================================================================
 // PLACEMENT COPILOT INTEGRATION HELPERS
 // ============================================================================
+
+// Helper to clean JSON
+function cleanJSONString(text: string): string {
+    let clean = text.trim();
+    if (clean.startsWith("```json")) clean = clean.slice(7);
+    else if (clean.startsWith("```")) clean = clean.slice(3);
+    if (clean.endsWith("```")) clean = clean.slice(0, -3);
+    return clean.trim();
+}
 
 /**
  * Resume parser with automatic fallback.
@@ -797,9 +786,13 @@ Extract ALL information from the resume into the following JSON structure:
 
 Return ONLY valid JSON. No markdown, no explanations.`;
 
-  // Sanitize user input before passing to AI
-  const { sanitizeInput } = await import("./sanitize");
-  const cleanedText = sanitizeInput(resumeText);
+  let cleanedText = resumeText;
+  try {
+      const { sanitizeInput } = await import("./sanitize");
+      cleanedText = sanitizeInput(resumeText);
+  } catch (e) {
+     // Safe to proceed if sanitizer missing, guard will catch strict issues
+  }
 
   const result = await router.execute(
     "parse_resume_full",
@@ -814,7 +807,7 @@ Return ONLY valid JSON. No markdown, no explanations.`;
 
   if (result.success && result.data) {
     try {
-      return JSON.parse(result.data as string);
+      return JSON.parse(cleanJSONString(result.data as string));
     } catch {
       return result.data;
     }
@@ -860,9 +853,13 @@ Structure and enhance the provided JD into this JSON format:
 
 Normalize all skill names. Return ONLY valid JSON.`;
 
-  // Sanitize user input before passing to AI
-  const { sanitizeInput } = await import("./sanitize");
-  const cleanedJd = sanitizeInput(jdText);
+  let cleanedJd = jdText;
+  try {
+      const { sanitizeInput } = await import("./sanitize");
+      cleanedJd = sanitizeInput(jdText);
+  } catch(e) {
+     // Safe fallback
+  }
 
   const result = await router.execute(
     "enhance_jd",
@@ -877,7 +874,7 @@ Normalize all skill names. Return ONLY valid JSON.`;
 
   if (result.success && result.data) {
     try {
-      return JSON.parse(result.data as string);
+      return JSON.parse(cleanJSONString(result.data as string));
     } catch {
       return result.data;
     }

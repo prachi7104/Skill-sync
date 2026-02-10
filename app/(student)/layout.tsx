@@ -1,6 +1,7 @@
 import { requireStudentProfile } from "@/lib/auth/helpers";
 import Header from "@/components/shared/header";
 import Link from "next/link";
+import { StudentProvider } from "@/app/(student)/providers/student-provider";
 
 const studentLinks = [
     { href: "/student/dashboard", label: "Dashboard" },
@@ -16,32 +17,35 @@ const studentLinks = [
  * because we're not using useState/useEffect for auth rendering logic.
  * Unauthorized users are redirected server-side before any HTML is sent.
  */
+
 export default async function StudentLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
     // Server-side auth check - throws redirect if not authenticated/authorized
-    await requireStudentProfile();
+    const { user, profile } = await requireStudentProfile();
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Header />
-            <div className="flex h-[calc(100vh-64px)]">
-                <aside className="w-64 border-r bg-white p-6 hidden md:block">
-                    <nav className="space-y-4">
-                        <h2 className="px-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Student Menu
-                        </h2>
-                        <StudentNavLinks />
-                    </nav>
-                </aside>
+        <StudentProvider initialStudent={profile} initialUser={user}>
+            <div className="min-h-screen bg-gray-50">
+                <Header />
+                <div className="flex h-[calc(100vh-64px)]">
+                    <aside className="w-64 border-r bg-white p-6 hidden md:block">
+                        <nav className="space-y-4">
+                            <h2 className="px-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Student Menu
+                            </h2>
+                            <StudentNavLinks />
+                        </nav>
+                    </aside>
 
-                <main className="flex-1 overflow-auto bg-gray-50 p-8">
-                    {children}
-                </main>
+                    <main className="flex-1 overflow-auto bg-gray-50 p-8">
+                        {children}
+                    </main>
+                </div>
             </div>
-        </div>
+        </StudentProvider>
     );
 }
 

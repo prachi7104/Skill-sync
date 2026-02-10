@@ -1,10 +1,9 @@
-import { getServerSession } from "next-auth";
+import { getCachedSession } from "@/lib/auth/session-cache";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/lib/auth/config";
 import Link from "next/link";
 
 export default async function Home() {
-  const session = await getServerSession(authOptions);
+  const session = await getCachedSession();
 
   if (session?.user?.role) {
     switch (session.user.role) {

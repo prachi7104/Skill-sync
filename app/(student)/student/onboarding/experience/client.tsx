@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Plus, ArrowRight, Loader2, Trash2 } from "lucide-react";
+import { Plus, ArrowLeft, ArrowRight, Loader2, Trash2 } from "lucide-react";
 import { updateOnboardingStep } from "@/app/actions/onboarding";
 import { toast } from "sonner";
 import { WorkExperience } from "@/lib/db/schema";
@@ -78,9 +78,9 @@ export default function OnboardingExperienceClient({ initialWork }: { initialWor
 
             if (!res.ok) throw new Error("Failed to save work experience");
 
-            // 2. Update Step
-            await updateOnboardingStep(5);
-            router.push("/student/onboarding/resume");
+            // 2. Update Step (6 → 7: Experience → Coding Profiles)
+            await updateOnboardingStep(7);
+            router.push("/student/onboarding/coding-profiles");
         } catch (error) {
             console.error(error);
             toast.error("Something went wrong");
@@ -158,13 +158,18 @@ export default function OnboardingExperienceClient({ initialWork }: { initialWor
             )}
 
             <div className="flex justify-between items-center pt-4 border-t">
-                <p className="text-sm text-muted-foreground italic">
-                    {works.length === 0 ? "Optional - you can skip this." : `${works.length} entries added.`}
-                </p>
-                <Button onClick={handleContinue} disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {works.length === 0 ? "Skip" : "Continue"} <ArrowRight className="ml-2 h-4 w-4" />
+                <Button variant="ghost" onClick={() => router.push("/student/onboarding/projects")} disabled={isLoading}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
+                <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground italic hidden md:block">
+                        {works.length === 0 ? "Optional - you can skip this." : `${works.length} entries added.`}
+                    </p>
+                    <Button onClick={handleContinue} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {works.length === 0 ? "Skip" : "Continue"} <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                </div>
             </div>
         </div>
     );

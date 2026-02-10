@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Loader2, GraduationCap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, GraduationCap } from "lucide-react";
 import { updateOnboardingStep, updateAcademics } from "@/app/actions/onboarding";
 import { toast } from "sonner";
 
@@ -31,16 +31,16 @@ const BRANCHES = [
 ];
 
 const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
-const BATCH_YEARS = [2024, 2025, 2026, 2027, 2028];
+const BATCH_YEARS = [2025, 2026, 2027, 2028, 2029];
 
-export default function OnboardingAcademicsClient({ 
-    initialData 
-}: { 
-    initialData: AcademicsData 
+export default function OnboardingAcademicsClient({
+    initialData
+}: {
+    initialData: AcademicsData
 }) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
-    
+
     const [formData, setFormData] = useState({
         tenthPercentage: initialData.tenthPercentage?.toString() || "",
         twelfthPercentage: initialData.twelfthPercentage?.toString() || "",
@@ -57,13 +57,15 @@ export default function OnboardingAcademicsClient({
     const handleContinue = async () => {
         setIsLoading(true);
         try {
-            // Validate percentages and CGPA
+            // Validate percentages and CGPA (all optional but validate if provided)
             const tenth = formData.tenthPercentage ? parseFloat(formData.tenthPercentage) : null;
             const twelfth = formData.twelfthPercentage ? parseFloat(formData.twelfthPercentage) : null;
             const cgpa = formData.cgpa ? parseFloat(formData.cgpa) : null;
             const semester = formData.semester ? parseInt(formData.semester) : null;
             const batchYear = formData.batchYear ? parseInt(formData.batchYear) : null;
+            const branch = formData.branch || null;
 
+            // Validate ranges only if values are provided
             if (tenth !== null && (tenth < 0 || tenth > 100)) {
                 throw new Error("10th percentage must be between 0 and 100");
             }
@@ -79,7 +81,7 @@ export default function OnboardingAcademicsClient({
                 twelfthPercentage: twelfth,
                 cgpa,
                 semester,
-                branch: formData.branch || null,
+                branch,
                 batchYear,
             });
 
@@ -87,6 +89,17 @@ export default function OnboardingAcademicsClient({
             router.push("/student/onboarding/skills");
         } catch (error: any) {
             toast.error(error.message || "Failed to save academic details");
+            setIsLoading(false);
+        }
+    };
+
+    const handleSkip = async () => {
+        setIsLoading(true);
+        try {
+            await updateOnboardingStep(4);
+            router.push("/student/onboarding/skills");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to proceed");
             setIsLoading(false);
         }
     };
@@ -140,8 +153,8 @@ export default function OnboardingAcademicsClient({
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="branch">Branch / Specialization</Label>
-                            <Select 
-                                value={formData.branch} 
+                            <Select
+                                value={formData.branch}
                                 onValueChange={(value) => handleChange("branch", value)}
                             >
                                 <SelectTrigger>
@@ -158,8 +171,8 @@ export default function OnboardingAcademicsClient({
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="batchYear">Batch Year</Label>
-                            <Select 
-                                value={formData.batchYear} 
+                            <Select
+                                value={formData.batchYear}
                                 onValueChange={(value) => handleChange("batchYear", value)}
                             >
                                 <SelectTrigger>
@@ -192,8 +205,8 @@ export default function OnboardingAcademicsClient({
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="semester">Current Semester</Label>
-                            <Select 
-                                value={formData.semester} 
+                            <Select
+                                value={formData.semester}
                                 onValueChange={(value) => handleChange("semester", value)}
                             >
                                 <SelectTrigger>
@@ -212,11 +225,22 @@ export default function OnboardingAcademicsClient({
                 </div>
             </div>
 
-            <div className="flex justify-end pt-4 border-t">
-                <Button onClick={handleContinue} disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Continue <ArrowRight className="ml-2 h-4 w-4" />
+            <div className="flex justify-between items-center pt-4 border-t">
+                <Button variant="ghost" onClick={() => router.push("/student/onboarding/basic")} disabled={isLoading}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
+                <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground italic hidden md:block">
+                        All fields are optional during onboarding
+                    </p>
+                    <Button variant="ghost" onClick={handleSkip} disabled={isLoading}>
+                        Skip
+                    </Button>
+                    <Button onClick={handleContinue} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Continue <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                </div>
             </div>
         </div>
     );

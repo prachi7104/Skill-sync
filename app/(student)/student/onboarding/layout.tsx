@@ -1,24 +1,36 @@
-import { requireStudentProfile } from "@/lib/auth/helpers";
-import { redirect } from "next/navigation";
-import { Progress } from "@/components/ui/progress";
+"use client";
 
-export default async function OnboardingLayout({
+import { useStudent } from "@/app/(student)/providers/student-provider";
+import { useRouter } from "next/navigation";
+import { Progress } from "@/components/ui/progress";
+import { TOTAL_ONBOARDING_STEPS } from "@/lib/onboarding/config";
+import { useEffect } from "react";
+
+export default function OnboardingLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const { profile } = await requireStudentProfile();
+    const { student, isLoading } = useStudent();
+    const router = useRouter();
 
-    // If already fully onboarded (step 9), go to dashboard
-    if (profile.onboardingStep >= 9) {
-        redirect("/student/dashboard");
+    useEffect(() => {
+        if (!isLoading && student) {
+            // If already fully onboarded (step 10), go to dashboard
+            if (student.onboardingStep >= TOTAL_ONBOARDING_STEPS) {
+                router.push("/student/dashboard");
+            }
+        }
+    }, [student, isLoading, router]);
+
+    if (isLoading || !student) {
+        return null; // Or a loading spinner
     }
 
     // Calculate progress percentage based on current step
-    // 9 steps total (steps 1-9), completing at step 9
-    const currentStep = profile.onboardingStep;
-    const totalSteps = 9;
-    const progress = Math.min(100, (currentStep / totalSteps) * 100);
+    // 10 steps total (steps 0-9), completing at step 10
+    const currentStep = student.onboardingStep;
+    const progress = Math.min(100, (currentStep / TOTAL_ONBOARDING_STEPS) * 100);
 
     return (
         <div className="min-h-screen bg-muted/10 p-4 md:p-8">
@@ -28,7 +40,7 @@ export default async function OnboardingLayout({
                 <div className="space-y-2">
                     <div className="flex justify-between text-sm font-medium text-muted-foreground">
                         <span>Onboarding</span>
-                        <span>Step {currentStep} of {totalSteps}</span>
+                        <span>Step {currentStep} of {TOTAL_ONBOARDING_STEPS - 1}</span>
                     </div>
                     <Progress value={progress} className="h-2" />
                 </div>

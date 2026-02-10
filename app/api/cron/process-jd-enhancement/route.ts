@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jobs, drives } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { enhanceJDWithAI } from "@/lib/jd/ai-enhancer";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +15,6 @@ const MAX_JOBS_PER_TICK = 5;
  * Cron worker that polls for pending enhance_jd jobs and processes them.
  * Uses the AI SDK to enhance raw JD text into structured parsed JD.
  * Authenticated via CRON_SECRET bearer token.
- *
- * Note: The actual AI enhancement logic is intentionally lightweight here.
- * For the MVP, this worker marks jobs as processed and stores the raw JD
- * as-is. A full AI pipeline (Gemini/Groq) can be plugged in later.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -92,18 +89,21 @@ export async function GET(req: NextRequest) {
           throw new Error(`Drive not found: ${driveId}`);
         }
 
-        // MVP enhancement: extract basic structure from raw JD
-        // A full AI pipeline can be plugged in here later
-        const enhancedJd = drive.rawJd; // pass-through for now
+        // MVP enhancement: Use Antigravity AI Enhancer
+        const enhancedData = await enhanceJDWithAI(drive.rawJd, drive.roleTitle, drive.company);
+
         const parsedJd = {
-          title: drive.roleTitle,
-          company: drive.company,
-          responsibilities: [] as string[],
-          requiredSkills: extractSkillsFromText(drive.rawJd),
-          preferredSkills: [] as string[],
-          qualifications: [] as string[],
-          summary: drive.rawJd.slice(0, 200),
+          title: enhancedData.title,
+          company: enhancedData.company,
+          responsibilities: enhancedData.responsibilities,
+          requiredSkills: enhancedData.requiredSkills,
+          preferredSkills: enhancedData.preferredSkills,
+          qualifications: enhancedData.qualifications,
+          summary: enhancedData.summary,
         };
+
+        // We can keep rawJd as enhancedJd text for now if we didn't generate a new one
+        const enhancedJd = drive.rawJd;
 
         // Update drive with enhanced/parsed data
         await db
@@ -161,33 +161,4 @@ export async function GET(req: NextRequest) {
     console.error("[Cron:JDEnhance] Worker failed:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
-
-/**
- * Basic keyword extraction from JD text.
- * Looks for common tech skills mentioned in the text.
- * This is a simple heuristic — the full AI pipeline will replace this.
- */
-function extractSkillsFromText(text: string): string[] {
-  const commonSkills = [
-    "javascript", "typescript", "python", "java", "c++", "c#", "go", "rust",
-    "ruby", "php", "swift", "kotlin", "scala", "r",
-    "react", "angular", "vue", "next.js", "node.js", "express", "django",
-    "flask", "spring", "rails", "laravel", "svelte",
-    "postgresql", "mysql", "mongodb", "redis", "elasticsearch",
-    "aws", "azure", "gcp", "docker", "kubernetes", "terraform",
-    "git", "ci/cd", "linux", "graphql", "rest", "microservices",
-    "machine learning", "deep learning", "nlp", "computer vision",
-    "data structures", "algorithms", "system design",
-    "html", "css", "tailwind", "sass",
-    "figma", "agile", "scrum",
-  ];
-
-  const lowerText = text.toLowerCase();
-  return commonSkills.filter((skill) => {
-    // Word-boundary match to avoid false positives
-    const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`(?:^|[\\s,;|/])${escaped}(?:$|[\\s,;|/])`, "i");
-    return regex.test(lowerText);
-  });
 }

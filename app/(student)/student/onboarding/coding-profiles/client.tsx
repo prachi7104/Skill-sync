@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Loader2, Code2, Plus, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Code2, Plus, X } from "lucide-react";
 import { updateOnboardingStep, updateCodingProfiles } from "@/app/actions/onboarding";
 import { toast } from "sonner";
 import type { CodingProfile } from "@/lib/db/schema";
@@ -71,7 +71,7 @@ export default function OnboardingCodingProfilesClient({
             );
 
             await updateCodingProfiles(validProfiles);
-            await updateOnboardingStep(7);
+            await updateOnboardingStep(8);
             router.push("/student/onboarding/soft-skills");
         } catch (error: any) {
             toast.error(error.message || "Failed to save coding profiles");
@@ -82,7 +82,7 @@ export default function OnboardingCodingProfilesClient({
     const handleSkip = async () => {
         setIsLoading(true);
         try {
-            await updateOnboardingStep(7);
+            await updateOnboardingStep(8);
             router.push("/student/onboarding/soft-skills");
         } catch (error: any) {
             toast.error(error.message || "Failed to proceed");
@@ -185,13 +185,18 @@ export default function OnboardingCodingProfilesClient({
             </div>
 
             <div className="flex justify-between pt-4 border-t">
-                <Button variant="ghost" onClick={handleSkip} disabled={isLoading}>
-                    Skip for now
+                <Button variant="ghost" onClick={() => router.push("/student/onboarding/experience")} disabled={isLoading}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
-                <Button onClick={handleContinue} disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Continue <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" onClick={handleSkip} disabled={isLoading}>
+                        Skip for now
+                    </Button>
+                    <Button onClick={handleContinue} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Continue <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                </div>
             </div>
         </div>
     );

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Loader2, Heart, Plus, X, Trophy } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Heart, Plus, X, Trophy } from "lucide-react";
 import { updateOnboardingStep, updateSoftSkillsAndAchievements } from "@/app/actions/onboarding";
 import { toast } from "sonner";
 import type { Achievement } from "@/lib/db/schema";
@@ -75,11 +75,6 @@ export default function OnboardingSoftSkillsClient({
     };
 
     const handleContinue = async () => {
-        if (selectedSkills.length === 0) {
-            toast.error("Please select at least 1 soft skill");
-            return;
-        }
-
         setIsLoading(true);
         try {
             // Filter out empty achievements
@@ -90,10 +85,21 @@ export default function OnboardingSoftSkillsClient({
                 achievements: validAchievements,
             });
 
-            await updateOnboardingStep(8);
+            await updateOnboardingStep(9);
             router.push("/student/onboarding/review");
         } catch (error: any) {
             toast.error(error.message || "Failed to save");
+            setIsLoading(false);
+        }
+    };
+
+    const handleSkip = async () => {
+        setIsLoading(true);
+        try {
+            await updateOnboardingStep(9);
+            router.push("/student/onboarding/review");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to proceed");
             setIsLoading(false);
         }
     };
@@ -208,11 +214,22 @@ export default function OnboardingSoftSkillsClient({
                 </Button>
             </div>
 
-            <div className="flex justify-end pt-4 border-t">
-                <Button onClick={handleContinue} disabled={isLoading || selectedSkills.length === 0}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Continue <ArrowRight className="ml-2 h-4 w-4" />
+            <div className="flex justify-between items-center pt-4 border-t">
+                <Button variant="ghost" onClick={() => router.push("/student/onboarding/coding-profiles")} disabled={isLoading}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
+                <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground italic hidden md:block">
+                        All fields are optional during onboarding
+                    </p>
+                    <Button variant="ghost" onClick={handleSkip} disabled={isLoading}>
+                        Skip
+                    </Button>
+                    <Button onClick={handleContinue} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Continue <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                </div>
             </div>
         </div>
     );

@@ -1,18 +1,30 @@
-import { requireStudentProfile } from "@/lib/auth/helpers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useStudent } from "@/app/(student)/providers/student-provider";
+import { useRouter } from "next/navigation";
+import { getOnboardingRoute } from "@/lib/onboarding/config";
 import OnboardingCodingProfilesClient from "./client";
+import { useEffect } from "react";
 
-export default async function OnboardingCodingProfilesPage() {
-    const { profile } = await requireStudentProfile();
+const EXPECTED_STEP = 7;
 
-    // Must have completed projects step (step 6)
-    if (profile.onboardingStep < 6) {
-        redirect("/student/onboarding/projects");
-    }
+export default function OnboardingCodingProfilesPage() {
+    const { student, isLoading } = useStudent();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && student) {
+            if (student.onboardingStep !== EXPECTED_STEP) {
+                router.push(getOnboardingRoute(student.onboardingStep));
+            }
+        }
+    }, [student, isLoading, router]);
+
+    if (isLoading || !student) return null;
 
     return (
-        <OnboardingCodingProfilesClient 
-            initialProfiles={profile.codingProfiles || []}
+        <OnboardingCodingProfilesClient
+            initialProfiles={student.codingProfiles || []}
         />
     );
 }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Loader2, CheckCircle, UploadCloud } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, CheckCircle, UploadCloud } from "lucide-react";
 import { updateOnboardingStep } from "@/app/actions/onboarding";
 import { toast } from "sonner";
 import { extractTextFromResume, cleanResumeText } from "@/lib/resume/text-extractor";
@@ -139,13 +139,23 @@ export default function OnboardingResumeClient() {
             </div>
 
             <div className="flex justify-between items-center pt-4 border-t">
-                <p className="text-sm text-muted-foreground italic">
-                    {uploadedUrl ? "Ready to proceed." : "Please upload a resume."}
-                </p>
-                <Button onClick={handleContinue} disabled={!uploadedUrl || isUploading || isLoadingNext}>
-                    {isLoadingNext && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Continue <ArrowRight className="ml-2 h-4 w-4" />
+                <Button variant="ghost" onClick={() => router.push("/student/onboarding/welcome")} disabled={isUploading || isLoadingNext}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
+                <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground italic hidden md:block">
+                        {uploadedUrl ? "Ready to proceed." : "Upload a resume for best autofill experience"}
+                    </p>
+                    {!uploadedUrl && (
+                        <Button variant="ghost" onClick={handleContinue} disabled={isUploading || isLoadingNext}>
+                            Skip
+                        </Button>
+                    )}
+                    <Button onClick={handleContinue} disabled={isUploading || isLoadingNext}>
+                        {isLoadingNext && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Continue <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                </div>
             </div>
         </div>
     );
