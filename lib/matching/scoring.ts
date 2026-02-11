@@ -32,9 +32,8 @@ const SEMANTIC_WEIGHT = 0.7;
 const STRUCTURED_WEIGHT = 0.3;
 
 // ── Structured sub-weights (out of 100) ─────────────────────────────────────
-const REQUIRED_SKILLS_PTS = 50;
-const PREFERRED_SKILLS_PTS = 20;
-const CGPA_BUFFER_PTS = 15;
+const REQUIRED_SKILLS_PTS = 60;
+const PREFERRED_SKILLS_PTS = 25;
 const PROJECT_KEYWORD_PTS = 15;
 
 /**
@@ -241,7 +240,6 @@ export function computeSemanticScore(
 export function computeStructuredScore(opts: {
   requiredOverlapRatio: number;
   preferredOverlapRatio: number;
-  cgpaAboveMin: number | null; // null if no minCgpa set
   projectKeywordHitRatio: number;
   isEligible: boolean;
 }): number {
@@ -249,17 +247,11 @@ export function computeStructuredScore(opts: {
 
   let score = 0;
 
-  // Required skills: 50 pts
+  // Required skills: 60 pts
   score += REQUIRED_SKILLS_PTS * opts.requiredOverlapRatio;
 
-  // Preferred skills: 20 pts
+  // Preferred skills: 25 pts
   score += PREFERRED_SKILLS_PTS * opts.preferredOverlapRatio;
-
-  // CGPA buffer: 15 pts  (0 pts at cutoff, full pts at +2.0 above)
-  if (opts.cgpaAboveMin !== null && opts.cgpaAboveMin > 0) {
-    const normalized = Math.min(opts.cgpaAboveMin / 2, 1);
-    score += CGPA_BUFFER_PTS * normalized;
-  }
 
   // Project/work keyword hits: 15 pts
   score += PROJECT_KEYWORD_PTS * opts.projectKeywordHitRatio;
@@ -321,29 +313,12 @@ export function generateShortExplanation(result: {
   minCgpa?: number | null;
 }): string {
   if (!result.isEligible) {
-    return `Not eligible: ${result.ineligibilityReason}`;
+    return `Ineligible: ${result.ineligibilityReason}`;
   }
-
-  const totalRequired =
-    result.matchedSkills.length + result.missingSkills.length;
-  const matchedCount = result.matchedSkills.length;
 
   const parts: string[] = [];
-
-  // Semantic alignment descriptor
-  if (result.semanticScore >= 80) {
-    parts.push("Strong semantic alignment with the JD");
-  } else if (result.semanticScore >= 60) {
-    parts.push("Good semantic alignment with the JD");
-  } else if (result.semanticScore >= 40) {
-    parts.push("Moderate semantic alignment");
-  } else {
-    parts.push("Low semantic alignment");
-  }
-
-  // Skill summary
-  if (totalRequired > 0) {
-    parts.push(`matched ${matchedCount}/${totalRequired} required skills`);
+  if (result.matchedSkills.length > 0) {
+    parts.push(`matched ${result.matchedSkills.length} required skills`);
   }
 
   // CGPA buffer
@@ -382,11 +357,11 @@ export function generateDetailedExplanation(result: {
   // Eligibility
   if (!result.isEligible) {
     lines.push(
-      `Eligibility: Not eligible — ${result.ineligibilityReason}`,
+      `Eligibility: ❌ Not eligible — ${result.ineligibilityReason}`,
     );
     return lines.join("\n");
   }
-  lines.push("Eligibility: Meets all requirements.");
+  lines.push("Eligibility: ✅ Meets all requirements.");
 
   // Score breakdown
   lines.push("");
@@ -394,8 +369,21 @@ export function generateDetailedExplanation(result: {
   lines.push(
     `  • Semantic Score: ${result.semanticScore.toFixed(2)} / 100 (70% weight)`,
   );
+  if (result.semanticScore < 70) {
+    lines.push(
+      `    (Lower semantic score suggests your profile descriptions and projects need more technical domain keywords found in the JD.)`,
+    );
+  } else {
+    lines.push(
+      `    (High semantic alignment indicating strong domain match.)`,
+    );
+  }
+
   lines.push(
     `  • Structured Score: ${result.structuredScore.toFixed(2)} / 100 (30% weight)`,
+  );
+  lines.push(
+    `    (Computed based on exact matching of skills and project keywords.)`,
   );
   lines.push(
     `  • Final Match Score: ${result.matchScore.toFixed(2)} / 100`,
@@ -407,15 +395,25 @@ export function generateDetailedExplanation(result: {
   // Skill analysis
   lines.push("");
   lines.push("Skill Analysis:");
-  if (result.matchedSkills.length > 0) {
-    lines.push(`  ✓ Matched: ${result.matchedSkills.join(", ")}`);
+
+  const totalChecked = result.matchedSkills.length + result.missingSkills.length;
+
+  if (totalChecked === 0) {
+    lines.push("  ⚠ No specific skills matched or missing.");
+    lines.push("    (The Job Description did not yield any specific required skills to check against.)");
   } else {
-    lines.push("  ✓ Matched: None");
-  }
-  if (result.missingSkills.length > 0) {
-    lines.push(`  ✗ Missing: ${result.missingSkills.join(", ")}`);
-  } else {
-    lines.push("  ✗ Missing: None — all requirements covered.");
+    if (result.matchedSkills.length > 0) {
+      lines.push(`  ✓ Matched (${result.matchedSkills.length}): ${result.matchedSkills.join(", ")}`);
+    } else {
+      lines.push("  ✓ Matched: None");
+    }
+
+    if (result.missingSkills.length > 0) {
+      lines.push(`  🚩 Missing (${result.missingSkills.length}): ${result.missingSkills.join(", ")}`);
+      lines.push("     (Try adding these skills to your profile or highlighting them in your projects to increase your score.)");
+    } else {
+      lines.push("  ✓ Missing: None — all found requirements covered.");
+    }
   }
 
   // CGPA note
@@ -425,16 +423,14 @@ export function generateDetailedExplanation(result: {
     result.minCgpa !== null &&
     result.minCgpa !== undefined
   ) {
-    const buffer = result.cgpa - result.minCgpa;
     lines.push("");
-    if (buffer > 0) {
-      lines.push(
-        `Academic: CGPA ${result.cgpa.toFixed(2)} exceeds the minimum cutoff (${result.minCgpa}) by ${buffer.toFixed(2)}.`,
-      );
+    lines.push(
+      `Academic Verification: CGPA ${result.cgpa.toFixed(2)} (Min Required: ${result.minCgpa.toFixed(2)})`,
+    );
+    if (result.cgpa < result.minCgpa) {
+      lines.push("  🚩 RED FLAG: Your CGPA is below the mandated cutoff for this drive.");
     } else {
-      lines.push(
-        `Academic: CGPA ${result.cgpa.toFixed(2)} meets the minimum cutoff (${result.minCgpa}).`,
-      );
+      lines.push("  ✓ Requirement met.");
     }
   }
 
@@ -476,20 +472,11 @@ export function computeAllScores(
     requiredSkills,
   );
 
-  // CGPA buffer
-  const cgpaAboveMin =
-    eligibility.minCgpa !== null &&
-    studentProfile.cgpa !== null &&
-    studentProfile.cgpa !== undefined
-      ? studentProfile.cgpa - eligibility.minCgpa
-      : null;
-
   // Scores
   const semanticScore = computeSemanticScore(studentEmbedding, jdEmbedding);
   const structuredScore = computeStructuredScore({
     requiredOverlapRatio,
     preferredOverlapRatio,
-    cgpaAboveMin,
     projectKeywordHitRatio,
     isEligible,
   });

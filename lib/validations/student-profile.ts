@@ -12,26 +12,31 @@ export const academicsSchema = z.object({
     tenthPercentage: z
         .number({ required_error: "10th Percentage is required" })
         .min(0, "10th percentage must be ≥ 0")
-        .max(100, "10th percentage must be ≤ 100"),
+        .max(100, "10th percentage must be ≤ 100")
+        .nullable().optional(),
     twelfthPercentage: z
         .number({ required_error: "12th Percentage is required" })
         .min(0, "12th percentage must be ≥ 0")
-        .max(100, "12th percentage must be ≤ 100"),
+        .max(100, "12th percentage must be ≤ 100")
+        .nullable().optional(),
     cgpa: z
         .number({ required_error: "CGPA is required" })
         .min(0, "CGPA must be ≥ 0")
-        .max(10, "CGPA must be ≤ 10"),
+        .max(10, "CGPA must be ≤ 10")
+        .nullable().optional(),
     semester: z
         .number({ required_error: "Semester is required" })
         .int("Semester must be an integer")
         .min(1, "Semester must be ≥ 1")
-        .max(10, "Semester must be ≤ 10"),
-    branch: z.string({ required_error: "Branch is required" }).min(1, "Branch is required").max(100),
+        .max(10, "Semester must be ≤ 10")
+        .nullable().optional(),
+    branch: z.string({ required_error: "Branch is required" }).min(1, "Branch is required").max(100).nullable().optional(),
     batchYear: z
         .number({ required_error: "Batch Year is required" })
         .int()
         .min(2000)
-        .max(2100),
+        .max(2100)
+        .nullable().optional(),
 });
 
 export type AcademicsInput = z.infer<typeof academicsSchema>;
@@ -96,30 +101,35 @@ export const studentProfileSchema = z.object({
     sapId: z.string({ required_error: "SAP ID is required" })
         .regex(/^\d{9}$/, "SAP ID must be exactly 9 digits (e.g., 500126666)"),
 
-    // Academic fields (Compulsory)
+    // Academic fields (Optional)
     tenthPercentage: z
         .number({ required_error: "10th Percentage is required" })
         .min(0, "10th percentage must be ≥ 0")
-        .max(100, "10th percentage must be ≤ 100"),
+        .max(100, "10th percentage must be ≤ 100")
+        .nullable().optional(),
     twelfthPercentage: z
         .number({ required_error: "12th Percentage is required" })
         .min(0, "12th percentage must be ≥ 0")
-        .max(100, "12th percentage must be ≤ 100"),
+        .max(100, "12th percentage must be ≤ 100")
+        .nullable().optional(),
     cgpa: z
         .number({ required_error: "CGPA is required" })
         .min(0, "CGPA must be ≥ 0")
-        .max(10, "CGPA must be ≤ 10"),
+        .max(10, "CGPA must be ≤ 10")
+        .nullable().optional(),
     semester: z
         .number({ required_error: "Semester is required" })
         .int("Semester must be an integer")
         .min(1, "Semester must be ≥ 1")
-        .max(10, "Semester must be ≤ 10"),
-    branch: z.string({ required_error: "Branch is required" }).min(1, "Branch is required").max(100),
+        .max(10, "Semester must be ≤ 10")
+        .nullable().optional(),
+    branch: z.string({ required_error: "Branch is required" }).min(1, "Branch is required").max(100).nullable().optional(),
     batchYear: z
         .number({ required_error: "Batch Year is required" })
         .int()
         .min(2000)
-        .max(2100),
+        .max(2100)
+        .nullable().optional(),
 
     // Array fields (Optional lists, but items must be valid if present)
     skills: z.array(skillSchema).max(50, "Maximum 50 skills allowed").optional(),

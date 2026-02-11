@@ -5,6 +5,7 @@ import { students, jobs } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { studentProfileSchema } from "@/lib/validations/student-profile";
 import { computeCompleteness } from "@/lib/profile/completeness";
+import { processEmbeddingJobs } from "@/lib/workers/generate-embedding";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -127,6 +128,14 @@ export async function PATCH(req: NextRequest) {
                         targetId: user.id,
                     },
                 });
+
+                // Trigger worker immediately (fire-and-forget)
+                processEmbeddingJobs().catch((err) =>
+                    console.error(
+                        "[Profile Update] Inline embedding generation failed:",
+                        err,
+                    ),
+                );
             }
         }
 

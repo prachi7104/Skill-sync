@@ -174,7 +174,7 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
 
   // GUARD
   groq_prompt_guard: {
-    id: "llama-prompt-guard-2-86m",
+    id: "llama-3.1-8b-instant",
     provider: "groq",
     tier: 1,
     rpm: 100,
@@ -267,6 +267,14 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
     requiresStructured: true,
     maxLatency: 20000,
     description: "Enhance and structure job descriptions",
+  },
+
+  parse_jd_advanced: {
+    priority: ["gemini_3_flash", "groq_llama_3_3_70b"],
+    requiresLongContext: false,
+    requiresStructured: true,
+    maxLatency: 30000,
+    description: "Deep structural extraction of JD requirements",
   },
 
   // Utility

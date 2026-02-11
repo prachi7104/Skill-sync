@@ -19,7 +19,6 @@ export default function OnboardingSkillsClient({ initialSkills }: { initialSkill
     const { refresh } = useStudent();
     const [skills, setSkills] = useState<Skill[]>(initialSkills || []);
     const [newSkill, setNewSkill] = useState("");
-    const [newLevel, setNewLevel] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleAddSkill = () => {
@@ -31,11 +30,10 @@ export default function OnboardingSkillsClient({ initialSkills }: { initialSkill
 
         const skill: Skill = {
             name: newSkill.trim(),
-            proficiency: newLevel as 1 | 2 | 3 | 4 | 5,
+            proficiency: 1, // Defaulting to 1 as level is removed from UI
         };
         setSkills([...skills, skill]);
         setNewSkill("");
-        setNewLevel(1);
     };
 
     const handleRemoveSkill = (index: number) => {
@@ -86,7 +84,7 @@ export default function OnboardingSkillsClient({ initialSkills }: { initialSkill
                 <h2 className="text-xl font-semibold">Review Your Skills</h2>
                 <p className="text-sm text-muted-foreground">
                     {initialSkills.length > 0
-                        ? "We've pre-filled skills from your resume. Review, adjust proficiency levels, or add more."
+                        ? "We've pre-filled skills from your resume. Review or add more."
                         : "Add at least 5 skills to proceed. This helps us match you with relevant drives."
                     }
                 </p>
@@ -94,7 +92,7 @@ export default function OnboardingSkillsClient({ initialSkills }: { initialSkill
 
             {initialSkills.length > 0 && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
-                    ✅ {initialSkills.length} skills auto-filled from your resume! Adjust proficiency (1-5) as needed.
+                    ✅ {initialSkills.length} skills auto-filled from your resume!
                 </div>
             )}
 
@@ -107,17 +105,6 @@ export default function OnboardingSkillsClient({ initialSkills }: { initialSkill
                         value={newSkill}
                         onChange={(e) => setNewSkill(e.target.value)}
                         placeholder="e.g. React, Python"
-                    />
-                </div>
-                <div className="w-24 gap-2 grid">
-                    <Label htmlFor="skill-level">Level (1-5)</Label>
-                    <Input
-                        id="skill-level"
-                        type="number"
-                        min={1}
-                        max={5}
-                        value={newLevel}
-                        onChange={(e) => setNewLevel(Number(e.target.value))}
                     />
                 </div>
                 <Button onClick={handleAddSkill} size="icon" variant="secondary">
@@ -136,9 +123,6 @@ export default function OnboardingSkillsClient({ initialSkills }: { initialSkill
                         {skills.map((skill, index) => (
                             <Badge key={index} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-2">
                                 <span>{skill.name}</span>
-                                <span className="bg-primary/10 text-primary px-1.5 rounded-full text-[10px]">
-                                    L{skill.proficiency}
-                                </span>
                                 <button
                                     onClick={() => handleRemoveSkill(index)}
                                     className="hover:bg-destructive/10 hover:text-destructive rounded-full p-0.5 transition-colors"

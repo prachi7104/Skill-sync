@@ -25,9 +25,8 @@ import { describe, it, expect } from "vitest";
 // ── Constants (mirror scoring.ts) ───────────────────────────────────────────
 const SEMANTIC_WEIGHT = 0.7;
 const STRUCTURED_WEIGHT = 0.3;
-const REQUIRED_SKILLS_PTS = 50;
-const PREFERRED_SKILLS_PTS = 20;
-const CGPA_BUFFER_PTS = 15;
+const REQUIRED_SKILLS_PTS = 60;
+const PREFERRED_SKILLS_PTS = 25;
 const PROJECT_KEYWORD_PTS = 15;
 
 // ── Inline types (mirror scoring.ts) ────────────────────────────────────────
@@ -184,7 +183,6 @@ function computeSemanticScore(
 function computeStructuredScore(opts: {
   requiredOverlapRatio: number;
   preferredOverlapRatio: number;
-  cgpaAboveMin: number | null;
   projectKeywordHitRatio: number;
   isEligible: boolean;
 }): number {
@@ -193,10 +191,6 @@ function computeStructuredScore(opts: {
   let score = 0;
   score += REQUIRED_SKILLS_PTS * opts.requiredOverlapRatio;
   score += PREFERRED_SKILLS_PTS * opts.preferredOverlapRatio;
-  if (opts.cgpaAboveMin !== null && opts.cgpaAboveMin > 0) {
-    const normalized = Math.min(opts.cgpaAboveMin / 2, 1);
-    score += CGPA_BUFFER_PTS * normalized;
-  }
   score += PROJECT_KEYWORD_PTS * opts.projectKeywordHitRatio;
 
   return round2(Math.min(score, 100));
@@ -229,6 +223,104 @@ function computeProjectKeywordHitRatio(
     }
   }
   return Math.min(hits / cap, 1);
+}
+
+
+function generateDetailedExplanation(result: {
+  matchScore: number;
+  semanticScore: number;
+  structuredScore: number;
+  matchedSkills: string[];
+  missingSkills: string[];
+  isEligible: boolean;
+  ineligibilityReason?: string;
+  cgpa?: number | null;
+  minCgpa?: number | null;
+  rankPosition?: number;
+}): string {
+  const lines: string[] = [];
+
+  // Eligibility
+  if (!result.isEligible) {
+    lines.push(
+      `Eligibility: ❌ Not eligible — ${result.ineligibilityReason}`,
+    );
+    return lines.join("\n");
+  }
+  lines.push("Eligibility: ✅ Meets all requirements.");
+
+  // Score breakdown
+  lines.push("");
+  lines.push("Score Breakdown:");
+  lines.push(
+    `  • Semantic Score: ${result.semanticScore.toFixed(2)} / 100 (70% weight)`,
+  );
+  if (result.semanticScore < 70) {
+    lines.push(
+      `    (Lower semantic score suggests your profile descriptions and projects need more technical domain keywords found in the JD.)`,
+    );
+  } else {
+    lines.push(
+      `    (High semantic alignment indicating strong domain match.)`,
+    );
+  }
+
+  lines.push(
+    `  • Structured Score: ${result.structuredScore.toFixed(2)} / 100 (30% weight)`,
+  );
+  lines.push(
+    `    (Computed based on exact matching of skills and project keywords.)`,
+  );
+  lines.push(
+    `  • Final Match Score: ${result.matchScore.toFixed(2)} / 100`,
+  );
+  if (result.rankPosition !== undefined) {
+    lines.push(`  • Rank Position: #${result.rankPosition}`);
+  }
+
+  // Skill analysis
+  lines.push("");
+  lines.push("Skill Analysis:");
+
+  const totalChecked = result.matchedSkills.length + result.missingSkills.length;
+
+  if (totalChecked === 0) {
+    lines.push("  ⚠ No specific skills matched or missing.");
+    lines.push("    (The Job Description did not yield any specific required skills to check against.)");
+  } else {
+    if (result.matchedSkills.length > 0) {
+      lines.push(`  ✓ Matched (${result.matchedSkills.length}): ${result.matchedSkills.join(", ")}`);
+    } else {
+      lines.push("  ✓ Matched: None");
+    }
+
+    if (result.missingSkills.length > 0) {
+      lines.push(`  🚩 Missing (${result.missingSkills.length}): ${result.missingSkills.join(", ")}`);
+      lines.push("     (Try adding these skills to your profile or highlighting them in your projects to increase your score.)");
+    } else {
+      lines.push("  ✓ Missing: None — all found requirements covered.");
+    }
+  }
+
+  // CGPA note
+  if (
+    result.cgpa !== null &&
+    result.cgpa !== undefined &&
+    result.minCgpa !== null &&
+    result.minCgpa !== undefined
+  ) {
+    lines.push("");
+    lines.push(
+      `Academic Verification: CGPA ${result.cgpa.toFixed(2)} (Min Required: ${result.minCgpa.toFixed(2)})`,
+    );
+    if (result.cgpa < result.minCgpa) {
+      lines.push("  🚩 RED FLAG: Your CGPA is below the mandated cutoff for this drive.");
+    } else {
+      lines.push("  ✓ Requirement met.");
+    }
+  }
+
+  return lines.join("\n");
 }
 
 // ── Tests ───────────────────────────────────────────────────────────────────
@@ -513,62 +605,36 @@ describe("Scoring Algorithm", () => {
       const score = computeStructuredScore({
         requiredOverlapRatio: 1,
         preferredOverlapRatio: 1,
-        cgpaAboveMin: 2,
         projectKeywordHitRatio: 1,
         isEligible: false,
       });
       expect(score).toBe(0);
     });
 
-    it("should give 50 pts for full required skill overlap + 0 others", () => {
+    it("should give 60 pts for full required skill overlap + 0 others", () => {
       const score = computeStructuredScore({
         requiredOverlapRatio: 1,
         preferredOverlapRatio: 0,
-        cgpaAboveMin: null,
         projectKeywordHitRatio: 0,
         isEligible: true,
       });
-      expect(score).toBe(50);
+      expect(score).toBe(60);
     });
 
-    it("should give 20 pts for full preferred skill overlap only", () => {
+    it("should give 25 pts for full preferred skill overlap only", () => {
       const score = computeStructuredScore({
         requiredOverlapRatio: 0,
         preferredOverlapRatio: 1,
-        cgpaAboveMin: null,
         projectKeywordHitRatio: 0,
         isEligible: true,
       });
-      expect(score).toBe(20);
+      expect(score).toBe(25);
     });
 
-    it("should give 15 pts for max CGPA buffer (+2.0 or more)", () => {
+    it("should NOT give points for CGPA buffer anymore", () => {
       const score = computeStructuredScore({
         requiredOverlapRatio: 0,
         preferredOverlapRatio: 0,
-        cgpaAboveMin: 2.5,
-        projectKeywordHitRatio: 0,
-        isEligible: true,
-      });
-      expect(score).toBe(15);
-    });
-
-    it("should give 7.5 pts for CGPA buffer of +1.0", () => {
-      const score = computeStructuredScore({
-        requiredOverlapRatio: 0,
-        preferredOverlapRatio: 0,
-        cgpaAboveMin: 1.0,
-        projectKeywordHitRatio: 0,
-        isEligible: true,
-      });
-      expect(score).toBe(7.5);
-    });
-
-    it("should give 0 pts for CGPA buffer of 0 or negative", () => {
-      const score = computeStructuredScore({
-        requiredOverlapRatio: 0,
-        preferredOverlapRatio: 0,
-        cgpaAboveMin: 0,
         projectKeywordHitRatio: 0,
         isEligible: true,
       });
@@ -579,7 +645,6 @@ describe("Scoring Algorithm", () => {
       const score = computeStructuredScore({
         requiredOverlapRatio: 0,
         preferredOverlapRatio: 0,
-        cgpaAboveMin: null,
         projectKeywordHitRatio: 1,
         isEligible: true,
       });
@@ -590,11 +655,10 @@ describe("Scoring Algorithm", () => {
       const score = computeStructuredScore({
         requiredOverlapRatio: 1,
         preferredOverlapRatio: 1,
-        cgpaAboveMin: 3,
         projectKeywordHitRatio: 1,
         isEligible: true,
       });
-      // 50 + 20 + 15 + 15 = 100
+      // 60 + 25 + 15 = 100
       expect(score).toBe(100);
     });
   });
@@ -784,13 +848,56 @@ describe("Scoring Algorithm", () => {
       const opts = {
         requiredOverlapRatio: 0.75,
         preferredOverlapRatio: 0.5,
-        cgpaAboveMin: 1.5 as number | null,
         projectKeywordHitRatio: 0.6,
         isEligible: true,
       };
       expect(computeStructuredScore(opts)).toBe(
         computeStructuredScore(opts),
       );
+    });
+  });
+
+  // ── Explanation Logic ────────────────────────────────────────────────────
+
+  describe("generateDetailedExplanation", () => {
+    const baseResult = {
+      matchScore: 80,
+      semanticScore: 80,
+      structuredScore: 80,
+      matchedSkills: [],
+      missingSkills: [],
+      isEligible: true,
+      cgpa: 8.0,
+      minCgpa: 7.0,
+    };
+
+    it("should handle empty skills case correctly", () => {
+      const explanation = generateDetailedExplanation({
+        ...baseResult,
+        matchedSkills: [],
+        missingSkills: [],
+      });
+
+      expect(explanation).toContain("⚠ No specific skills matched or missing.");
+      expect(explanation).toContain("(The Job Description did not yield any specific required skills");
+      expect(explanation).not.toContain("Matched: None");
+      expect(explanation).not.toContain("Missing: None");
+    });
+
+    it("should list matched and missing skills when present", () => {
+      const explanation = generateDetailedExplanation({
+        ...baseResult,
+        matchedSkills: ["Python"],
+        missingSkills: ["Java"],
+      });
+
+      expect(explanation).toContain("✓ Matched (1): Python");
+      expect(explanation).toContain("🚩 Missing (1): Java");
+    });
+
+    it("should include semantic score explanation", () => {
+      const explanation = generateDetailedExplanation(baseResult);
+      expect(explanation).toContain("High semantic alignment indicating strong domain match");
     });
   });
 });

@@ -27,8 +27,8 @@ import { ERRORS } from "./errors";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const DAILY_LIMIT = 3;
-const MONTHLY_LIMIT = 20;
+const DAILY_LIMIT = 100;
+const MONTHLY_LIMIT = 500;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

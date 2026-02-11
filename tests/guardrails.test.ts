@@ -54,7 +54,7 @@ const ERRORS = {
   SANDBOX_DAILY_LIMIT: (): GuardrailViolation =>
     new GuardrailViolation({
       code: "SANDBOX_DAILY_LIMIT",
-      reason: "Daily sandbox limit exceeded (3/day).",
+      reason: "Daily sandbox limit exceeded (100/day).",
       nextStep: "Try again tomorrow. Limits reset at midnight UTC.",
       status: 429,
     }),
@@ -62,7 +62,7 @@ const ERRORS = {
   SANDBOX_MONTHLY_LIMIT: (): GuardrailViolation =>
     new GuardrailViolation({
       code: "SANDBOX_MONTHLY_LIMIT",
-      reason: "Monthly sandbox limit exceeded (20/month).",
+      reason: "Monthly sandbox limit exceeded (500/month).",
       nextStep: "Limit resets at the start of next month.",
       status: 429,
     }),
@@ -114,8 +114,8 @@ const ERRORS = {
 
 // ── Inline sandbox limits logic (mirrors sandbox-limits.ts) ─────────────────
 
-const DAILY_LIMIT = 3;
-const MONTHLY_LIMIT = 20;
+const DAILY_LIMIT = 100;
+const MONTHLY_LIMIT = 500;
 
 function todayUTC(): string {
   return new Date().toISOString().slice(0, 10);
@@ -288,23 +288,23 @@ describe("Guardrails", () => {
 
     it("should pass when usage is below daily and monthly limits", () => {
       const student: StudentSandboxRow = {
-        sandboxUsageToday: 2,
+        sandboxUsageToday: 99,
         sandboxResetDate: today,
-        sandboxUsageMonth: 10,
+        sandboxUsageMonth: 490,
         sandboxMonthResetDate: month,
       };
 
       const result = checkSandboxLimits(student);
-      expect(result.effectiveDailyUsage).toBe(2);
-      expect(result.effectiveMonthlyUsage).toBe(10);
+      expect(result.effectiveDailyUsage).toBe(99);
+      expect(result.effectiveMonthlyUsage).toBe(490);
       expect(Object.keys(result.updates)).toHaveLength(0);
     });
 
-    it("should throw SANDBOX_DAILY_LIMIT when daily usage >= 3", () => {
+    it("should throw SANDBOX_DAILY_LIMIT when daily usage >= 100", () => {
       const student: StudentSandboxRow = {
-        sandboxUsageToday: 3,
+        sandboxUsageToday: 100,
         sandboxResetDate: today,
-        sandboxUsageMonth: 3,
+        sandboxUsageMonth: 100,
         sandboxMonthResetDate: month,
       };
 
@@ -317,11 +317,11 @@ describe("Guardrails", () => {
       }
     });
 
-    it("should throw SANDBOX_MONTHLY_LIMIT when monthly usage >= 20", () => {
+    it("should throw SANDBOX_MONTHLY_LIMIT when monthly usage >= 500", () => {
       const student: StudentSandboxRow = {
         sandboxUsageToday: 0,
         sandboxResetDate: today,
-        sandboxUsageMonth: 20,
+        sandboxUsageMonth: 500,
         sandboxMonthResetDate: month,
       };
 
@@ -336,7 +336,7 @@ describe("Guardrails", () => {
     it("should lazy-reset daily counter when date has changed", () => {
       const yesterday = "2025-01-01";
       const student: StudentSandboxRow = {
-        sandboxUsageToday: 3,
+        sandboxUsageToday: 100,
         sandboxResetDate: yesterday, // old date
         sandboxUsageMonth: 5,
         sandboxMonthResetDate: month,
@@ -354,7 +354,7 @@ describe("Guardrails", () => {
       const student: StudentSandboxRow = {
         sandboxUsageToday: 0,
         sandboxResetDate: today,
-        sandboxUsageMonth: 20,
+        sandboxUsageMonth: 500,
         sandboxMonthResetDate: oldMonth, // old month
       };
 
@@ -367,9 +367,9 @@ describe("Guardrails", () => {
 
     it("should reset both daily and monthly when both dates are stale", () => {
       const student: StudentSandboxRow = {
-        sandboxUsageToday: 3,
+        sandboxUsageToday: 100,
         sandboxResetDate: "2024-06-15",
-        sandboxUsageMonth: 20,
+        sandboxUsageMonth: 500,
         sandboxMonthResetDate: "2024-06",
       };
 
@@ -395,9 +395,9 @@ describe("Guardrails", () => {
 
     it("should pass at usage = limit - 1", () => {
       const student: StudentSandboxRow = {
-        sandboxUsageToday: 2, // DAILY_LIMIT - 1
+        sandboxUsageToday: 99, // DAILY_LIMIT - 1
         sandboxResetDate: today,
-        sandboxUsageMonth: 19, // MONTHLY_LIMIT - 1
+        sandboxUsageMonth: 499, // MONTHLY_LIMIT - 1
         sandboxMonthResetDate: month,
       };
 
@@ -406,9 +406,9 @@ describe("Guardrails", () => {
 
     it("daily limit takes precedence over monthly when both exceeded", () => {
       const student: StudentSandboxRow = {
-        sandboxUsageToday: 3,
+        sandboxUsageToday: 100,
         sandboxResetDate: today,
-        sandboxUsageMonth: 20,
+        sandboxUsageMonth: 500,
         sandboxMonthResetDate: month,
       };
 

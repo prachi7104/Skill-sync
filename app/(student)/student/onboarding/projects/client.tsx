@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Plus, ArrowLeft, ArrowRight, Loader2, Trash2 } from "lucide-react";
+import { Plus, ArrowLeft, ArrowRight, Loader2, Trash2, Pencil } from "lucide-react";
 import { updateOnboardingStep } from "@/app/actions/onboarding";
 import { toast } from "sonner";
 import { Project } from "@/lib/db/schema";
@@ -44,6 +44,7 @@ export default function OnboardingProjectsClient({ initialProjects }: { initialP
     const [link, setLink] = useState("");
 
     const [isAdding, setIsAdding] = useState(false);
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
     const handleAddProject = () => {
         if (!title.trim() || !desc.trim()) {
@@ -58,14 +59,37 @@ export default function OnboardingProjectsClient({ initialProjects }: { initialP
             url: link.trim() || undefined,
         };
 
-        setProjects([...projects, newProject]);
+        if (editingIndex !== null) {
+            const updated = [...projects];
+            updated[editingIndex] = newProject;
+            setProjects(updated);
+            toast.success("Project updated");
+        } else {
+            setProjects([...projects, newProject]);
+            toast.success("Project added");
+        }
 
         // Reset form
+        resetForm();
+    };
+
+    const resetForm = () => {
         setTitle("");
         setDesc("");
         setTech("");
         setLink("");
         setIsAdding(false);
+        setEditingIndex(null);
+    };
+
+    const handleEditProject = (index: number) => {
+        const p = projects[index];
+        setTitle(p.title);
+        setDesc(p.description);
+        setTech(p.techStack.join(", "));
+        setLink(p.url || "");
+        setEditingIndex(index);
+        setIsAdding(true);
     };
 
     const handleRemoveProject = (index: number) => {
@@ -140,6 +164,14 @@ export default function OnboardingProjectsClient({ initialProjects }: { initialP
                         >
                             <Trash2 className="h-4 w-4" />
                         </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-10 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:bg-secondary"
+                            onClick={() => handleEditProject(index)}
+                        >
+                            <Pencil className="h-4 w-4" />
+                        </Button>
                         <CardHeader className="pb-2">
                             <CardTitle className="text-base">{project.title}</CardTitle>
                         </CardHeader>
@@ -179,13 +211,15 @@ export default function OnboardingProjectsClient({ initialProjects }: { initialP
                             <Input value={link} onChange={e => setLink(e.target.value)} placeholder="https://github.com/..." />
                         </div>
                         <div className="flex gap-2 pt-2">
-                            <Button onClick={handleAddProject} size="sm">Add Project</Button>
-                            <Button onClick={() => setIsAdding(false)} variant="ghost" size="sm">Cancel</Button>
+                            <Button onClick={handleAddProject} size="sm">
+                                {editingIndex !== null ? "Update Project" : "Add Project"}
+                            </Button>
+                            <Button onClick={resetForm} variant="ghost" size="sm">Cancel</Button>
                         </div>
                     </CardContent>
                 </Card>
             ) : (
-                <Button onClick={() => setIsAdding(true)} variant="outline" className="w-full border-dashed">
+                <Button onClick={() => { resetForm(); setIsAdding(true); }} variant="outline" className="w-full border-dashed">
                     <Plus className="mr-2 h-4 w-4" /> Add Project
                 </Button>
             )}

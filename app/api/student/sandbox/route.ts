@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import { requireStudentProfile } from "@/lib/auth/helpers";
 import { enforceSandboxLimits, incrementSandboxUsage, enforceProfileGate } from "@/lib/guardrails";
@@ -5,13 +6,11 @@ import { GuardrailViolation } from "@/lib/guardrails/errors";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import {
-  computeAllScores,
-  generateDetailedExplanation,
-  type StudentProfile,
-  type EligibilityCriteria,
-} from "@/lib/matching";
-import { extractStudentSkillNames, generateEmbedding } from "@/lib/embeddings";
+import { checkEligibility, type EligibilityCriteria, type StudentProfile } from "@/lib/matching";
+import { parseJD } from "@/lib/jd/parser";
+import { analyzeMatch } from "@/lib/ats";
+import { ATSScore } from "@/lib/ats/types";
+import { ParsedResumeData } from "@/lib/resume/ai-parser";
 import { z } from "zod";
 import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
 
@@ -21,6 +20,80 @@ const sandboxSchema = z.object({
   preferredSkills: z.array(z.string()).optional(),
   minCgpa: z.number().min(0).max(10).optional().nullable(),
 });
+
+function formatDetailedExplanation(result: ATSScore): string {
+  const lines: string[] = [];
+  lines.push(`**Match Verdict**: ${result.match_score.interpretation} (${result.match_score.overall}/100)`);
+  lines.push(`**Recommendation**: ${result.match_score.hire_recommendation}`);
+  lines.push("");
+
+  lines.push("**Score Breakdown**:");
+  lines.push(`- Hard Skills: ${result.component_breakdown.hard_requirements.score.toFixed(1)}%`);
+  lines.push(`- Soft Skills: ${result.component_breakdown.soft_requirements.score.toFixed(1)}%`);
+  lines.push(`- Experience: ${result.component_breakdown.experience_level.score.toFixed(1)}%`);
+  lines.push(`- Domain/Stack: ${result.component_breakdown.domain_alignment.score.toFixed(1)}%`);
+
+  if (result.red_flags.length > 0) {
+    lines.push("");
+    lines.push("**Red Flags**:");
+    result.red_flags.forEach(f => lines.push(`- 🚩 ${f.flag} (${f.impact})`));
+  }
+
+  if (result.positive_signals.length > 0) {
+    lines.push("");
+    lines.push("**Positive Signals**:");
+    result.positive_signals.forEach(s => lines.push(`- ✅ ${s.signal} (${s.value})`));
+  }
+
+  lines.push("");
+  lines.push("**Analysis**:");
+  if (result.skill_analysis.missing_critical.length > 0) {
+    lines.push(`Missing critical skills: ${result.skill_analysis.missing_critical.map(m => m.skill).join(", ")}`);
+  } else {
+    lines.push("No critical skills missing.");
+  }
+
+  return lines.join("\n");
+}
+
+function mapProfileToResumeData(profile: any, skills: Skill[], projects: Project[], workExperience: WorkExperience[]): ParsedResumeData {
+  return {
+    full_name: profile.fullName || "Candidate",
+    email: profile.email || null,
+    phone: profile.phone || null,
+    linkedin_url: profile.linkedin || null,
+    professional_summary: null,
+    coding_profiles: (profile.codingProfiles || []).map((cp: any) => ({ platform: cp.platform, profile_url: cp.url || "" })),
+    education_history: [
+      {
+        institution: "University",
+        degree: "Bachelor's",
+        branch: profile.branch || "Unknown",
+        current_cgpa: profile.cgpa,
+        expected_graduation: profile.batchYear ? String(profile.batchYear) : undefined
+      }
+    ],
+    experience: workExperience.map(w => ({
+      company: w.company,
+      role: w.role,
+      duration: w.startDate + (w.endDate ? " - " + w.endDate : " - Present"),
+      description: w.description,
+      is_internship: w.role.toLowerCase().includes("intern")
+    })),
+    projects: projects.map(p => ({
+      title: p.title,
+      description: p.description,
+      link: p.url,
+      tech_stack: p.techStack,
+      date: p.startDate
+    })),
+    skills: skills.map(s => ({ name: s.name, category: s.category || "other" })),
+    research_papers: (profile.researchPapers || []).map((r: any) => ({ title: r.title, paper_link: r.url })),
+    certifications: (profile.certifications || []).map((c: any) => ({ certification_name: c.title, issuer: c.issuer, verification_link: c.url })),
+    achievements: (profile.achievements || []).map((a: any) => ({ title: a.title, description: a.description })),
+    soft_skills: profile.softSkills || []
+  };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,32 +117,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { jdText, requiredSkills = [], preferredSkills = [], minCgpa = null } = parsed.data;
+    const { jdText, minCgpa = null } = parsed.data;
 
-    // 5. Build student profile for scoring
-    const skills = (profile.skills as Skill[] | null) ?? [];
-    const projects = (profile.projects as Project[] | null) ?? [];
-    const workExperience = (profile.workExperience as WorkExperience[] | null) ?? [];
-
-    const skillNames = extractStudentSkillNames(skills);
-    const projectKeywords = [
-      ...projects.flatMap((p) =>
-        (p.techStack || []).map((t) => t.toLowerCase())
-      ),
-      ...workExperience.flatMap((w) =>
-        w.description.toLowerCase().split(/\s+/)
-      ),
-    ];
-
-    const studentProfile: StudentProfile = {
-      cgpa: profile.cgpa,
-      branch: profile.branch,
-      batchYear: profile.batchYear,
-      category: profile.category,
-      skillNames,
-      projectKeywords,
-    };
-
+    // 5. Build eligibility criteria
     const eligibility: EligibilityCriteria = {
       minCgpa: minCgpa ?? null,
       eligibleBranches: null,
@@ -77,39 +127,43 @@ export async function POST(req: NextRequest) {
       eligibleCategories: null,
     };
 
-    // 6. Compute scores
-    const studentEmbedding = (profile.embedding as number[] | null) ?? new Array(384).fill(0);
-
-    // Generate actual JD embedding for sandbox analysis
-    const jdEmbedding = await generateEmbedding(jdText, "jd");
-
-    // If student has no embedding, structured scoring still works
-    const scoringResult = computeAllScores(
-      studentEmbedding,
-      jdEmbedding,
-      studentProfile,
-      requiredSkills.length > 0 ? requiredSkills : extractSkillsFromText(jdText),
-      preferredSkills,
-      eligibility,
-    );
-
-    // Generate detailed explanation
-    const detailedExplanation = generateDetailedExplanation({
-      matchScore: scoringResult.matchScore,
-      semanticScore: scoringResult.semanticScore,
-      structuredScore: scoringResult.structuredScore,
-      matchedSkills: scoringResult.matchedSkills,
-      missingSkills: scoringResult.missingSkills,
-      isEligible: scoringResult.isEligible,
-      ineligibilityReason: scoringResult.ineligibilityReason,
+    // Check basic eligibility first
+    const studentProfileForCheck: StudentProfile = {
       cgpa: profile.cgpa,
-      minCgpa: minCgpa,
-    });
+      branch: profile.branch,
+      batchYear: profile.batchYear,
+      category: profile.category,
+      skillNames: [], // Not needed for eligibility check
+      projectKeywords: [] // Not needed
+    };
+    const eligibilityResult = checkEligibility(studentProfileForCheck, eligibility);
+
+    // 6. Run ATS Analysis
+    // Parse JD
+    const parsedJd = await parseJD(jdText);
+
+    // Map Profile to Resume Data
+    const skills = (profile.skills as Skill[] | null) ?? [];
+    const projects = (profile.projects as Project[] | null) ?? [];
+    const workExperience = (profile.workExperience as WorkExperience[] | null) ?? [];
+
+    const parsedResume = mapProfileToResumeData(profile, skills, projects, workExperience);
+
+    // Analyze
+    let atsResult = analyzeMatch(parsedJd, parsedResume);
+
+    // Override score if ineligible
+    if (!eligibilityResult.isEligible) {
+      atsResult.match_score.overall = 0;
+      atsResult.match_score.interpretation = "Ineligible";
+      atsResult.match_score.hire_recommendation = "REJECT";
+      atsResult.red_flags.push({ flag: eligibilityResult.reason || "Did not meet eligibility criteria", severity: "Critical", impact: -100 });
+    }
 
     // 7. Increment usage counters (AFTER successful computation)
     await incrementSandboxUsage(user.id);
 
-    // 8. Fetch updated usage for response
+    // 8. Fetch updated usage for request context
     const [updated] = await db
       .select({
         sandboxUsageToday: students.sandboxUsageToday,
@@ -120,21 +174,22 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     return NextResponse.json({
-      matchScore: scoringResult.matchScore,
-      semanticScore: scoringResult.semanticScore,
-      structuredScore: scoringResult.structuredScore,
-      matchedSkills: scoringResult.matchedSkills,
-      missingSkills: scoringResult.missingSkills,
-      shortExplanation: scoringResult.shortExplanation,
-      detailedExplanation,
-      isEligible: scoringResult.isEligible,
-      ineligibilityReason: scoringResult.ineligibilityReason,
+      matchScore: atsResult.match_score.overall,
+      semanticScore: atsResult.component_breakdown.hard_requirements.score, // Mapping hard skills to semantic for backward compat
+      structuredScore: atsResult.component_breakdown.experience_level.score, // Mapping exp to structured for backward compat
+      matchedSkills: atsResult.skill_analysis.matched.map(s => s.skill),
+      missingSkills: atsResult.skill_analysis.missing_critical.map(s => s.skill),
+      shortExplanation: atsResult.match_score.interpretation,
+      detailedExplanation: formatDetailedExplanation(atsResult),
+      isEligible: eligibilityResult.isEligible,
+      ineligibilityReason: eligibilityResult.reason,
       usage: {
         dailyUsed: updated?.sandboxUsageToday ?? 0,
-        dailyLimit: 3,
+        dailyLimit: 100,
         monthlyUsed: updated?.sandboxUsageMonth ?? 0,
-        monthlyLimit: 20,
+        monthlyLimit: 500,
       },
+      analysis: atsResult // Full new ATS result
     });
   } catch (error: any) {
     // Handle guardrail violations with proper status codes
@@ -156,33 +211,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-/**
- * Simple keyword extraction from JD text for sandbox when no explicit skills provided.
- * Extracts capitalized multi-word terms and common tech terms.
- */
-function extractSkillsFromText(text: string): string[] {
-  const commonTechTerms = new Set([
-    "javascript", "typescript", "python", "java", "c++", "c#", "go", "rust",
-    "react", "angular", "vue", "node.js", "express", "django", "flask",
-    "spring", "docker", "kubernetes", "aws", "azure", "gcp", "sql",
-    "nosql", "mongodb", "postgresql", "redis", "graphql", "rest",
-    "git", "ci/cd", "agile", "scrum", "machine learning", "deep learning",
-    "tensorflow", "pytorch", "pandas", "numpy", "html", "css", "sass",
-    "tailwind", "figma", "linux", "bash", "terraform", "jenkins",
-  ]);
-
-  const words = text.toLowerCase().split(/[\s,;.()]+/).filter(Boolean);
-  const found: string[] = [];
-  const seen = new Set<string>();
-
-  for (const word of words) {
-    if (commonTechTerms.has(word) && !seen.has(word)) {
-      seen.add(word);
-      found.push(word);
-    }
-  }
-
-  return found.slice(0, 15); // Cap at 15 skills
 }

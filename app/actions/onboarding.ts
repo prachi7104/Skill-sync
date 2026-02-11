@@ -56,17 +56,22 @@ export async function updateOnboardingStep(step: number) {
         return { success: true };
     }
 
-    if (step !== allowedNextStep) {
+    // Only enforce forward progress to the immediately next step
+    // If we are regressing or staying on same step, it's allowed (but we just update the DB to match)
+    // Actually, we should probably just allow setting step to anything <= currentStep + 1
+    // But for strictness let's keep the VALID_TRANSITIONS for forward movement
+
+    if (step > currentStep && step !== allowedNextStep) {
         throw new Error(
-            `Invalid step transition: cannot go from step ${currentStep} to step ${step}. ` +
-            `Only step ${allowedNextStep} is allowed.`
+            `Invalid step transition: cannot skip from step ${currentStep} to step ${step}. ` +
+            `Must go to ${allowedNextStep}.`
         );
     }
 
-    // Prevent regression (going backwards)
-    if (step < currentStep) {
-        throw new Error("Cannot regress to a previous onboarding step.");
-    }
+    // Allow regression (going backwards) to correct mistakes
+    // if (step < currentStep) {
+    //     throw new Error("Cannot regress to a previous onboarding step.");
+    // }
 
     // 3. Update DB
     await db

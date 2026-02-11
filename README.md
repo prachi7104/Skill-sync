@@ -60,8 +60,8 @@ The `AntigravityRouter` (`lib/antigravity/router.ts`) allows SkillSync to operat
 
 | Tier | Provider | Models | Best For |
 | :--- | :--- | :--- | :--- |
-| **Tier 1** | Google | Gemini 1.5 Flash | Long-context Resume/JD Parsing |
-| **Tier 2** | Google | Gemini 1.5 Pro | Complex reasoning & explanations |
+| **Tier 1** | Google | Gemini 2.5 Flash | Long-context Resume/JD Parsing |
+| **Tier 2** | Google | Gemini 2.5 Pro | Complex reasoning & explanations |
 | **Tier 3** | Groq | Llama 3 70B/8B | High-throughput Chat & Ranking |
 | **Tier 4** | Groq | Llama Prompt Guard | Input Sanitization & Safety |
 | **Tier 0** | Local | Xenova/all-MiniLM-L6-v2 | Zero-latency Embeddings (384d) |
