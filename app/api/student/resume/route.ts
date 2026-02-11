@@ -17,7 +17,7 @@ cloudinary.config({
 export async function POST(req: NextRequest) {
     try {
         // 1. Auth Check
-        const { user } = await requireStudentProfile();
+        const { user, profile } = await requireStudentProfile();
 
         // 2. Parse Form Data
         const formData = await req.formData();
@@ -127,10 +127,12 @@ export async function POST(req: NextRequest) {
             })
             .where(eq(students.id, user.id));
 
-        // 7. Enqueue AI parsing job (processed by cron worker)
+        // 7. Enqueue AI parsing job (ONLY if onboarding is NOT complete)
+        // Post-onboarding uploads are storage-only updates.
         let jobId: string | null = null;
+        const isOnboarded = profile.onboardingStep >= 10;
 
-        if (resumeText && resumeText.length >= 50) {
+        if (resumeText && resumeText.length >= 50 && !isOnboarded) {
             // Check for existing pending parse job for this student (dedup)
             const existingJob = await db.query.jobs.findFirst({
                 where: and(

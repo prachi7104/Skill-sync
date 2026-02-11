@@ -13,6 +13,7 @@ import { ATSScore } from "@/lib/ats/types";
 import { ParsedResumeData } from "@/lib/resume/ai-parser";
 import { z } from "zod";
 import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
+import { generateEmbedding, composeStudentEmbeddingText } from "@/lib/embeddings";
 
 const sandboxSchema = z.object({
   jdText: z.string().min(20, "Job description must be at least 20 characters").max(10000),
@@ -98,7 +99,40 @@ function mapProfileToResumeData(profile: any, skills: Skill[], projects: Project
 export async function POST(req: NextRequest) {
   try {
     // 1. Auth — require student with profile
-    const { user, profile } = await requireStudentProfile();
+    let { user, profile } = await requireStudentProfile();
+
+    // Fix: If embedding is missing (e.g. from legacy profile or failed job), generate it now
+    if (!profile.embedding) {
+      console.log("[Sandbox] Profile embedding missing. Generating on-the-fly...");
+      try {
+        const skills = (profile.skills as Skill[] | null) ?? [];
+        const projects = (profile.projects as Project[] | null) ?? [];
+        const workExperience = (profile.workExperience as WorkExperience[] | null) ?? [];
+        const certifications = (profile.certifications as any[] | null) ?? [];
+
+        const embeddingText = composeStudentEmbeddingText({
+          skills,
+          projects,
+          workExperience,
+          certifications
+        });
+
+        const embedding = await generateEmbedding(embeddingText);
+
+        // Save to DB so we don't regenerate next time
+        await db
+          .update(students)
+          .set({ embedding, updatedAt: new Date() })
+          .where(eq(students.id, user.id));
+
+        // Update local object so gate passes
+        profile.embedding = embedding;
+        console.log("[Sandbox] Embedding generated and saved.");
+      } catch (err) {
+        console.error("[Sandbox] Failed to generate embedding:", err);
+        // Continue and let the gate fail naturally with the correct error
+      }
+    }
 
     // 2. Profile gate — must have complete enough profile
     await enforceProfileGate(user.id);

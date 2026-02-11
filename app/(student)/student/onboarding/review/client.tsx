@@ -22,7 +22,9 @@ export default function OnboardingReviewClient({ profile }: { profile: any }) {
         try {
             // This saves the final profile state, generates embeddings, and marks onboarding complete
             await completeOnboarding();
-            router.push("/student/dashboard");
+
+            // Force a hard redirect to clear onboarding state from router/middleware
+            window.location.href = "/student/dashboard";
         } catch (error) {
             toast.error("Failed to finish onboarding");
             setIsFinishing(false);

@@ -14,7 +14,8 @@ export default function OnboardingProjectsPage() {
 
     useEffect(() => {
         if (!isLoading && student) {
-            if (student.onboardingStep !== EXPECTED_STEP) {
+            // Allow visiting any previous step, but not future steps
+            if (student.onboardingStep < EXPECTED_STEP) {
                 router.push(getOnboardingRoute(student.onboardingStep));
             }
         }

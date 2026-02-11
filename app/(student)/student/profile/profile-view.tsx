@@ -85,9 +85,7 @@ interface ProfileViewProps {
 export default function ProfileView({ user, profile }: ProfileViewProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [mergeSkills, setMergeSkills] = useState(false);
-    const [mergeProjects, setMergeProjects] = useState(false);
-    const [mergeWork, setMergeWork] = useState(false);
+
     const router = useRouter();
 
     // Compute profile completeness
@@ -272,7 +270,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                     <Progress value={score} className="h-2" />
                                 </div>
 
-                                {missing.length > 0 ? (
+                                {missing.length > 0 && !profile.resumeUrl ? (
                                     <div className="space-y-1">
                                         <p className="text-xs font-semibold text-muted-foreground">To improve:</p>
                                         <ul className="text-xs space-y-1 text-muted-foreground list-disc pl-3">
@@ -286,7 +284,8 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                     </div>
                                 ) : (
                                     <p className="text-xs text-green-600 font-medium flex items-center gap-1">
-                                        <Trophy className="h-3 w-3" /> Excellent! Profile complete.
+                                        <Trophy className="h-3 w-3" />
+                                        {profile.resumeUrl ? "Profile detailed via Resume" : "Excellent! Profile complete."}
                                     </p>
                                 )}
                             </div>
@@ -341,10 +340,10 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                     <FormItem>
                                                         <Label>Roll Number</Label>
                                                         <FormControl>
-                                                            <Input 
-                                                                placeholder="e.g., 21BCE1234" 
-                                                                {...field} 
-                                                                value={field.value || ""} 
+                                                            <Input
+                                                                placeholder="e.g., 21BCE1234"
+                                                                {...field}
+                                                                value={field.value || ""}
                                                             />
                                                         </FormControl>
                                                         <FormMessage />
@@ -358,10 +357,10 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                     <FormItem>
                                                         <Label>SAP ID</Label>
                                                         <FormControl>
-                                                            <Input 
-                                                                placeholder="e.g., 500012345" 
-                                                                {...field} 
-                                                                value={field.value || ""} 
+                                                            <Input
+                                                                placeholder="e.g., 500012345"
+                                                                {...field}
+                                                                value={field.value || ""}
                                                             />
                                                         </FormControl>
                                                         <FormMessage />
@@ -369,7 +368,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                 )}
                                             />
                                         </div>
-                                        
+
                                         {/* Branch and Batch */}
                                         <div className="grid grid-cols-2 gap-4">
                                             <FormField
@@ -378,8 +377,8 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <Label>Branch</Label>
-                                                        <Select 
-                                                            onValueChange={field.onChange} 
+                                                        <Select
+                                                            onValueChange={field.onChange}
                                                             value={field.value || ""}
                                                         >
                                                             <FormControl>
@@ -408,8 +407,8 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <Label>Batch Year</Label>
-                                                        <Select 
-                                                            onValueChange={(v) => field.onChange(parseInt(v))} 
+                                                        <Select
+                                                            onValueChange={(v) => field.onChange(parseInt(v))}
                                                             value={field.value?.toString() || ""}
                                                         >
                                                             <FormControl>
@@ -438,12 +437,12 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                     <FormItem>
                                                         <Label>CGPA (0-10)</Label>
                                                         <FormControl>
-                                                            <Input 
-                                                                type="number" 
+                                                            <Input
+                                                                type="number"
                                                                 step="0.01"
                                                                 min="0"
                                                                 max="10"
-                                                                placeholder="e.g., 8.5" 
+                                                                placeholder="e.g., 8.5"
                                                                 {...field}
                                                                 value={field.value ?? ""}
                                                                 onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
@@ -459,8 +458,8 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <Label>Semester</Label>
-                                                        <Select 
-                                                            onValueChange={(v) => field.onChange(parseInt(v))} 
+                                                        <Select
+                                                            onValueChange={(v) => field.onChange(parseInt(v))}
                                                             value={field.value?.toString() || ""}
                                                         >
                                                             <FormControl>
@@ -489,12 +488,12 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                     <FormItem>
                                                         <Label>10th Percentage</Label>
                                                         <FormControl>
-                                                            <Input 
-                                                                type="number" 
+                                                            <Input
+                                                                type="number"
                                                                 step="0.01"
                                                                 min="0"
                                                                 max="100"
-                                                                placeholder="e.g., 85.5" 
+                                                                placeholder="e.g., 85.5"
                                                                 {...field}
                                                                 value={field.value ?? ""}
                                                                 onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
@@ -511,12 +510,12 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                     <FormItem>
                                                         <Label>12th Percentage</Label>
                                                         <FormControl>
-                                                            <Input 
-                                                                type="number" 
+                                                            <Input
+                                                                type="number"
                                                                 step="0.01"
                                                                 min="0"
                                                                 max="100"
-                                                                placeholder="e.g., 88.0" 
+                                                                placeholder="e.g., 88.0"
                                                                 {...field}
                                                                 value={field.value ?? ""}
                                                                 onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
@@ -616,25 +615,6 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                         </FormItem>
                                                     )}
                                                 />
-                                                <FormField
-                                                    control={form.control}
-                                                    name={`skills.${index}.proficiency`}
-                                                    render={({ field }) => (
-                                                        <FormItem className="w-24">
-                                                            <FormControl>
-                                                                <Input
-                                                                    type="number"
-                                                                    min={1}
-                                                                    max={5}
-                                                                    placeholder="Lvl"
-                                                                    {...field}
-                                                                    onChange={(e) => field.onChange(parseInt(e.target.value))}
-                                                                />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
@@ -652,11 +632,6 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                             {profile.skills.map((skill: any, i: number) => (
                                                 <Badge key={i} variant="outline" className="px-3 py-1">
                                                     {skill.name}
-                                                    {skill.proficiency && (
-                                                        <span className="ml-2 text-xs text-muted-foreground">
-                                                            • L{skill.proficiency}
-                                                        </span>
-                                                    )}
                                                 </Badge>
                                             ))}
                                         </div>
@@ -838,100 +813,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                     </div>
                                 )}
 
-                                {/* Parsed Data Display & Merge Controls */}
-                                {profile.parsedResumeJson && (
-                                    <div className="mt-4 pt-4 border-t">
-                                        <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                                            <Loader2 className="h-3 w-3 text-green-600" />
-                                            Resume Suggestions
-                                        </h4>
-                                        <div className="bg-muted/30 p-3 rounded text-xs space-y-3">
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    id="merge-skills"
-                                                    className="rounded border-gray-300"
-                                                    disabled={!isEditing || !profile.parsedResumeJson.skills?.length}
-                                                    checked={mergeSkills}
-                                                    onChange={(e) => setMergeSkills(e.target.checked)}
-                                                />
-                                                <label htmlFor="merge-skills" className="flex-1 cursor-pointer">
-                                                    <span className="font-semibold">Skills:</span> {profile.parsedResumeJson.skills?.length || 0} found
-                                                </label>
-                                            </div>
 
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    id="merge-projects"
-                                                    className="rounded border-gray-300"
-                                                    disabled={!isEditing || !profile.parsedResumeJson.projects?.length}
-                                                    checked={mergeProjects}
-                                                    onChange={(e) => setMergeProjects(e.target.checked)}
-                                                />
-                                                <label htmlFor="merge-projects" className="flex-1 cursor-pointer">
-                                                    <span className="font-semibold">Projects:</span> {profile.parsedResumeJson.projects?.length || 0} found
-                                                </label>
-                                            </div>
-
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    id="merge-work"
-                                                    className="rounded border-gray-300"
-                                                    disabled={!isEditing || !profile.parsedResumeJson.workExperience?.length}
-                                                    checked={mergeWork}
-                                                    onChange={(e) => setMergeWork(e.target.checked)}
-                                                />
-                                                <label htmlFor="merge-work" className="flex-1 cursor-pointer">
-                                                    <span className="font-semibold">Experience:</span> {profile.parsedResumeJson.workExperience?.length || 0} found
-                                                </label>
-                                            </div>
-
-                                            {isEditing && (
-                                                <Button
-                                                    size="sm"
-                                                    className="w-full mt-2"
-                                                    variant="secondary"
-                                                    onClick={async () => {
-                                                        if (!mergeSkills && !mergeProjects && !mergeWork) {
-                                                            toast.error("Select at least one section to apply.");
-                                                            return;
-                                                        }
-
-                                                        setIsLoading(true);
-                                                        try {
-                                                            const res = await fetch('/api/student/profile/merge', {
-                                                                method: 'POST',
-                                                                headers: { 'Content-Type': 'application/json' },
-                                                                body: JSON.stringify({ sections: { skills: mergeSkills, projects: mergeProjects, workExperience: mergeWork } })
-                                                            });
-
-                                                            if (!res.ok) throw new Error("Merge failed");
-
-                                                            await res.json();
-                                                            toast.success("Resume data has been merged into your profile.");
-                                                            setMergeSkills(false);
-                                                            setMergeProjects(false);
-                                                            setMergeWork(false);
-                                                            router.refresh();
-                                                        } catch (e) {
-                                                            toast.error("Failed to apply resume data.");
-                                                        } finally {
-                                                            setIsLoading(false);
-                                                        }
-                                                    }}
-                                                >
-                                                    Apply Selected
-                                                </Button>
-                                            )}
-
-                                            <div className="text-muted-foreground italic text-[10px] mt-2">
-                                                * Creating entries may require manual cleanup (dates, titles).
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
                             </CardContent>
                         </Card>
 

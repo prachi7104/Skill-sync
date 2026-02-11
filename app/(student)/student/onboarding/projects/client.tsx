@@ -52,11 +52,16 @@ export default function OnboardingProjectsClient({ initialProjects }: { initialP
             return;
         }
 
+        let formattedLink = link.trim();
+        if (formattedLink && !/^https?:\/\//i.test(formattedLink)) {
+            formattedLink = "https://" + formattedLink;
+        }
+
         const newProject: Project = {
             title: title.trim(),
             description: desc.trim(),
             techStack: tech.split(",").map(t => t.trim()).filter(Boolean),
-            url: link.trim() || undefined,
+            url: formattedLink || undefined,
         };
 
         if (editingIndex !== null) {

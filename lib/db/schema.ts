@@ -279,6 +279,22 @@ export const students = pgTable("students", {
   /** Month (YYYY-MM) of last monthly sandbox usage reset. */
   sandboxMonthResetDate: varchar("sandbox_month_reset_date", { length: 7 }),
 
+  // ── Detailed Analysis Usage ───────────────────────────────────────────────
+  // Separate quota for "Detailed Analysis" (Custom Resume Upload) feature.
+  // Limits: 100/day, 500/month.
+
+  /** Number of detailed analysis calls used today. */
+  detailedAnalysisUsageToday: integer("detailed_analysis_usage_today").notNull().default(0),
+
+  /** Date (YYYY-MM-DD) of last daily detailed analysis usage reset. */
+  detailedAnalysisResetDate: varchar("detailed_analysis_reset_date", { length: 10 }),
+
+  /** Number of detailed analysis calls used this calendar month. */
+  detailedAnalysisUsageMonth: integer("detailed_analysis_usage_month").notNull().default(0),
+
+  /** Month (YYYY-MM) of last monthly detailed analysis usage reset. */
+  detailedAnalysisMonthResetDate: varchar("detailed_analysis_month_reset_date", { length: 7 }),
+
   // ── Timestamps ────────────────────────────────────────────────────────────
 
   createdAt: timestamp("created_at", { withTimezone: true })

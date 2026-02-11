@@ -225,10 +225,12 @@ export async function completeOnboarding() {
                 },
             });
 
-            // Fire-and-forget: trigger worker immediately
-            processEmbeddingJobs().catch(err =>
-                console.error("[Onboarding] Inline embedding generation failed:", err)
-            );
+            // Trigger worker immediately and await to ensure it runs
+            try {
+                await processEmbeddingJobs();
+            } catch (err) {
+                console.error("[Onboarding] Inline embedding generation failed:", err);
+            }
         }
     }
 

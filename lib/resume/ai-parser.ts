@@ -114,6 +114,8 @@ export interface ParsedResumeData {
 
     achievements: Array<{
         title: string;
+        issuer?: string;
+        date?: string;
         description?: string;
     }>;
 
@@ -140,7 +142,7 @@ Return this EXACT JSON structure:
   "skills": [{"name": "Python", "category": "programming|framework|database|tool|cloud|devops|testing|other"}],
   "research_papers": [{"title": "name", "field": "area or null", "paper_link": "URL or null", "skills_demonstrated": ["skill1"]}],
   "certifications": [{"certification_name": "name", "issuer": "org or null", "verification_link": "URL or null", "date_obtained": "string or null"}],
-  "achievements": [{"title": "description", "description": "details or null"}],
+  "achievements": [{"title": "Short title (e.g. Hackathon Winner)", "issuer": "Organization/Event", "date": "YYYY-MM", "description": "Details about the achievement"}],
   "soft_skills": ["communication", "teamwork"]
 }
 
@@ -151,7 +153,8 @@ RULES:
 4. Extract ALL skills from everywhere (skills section, projects, experience).
 5. For CGPA: return as number (8.5), for percentage: return as string ("85%").
 6. Combine experience bullet points into one description string.
-7. Set is_internship=true for internships.`;
+7. Set is_internship=true for internships.
+8. For Achievements: Split the content. Title should be concise. Put details in description.`;
 
 // ============================================================================
 // EMPTY RESULT
@@ -306,7 +309,12 @@ function validateAndBuild(raw: unknown): ParsedResumeData | null {
             ? p.achievements
                 .map((a: any) => {
                     if (typeof a === "string") return { title: a };
-                    if (a?.title) return { title: a.title, description: a.description };
+                    if (a?.title) return {
+                        title: a.title,
+                        issuer: a.issuer,
+                        date: a.date,
+                        description: a.description
+                    };
                     return null;
                 })
                 .filter(Boolean) as ParsedResumeData["achievements"]
@@ -504,7 +512,7 @@ export function mapParsedResumeToProfile(parsed: ParsedResumeData): {
     codingProfiles: Array<{ platform: string; username: string; rating?: number; url?: string }>;
     certifications: Array<{ title: string; issuer: string; url?: string; dateIssued?: string }>;
     researchPapers: Array<{ title: string; abstract?: string; url?: string }>;
-    achievements: Array<{ title: string; description?: string }>;
+    achievements: Array<{ title: string; description?: string; issuer?: string; date?: string }>;
     softSkills: string[];
     tenthPercentage: number | null;
     twelfthPercentage: number | null;
@@ -578,7 +586,12 @@ export function mapParsedResumeToProfile(parsed: ParsedResumeData): {
 
     const achievements = parsed.achievements.map(a => {
         if (typeof a === "string") return { title: a, description: undefined };
-        return { title: a.title, description: a.description };
+        return {
+            title: a.title,
+            description: a.description,
+            issuer: a.issuer,
+            date: normalizeDate(a.date)
+        };
     });
 
     // Extract academic scores (unchanged)

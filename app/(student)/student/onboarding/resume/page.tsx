@@ -14,7 +14,7 @@ export default function OnboardingResumePage() {
 
     useEffect(() => {
         if (!isLoading && student) {
-            if (student.onboardingStep !== EXPECTED_STEP) {
+            if (student.onboardingStep < EXPECTED_STEP) {
                 router.push(getOnboardingRoute(student.onboardingStep));
             }
         }

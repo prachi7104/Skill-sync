@@ -39,7 +39,9 @@ export default function OnboardingSoftSkillsClient({
     const { refresh } = useStudent();
     const [isLoading, setIsLoading] = useState(false);
     const [selectedSkills, setSelectedSkills] = useState<string[]>(
-        initialSoftSkills.slice(0, 3)
+        initialSoftSkills
+            .filter(s => SOFT_SKILL_OPTIONS.includes(s))
+            .slice(0, 3)
     );
     const normalizeAchievement = (a: Achievement) => {
         const fixDate = (d?: string) => {
