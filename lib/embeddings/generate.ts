@@ -33,8 +33,6 @@ export async function generateEmbedding(
 
   const taskType = type === "jd" ? "embed_jd" : "embed_profile";
 
-  console.log(`[Embeddings] Generating for ${type} via Router...`);
-
   const result = await router.execute<number[]>(taskType, cleaned);
 
   if (result.success && result.data) {

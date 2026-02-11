@@ -1,5 +1,7 @@
 import "server-only";
 
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";

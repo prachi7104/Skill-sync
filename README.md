@@ -7,6 +7,8 @@ SkillSync is an intelligent placement management platform that bridges the gap b
 - **Antigravity Router**: Intelligent fallback system routing tasks to Gemini 1.5 Flash (Tier 1), Groq Llama 3 (Tier 3), or Local Embeddings (Tier 0) based on real-time rate limits and task complexity.
 - **AI Resume Parsing**: Extracts structured data (skills, projects, education) from PDF/DOCX resumes with high fidelity.
 - **Smart Ranking Engine**: Matches students to JDs using a hybrid score (70% Semantic Vector Search + 30% Structured Skill Overlap).
+- **Sandbox v2**: Detailed Resume vs. JD analysis. Upload a custom resume to see how well it targets a specific role, with semantic scoring and "Missed Opportunities" insights.
+- **Smart Resume Upload**: Optimized upload flow that preserves existing parsing data for fully onboarded students.
 - **Automated Mock Interviews**: AI-driven voice/text interviews with real-time feedback.
 - **Role-Based Access**: Granular permissions for Students, Faculty, and Admins.
 

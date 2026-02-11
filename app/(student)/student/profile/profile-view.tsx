@@ -904,20 +904,21 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                                     className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                                                     placeholder="Description"
                                                                     {...field}
+                                                                    value={field.value ?? ""}
                                                                 />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
                                                     )}
                                                 />
-                                                <div className="grid grid-cols-2 gap-2">
+                                                <div className="grid grid-cols-1 gap-2">
                                                     <FormField
                                                         control={form.control}
                                                         name={`projects.${index}.url`}
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormControl>
-                                                                    <Input placeholder="Project URL (optional)" {...field} />
+                                                                    <Input placeholder="Project URL (optional)" {...field} value={field.value ?? ""} />
                                                                 </FormControl>
                                                                 <FormMessage />
                                                             </FormItem>
