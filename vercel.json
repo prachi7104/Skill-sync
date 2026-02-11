@@ -6,15 +6,12 @@
     ],
     "functions": {
         "app/api/**/*.ts": {
-            "runtime": "nodejs20.x",
             "maxDuration": 30
         },
         "app/api/cron/**/*.ts": {
-            "runtime": "nodejs20.x",
             "maxDuration": 60
         },
         "app/api/student/sandbox/**/*.ts": {
-            "runtime": "nodejs20.x",
             "maxDuration": 60
         }
     },
