@@ -6,7 +6,7 @@ import { enhanceJDWithAI } from "@/lib/jd/ai-enhancer";
 
 export const dynamic = "force-dynamic";
 
-const CRON_SECRET = process.env.CRON_SECRET;
+
 const MAX_JOBS_PER_TICK = 5;
 
 /**
@@ -20,19 +20,8 @@ export async function GET(req: NextRequest) {
   try {
     // Security: Verify cron secret
     const authHeader = req.headers.get("authorization");
-    const providedSecret = authHeader?.replace("Bearer ", "");
-
-    if (!CRON_SECRET) {
-      console.error("CRON_SECRET not configured in environment");
-      return NextResponse.json(
-        { error: "Cron endpoint not configured" },
-        { status: 503 },
-      );
-    }
-
-    if (providedSecret !== CRON_SECRET) {
-      console.warn("Unauthorized cron attempt at process-jd-enhancement");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return new Response('Unauthorized', { status: 401 });
     }
 
     console.log("[Cron:JDEnhance] Checking for pending enhance_jd jobs...");

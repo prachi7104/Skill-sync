@@ -1,0 +1,42 @@
+name: Process Resume Jobs
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # Every 10 minutes
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  process-resumes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel Cron Endpoint
+        run: |
+          curl -X GET "${{ secrets.VERCEL_CRON_URL }}/api/cron/process-resumes" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -f || exit 1
+
+  process-embeddings:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Embeddings
+        run: |
+          curl -X GET "${{ secrets.VERCEL_CRON_URL }}/api/cron/process-embeddings" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -f || exit 1
+
+  process-jd-enhancement:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger JD Enhancement
+        run: |
+          curl -X GET "${{ secrets.VERCEL_CRON_URL }}/api/cron/process-jd-enhancement" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -f || exit 1
+
+  process-rankings:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Rankings
+        run: |
+          curl -X GET "${{ secrets.VERCEL_CRON_URL }}/api/cron/process-rankings" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -f || exit 1

@@ -8,7 +8,7 @@ import { logger } from "@/lib/logger";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 minutes for ranking computation
 
-const CRON_SECRET = process.env.CRON_SECRET;
+
 const MAX_JOBS_PER_TICK = 3;
 
 /**
@@ -21,19 +21,8 @@ export async function GET(req: NextRequest) {
   try {
     // Security: Verify cron secret
     const authHeader = req.headers.get("authorization");
-    const providedSecret = authHeader?.replace("Bearer ", "");
-
-    if (!CRON_SECRET) {
-      console.error("CRON_SECRET not configured in environment");
-      return NextResponse.json(
-        { error: "Cron endpoint not configured" },
-        { status: 503 },
-      );
-    }
-
-    if (providedSecret !== CRON_SECRET) {
-      console.warn("Unauthorized cron attempt at process-rankings");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return new Response('Unauthorized', { status: 401 });
     }
 
     logger.info("Checking for pending rank_students jobs");
