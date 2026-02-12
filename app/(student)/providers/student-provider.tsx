@@ -43,15 +43,24 @@ export function StudentProvider({
     const [isLoading, setIsLoading] = useState(!initialStudent);
     const [error, setError] = useState<string | null>(null);
 
+    const applyProfileData = useCallback((data: any) => {
+        // API returns { success, data: { user, profile } }
+        const payload = data.data ?? data;
+        if (payload.profile) {
+            setStudent(payload.profile);
+        } else {
+            setStudent(payload);
+        }
+        if (payload.user) {
+            setUser(payload.user);
+        }
+    }, []);
+
     const fetchStudentData = useCallback(async () => {
         try {
             setIsLoading(true);
             setError(null);
 
-            // We use the existing profile API which returns { user, profile }
-            // This assumes GET /api/student/profile returns standard generic response
-            // or specifically the user+profile object. 
-            // Based on typical patterns in this codebase, let's assume standard fetch.
             const response = await fetch("/api/student/profile");
 
             if (!response.ok) {
@@ -62,33 +71,37 @@ export function StudentProvider({
             }
 
             const data = await response.json();
-
-            // The API route usually returns { user, profile } based on requireStudentProfile()
-            // Let's handle generic "data.profile" or just "data" depending on structure.
-            // Adjusting to typical response: { user: ..., profile: ... }
-            if (data.profile) {
-                setStudent(data.profile);
-            } else {
-                // If the root object is the profile
-                setStudent(data);
-            }
-
-            if (data.user) {
-                setUser(data.user);
-            }
-
+            applyProfileData(data);
         } catch (err) {
             console.error("Error fetching student context:", err);
             const message = err instanceof Error ? err.message : "Unknown error";
             setError(message);
-            // Optional: don't toast on 401/initial load to avoid spamming login screen
             if (message !== "Unauthorized") {
                 toast.error("Could not load student profile");
             }
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [applyProfileData]);
+
+    // Refresh without setting isLoading to true – prevents unmount/remount
+    // cycles when a parent layout returns null while isLoading is true.
+    const refreshStudentData = useCallback(async () => {
+        try {
+            setError(null);
+            const response = await fetch("/api/student/profile");
+            if (!response.ok) {
+                if (response.status === 401) throw new Error("Unauthorized");
+                throw new Error("Failed to fetch student profile");
+            }
+            const data = await response.json();
+            applyProfileData(data);
+        } catch (err) {
+            console.error("Error refreshing student context:", err);
+            const message = err instanceof Error ? err.message : "Unknown error";
+            setError(message);
+        }
+    }, [applyProfileData]);
 
     // Fetch only if no initial data or if explicitly requested (refresh)
     // We skip the effect if initialStudent is provided to avoid double-fetch
@@ -105,7 +118,7 @@ export function StudentProvider({
                 user,
                 isLoading,
                 error,
-                refresh: fetchStudentData,
+                refresh: refreshStudentData,
             }}
         >
             {children}
