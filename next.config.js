@@ -16,6 +16,11 @@ const nextConfig = {
       "pdfjs-dist",
     ],
   },
+  webpack: (config) => {
+    config.resolve.alias.canvas = false;
+    config.resolve.alias.encoding = false;
+    return config;
+  },
 };
 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
