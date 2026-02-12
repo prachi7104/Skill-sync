@@ -42,11 +42,13 @@ export interface ModelRegistryEntry {
   tier: number;
   rpm: number | null | "unlimited"; // Requests per minute
   rpd: number | null | "unlimited"; // Requests per day
+  tpm?: number | null | "unlimited"; // Tokens per minute (new)
   contextWindow?: number;
   latency: number; // Estimated P95 latency in ms
   inputCostPer1k?: number;
   outputCostPer1k?: number;
   capabilities: ModelCapabilities;
+  jsonModeSupported?: boolean;
 }
 
 export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
@@ -57,6 +59,7 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     tier: 1,
     rpm: 15,
     rpd: 1500,
+    tpm: 1000000,
     contextWindow: 1000000,
     latency: 600,
     capabilities: {
@@ -66,6 +69,65 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
       functionCalling: true,
       json: true,
     },
+    jsonModeSupported: true,
+  },
+
+  // GEMINI PRO & 3.0 FAMILY
+  gemini_2_5_pro: {
+    id: "gemini-2.5-pro",
+    provider: "google",
+    tier: 1,
+    rpm: 15,
+    rpd: 1500,
+    tpm: "unlimited", // NEW FIELD
+    contextWindow: 2000000,
+    latency: 800,
+    capabilities: {
+      longContext: true,
+      structured: true,
+      vision: true,
+      functionCalling: true,
+      json: true,
+    },
+    jsonModeSupported: true,
+  },
+
+  gemini_3_pro: {
+    id: "gemini-3-pro",
+    provider: "google",
+    tier: 1,
+    rpm: 15,
+    rpd: 1500,
+    tpm: "unlimited",
+    contextWindow: 2000000,
+    latency: 900,
+    capabilities: {
+      longContext: true,
+      structured: true,
+      vision: true,
+      functionCalling: true,
+      json: true,
+    },
+    jsonModeSupported: true,
+  },
+
+  gemini_3_flash: {
+    id: "gemini-3-flash",
+    provider: "google",
+    tier: 1,
+    rpm: 5,
+    rpd: 20,
+    tpm: 250000, // 250K tokens/minute
+    contextWindow: 1000000,
+    latency: 400,
+    capabilities: {
+      longContext: true,
+      structured: true,
+      vision: true,
+      functionCalling: true,
+      json: true,
+    },
+    jsonModeSupported: true,
   },
 
   gemini_2_5_flash_lite: {
@@ -108,7 +170,8 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     provider: "google",
     tier: 2,
     rpm: 30,
-    rpd: 500,
+    rpd: 14400, // CORRECT VALUE
+    tpm: 15000,
     contextWindow: 8192, // Standardizing to known limit or safe default
     latency: 800,
     capabilities: {
@@ -116,8 +179,9 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
       structured: true,
       vision: true,
       functionCalling: false,
-      json: true,
+      json: false, // Can parse but no native mode
     },
+    jsonModeSupported: false, // CRITICAL
   },
 
   gemma_3_12b: {
@@ -125,7 +189,8 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     provider: "google",
     tier: 2,
     rpm: 30,
-    rpd: 500,
+    rpd: 14400,
+    tpm: 15000,
     contextWindow: 8192,
     latency: 600,
     capabilities: {
@@ -133,8 +198,9 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
       structured: true,
       vision: true,
       functionCalling: false,
-      json: true,
+      json: false,
     },
+    jsonModeSupported: false,
   },
 
   gemma_3_4b: {
@@ -142,7 +208,8 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     provider: "google",
     tier: 3,
     rpm: 30,
-    rpd: 500,
+    rpd: 14400,
+    tpm: 15000,
     contextWindow: 8192,
     latency: 300,
     capabilities: {
@@ -150,8 +217,9 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
       structured: true,
       vision: true,
       functionCalling: false,
-      json: true,
+      json: false,
     },
+    jsonModeSupported: false,
   },
 
   gemma_3_1b: {
@@ -169,6 +237,7 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
       functionCalling: false,
       json: true,
     },
+    jsonModeSupported: false,
   },
 
   gemma_3_270m: {
@@ -186,6 +255,62 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
       functionCalling: false,
       json: false, // Too small for reliable JSON
     },
+    jsonModeSupported: false,
+  },
+
+  // GROQ HIGH-CAPACITY MODELS (500K TPD each)
+  groq_llama_4_scout: {
+    id: "meta-llama/llama-4-scout-17b-16e-instruct",
+    provider: "groq",
+    tier: 1, // PRIMARY TIER - high capacity + quality
+    rpm: 30,
+    rpd: 500000, // 500K tokens/day
+    contextWindow: 128000,
+    latency: 500,
+    capabilities: {
+      longContext: true,
+      structured: true,
+      vision: false,
+      functionCalling: true,
+      json: true,
+    },
+    jsonModeSupported: true,
+  },
+
+  groq_llama_4_maverick: {
+    id: "meta-llama/llama-4-maverick-17b-128e-instruct",
+    provider: "groq",
+    tier: 1,
+    rpm: 30,
+    rpd: 500000,
+    contextWindow: 128000,
+    latency: 600,
+    capabilities: {
+      longContext: true,
+      structured: true,
+      vision: false,
+      functionCalling: true,
+      json: true,
+    },
+    jsonModeSupported: true,
+  },
+
+  groq_qwen_32b: {
+    id: "qwen/qwen3-32b",
+    provider: "groq",
+    tier: 1,
+    rpm: 60,
+    rpd: 500000,
+    contextWindow: 32768,
+    latency: 400,
+    capabilities: {
+      longContext: true,
+      structured: true,
+      vision: false,
+      functionCalling: false,
+      json: true,
+    },
+    jsonModeSupported: true,
   },
 
   // TIER 2: Secondary / Specialized Models (Groq Llama)
@@ -204,6 +329,7 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
       functionCalling: true,
       json: true,
     },
+    jsonModeSupported: true,
   },
 
   groq_llama_3_1_8b: {
@@ -221,24 +347,44 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
       functionCalling: true,
       json: true,
     },
+    jsonModeSupported: true,
   },
 
   // FALLBACK / SPECIALTY
   groq_gpt_oss_120b: {
-    id: "gpt-oss-120b",
+    id: "openai/gpt-oss-120b",
     provider: "groq",
-    tier: 3,
-    rpm: 10,
-    rpd: 1000,
-    contextWindow: 4096,
-    latency: 1200,
+    tier: 2,
+    rpm: 30,
+    rpd: 200000,
+    contextWindow: 8192,
+    latency: 800,
     capabilities: {
       longContext: false,
-      structured: false,
+      structured: true,
       vision: false,
       functionCalling: false,
-      json: false,
+      json: true,
     },
+    jsonModeSupported: true,
+  },
+
+  groq_gpt_oss_20b: {
+    id: "openai/gpt-oss-20b",
+    provider: "groq",
+    tier: 2,
+    rpm: 30,
+    rpd: 200000,
+    contextWindow: 8192,
+    latency: 400,
+    capabilities: {
+      longContext: false,
+      structured: true,
+      vision: false,
+      functionCalling: false,
+      json: true,
+    },
+    jsonModeSupported: true,
   },
 
   // GUARD
@@ -306,7 +452,22 @@ export interface TaskDefinition {
 export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   // Resume Processing — Groq/Gemma first for JSON tasks, Gemini for explanations only
   parse_resume_full: {
-    priority: ["groq_llama_3_3_70b", "gemma_3_27b", "gemini_2_0_flash", "gemini_2_5_flash_lite"],
+    priority: [
+      // High-capacity Groq first
+      "groq_llama_4_scout",
+      "groq_llama_4_maverick",
+      "groq_qwen_32b",
+      "groq_llama_3_3_70b",
+      // Gemini unlimited TPM
+      "gemini_2_5_pro",
+      "gemini_3_pro",
+      // Gemma (manual JSON extraction)
+      "gemma_3_27b",
+      "gemma_3_12b",
+      // Flash models
+      "gemini_2_5_flash",
+      "gemini_3_flash",
+    ],
     requiresLongContext: true,
     requiresStructured: true,
     maxLatency: 60000, // 60s
@@ -314,7 +475,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
 
   parse_resume_fast: {
-    priority: ["groq_llama_3_1_8b", "gemma_3_27b", "gemini_2_5_flash_lite"],
+    priority: ["groq_llama_4_scout", "groq_llama_3_1_8b", "gemma_3_27b", "gemini_2_5_flash_lite"],
     requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 10000, // 10s
@@ -323,7 +484,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
 
   // Content Generation
   generate_questions: {
-    priority: ["gemini_2_0_flash", "groq_llama_3_3_70b"],
+    priority: ["gemini_2_0_flash", "groq_llama_4_scout", "groq_llama_3_3_70b"],
     requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 15000,
@@ -331,7 +492,13 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
 
   enhance_jd: {
-    priority: ["groq_llama_3_3_70b", "gemma_3_27b", "gemini_2_0_flash"],
+    priority: [
+      "groq_llama_4_scout",
+      "groq_qwen_32b",
+      "gemini_2_5_pro",
+      "groq_llama_3_3_70b",
+      "gemma_3_27b",
+    ],
     requiresLongContext: false, // JD is usually short enough
     requiresStructured: true,
     maxLatency: 20000,
@@ -339,7 +506,15 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
 
   parse_jd_advanced: {
-    priority: ["groq_llama_3_3_70b", "gemma_3_27b", "gemini_2_0_flash"],
+    priority: [
+      "groq_llama_4_scout",
+      "groq_qwen_32b",
+      "groq_llama_3_3_70b",
+      "gemini_2_5_pro",
+      "gemini_3_pro",
+      "gemma_3_27b",
+      "gemini_2_5_flash",
+    ],
     requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 30000,
@@ -475,6 +650,77 @@ class RateLimiter {
 }
 
 // ============================================================================
+// HEALTH MONITORING — Track Failures & Circuit Breaking
+// ============================================================================
+
+interface ModelHealth {
+  consecutiveFailures: number;
+  lastFailure: number | null;
+  totalRequests: number;
+  successfulRequests: number;
+}
+
+class ModelHealthMonitor {
+  private health: Map<string, ModelHealth> = new Map();
+  private FAILURE_THRESHOLD = 3;
+  private COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+
+  recordFailure(modelKey: string): void {
+    const current = this.health.get(modelKey) || {
+      consecutiveFailures: 0,
+      lastFailure: null,
+      totalRequests: 0,
+      successfulRequests: 0,
+    };
+
+    current.consecutiveFailures++;
+    current.lastFailure = Date.now();
+    current.totalRequests++;
+
+    this.health.set(modelKey, current);
+
+    if (current.consecutiveFailures >= this.FAILURE_THRESHOLD) {
+      console.warn(`[Health] ⚠️ ${modelKey} marked unhealthy after ${current.consecutiveFailures} failures`);
+    }
+  }
+
+  recordSuccess(modelKey: string): void {
+    const current = this.health.get(modelKey) || {
+      consecutiveFailures: 0,
+      lastFailure: null,
+      totalRequests: 0,
+      successfulRequests: 0,
+    };
+
+    current.consecutiveFailures = 0;
+    current.totalRequests++;
+    current.successfulRequests++;
+
+    this.health.set(modelKey, current);
+  }
+
+  isHealthy(modelKey: string): boolean {
+    const current = this.health.get(modelKey);
+    if (!current) return true;
+
+    if (current.consecutiveFailures < this.FAILURE_THRESHOLD) return true;
+
+    // Check if cooldown expired
+    if (current.lastFailure && Date.now() - current.lastFailure > this.COOLDOWN_MS) {
+      // Reset logic could be more complex (e.g., half-open), but resetting entirely for now
+      current.consecutiveFailures = 0;
+      return true;
+    }
+
+    return false;
+  }
+
+  getStats(): Record<string, ModelHealth> {
+    return Object.fromEntries(this.health);
+  }
+}
+
+// ============================================================================
 // MODEL ROUTER — Intelligent Model Selection + Execution
 // ============================================================================
 
@@ -495,6 +741,7 @@ export interface ExecuteResult<T = string> {
 
 export class AntigravityRouter {
   private rateLimiter: RateLimiter;
+  private healthMonitor: ModelHealthMonitor;
   private googleAI: GoogleGenerativeAI | null = null;
   private groqClient: Groq | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -507,6 +754,7 @@ export class AntigravityRouter {
     enableLogging?: boolean;
   }) {
     this.rateLimiter = new RateLimiter();
+    this.healthMonitor = new ModelHealthMonitor();
     this.enableLogging = config.enableLogging ?? false;
 
     if (config.googleApiKey) {
@@ -554,6 +802,14 @@ export class AntigravityRouter {
       if (!this.rateLimiter.canMakeRequest(modelKey)) {
         if (this.enableLogging) {
           console.log(`[antigravity] ⚠️ ${modelKey} rate-limited, skipping`);
+        }
+        continue;
+      }
+
+      // Check health
+      if (!this.healthMonitor.isHealthy(modelKey)) {
+        if (this.enableLogging) {
+          console.log(`[antigravity] ⚠️ ${modelKey} unhealthy, skipping`);
         }
         continue;
       }
@@ -643,6 +899,8 @@ export class AntigravityRouter {
           continue;
         }
 
+        this.healthMonitor.recordSuccess(modelKey);
+
         return {
           success: true,
           data: result as T,
@@ -654,6 +912,9 @@ export class AntigravityRouter {
           const msg = error instanceof Error ? error.message : String(error);
           console.error(`[antigravity] ❌ ${modelKey} failed: ${msg}`);
         }
+
+        this.healthMonitor.recordFailure(modelKey);
+
         // Continue to next model in priority chain
         continue;
       }
@@ -674,26 +935,82 @@ export class AntigravityRouter {
     }
 
     try {
+      // Check if this specific model supports JSON mode
+      const modelEntry = Object.values(MODEL_REGISTRY).find((m) => m.id === modelId);
+      const supportsJsonMode = modelEntry?.jsonModeSupported !== false; // Default true for backwards compat
+
       const model = this.googleAI.getGenerativeModel({
         model: modelId,
         generationConfig: {
           temperature: options.temperature ?? 0.7,
           maxOutputTokens: options.maxTokens ?? 2048,
-          ...(options.responseFormat === "json" && {
+          // ONLY set responseMimeType if model supports it
+          ...(options.responseFormat === "json" &&
+            supportsJsonMode && {
             responseMimeType: "application/json",
           }),
         },
         ...(options.systemPrompt && {
-          systemInstruction: options.systemPrompt,
+          systemInstruction: supportsJsonMode
+            ? options.systemPrompt
+            : `${options.systemPrompt}\n\nIMPORTANT: Return ONLY valid JSON in your response. No markdown, no explanations.`,
         }),
       });
 
       const result = await model.generateContent(prompt);
-      const text = result.response.text();
+      let text = result.response.text();
+
+      // If JSON requested but model doesn't support native mode, extract manually
+      if (options.responseFormat === "json" && !supportsJsonMode) {
+        text = this.extractJSON(text);
+      }
+
       return text;
     } catch (e: any) {
       throw new Error(`Google Generation Error: ${e.message}`);
     }
+  }
+
+  // Add JSON extraction helper:
+  private extractJSON(raw: string): string {
+    if (!raw?.trim()) return "{}";
+
+    let text = raw.trim();
+
+    // Remove markdown fences
+    const fenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)```/);
+    if (fenceMatch) text = fenceMatch[1].trim();
+
+    // Find first complete JSON object
+    const start = text.indexOf("{");
+    if (start === -1) return "{}";
+
+    let depth = 0,
+      inStr = false,
+      esc = false;
+    for (let i = start; i < text.length; i++) {
+      const c = text[i];
+      if (esc) {
+        esc = false;
+        continue;
+      }
+      if (c === "\\") {
+        esc = true;
+        continue;
+      }
+      if (c === '"') {
+        inStr = !inStr;
+        continue;
+      }
+      if (inStr) continue;
+      if (c === "{") depth++;
+      else if (c === "}") {
+        depth--;
+        if (depth === 0) return text.substring(start, i + 1);
+      }
+    }
+
+    return "{}";
   }
 
   private async embedGoogle(
@@ -819,6 +1136,8 @@ function cleanJSONString(text: string): string {
   return clean.trim();
 }
 
+import { jdCache } from "@/lib/cache/jd-cache";
+
 /**
  * Resume parser with automatic fallback.
  */
@@ -900,6 +1219,12 @@ export async function enhanceJDWithAntigravity(
   router: AntigravityRouter,
   jdText: string,
 ): Promise<unknown> {
+  // 1. Check Cache
+  const cached = jdCache.get(jdText);
+  if (cached) {
+    return cached;
+  }
+
   const systemPrompt = `You are a job description enhancement expert.
 Structure and enhance the provided JD into this JSON format:
 
@@ -951,7 +1276,10 @@ Normalize all skill names. Return ONLY valid JSON.`;
 
   if (result.success && result.data) {
     try {
-      return JSON.parse(cleanJSONString(result.data as string));
+      const parsed = JSON.parse(cleanJSONString(result.data as string));
+      // 2. Store in Cache
+      jdCache.set(jdText, parsed);
+      return parsed;
     } catch {
       return result.data;
     }

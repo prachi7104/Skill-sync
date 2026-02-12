@@ -1,124 +1,125 @@
 import { AntigravityRouter } from "@/lib/antigravity/router";
 import { env } from "@/lib/env";
+import { jdCache } from "@/lib/cache/jd-cache";
 
 // ============================================================================
 // TYPES & INTERFACES
 // ============================================================================
 
 export interface JDRoleMetadata {
-    job_title: string;
-    role_type: string;
-    seniority_level: "Entry" | "Mid" | "Senior" | "Staff+" | "Unknown";
-    work_arrangement: "Remote" | "Hybrid" | "Onsite" | "Unknown";
-    employment_type: "Full-time" | "Part-time" | "Contract" | "Hourly" | "Unknown";
-    location: string;
-    company_info: {
-        name: string;
-        industry: string;
-        stage: string;
-    };
+  job_title: string;
+  role_type: string;
+  seniority_level: "Entry" | "Mid" | "Senior" | "Staff+" | "Unknown";
+  work_arrangement: "Remote" | "Hybrid" | "Onsite" | "Unknown";
+  employment_type: "Full-time" | "Part-time" | "Contract" | "Hourly" | "Unknown";
+  location: string;
+  company_info: {
+    name: string;
+    industry: string;
+    stage: string;
+  };
 }
 
 export interface JDTechnicalSkill {
-    skill: string;
-    proficiency_level: "Familiar" | "Professional" | "Expert" | "Unknown";
-    years_required?: string;
-    context?: string;
-    critical?: boolean;
-    priority?: "Required" | "Preferred" | "Bonus";
+  skill: string;
+  proficiency_level: "Familiar" | "Professional" | "Expert" | "Unknown";
+  years_required?: string;
+  context?: string;
+  critical?: boolean;
+  priority?: "Required" | "Preferred" | "Bonus";
 }
 
 export interface JDEducation {
-    degree_level: string;
-    field: string;
-    mandatory: boolean;
-    alternatives_accepted?: string;
+  degree_level: string;
+  field: string;
+  mandatory: boolean;
+  alternatives_accepted?: string;
 }
 
 export interface JDExperience {
-    total_years: string;
-    relevant_experience?: string;
-    context?: string;
-    type?: string;
-    description?: string;
-    priority?: string;
+  total_years: string;
+  relevant_experience?: string;
+  context?: string;
+  type?: string;
+  description?: string;
+  priority?: string;
 }
 
 export interface JDDomainKnowledge {
-    domain: string;
-    description: string;
-    critical?: boolean;
+  domain: string;
+  description: string;
+  critical?: boolean;
 }
 
 export interface JDSoftSkill {
-    skill: string;
-    proficiency?: string;
-    context?: string;
-    critical?: boolean;
+  skill: string;
+  proficiency?: string;
+  context?: string;
+  critical?: boolean;
 }
 
 export interface JDRequirements {
-    hard_requirements: {
-        technical_skills: JDTechnicalSkill[];
-        education: JDEducation;
-        experience: JDExperience;
-        domain_knowledge?: JDDomainKnowledge[];
-        soft_skills?: JDSoftSkill[];
-    };
-    soft_requirements: {
-        technical_skills: JDTechnicalSkill[];
-        experience?: JDExperience[];
-    };
+  hard_requirements: {
+    technical_skills: JDTechnicalSkill[];
+    education: JDEducation;
+    experience: JDExperience;
+    domain_knowledge?: JDDomainKnowledge[];
+    soft_skills?: JDSoftSkill[];
+  };
+  soft_requirements: {
+    technical_skills: JDTechnicalSkill[];
+    experience?: JDExperience[];
+  };
 }
 
 export interface JDResponsibilities {
-    primary_tasks: string[];
-    deliverables?: string[];
-    quality_expectations?: {
-        code_quality?: string;
-        accuracy?: string;
-        clarity?: string;
-        [key: string]: string | undefined;
-    };
+  primary_tasks: string[];
+  deliverables?: string[];
+  quality_expectations?: {
+    code_quality?: string;
+    accuracy?: string;
+    clarity?: string;
+    [key: string]: string | undefined;
+  };
 }
 
 export interface JDTechStackCluster {
-    primary_cluster: string;
-    related_clusters: string[];
-    core_technologies: string[];
-    secondary_technologies: string[];
-    complementary_skills: string[];
+  primary_cluster: string;
+  related_clusters: string[];
+  core_technologies: string[];
+  secondary_technologies: string[];
+  complementary_skills: string[];
 }
 
 export interface JDNormalizedSkills {
-    programming_languages: string[];
-    frameworks: string[];
-    concepts: string[];
-    tools: string[];
-    methodologies: string[];
-    domains: string[];
+  programming_languages: string[];
+  frameworks: string[];
+  concepts: string[];
+  tools: string[];
+  methodologies: string[];
+  domains: string[];
 }
 
 export interface JDMatchingKeywords {
-    critical: string[];
-    important: string[];
-    context: string[];
+  critical: string[];
+  important: string[];
+  context: string[];
 }
 
 export interface JDNoiseFiltered {
-    company_description: string;
-    removed_content: string[];
+  company_description: string;
+  removed_content: string[];
 }
 
 export interface StructuredJD {
-    role_metadata: JDRoleMetadata;
-    requirements: JDRequirements;
-    responsibilities: JDResponsibilities;
-    tech_stack_cluster: JDTechStackCluster;
-    normalized_skills: JDNormalizedSkills;
-    matching_keywords: JDMatchingKeywords;
-    implicit_requirements: string[];
-    noise_filtered: JDNoiseFiltered;
+  role_metadata: JDRoleMetadata;
+  requirements: JDRequirements;
+  responsibilities: JDResponsibilities;
+  tech_stack_cluster: JDTechStackCluster;
+  normalized_skills: JDNormalizedSkills;
+  matching_keywords: JDMatchingKeywords;
+  implicit_requirements: string[];
+  noise_filtered: JDNoiseFiltered;
 }
 
 // ============================================================================
@@ -436,86 +437,96 @@ If you detect:
 // ============================================================================
 
 const router = new AntigravityRouter({
-    googleApiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
-    groqApiKey: env.GROQ_API_KEY,
-    enableLogging: true,
+  googleApiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
+  groqApiKey: env.GROQ_API_KEY,
+  enableLogging: true,
 });
 
 export async function parseJD(rawJd: string, titleHint?: string, companyHint?: string): Promise<StructuredJD> {
-    if (!rawJd || rawJd.length < 50) {
-        throw new Error("JD text too short to process");
+  if (!rawJd || rawJd.length < 50) {
+    throw new Error("JD text too short to process");
+  }
+
+  // Check cache first (include hints in key to differentiate context)
+  const cacheKey = rawJd + (titleHint || "") + (companyHint || "");
+  const cached = jdCache.get(cacheKey);
+  if (cached) {
+    console.log("[JD Parser] Using cached result");
+    return validateAndFillDefaults(cached as StructuredJD, titleHint, companyHint);
+  }
+
+  console.log("[JD Parser] Starting advanced JD parsing via Antigravity Router...");
+
+  let prompt = JD_PARSER_SYSTEM_PROMPT + "\n\nRAW JD TEXT:\n" + rawJd;
+  if (titleHint || companyHint) {
+    prompt += `\n\nCONTEXT HINTS: Title: ${titleHint || "Unknown"}, Company: ${companyHint || "Unknown"}`;
+  }
+
+  const result = await router.execute<StructuredJD>(
+    "parse_jd_advanced",
+    prompt,
+    {
+      responseFormat: "json",
+      temperature: 0.1 // Low temperature for consistent extraction
     }
+  );
 
-    console.log("[JD Parser] Starting advanced JD parsing via Antigravity Router...");
+  if (result.success && result.data) {
+    const parsed = typeof result.data === 'string'
+      ? parseAIResponse(result.data)
+      : result.data as StructuredJD;
 
-    let prompt = JD_PARSER_SYSTEM_PROMPT + "\n\nRAW JD TEXT:\n" + rawJd;
-    if (titleHint || companyHint) {
-        prompt += `\n\nCONTEXT HINTS: Title: ${titleHint || "Unknown"}, Company: ${companyHint || "Unknown"}`;
+    if (parsed) {
+      console.log(`[JD Parser] Success via ${result.modelUsed}`);
+      // Cache successful parse
+      jdCache.set(cacheKey, parsed);
+      return validateAndFillDefaults(parsed, titleHint, companyHint);
     }
+  }
 
-    const result = await router.execute<StructuredJD>(
-        "parse_jd_advanced",
-        prompt,
-        {
-            responseFormat: "json",
-            temperature: 0.1 // Low temperature for consistent extraction
-        }
-    );
-
-    if (result.success && result.data) {
-        const parsed = typeof result.data === 'string'
-            ? parseAIResponse(result.data)
-            : result.data as StructuredJD;
-
-        if (parsed) {
-            console.log(`[JD Parser] Success via ${result.modelUsed}`);
-            return validateAndFillDefaults(parsed, titleHint, companyHint);
-        }
-    }
-
-    throw new Error(`JD advanced parsing failed: ${result.error || "Unknown error"}`);
+  throw new Error(`JD advanced parsing failed: ${result.error || "Unknown error"}`);
 }
 
 function parseAIResponse(response: string): StructuredJD | null {
-    try {
-        let cleaned = response.trim();
-        if (cleaned.startsWith("```json")) cleaned = cleaned.slice(7);
-        else if (cleaned.startsWith("```")) cleaned = cleaned.slice(3);
-        if (cleaned.endsWith("```")) cleaned = cleaned.slice(0, -3);
+  try {
+    let cleaned = response.trim();
+    if (cleaned.startsWith("```json")) cleaned = cleaned.slice(7);
+    else if (cleaned.startsWith("```")) cleaned = cleaned.slice(3);
+    if (cleaned.endsWith("```")) cleaned = cleaned.slice(0, -3);
 
-        return JSON.parse(cleaned.trim());
-    } catch (e) {
-        console.error("[JD Parser] JSON Parse Error:", e);
-        return null;
-    }
+    return JSON.parse(cleaned.trim());
+  } catch (e) {
+    console.error("[JD Parser] JSON Parse Error:", e);
+    return null;
+  }
 }
 
 function validateAndFillDefaults(data: StructuredJD, titleHint?: string, companyHint?: string): StructuredJD {
-    // Ensure basic structure exists even if LLM missed some fields
-    const safeData = { ...data };
+  // Ensure basic structure exists even if LLM missed some fields
+  const safeData = { ...data };
 
-    if (!safeData.role_metadata) {
-        safeData.role_metadata = {
-            job_title: titleHint || "Unknown Role",
-            company_info: { name: companyHint || "Unknown Company", industry: "Tech", stage: "Unknown" },
-            role_type: "Unknown",
-            seniority_level: "Entry",
-            work_arrangement: "Unknown",
-            employment_type: "Full-time",
-            location: "Unknown"
-        };
-    } else {
-        if (!safeData.role_metadata.job_title && titleHint) safeData.role_metadata.job_title = titleHint;
-        if (!safeData.role_metadata.company_info) safeData.role_metadata.company_info = { name: companyHint || "Unknown Company", industry: "Tech", stage: "Unknown" };
-        else if (!safeData.role_metadata.company_info.name && companyHint) safeData.role_metadata.company_info.name = companyHint;
-    }
+  if (!safeData.role_metadata) {
+    safeData.role_metadata = {
+      job_title: titleHint || "Unknown Role",
+      company_info: { name: companyHint || "Unknown Company", industry: "Tech", stage: "Unknown" },
+      role_type: "Unknown",
+      seniority_level: "Entry",
+      work_arrangement: "Unknown",
+      employment_type: "Full-time",
+      location: "Unknown"
+    };
+  } else {
+    if (!safeData.role_metadata.job_title && titleHint) safeData.role_metadata.job_title = titleHint;
+    if (!safeData.role_metadata.company_info) safeData.role_metadata.company_info = { name: companyHint || "Unknown Company", industry: "Tech", stage: "Unknown" };
+    else if (!safeData.role_metadata.company_info.name && companyHint) safeData.role_metadata.company_info.name = companyHint;
+  }
 
-    if (!safeData.requirements) {
-        safeData.requirements = {
-            hard_requirements: { technical_skills: [], education: { degree_level: "Unknown", field: "Unknown", mandatory: false }, experience: { total_years: "0" } },
-            soft_requirements: { technical_skills: [] }
-        };
-    }
+  if (!safeData.requirements) {
+    safeData.requirements = {
+      hard_requirements: { technical_skills: [], education: { degree_level: "Unknown", field: "Unknown", mandatory: false }, experience: { total_years: "0" } },
+      soft_requirements: { technical_skills: [] }
+    };
+  }
 
-    return safeData;
+  return safeData;
 }
