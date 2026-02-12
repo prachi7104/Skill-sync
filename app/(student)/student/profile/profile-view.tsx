@@ -19,7 +19,9 @@ import {
     Save,
     X,
     FileText,
-    Upload
+    Upload,
+    Sparkles,
+    ExternalLink
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -48,7 +50,7 @@ import { toast } from "sonner";
 
 import { studentProfileSchema, type StudentProfileInput } from "@/lib/validations/student-profile";
 import { computeCompleteness } from "@/lib/profile/completeness";
-import type { Skill, Project, WorkExperience, Certification, CodingProfile } from "@/lib/db/schema";
+import type { Skill, Project, WorkExperience, Certification, CodingProfile, ResearchPaper, Achievement } from "@/lib/db/schema";
 
 interface ProfileViewProps {
     user: {
@@ -64,6 +66,9 @@ interface ProfileViewProps {
         workExperience: WorkExperience[] | null;
         certifications: Certification[] | null;
         codingProfiles: CodingProfile[] | null;
+        researchPapers: ResearchPaper[] | null;
+        achievements: Achievement[] | null;
+        softSkills: string[] | null;
         // Academic fields - editable by students
         rollNo: string | null;
         sapId: string | null;
@@ -134,6 +139,28 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
         name: "codingProfiles",
     });
 
+    const { fields: workExperienceFields, append: appendWorkExperience, remove: removeWorkExperience } = useFieldArray({
+        control: form.control,
+        name: "workExperience",
+    });
+
+    const { fields: certificationFields, append: appendCertification, remove: removeCertification } = useFieldArray({
+        control: form.control,
+        name: "certifications",
+    });
+
+    const { fields: researchPaperFields, append: appendResearchPaper, remove: removeResearchPaper } = useFieldArray({
+        control: form.control,
+        name: "researchPapers",
+    });
+
+    const { fields: achievementFields, append: appendAchievement, remove: removeAchievement } = useFieldArray({
+        control: form.control,
+        name: "achievements",
+    });
+
+    const [softSkillInput, setSoftSkillInput] = useState("");
+
     const handleCancel = () => {
         form.reset({
             // Academic fields
@@ -149,6 +176,11 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
             skills: profile.skills || [],
             projects: profile.projects || [],
             codingProfiles: profile.codingProfiles || [],
+            workExperience: profile.workExperience || [],
+            certifications: profile.certifications || [],
+            researchPapers: profile.researchPapers || [],
+            achievements: profile.achievements || [],
+            softSkills: profile.softSkills || [],
         });
         setIsEditing(false);
     };
@@ -817,32 +849,421 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                             </CardContent>
                         </Card>
 
-                        {/* Work Experience - Read Only */}
+                        {/* Work Experience Section (Editable) */}
                         <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Briefcase className="h-5 w-5 text-blue-600" />
-                                    Work Experience
-                                </CardTitle>
-                                <CardDescription>Work experience updates are currently disabled.</CardDescription>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <div className="space-y-1">
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Briefcase className="h-5 w-5 text-blue-600" />
+                                        Work Experience
+                                    </CardTitle>
+                                    <CardDescription>Add your internships and full-time roles</CardDescription>
+                                </div>
+                                {isEditing && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => appendWorkExperience({
+                                            company: "",
+                                            role: "",
+                                            description: "",
+                                            startDate: "",
+                                            endDate: "",
+                                            location: ""
+                                        })}
+                                    >
+                                        <Plus className="h-4 w-4 mr-2" /> Add
+                                    </Button>
+                                )}
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                {profile.workExperience && profile.workExperience.length > 0 ? (
-                                    profile.workExperience.map((work: any, i: number) => (
-                                        <div key={i} className="relative border-l-2 border-muted pl-4">
-                                            <h3 className="font-semibold">{work.role}</h3>
-                                            <p className="text-sm text-muted-foreground">
-                                                {work.company} • {work.startDate} - {work.endDate || "Present"}
-                                            </p>
-                                            <p className="mt-2 text-sm text-gray-600 line-clamp-2">
-                                                {work.description}
-                                            </p>
-                                        </div>
-                                    ))
+                                {isEditing ? (
+                                    <div className="space-y-6">
+                                        {workExperienceFields.map((field, index) => (
+                                            <div key={field.id} className="grid gap-4 p-4 border rounded-lg relative bg-muted/20">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
+                                                    onClick={() => removeWorkExperience(index)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label>Company</Label>
+                                                        <Input
+                                                            {...form.register(`workExperience.${index}.company`)}
+                                                            placeholder="Company Name"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>Role</Label>
+                                                        <Input
+                                                            {...form.register(`workExperience.${index}.role`)}
+                                                            placeholder="Job Title"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>Start Date</Label>
+                                                        <Input
+                                                            type="month"
+                                                            {...form.register(`workExperience.${index}.startDate`)}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>End Date</Label>
+                                                        <Input
+                                                            type="month"
+                                                            {...form.register(`workExperience.${index}.endDate`)}
+                                                        />
+                                                        <p className="text-[10px] text-muted-foreground">Leave empty if currently working here</p>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Description</Label>
+                                                    <textarea
+                                                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                                        {...form.register(`workExperience.${index}.description`)}
+                                                        placeholder="Describe your responsibilities..."
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Location</Label>
+                                                    <Input
+                                                        {...form.register(`workExperience.${index}.location`)}
+                                                        placeholder="e.g. Remote, Bangalore"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 ) : (
-                                    <p className="text-sm text-muted-foreground italic">
-                                        No work experience added yet.
-                                    </p>
+                                    profile.workExperience && profile.workExperience.length > 0 ? (
+                                        profile.workExperience.map((work: any, i: number) => (
+                                            <div key={i} className="relative border-l-2 border-primary/20 pl-4 pb-4 last:pb-0">
+                                                <h3 className="font-semibold">{work.role}</h3>
+                                                <div className="text-primary font-medium">{work.company}</div>
+                                                <div className="text-sm text-muted-foreground mb-2">
+                                                    {work.startDate} - {work.endDate || "Present"}
+                                                    {work.location && ` • ${work.location}`}
+                                                </div>
+                                                <p className="text-sm text-gray-600 line-clamp-5 whitespace-pre-wrap">
+                                                    {work.description}
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground italic">
+                                            No work experience added yet.
+                                        </p>
+                                    )
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Certifications Section */}
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle className="flex items-center gap-2">
+                                    <Sparkles className="h-5 w-5 text-blue-600" />
+                                    Certifications
+                                </CardTitle>
+                                {isEditing && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => appendCertification({ title: "", issuer: "", url: "", dateIssued: "" })}
+                                    >
+                                        <Plus className="h-4 w-4 mr-2" /> Add
+                                    </Button>
+                                )}
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                {isEditing ? (
+                                    <div className="space-y-6">
+                                        {certificationFields.map((field, index) => (
+                                            <div key={field.id} className="grid gap-4 p-4 border rounded-lg relative bg-muted/20">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
+                                                    onClick={() => removeCertification(index)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label>Title</Label>
+                                                        <Input {...form.register(`certifications.${index}.title`)} placeholder="Certificate Name" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>Issuer</Label>
+                                                        <Input {...form.register(`certifications.${index}.issuer`)} placeholder="Issuing Org" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>Date Issued</Label>
+                                                        <Input type="month" {...form.register(`certifications.${index}.dateIssued`)} />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>URL</Label>
+                                                        <Input {...form.register(`certifications.${index}.url`)} placeholder="https://..." />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    profile.certifications && profile.certifications.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {profile.certifications.map((cert: any, i: number) => (
+                                                <div key={i} className="flex justify-between items-start border-b pb-4 last:border-0 last:pb-0">
+                                                    <div>
+                                                        <div className="font-medium">{cert.title}</div>
+                                                        <div className="text-sm text-muted-foreground">{cert.issuer} • {cert.dateIssued}</div>
+                                                    </div>
+                                                    {cert.url && (
+                                                        <a href={cert.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs flex items-center gap-1">
+                                                            <ExternalLink className="h-3 w-3" /> Verify
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground italic">No certifications added yet.</p>
+                                    )
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Research Papers Section */}
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileText className="h-5 w-5 text-blue-600" />
+                                    Research Papers
+                                </CardTitle>
+                                {isEditing && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => appendResearchPaper({ title: "", abstract: "", url: "", publicationDate: "" })}
+                                    >
+                                        <Plus className="h-4 w-4 mr-2" /> Add
+                                    </Button>
+                                )}
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                {isEditing ? (
+                                    <div className="space-y-6">
+                                        {researchPaperFields.map((field, index) => (
+                                            <div key={field.id} className="grid gap-4 p-4 border rounded-lg relative bg-muted/20">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
+                                                    onClick={() => removeResearchPaper(index)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label>Title</Label>
+                                                        <Input {...form.register(`researchPapers.${index}.title`)} placeholder="Paper Title" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>Date</Label>
+                                                        <Input type="month" {...form.register(`researchPapers.${index}.publicationDate`)} />
+                                                    </div>
+                                                    <div className="space-y-2 md:col-span-2">
+                                                        <Label>URL</Label>
+                                                        <Input {...form.register(`researchPapers.${index}.url`)} placeholder="https://..." />
+                                                    </div>
+                                                    <div className="space-y-2 md:col-span-2">
+                                                        <Label>Abstract</Label>
+                                                        <textarea
+                                                            className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                                            {...form.register(`researchPapers.${index}.abstract`)}
+                                                            placeholder="Short abstract..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    profile.researchPapers && profile.researchPapers.length > 0 ? (
+                                        <div className="space-y-6">
+                                            {profile.researchPapers.map((paper: any, i: number) => (
+                                                <div key={i}>
+                                                    <div className="font-medium flex items-center justify-between">
+                                                        <span>{paper.title}</span>
+                                                        {paper.url && (
+                                                            <a href={paper.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs flex items-center gap-1">
+                                                                <ExternalLink className="h-3 w-3" /> Link
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground mb-1">{paper.publicationDate}</div>
+                                                    <p className="text-sm text-gray-600 line-clamp-3">{paper.abstract}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground italic">No research papers added yet.</p>
+                                    )
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Achievements Section */}
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle className="flex items-center gap-2">
+                                    <Trophy className="h-5 w-5 text-blue-600" />
+                                    Achievements
+                                </CardTitle>
+                                {isEditing && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => appendAchievement({ title: "", description: "", date: "", issuer: "" })}
+                                    >
+                                        <Plus className="h-4 w-4 mr-2" /> Add
+                                    </Button>
+                                )}
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                {isEditing ? (
+                                    <div className="space-y-6">
+                                        {achievementFields.map((field, index) => (
+                                            <div key={field.id} className="grid gap-4 p-4 border rounded-lg relative bg-muted/20">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
+                                                    onClick={() => removeAchievement(index)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label>Title</Label>
+                                                        <Input {...form.register(`achievements.${index}.title`)} placeholder="Title" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>Date</Label>
+                                                        <Input type="month" {...form.register(`achievements.${index}.date`)} />
+                                                    </div>
+                                                    <div className="space-y-2 md:col-span-2">
+                                                        <Label>Issuer</Label>
+                                                        <Input {...form.register(`achievements.${index}.issuer`)} placeholder="Organization / Event" />
+                                                    </div>
+                                                    <div className="space-y-2 md:col-span-2">
+                                                        <Label>Description</Label>
+                                                        <textarea
+                                                            className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                                            {...form.register(`achievements.${index}.description`)}
+                                                            placeholder="Details..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    profile.achievements && profile.achievements.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {profile.achievements.map((ach: any, i: number) => (
+                                                <div key={i} className="border-b pb-4 last:border-0 last:pb-0">
+                                                    <div className="font-medium">{ach.title}</div>
+                                                    <div className="text-sm text-muted-foreground">{ach.issuer} • {ach.date}</div>
+                                                    <p className="text-sm text-gray-600 mt-1">{ach.description}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground italic">No achievements added yet.</p>
+                                    )
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Soft Skills Section */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-xl">Soft Skills</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex flex-wrap gap-2">
+                                    {(form.watch("softSkills") || profile.softSkills || []).map((skill: string, index: number) => (
+                                        <Badge key={index} variant="secondary" className="px-3 py-1">
+                                            {skill}
+                                            {isEditing && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-4 w-4 ml-2 hover:text-destructive p-0"
+                                                    onClick={() => {
+                                                        const current = form.getValues("softSkills") || [];
+                                                        form.setValue("softSkills", current.filter((_: any, i: number) => i !== index));
+                                                    }}
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </Button>
+                                            )}
+                                        </Badge>
+                                    ))}
+                                    {(!form.watch("softSkills")?.length && (!profile.softSkills || profile.softSkills.length === 0)) && (
+                                        <p className="text-sm text-muted-foreground italic">No soft skills added yet.</p>
+                                    )}
+                                </div>
+
+                                {isEditing && (
+                                    <div className="flex gap-2 max-w-sm">
+                                        <Input
+                                            value={softSkillInput}
+                                            onChange={(e) => setSoftSkillInput(e.target.value)}
+                                            placeholder="Add soft skill"
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    e.preventDefault();
+                                                    if (softSkillInput.trim()) {
+                                                        const current = form.getValues("softSkills") || [];
+                                                        if (!current.includes(softSkillInput.trim())) {
+                                                            form.setValue("softSkills", [...current, softSkillInput.trim()]);
+                                                        }
+                                                        setSoftSkillInput("");
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                        <Button
+                                            type="button"
+                                            size="icon"
+                                            onClick={() => {
+                                                if (softSkillInput.trim()) {
+                                                    const current = form.getValues("softSkills") || [];
+                                                    if (!current.includes(softSkillInput.trim())) {
+                                                        form.setValue("softSkills", [...current, softSkillInput.trim()]);
+                                                    }
+                                                    setSoftSkillInput("");
+                                                }
+                                            }}
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 )}
                             </CardContent>
                         </Card>

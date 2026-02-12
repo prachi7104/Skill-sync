@@ -209,6 +209,7 @@ export default function OnboardingResumeClient() {
                                 type="file"
                                 accept=".pdf,.docx,application/pdf"
                                 className="hidden"
+                                style={{ display: "none" }}
                                 onChange={handleFileUpload}
                                 disabled={isProcessing}
                             />
@@ -235,6 +236,7 @@ export default function OnboardingResumeClient() {
                                 type="file"
                                 accept=".pdf,.docx,application/pdf"
                                 className="hidden"
+                                style={{ display: "none" }}
                                 onChange={handleFileUpload}
                             />
                         </div>
@@ -254,6 +256,7 @@ export default function OnboardingResumeClient() {
                             type="file"
                             accept=".pdf,.docx,application/pdf"
                             className="hidden"
+                            style={{ display: "none" }}
                             onChange={handleFileUpload}
                         />
                         <p className="text-xs text-muted-foreground">Supported: PDF, DOCX (max 2MB)</p>

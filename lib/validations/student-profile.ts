@@ -89,6 +89,13 @@ export const achievementSchema = z.object({
     issuer: z.string().max(200).optional(),
 });
 
+export const researchPaperSchema = z.object({
+    title: z.string().min(1, "Title is required").max(200),
+    abstract: z.string().max(1000).optional(),
+    url: z.string().url().optional().or(z.literal("")),
+    publicationDate: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")),
+});
+
 // ── Composite profile schema with array limits ──────────────────────────────
 
 export const studentProfileSchema = z.object({
@@ -138,6 +145,8 @@ export const studentProfileSchema = z.object({
     workExperience: z.array(workExperienceSchema).max(10, "Maximum 10 work experiences allowed").optional(),
     certifications: z.array(certificationSchema).max(20).optional(),
     achievements: z.array(achievementSchema).max(20).optional(),
+    researchPapers: z.array(researchPaperSchema).max(20).optional(),
+    softSkills: z.array(z.string().max(50)).max(20).optional(),
 });
 
 export type StudentProfileInput = z.infer<typeof studentProfileSchema>;

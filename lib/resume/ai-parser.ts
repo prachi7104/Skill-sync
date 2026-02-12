@@ -6,14 +6,16 @@
  *     causing a silent fallback to the regex parser.  Resume uploads are already
  *     gated by auth + file-type validation, so the guard is unnecessary here.
  *
- * Model priority:
- *   1. gemini-2.5-flash         (Google — fast, structured JSON)
- *   2. gemini-2.5-flash-lite    (Google — lighter, still good)
- *   3. llama-3.3-70b-versatile  (Groq  — fallback)
- *   4. Regex fallback            (last resort)
+ * STRICT Fallback Policy — Only approved models:
+ *   1. gemini-3-flash           (Google — fastest, primary)
+ *   2. gemini-2.5-flash-lite    (Google — lighter fallback)
+ *   3. gemini-2.5-flash         (Google — robust)
+ *   4. gemma-3-27b              (Google — complex reasoning)
+ *   5. llama-3.3-70b-versatile  (Groq  — throughput fallback)
+ *   6. Regex fallback           (last resort)
  *
- * Each model attempt is validated: if critical fields are missing the next
- * model is tried automatically.
+ * Timeouts: 10s Google tier-1, 8s Groq, 20s heavy models (Gemma/GPT-OSS).
+ * Retry: 1 retry with 300ms jitter on 5xx/timeout, then next fallback.
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -33,20 +35,53 @@ const groqClient = env.GROQ_API_KEY
     : null;
 
 // ============================================================================
-// MODEL CHAIN — Tried in order until one produces valid output
+// MODEL CHAIN — Strict fallback policy (NO Mistral, NO unapproved models)
 // ============================================================================
 
 interface ModelDef {
     id: string;
     provider: "google" | "groq";
     label: string;
+    timeoutMs: number;
 }
 
 const MODEL_CHAIN: ModelDef[] = [
-    { id: "llama-3.3-70b-versatile", provider: "groq", label: "Groq Llama 3.3 70B" },
-    { id: "gemini-2.5-flash", provider: "google", label: "Gemini 2.5 Flash" },
-    { id: "gemini-2.5-flash-lite", provider: "google", label: "Gemini 2.5 Flash Lite" },
+    { id: "gemini-3-flash", provider: "google", label: "Gemini 3 Flash", timeoutMs: 10_000 },
+    { id: "gemini-2.5-flash-lite", provider: "google", label: "Gemini 2.5 Flash Lite", timeoutMs: 10_000 },
+    { id: "gemini-2.5-flash", provider: "google", label: "Gemini 2.5 Flash", timeoutMs: 10_000 },
+    { id: "gemma-3-27b", provider: "google", label: "Gemma 3 27B", timeoutMs: 20_000 },
+    { id: "llama-3.3-70b-versatile", provider: "groq", label: "Groq Llama 3.3 70B", timeoutMs: 8_000 },
 ];
+
+// ============================================================================
+// TIMEOUT & RETRY HELPERS
+// ============================================================================
+
+/** Wraps a promise with a timeout. Rejects with TimeoutError if exceeded. */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(`[Timeout] ${label} exceeded ${ms}ms`)), ms);
+        promise.then(
+            (val) => { clearTimeout(timer); resolve(val); },
+            (err) => { clearTimeout(timer); reject(err); },
+        );
+    });
+}
+
+/** Adds 0-300ms random jitter for retry backoff. */
+function jitterMs(): number {
+    return Math.floor(Math.random() * 300);
+}
+
+/** Returns true if error is retriable (5xx, timeout, network). */
+function isRetriable(err: unknown): boolean {
+    if (err instanceof Error) {
+        const msg = err.message.toLowerCase();
+        if (msg.includes("timeout") || msg.includes("5") || msg.includes("network") || msg.includes("econnreset") || msg.includes("fetch failed")) return true;
+        // Rate limit => not retriable on same model, but should fallback
+    }
+    return false;
+}
 
 // ============================================================================
 // SCHEMA / INTERFACE
@@ -409,47 +444,62 @@ export async function parseResumeWithAI(resumeText: string): Promise<ParsedResum
     let bestModel = "";
 
     for (const model of MODEL_CHAIN) {
-        try {
-            let rawResponse: string;
-            if (model.provider === "google") {
-                rawResponse = await callGemini(model.id, resumeText);
-            } else {
-                rawResponse = await callGroq(model.id, resumeText);
+        let attempts = 0;
+        const maxAttempts = 2; // 1 initial + 1 retry
+
+        while (attempts < maxAttempts) {
+            attempts++;
+            try {
+                let rawResponse: string;
+                const callFn = model.provider === "google"
+                    ? callGemini(model.id, resumeText)
+                    : callGroq(model.id, resumeText);
+
+                rawResponse = await withTimeout(callFn, model.timeoutMs, model.label);
+
+                // Extract JSON from raw response
+                const jsonObj = extractJSON(rawResponse);
+                if (!jsonObj) {
+                    console.error(`[AI Parser] ❌ ${model.label}: Could not extract JSON.`);
+                    break; // Bad output, skip to next model (no retry)
+                }
+
+                // Validate and build typed result
+                const parsed = validateAndBuild(jsonObj);
+                if (!parsed) {
+                    console.error(`[AI Parser] ❌ ${model.label}: Validation failed`);
+                    break; // Schema fail, skip to next model
+                }
+
+                // Quality check
+                const score = qualityScore(parsed);
+
+                // Accept if score is good enough (≥30 = at least name + some data)
+                if (score >= 30) {
+                    console.log(`[AI Parser] ✅ ${model.label} succeeded (score ${score}, attempt ${attempts})`);
+                    return parsed;
+                }
+
+                // Track best attempt even if below threshold
+                if (score > bestScore) {
+                    bestResult = parsed;
+                    bestScore = score;
+                    bestModel = model.label;
+                }
+                break; // Got a result (even if low score), move to next model
+
+            } catch (error: unknown) {
+                const msg = error instanceof Error ? error.message : String(error);
+                console.error(`[AI Parser] ❌ ${model.label} attempt ${attempts} failed: ${msg}`);
+
+                if (attempts < maxAttempts && isRetriable(error)) {
+                    const delay = 300 + jitterMs();
+                    console.log(`[AI Parser] ⏳ Retrying ${model.label} in ${delay}ms...`);
+                    await new Promise(r => setTimeout(r, delay));
+                    continue;
+                }
+                break; // Non-retriable or max retries exhausted, next model
             }
-
-            // Extract JSON from raw response
-            const jsonObj = extractJSON(rawResponse);
-            if (!jsonObj) {
-                console.error(`[AI Parser] ❌ ${model.label}: Could not extract JSON.`);
-                continue;
-            }
-
-            // Validate and build typed result
-            const parsed = validateAndBuild(jsonObj);
-            if (!parsed) {
-                console.error(`[AI Parser] ❌ ${model.label}: Validation failed`);
-                continue;
-            }
-
-            // Quality check
-            const score = qualityScore(parsed);
-
-            // Accept if score is good enough (≥30 = at least name + some data)
-            if (score >= 30) {
-                return parsed;
-            }
-
-            // Track best attempt even if below threshold
-            if (score > bestScore) {
-                bestResult = parsed;
-                bestScore = score;
-                bestModel = model.label;
-            }
-
-        } catch (error: unknown) {
-            const msg = error instanceof Error ? error.message : String(error);
-            console.error(`[AI Parser] ❌ ${model.label} failed: ${msg}`);
-            continue;
         }
     }
 

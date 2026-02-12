@@ -26,10 +26,30 @@ export async function POST(req: NextRequest) {
         }
 
         // Get student ID and profile data
-        const [student] = await db
+        // Primary: look up by session user ID (DB UUID stored in JWT)
+        let student;
+        const directResult = await db
             .select()
             .from(students)
             .where(eq(students.id, session.user.id));
+        student = directResult[0];
+
+        // Fallback: if ID lookup fails (e.g. JWT has provider ID instead of DB ID),
+        // look up user by email first, then fetch student by that user's ID
+        if (!student && session.user.email) {
+            const { users } = await import("@/lib/db/schema");
+            const [dbUser] = await db
+                .select()
+                .from(users)
+                .where(eq(users.email, session.user.email.toLowerCase()));
+            if (dbUser) {
+                const [fallbackStudent] = await db
+                    .select()
+                    .from(students)
+                    .where(eq(students.id, dbUser.id));
+                student = fallbackStudent;
+            }
+        }
 
         if (!student) {
             return NextResponse.json({ error: "Student profile not found" }, { status: 404 });

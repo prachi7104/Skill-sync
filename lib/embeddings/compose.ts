@@ -106,14 +106,19 @@ export function composeStudentEmbeddingText(profile: {
 /**
  * Composes embedding text from a job description.
  *
- * For parsed JDs:
- * - Job title
- * - Company
- * - Responsibilities
- * - Requirements (required + preferred skills)
- * - Tech stack (from skills)
+ * For parsed JDs, focuses on HIGH-SIGNAL fields only:
+ * - Role title (what the job is)
+ * - Responsibilities (what the job does)
+ * - Required skills (must-have technical skills)
+ * - Preferred skills (nice-to-have)
+ * - Qualifications (education / experience requirements)
  *
- * For raw JDs, returns the raw text directly.
+ * EXCLUDED (noise that hurts matching quality):
+ * - Company name (irrelevant to candidate skills)
+ * - Location / logistics
+ * - Generic summary / boilerplate
+ *
+ * For raw JDs, returns the raw text with the role title prefix.
  *
  * @param jd - Job description data (parsed or raw)
  * @returns Deterministic text representation for embedding generation
@@ -124,24 +129,26 @@ export function composeJDEmbeddingText(jd: {
   roleTitle: string;
   company: string;
 }): string {
-  // If we have a parsed JD, use structured data
+  // If we have a parsed JD, use structured data (no company / summary)
   if (jd.parsedJd) {
     const parts: string[] = [];
 
-    // Title and company
-    parts.push(`${jd.parsedJd.title} at ${jd.parsedJd.company}`);
+    // Role title only (no company)
+    if (jd.parsedJd.title) {
+      parts.push(`Role: ${jd.parsedJd.title}`);
+    }
 
-    // Responsibilities
+    // Responsibilities — what they'll actually do
     if (jd.parsedJd.responsibilities && jd.parsedJd.responsibilities.length > 0) {
       parts.push(`Responsibilities: ${jd.parsedJd.responsibilities.join("; ")}`);
     }
 
-    // Requirements (required skills)
+    // Requirements (required skills) — highest signal
     if (jd.parsedJd.requiredSkills && jd.parsedJd.requiredSkills.length > 0) {
       parts.push(`Required Skills: ${jd.parsedJd.requiredSkills.join(", ")}`);
     }
 
-    // Preferred skills (tech stack)
+    // Preferred skills
     if (jd.parsedJd.preferredSkills && jd.parsedJd.preferredSkills.length > 0) {
       parts.push(`Preferred Skills: ${jd.parsedJd.preferredSkills.join(", ")}`);
     }
@@ -151,16 +158,13 @@ export function composeJDEmbeddingText(jd: {
       parts.push(`Qualifications: ${jd.parsedJd.qualifications.join("; ")}`);
     }
 
-    // Summary
-    if (jd.parsedJd.summary) {
-      parts.push(jd.parsedJd.summary);
-    }
+    // NOTE: Intentionally omitting jd.parsedJd.company and jd.parsedJd.summary
 
     return parts.join(". ");
   }
 
-  // Fallback to raw JD with title and company prefix
-  return `${jd.roleTitle} at ${jd.company}. ${jd.rawJd}`;
+  // Fallback to raw JD with role title prefix only (no company)
+  return `${jd.roleTitle}. ${jd.rawJd}`;
 }
 
 /**

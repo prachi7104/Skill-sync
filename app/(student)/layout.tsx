@@ -1,7 +1,9 @@
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireRole, getStudentProfile } from "@/lib/auth/helpers";
 import Header from "@/components/shared/header";
 import Link from "next/link";
 import { StudentProvider } from "@/app/(student)/providers/student-provider";
+import { db } from "@/lib/db";
+import { students } from "@/lib/db/schema";
 
 const studentLinks = [
     { href: "/student/dashboard", label: "Dashboard" },
@@ -13,9 +15,12 @@ const studentLinks = [
 /**
  * StudentLayout - Server Component
  * 
- * All auth/role checks happen server-side. No client-side hydration mismatch
- * because we're not using useState/useEffect for auth rendering logic.
- * Unauthorized users are redirected server-side before any HTML is sent.
+ * Auth check: requires the user to be a student but does NOT require a
+ * completed student profile. This allows onboarding pages (which live under
+ * this layout) to render without causing an infinite redirect loop.
+ * 
+ * If the student profile row doesn't exist (edge case: auth created user
+ * but profile insert failed), we auto-create it here.
  */
 
 export default async function StudentLayout({
@@ -23,8 +28,23 @@ export default async function StudentLayout({
 }: {
     children: React.ReactNode;
 }) {
-    // Server-side auth check - throws redirect if not authenticated/authorized
-    const { user, profile } = await requireStudentProfile();
+    // Server-side auth check - redirects to /login if not authenticated,
+    // to /unauthorized if not a student. Does NOT require student profile.
+    const user = await requireRole(["student"]);
+
+    // Try to fetch the student profile (may not exist yet for brand-new users)
+    let profile = await getStudentProfile(user.id);
+
+    // Auto-create student profile row if missing (defensive: signIn callback
+    // should have created this, but handle edge cases)
+    if (!profile) {
+        try {
+            await db.insert(students).values({ id: user.id }).onConflictDoNothing();
+            profile = await getStudentProfile(user.id);
+        } catch (e) {
+            console.error("[StudentLayout] Failed to auto-create student profile:", e);
+        }
+    }
 
     return (
         <StudentProvider initialStudent={profile} initialUser={user}>

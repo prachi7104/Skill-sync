@@ -40,7 +40,7 @@ export default function OnboardingLayout({
                 <div className="space-y-2">
                     <div className="flex justify-between text-sm font-medium text-muted-foreground">
                         <span>Onboarding</span>
-                        <span>Step {currentStep} of {TOTAL_ONBOARDING_STEPS - 1}</span>
+                        <span>Step {currentStep + 1} of {TOTAL_ONBOARDING_STEPS}</span>
                     </div>
                     <Progress value={progress} className="h-2" />
                 </div>

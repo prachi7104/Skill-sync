@@ -117,6 +117,12 @@ export async function PATCH(req: NextRequest) {
         if (validatedData.achievements !== undefined) {
             updateData.achievements = validatedData.achievements;
         }
+        if (validatedData.researchPapers !== undefined) {
+            updateData.researchPapers = validatedData.researchPapers;
+        }
+        if (validatedData.softSkills !== undefined) {
+            updateData.softSkills = validatedData.softSkills;
+        }
 
         if (Object.keys(updateData).length === 0) {
             return NextResponse.json(
