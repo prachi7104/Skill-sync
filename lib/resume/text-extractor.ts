@@ -112,8 +112,15 @@ export async function extractTextFromPDFServer(
     // Use the legacy build that works in Node.js (no DOMMatrix dependency)
     const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
-    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) })
-        .promise;
+    // Disable the worker — Vercel Lambda doesn't bundle pdf.worker.mjs
+    // and we only need text extraction, not rendering.
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+
+    const pdf = await pdfjsLib.getDocument({
+        data: new Uint8Array(arrayBuffer),
+        disableAutoFetch: true,
+        useWorkerFetch: false,
+    }).promise;
     const pages: string[] = [];
 
     for (let i = 1; i <= pdf.numPages; i++) {
