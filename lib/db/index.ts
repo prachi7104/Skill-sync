@@ -27,6 +27,7 @@ const client = globalThis._postgresClient || postgres(connectionString, {
   max: MAX_POOL_SIZE,
   idle_timeout: 20,
   connect_timeout: 10,
+  ssl: "require", // Ensure SSL for Supabase
   connection: {
     application_name: "skillsync_app",
     statement_timeout: 30000,

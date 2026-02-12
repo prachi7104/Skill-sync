@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireStudentProfile } from "@/lib/auth/helpers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
-import { students, jobs } from "@/lib/db/schema";
+import { students, users, jobs } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { studentProfileSchema } from "@/lib/validations/student-profile";
 import { computeCompleteness } from "@/lib/profile/completeness";
@@ -12,13 +14,46 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
     try {
-        const { user, profile } = await requireStudentProfile();
-        return NextResponse.json({ user, profile });
-    } catch (error) {
-        if (error instanceof Error && (error.message.includes("Unauthorized") || error.message.includes("Forbidden"))) {
-            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        console.log("[API] /api/student/profile - Check started");
+
+        // 1. Check Session
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.email) {
+            console.log("[API] /api/student/profile - No Session");
+            return NextResponse.json({ message: "Unauthorized: No Session" }, { status: 401 });
         }
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+        console.log(`[API] Session found for: ${session.user.email}`);
+
+        // 2. Check User in DB
+        const user = await db.query.users.findFirst({
+            where: eq(users.email, session.user.email),
+        });
+
+        if (!user) {
+            console.log("[API] User not found in DB");
+            return NextResponse.json({ message: "User not found" }, { status: 404 });
+        }
+
+        // 3. Check Student Profile
+        const profile = await db.query.students.findFirst({
+            where: eq(students.id, user.id),
+        });
+
+        if (!profile) {
+            console.log("[API] Student profile missing for user", user.id);
+            // Do NOT redirect here for API calls
+            return NextResponse.json({ message: "Profile missing" }, { status: 404 });
+        }
+
+        console.log("[API] Success");
+        return NextResponse.json({ user, profile });
+
+    } catch (error) {
+        console.error("[API] Error in /api/student/profile:", error);
+        return NextResponse.json({
+            message: "Internal Server Error",
+            error: error instanceof Error ? error.message : String(error)
+        }, { status: 500 });
     }
 }
 

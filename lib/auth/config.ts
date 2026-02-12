@@ -65,7 +65,9 @@ export const authOptions: NextAuthOptions = {
                 console.log("[auth] 🔌 Initializing fresh DB connection for this request...");
                 localClient = postgres(process.env.DATABASE_URL, {
                     prepare: false,
-                    connect_timeout: 10
+                    connect_timeout: 10,
+                    ssl: "require", // Required for Supabase Transaction Pooler
+                    max: 1 // Single connection for this check
                 });
                 localDb = drizzle(localClient, { schema });
 
@@ -156,11 +158,8 @@ export const authOptions: NextAuthOptions = {
                 return "/login?error=DatabaseError";
             } finally {
                 if (localClient) {
-                    // console.log("[auth] 🧹 Closing local DB connection...");
-                    // localClient.end(); 
-                    // Note: In serverless, we might leave it open, but for "fresh connection" guarantee request,
-                    // we should probably close it... but postgres-js handles pool. 
-                    // Let's NOT close it aggressively to avoid 'connection closed' errors if asyncs are pending.
+                    console.log("[auth] 🧹 Closing local DB connection...");
+                    await localClient.end({ timeout: 5 }); // Close with a timeout
                 }
             }
         },
