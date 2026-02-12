@@ -16,6 +16,7 @@ import { type StudentProfileInput } from "@/lib/validations/student-profile";
 // Maximum execution time (Next.js default is often 10-60s, Vercel Pro is 60s)
 // This process is heavy (3 AI calls + 2 Embeddings), might take 30s+.
 export const maxDuration = 60;
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
     try {

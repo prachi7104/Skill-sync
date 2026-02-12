@@ -231,11 +231,11 @@ export default function DetailedSandboxPage() {
                     <CardContent className="grid grid-cols-2 gap-8">
                         <div>
                             <div className="text-sm text-gray-500 mb-1">Resume Semantic Similarity</div>
-                            <div className="text-xl font-mono">{(result.resumeSemanticScore * 100).toFixed(1)}%</div>
+                            <div className="text-xl font-mono">{(result.resumeSemanticScore * 100)?.toFixed(1) || "0.0"}%</div>
                         </div>
                         <div>
                             <div className="text-sm text-gray-500 mb-1">Profile Semantic Similarity</div>
-                            <div className="text-xl font-mono">{(result.profileSemanticScore * 100).toFixed(1)}%</div>
+                            <div className="text-xl font-mono">{(result.profileSemanticScore * 100)?.toFixed(1) || "0.0"}%</div>
                         </div>
                     </CardContent>
                 </Card>
