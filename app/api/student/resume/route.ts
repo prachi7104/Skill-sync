@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import { db } from "@/lib/db";
 import { students, jobs } from "@/lib/db/schema";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireStudentProfileAPI } from "@/lib/auth/helpers";
 import { eq, and, sql } from "drizzle-orm";
 import { processResumeParseJobs } from "@/lib/workers/parse-resume";
 
@@ -17,7 +17,7 @@ cloudinary.config({
 export async function POST(req: NextRequest) {
     try {
         // 1. Auth Check
-        const { user, profile } = await requireStudentProfile();
+        const { user, profile } = await requireStudentProfileAPI();
 
         // 2. Parse Form Data
         const formData = await req.formData();

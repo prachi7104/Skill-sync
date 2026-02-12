@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireStudentProfileAPI } from "@/lib/auth/helpers";
 import { enforceSandboxLimits, incrementSandboxUsage, enforceProfileGate } from "@/lib/guardrails";
 import { GuardrailViolation } from "@/lib/guardrails/errors";
 import { db } from "@/lib/db";
@@ -99,7 +99,7 @@ function mapProfileToResumeData(profile: any, skills: Skill[], projects: Project
 export async function POST(req: NextRequest) {
   try {
     // 1. Auth — require student with profile
-    let { user, profile } = await requireStudentProfile();
+    let { user, profile } = await requireStudentProfileAPI();
 
     // Fix: If embedding is missing (e.g. from legacy profile or failed job), generate it now
     if (!profile.embedding) {

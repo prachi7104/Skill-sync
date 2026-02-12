@@ -82,3 +82,27 @@ export async function requireStudentProfile() {
 
     return { user, profile };
 }
+
+/**
+ * API-friendly version of requireStudentProfile.
+ * Throws errors instead of redirecting, so API routes can return JSON.
+ */
+export async function requireStudentProfileAPI() {
+    const user = await getCurrentUser();
+
+    if (!user) {
+        throw new Error("Unauthorized: No Session");
+    }
+
+    if (user.role !== "student") {
+        throw new Error("Forbidden: Not a student");
+    }
+
+    const profile = await getStudentProfile(user.id);
+
+    if (!profile) {
+        throw new Error("Profile Not Found");
+    }
+
+    return { user, profile };
+}
