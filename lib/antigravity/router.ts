@@ -51,8 +51,8 @@ export interface ModelRegistryEntry {
 
 export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
   // TIER 1: Primary Models (Fast, Long-Context, Free-Tier Friendly)
-  gemini_3_flash: {
-    id: "gemini-3-flash",
+  gemini_2_0_flash: {
+    id: "gemini-2.0-flash",
     provider: "google",
     tier: 1,
     rpm: 15,
@@ -235,9 +235,9 @@ export interface TaskDefinition {
 }
 
 export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
-  // Resume Processing
+  // Resume Processing — Groq/Gemma first for JSON tasks, Gemini for explanations only
   parse_resume_full: {
-    priority: ["gemini_3_flash", "gemini_2_5_flash_lite", "gemini_2_5_flash", "gemma_3_27b", "groq_llama_3_3_70b"],
+    priority: ["groq_llama_3_3_70b", "gemma_3_27b", "gemini_2_0_flash", "gemini_2_5_flash_lite"],
     requiresLongContext: true,
     requiresStructured: true,
     maxLatency: 60000, // 60s
@@ -245,7 +245,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
 
   parse_resume_fast: {
-    priority: ["gemini_2_5_flash_lite", "groq_llama_3_1_8b"],
+    priority: ["groq_llama_3_1_8b", "gemma_3_27b", "gemini_2_5_flash_lite"],
     requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 10000, // 10s
@@ -254,7 +254,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
 
   // Content Generation
   generate_questions: {
-    priority: ["gemini_3_flash", "groq_llama_3_3_70b"],
+    priority: ["gemini_2_0_flash", "groq_llama_3_3_70b"],
     requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 15000,
@@ -262,7 +262,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
 
   enhance_jd: {
-    priority: ["gemini_3_flash", "groq_llama_3_3_70b"],
+    priority: ["groq_llama_3_3_70b", "gemma_3_27b", "gemini_2_0_flash"],
     requiresLongContext: false, // JD is usually short enough
     requiresStructured: true,
     maxLatency: 20000,
@@ -270,7 +270,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
 
   parse_jd_advanced: {
-    priority: ["gemini_3_flash", "groq_llama_3_3_70b"],
+    priority: ["groq_llama_3_3_70b", "gemma_3_27b", "gemini_2_0_flash"],
     requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 30000,

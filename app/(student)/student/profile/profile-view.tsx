@@ -117,10 +117,15 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
             semester: profile.semester || undefined,
             tenthPercentage: profile.tenthPercentage || undefined,
             twelfthPercentage: profile.twelfthPercentage || undefined,
-            // Array fields
+            // Array fields - ALL must be present for useFieldArray to work
             skills: profile.skills || [],
             projects: profile.projects || [],
             codingProfiles: profile.codingProfiles || [],
+            workExperience: profile.workExperience || [],
+            certifications: profile.certifications || [],
+            researchPapers: profile.researchPapers || [],
+            achievements: profile.achievements || [],
+            softSkills: profile.softSkills || [],
         },
     });
 

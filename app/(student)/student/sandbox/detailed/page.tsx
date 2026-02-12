@@ -27,11 +27,10 @@ import { extractTextFromResume, cleanResumeText } from "@/lib/resume/text-extrac
 
 function RadarChart({ breakdown, label }: { breakdown: ScoreBreakdown; label: string }) {
     const dimensions = [
-        { key: "hardSkills", label: "Hard Skills", value: breakdown.hardSkills },
-        { key: "semantic", label: "Semantic", value: breakdown.semantic },
-        { key: "softSkills", label: "Soft Skills", value: breakdown.softSkills },
-        { key: "experience", label: "Experience", value: breakdown.experience },
-        { key: "evidenceQuality", label: "Evidence", value: breakdown.evidenceQuality },
+        { key: "hardSkills", label: "Hard Skills (20%)", value: breakdown.hardSkills },
+        { key: "softSkills", label: "Soft Skills (10%)", value: breakdown.softSkills },
+        { key: "experience", label: "Experience (10%)", value: breakdown.experience },
+        { key: "domainMatch", label: "Domain Match (60%)", value: breakdown.domainMatch },
     ];
 
     const cx = 120, cy = 120, maxR = 90;
@@ -226,10 +225,10 @@ export default function DetailedSandboxPage() {
     }
 
     function getScoreLabel(score: number): string {
-        if (score >= 75) return "Strong Match";
-        if (score >= 50) return "Moderate Match";
-        if (score >= 25) return "Weak Match";
-        return "Low Match";
+        if (score >= 85) return "Strong Match";
+        if (score >= 65) return "Interview";
+        if (score >= 50) return "Consider";
+        return "Weak Match";
     }
 
     // Memoize grouped skills
@@ -330,7 +329,7 @@ export default function DetailedSandboxPage() {
                                     </div>
                                     <div className="text-xs text-gray-500 mt-1">Resume Match</div>
                                     <Badge variant="outline" className="mt-2 text-xs" style={{ borderColor: getScoreColor(result.resumeMatchScore), color: getScoreColor(result.resumeMatchScore) }}>
-                                        {getScoreLabel(result.resumeMatchScore)}
+                                        {result.recommendation?.replace("_", " ") || getScoreLabel(result.resumeMatchScore)}
                                     </Badge>
                                 </div>
 
@@ -402,12 +401,36 @@ export default function DetailedSandboxPage() {
                             {/* Dimension bars for resume */}
                             <div className="mt-8 space-y-3">
                                 <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Resume Dimension Scores</h4>
-                                <ScoreBar label="Hard Skills (Required)" value={result.resumeScoreBreakdown.hardSkills} color={getScoreColor(result.resumeScoreBreakdown.hardSkills)} />
-                                <ScoreBar label="Semantic Alignment" value={result.resumeScoreBreakdown.semantic} color={getScoreColor(result.resumeScoreBreakdown.semantic)} />
-                                <ScoreBar label="Soft Skills (Preferred)" value={result.resumeScoreBreakdown.softSkills} color={getScoreColor(result.resumeScoreBreakdown.softSkills)} />
-                                <ScoreBar label="Evidence Quality" value={result.resumeScoreBreakdown.evidenceQuality} color={getScoreColor(result.resumeScoreBreakdown.evidenceQuality)} />
-                                <ScoreBar label="Experience Level" value={result.resumeScoreBreakdown.experience} color={getScoreColor(result.resumeScoreBreakdown.experience)} />
+                                <ScoreBar label="Hard Skills (20%)" value={result.resumeScoreBreakdown.hardSkills} color={getScoreColor(result.resumeScoreBreakdown.hardSkills)} />
+                                <ScoreBar label="Soft Skills (10%)" value={result.resumeScoreBreakdown.softSkills} color={getScoreColor(result.resumeScoreBreakdown.softSkills)} />
+                                <ScoreBar label="Experience Level (10%)" value={result.resumeScoreBreakdown.experience} color={getScoreColor(result.resumeScoreBreakdown.experience)} />
+                                <ScoreBar label="Domain Match (60%)" value={result.resumeScoreBreakdown.domainMatch} color={getScoreColor(result.resumeScoreBreakdown.domainMatch)} />
                             </div>
+
+                            {/* Red Flags */}
+                            {result.redFlags && result.redFlags.length > 0 && (
+                                <div className="mt-6 space-y-2">
+                                    <h4 className="text-sm font-semibold text-red-700 dark:text-red-400 flex items-center gap-1">
+                                        <AlertTriangle className="h-3.5 w-3.5" />
+                                        Red Flags ({result.redFlags.length})
+                                    </h4>
+                                    {result.redFlags.map((rf, i) => (
+                                        <div key={i} className={`flex items-start gap-2 p-3 rounded-lg border ${rf.severity === "Critical"
+                                            ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800"
+                                            : "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800"
+                                            }`}>
+                                            <XCircle className={`h-4 w-4 mt-0.5 shrink-0 ${rf.severity === "Critical" ? "text-red-600" : "text-amber-600"
+                                                }`} />
+                                            <div>
+                                                <span className={`text-xs font-semibold ${rf.severity === "Critical" ? "text-red-700 dark:text-red-300" : "text-amber-700 dark:text-amber-300"
+                                                    }`}>{rf.severity}</span>
+                                                <p className={`text-xs ${rf.severity === "Critical" ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"
+                                                    }`}>{rf.flag} ({rf.impact} pts)</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 

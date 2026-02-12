@@ -5,17 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, XCircle } from "lucide-react";
 
 interface SandboxResult {
     matchScore: number;
     semanticScore: number;
     structuredScore: number;
+    // New 4-dimension breakdown
+    hardSkillsScore: number;
+    softSkillsScore: number;
+    experienceScore: number;
+    domainMatchScore: number;
+    recommendation: string;
     matchedSkills: string[];
     missingSkills: string[];
     shortExplanation: string;
     detailedExplanation: string;
     isEligible: boolean;
     ineligibilityReason?: string;
+    redFlags?: Array<{ flag: string; severity: "Critical" | "Minor"; impact: number }>;
     usage: {
         dailyUsed: number;
         dailyLimit: number;
@@ -81,6 +90,13 @@ export default function QuickSandbox() {
         return "bg-red-500";
     }
 
+    function getRecommendationColor(rec: string): string {
+        if (rec === "STRONG_MATCH" || rec === "STRONG_HIRE") return "bg-green-100 text-green-800 border-green-300";
+        if (rec === "INTERVIEW" || rec === "HIRE") return "bg-blue-100 text-blue-800 border-blue-300";
+        if (rec === "CONSIDER" || rec === "HOLD") return "bg-yellow-100 text-yellow-800 border-yellow-300";
+        return "bg-red-100 text-red-800 border-red-300";
+    }
+
     return (
         <div className="space-y-6">
 
@@ -139,7 +155,7 @@ export default function QuickSandbox() {
             {/* Results */}
             {result && (
                 <div className="space-y-4">
-                    {/* Score Gauge */}
+                    {/* Score Gauge + Recommendation */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-lg">Match Score</CardTitle>
@@ -148,32 +164,62 @@ export default function QuickSandbox() {
                             <div className="flex items-center gap-6">
                                 <div className="text-center">
                                     <div className={`text-5xl font-bold ${getScoreColor(result.matchScore)}`}>
-                                        {result.matchScore.toFixed(1)}
+                                        {result.matchScore.toFixed(1)}%
                                     </div>
                                     <p className="text-xs text-gray-500 mt-1">out of 100</p>
+                                    {result.recommendation && (
+                                        <Badge variant="outline" className={`mt-2 text-xs ${getRecommendationColor(result.recommendation)}`}>
+                                            {result.recommendation.replace(/_/g, " ")}
+                                        </Badge>
+                                    )}
                                 </div>
                                 <div className="flex-1 space-y-3">
+                                    {/* 4-dimension breakdown */}
                                     <div>
                                         <div className="flex justify-between text-xs mb-1">
-                                            <span className="text-gray-600">Structured Score</span>
-                                            <span className="font-medium">{result.structuredScore.toFixed(1)}</span>
+                                            <span className="text-gray-600">Hard Skills (20%)</span>
+                                            <span className="font-medium">{(result.hardSkillsScore ?? result.structuredScore).toFixed(1)}%</span>
                                         </div>
                                         <div className="h-2 w-full rounded-full bg-gray-100">
                                             <div
-                                                className={`h-2 rounded-full transition-all ${getScoreBarColor(result.structuredScore)}`}
-                                                style={{ width: `${Math.min(result.structuredScore, 100)}%` }}
+                                                className={`h-2 rounded-full transition-all ${getScoreBarColor(result.hardSkillsScore ?? result.structuredScore)}`}
+                                                style={{ width: `${Math.min(result.hardSkillsScore ?? result.structuredScore, 100)}%` }}
                                             />
                                         </div>
                                     </div>
                                     <div>
                                         <div className="flex justify-between text-xs mb-1">
-                                            <span className="text-gray-600">Semantic Score</span>
-                                            <span className="font-medium">{result.semanticScore.toFixed(1)}</span>
+                                            <span className="text-gray-600">Soft Skills (10%)</span>
+                                            <span className="font-medium">{(result.softSkillsScore ?? 0).toFixed(1)}%</span>
                                         </div>
                                         <div className="h-2 w-full rounded-full bg-gray-100">
                                             <div
-                                                className={`h-2 rounded-full transition-all ${getScoreBarColor(result.semanticScore)}`}
-                                                style={{ width: `${Math.min(result.semanticScore, 100)}%` }}
+                                                className={`h-2 rounded-full transition-all ${getScoreBarColor(result.softSkillsScore ?? 0)}`}
+                                                style={{ width: `${Math.min(result.softSkillsScore ?? 0, 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span className="text-gray-600">Experience (10%)</span>
+                                            <span className="font-medium">{(result.experienceScore ?? 0).toFixed(1)}%</span>
+                                        </div>
+                                        <div className="h-2 w-full rounded-full bg-gray-100">
+                                            <div
+                                                className={`h-2 rounded-full transition-all ${getScoreBarColor(result.experienceScore ?? 0)}`}
+                                                style={{ width: `${Math.min(result.experienceScore ?? 0, 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span className="text-gray-600">Domain Match (60%)</span>
+                                            <span className="font-medium">{(result.domainMatchScore ?? result.semanticScore).toFixed(1)}%</span>
+                                        </div>
+                                        <div className="h-2 w-full rounded-full bg-gray-100">
+                                            <div
+                                                className={`h-2 rounded-full transition-all ${getScoreBarColor(result.domainMatchScore ?? result.semanticScore)}`}
+                                                style={{ width: `${Math.min(result.domainMatchScore ?? result.semanticScore, 100)}%` }}
                                             />
                                         </div>
                                     </div>
@@ -183,6 +229,25 @@ export default function QuickSandbox() {
                             {!result.isEligible && (
                                 <div className="mt-4 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
                                     <span className="font-medium">Not Eligible:</span> {result.ineligibilityReason}
+                                </div>
+                            )}
+
+                            {/* Red Flags */}
+                            {result.redFlags && result.redFlags.length > 0 && (
+                                <div className="mt-4 space-y-2">
+                                    <h4 className="text-sm font-semibold text-red-700 flex items-center gap-1">
+                                        <AlertTriangle className="h-3.5 w-3.5" />
+                                        Red Flags ({result.redFlags.length})
+                                    </h4>
+                                    {result.redFlags.map((rf, i) => (
+                                        <div key={i} className={`flex items-start gap-2 p-2 rounded-lg border text-xs ${rf.severity === "Critical"
+                                            ? "bg-red-50 border-red-200 text-red-700"
+                                            : "bg-amber-50 border-amber-200 text-amber-700"
+                                            }`}>
+                                            <XCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                                            <span>{rf.severity}: {rf.flag} ({rf.impact} pts)</span>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </CardContent>
@@ -290,3 +355,4 @@ export default function QuickSandbox() {
         </div>
     );
 }
+

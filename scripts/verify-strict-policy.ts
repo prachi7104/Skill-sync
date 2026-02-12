@@ -15,7 +15,7 @@ async function main() {
     // 1. Verify Model IDs
     console.log("1. Verifying Model IDs against Strict Policy:");
     const expectedModels: Record<string, string> = {
-        "gemini_3_flash": "gemini-3-flash",
+        "gemini_2_0_flash": "gemini-2.0-flash",
         "gemini_2_5_flash": "gemini-2.5-flash",
         "gemini_2_5_flash_lite": "gemini-2.5-flash-lite",
         "gemini_embedding": "gemini-embedding-1",
@@ -45,8 +45,8 @@ async function main() {
     console.log("   a) Resume Parsing (Chain Check)");
     try {
         const model = await router.selectModel("parse_resume_full");
-        console.log(`      Selected Model: ${model} (Should be gemini_3_flash)`);
-        if (model !== "gemini_3_flash") console.warn("      ⚠️  Primary model not selected (Rate limit?)");
+        console.log(`      Selected Model: ${model} (Should be gemini_2_0_flash)`);
+        if (model !== "gemini_2_0_flash") console.warn("      ⚠️  Primary model not selected (Rate limit?)");
 
         // Dry run execution
         // We use a safe test prompt
@@ -62,7 +62,7 @@ async function main() {
     console.log("   b) JD Enhancement (Chain Check)");
     try {
         const model = await router.selectModel("enhance_jd");
-        console.log(`      Selected Model: ${model} (Should be gemini_3_flash)`);
+        console.log(`      Selected Model: ${model} (Should be gemini_2_0_flash)`);
     } catch (e: any) {
         console.error(`      ❌ JD Check Failed: ${e.message}`);
     }

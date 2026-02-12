@@ -69,8 +69,8 @@ export const codingProfileSchema = z.object({
 export const workExperienceSchema = z.object({
     company: z.string().min(1, "Company is required").max(200),
     role: z.string().min(1, "Role is required").max(200),
-    description: z.string().min(1, "Description is required").max(1000),
-    startDate: z.string().regex(dateMonthRegex, "Use YYYY-MM format"),
+    description: z.string().max(1000).optional().or(z.literal("")),
+    startDate: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")),
     endDate: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")),
     location: z.string().max(200).optional(),
 });

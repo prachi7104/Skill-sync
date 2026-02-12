@@ -1,6 +1,6 @@
 "use server";
 
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireStudentProfile, requireRole, getStudentProfile } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { students, jobs } from "@/lib/db/schema";
 import type { CodingProfile, Achievement } from "@/lib/db/schema";
@@ -43,24 +43,35 @@ const VALID_TRANSITIONS: Record<number, number> = {
 };
 
 export async function updateOnboardingStep(step: number) {
-    // 1. Auth & Role Check
-    const { user, profile } = await requireStudentProfile();
+    // 1. Auth & Role Check — use requireRole instead of requireStudentProfile
+    // to avoid redirecting during onboarding when profile may not exist yet
+    const user = await requireRole(["student"]);
 
-    // 2. Validate step transition (CRITICAL SECURITY CHECK)
+    // 2. Get or create the student profile (defensive, matches layout pattern)
+    let profile = await getStudentProfile(user.id);
+    if (!profile) {
+        try {
+            await db.insert(students).values({ id: user.id }).onConflictDoNothing();
+            profile = await getStudentProfile(user.id);
+        } catch (e) {
+            console.error("[updateOnboardingStep] Failed to auto-create profile:", e);
+        }
+    }
+
+    if (!profile) {
+        throw new Error("Student profile not found and could not be created.");
+    }
+
+    // 3. Validate step transition (CRITICAL SECURITY CHECK)
     const currentStep = profile.onboardingStep;
     const allowedNextStep = VALID_TRANSITIONS[currentStep];
 
-    // Only allow moving to the exact next step in sequence
     // Idempotent: if already on the requested step, treat as no-op
     if (step === currentStep) {
         return { success: true };
     }
 
     // Only enforce forward progress to the immediately next step
-    // If we are regressing or staying on same step, it's allowed (but we just update the DB to match)
-    // Actually, we should probably just allow setting step to anything <= currentStep + 1
-    // But for strictness let's keep the VALID_TRANSITIONS for forward movement
-
     if (step > currentStep && step !== allowedNextStep) {
         throw new Error(
             `Invalid step transition: cannot skip from step ${currentStep} to step ${step}. ` +
@@ -69,17 +80,14 @@ export async function updateOnboardingStep(step: number) {
     }
 
     // Allow regression (going backwards) to correct mistakes
-    // if (step < currentStep) {
-    //     throw new Error("Cannot regress to a previous onboarding step.");
-    // }
 
-    // 3. Update DB
+    // 4. Update DB
     await db
         .update(students)
         .set({ onboardingStep: step })
         .where(eq(students.id, user.id));
 
-    // 4. Revalidate
+    // 5. Revalidate
     revalidatePath("/student");
 
     return { success: true };

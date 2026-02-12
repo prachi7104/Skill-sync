@@ -7,7 +7,7 @@
  *     gated by auth + file-type validation, so the guard is unnecessary here.
  *
  * STRICT Fallback Policy — Only approved models:
- *   1. gemini-3-flash           (Google — fastest, primary)
+ *   1. gemini-2.0-flash           (Google — fastest, primary)
  *   2. gemini-2.5-flash-lite    (Google — lighter fallback)
  *   3. gemini-2.5-flash         (Google — robust)
  *   4. gemma-3-27b              (Google — complex reasoning)
@@ -46,11 +46,12 @@ interface ModelDef {
 }
 
 const MODEL_CHAIN: ModelDef[] = [
-    { id: "gemini-3-flash", provider: "google", label: "Gemini 3 Flash", timeoutMs: 10_000 },
-    { id: "gemini-2.5-flash-lite", provider: "google", label: "Gemini 2.5 Flash Lite", timeoutMs: 10_000 },
-    { id: "gemini-2.5-flash", provider: "google", label: "Gemini 2.5 Flash", timeoutMs: 10_000 },
-    { id: "gemma-3-27b", provider: "google", label: "Gemma 3 27B", timeoutMs: 20_000 },
+    // Groq/Gemma first for text-to-JSON tasks (Gemini reserved for explanations)
     { id: "llama-3.3-70b-versatile", provider: "groq", label: "Groq Llama 3.3 70B", timeoutMs: 8_000 },
+    { id: "gemma-3-27b", provider: "google", label: "Gemma 3 27B", timeoutMs: 20_000 },
+    // Gemini as fallback only
+    { id: "gemini-2.0-flash", provider: "google", label: "Gemini 2.0 Flash", timeoutMs: 10_000 },
+    { id: "gemini-2.5-flash-lite", provider: "google", label: "Gemini 2.5 Flash Lite", timeoutMs: 10_000 },
 ];
 
 // ============================================================================

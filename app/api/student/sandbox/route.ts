@@ -209,14 +209,22 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       matchScore: atsResult.match_score.overall,
-      semanticScore: atsResult.component_breakdown.hard_requirements.score, // Mapping hard skills to semantic for backward compat
-      structuredScore: atsResult.component_breakdown.experience_level.score, // Mapping exp to structured for backward compat
+      // 4-dimension breakdown (new scoring system)
+      hardSkillsScore: atsResult.component_breakdown.hard_requirements.percentage,
+      softSkillsScore: atsResult.component_breakdown.soft_requirements.percentage,
+      experienceScore: atsResult.component_breakdown.experience_level.percentage,
+      domainMatchScore: atsResult.component_breakdown.domain_alignment.percentage,
+      recommendation: atsResult.match_score.hire_recommendation,
+      // Backward compat — keep old field names mapped to closest new equivalents
+      semanticScore: atsResult.component_breakdown.domain_alignment.percentage,
+      structuredScore: atsResult.component_breakdown.hard_requirements.percentage,
       matchedSkills: atsResult.skill_analysis.matched.map(s => s.skill),
       missingSkills: atsResult.skill_analysis.missing_critical.map(s => s.skill),
       shortExplanation: atsResult.match_score.interpretation,
       detailedExplanation: formatDetailedExplanation(atsResult),
       isEligible: eligibilityResult.isEligible,
       ineligibilityReason: eligibilityResult.reason,
+      redFlags: atsResult.red_flags,
       usage: {
         dailyUsed: updated?.sandboxUsageToday ?? 0,
         dailyLimit: 100,
