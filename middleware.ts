@@ -18,11 +18,6 @@ export default withAuth(
         const method = req.method;
         const role = token?.role as string | undefined;
 
-        // 🛑 Explicitly handle missing token (since we bypassed 'authorized' callback)
-        if (!token) {
-            return NextResponse.json({ error: "Unauthorized: No session" }, { status: 401 });
-        }
-
         const logResponse = (res: NextResponse, context?: string) => {
             const duration = Date.now() - start;
             const status = res.status;
@@ -89,10 +84,8 @@ export default withAuth(
     },
     {
         callbacks: {
-            authorized: () => {
-                // 🟢 ALWAYS return true here to bypass the auto-redirect to /login.
-                // We will handle the 401 Unauthorized response manually in the middleware function above.
-                return true;
+            authorized: ({ token }) => {
+                return !!token;
             },
         },
     }

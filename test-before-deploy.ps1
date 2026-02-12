@@ -178,7 +178,7 @@ $UpdatePayload = @{
         @{ name = "Testing"; proficiency = 3; category = "Skill" }
     )
     linkedin = "https://linkedin.com/in/testuser"
-} | ConvertTo-Json
+} | ConvertTo-Json -Depth 5
 
 $Update = Test-Endpoint -Name "Update Profile" -Method "PATCH" -Path "/api/student/profile" -Body $UpdatePayload
 if ($Update.success -eq $true) {
