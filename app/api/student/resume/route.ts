@@ -135,7 +135,10 @@ export async function POST(req: NextRequest) {
         let jobId: string | null = null;
         const isOnboarded = profile.onboardingStep >= 10;
 
-        if (resumeText && resumeText.length >= 50 && !isOnboarded) {
+        // If still in onboarding, always enqueue a parse job so the server
+        // can attempt server-side extraction when client-side text is missing.
+        // We include resumeText if present, otherwise null and the worker will fetch the file.
+        if (!isOnboarded) {
             // Check for existing pending parse job for this student (dedup)
             const existingJob = await db.query.jobs.findFirst({
                 where: and(
@@ -162,7 +165,7 @@ export async function POST(req: NextRequest) {
                 jobId = existingJob.id;
                 console.log(`[Resume API] Updated existing job ${jobId} for student ${user.id}`);
             } else {
-                // Insert new job
+                // Insert new job (payload.resumeText may be null)
                 const [newJob] = await db
                     .insert(jobs)
                     .values({
@@ -171,7 +174,7 @@ export async function POST(req: NextRequest) {
                         priority: 7, // Resume parsing is high priority
                         payload: {
                             studentId: user.id,
-                            resumeText,
+                            resumeText: resumeText && resumeText.length >= 50 ? resumeText : null,
                             resumeUrl,
                             mimeType: file.type,
                         },
@@ -180,7 +183,6 @@ export async function POST(req: NextRequest) {
                 jobId = newJob.id;
                 console.log(`[Resume API] Enqueued new job ${jobId} for student ${user.id}`);
             }
-
             // Fire-and-forget: trigger worker immediately so the job is processed
             // without waiting for the external cron. Errors are caught silently.
             processResumeParseJobs().catch((err) =>
@@ -188,14 +190,22 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // Warn early if AI keys are not present — parsing will likely fail.
+        const warnings: string[] = [];
+        if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY && !process.env.GROQ_API_KEY) {
+            warnings.push("AI provider not configured — resume parsing may fail until API keys are set on the server.");
+            console.warn("[Resume API] No AI keys configured; parsing jobs will likely fail.");
+        }
+
         return NextResponse.json(
             {
                 success: true,
-                message: "Resume uploaded. AI parsing queued.",
+                message: "Resume uploaded.",
                 data: {
                     url: resumeUrl,
                     jobId,
                     status: jobId ? "queued" : "uploaded",
+                    warnings,
                 }
             },
             { status: 202 }

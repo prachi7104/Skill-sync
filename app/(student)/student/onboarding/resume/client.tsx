@@ -99,12 +99,15 @@ export default function OnboardingResumeClient() {
             const data = await res.json();
             setUploadedUrl(data.url);
 
+            // Immediate user feedback that upload succeeded and parsing is queued
             if (data.jobId) {
+                toast.success("Resume uploaded. Parsing queued — we'll auto-fill your profile shortly.");
                 setParseStatus("queued");
                 // Start polling for AI parsing completion
                 startPolling(data.jobId);
             } else {
-                // No job created (text too short) — allow proceed anyway
+                toast.success("Resume uploaded. No AI parsing was queued — you can continue to fill details manually.");
+                // No job created (text too short or onboarding complete) — allow proceed anyway
                 setParseStatus("completed");
             }
         } catch (error: any) {

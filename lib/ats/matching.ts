@@ -11,6 +11,15 @@ function normalize(s: string) {
     return s.toLowerCase().trim();
 }
 
+/**
+ * Word-boundary match to prevent substring false positives.
+ * E.g. "java" must NOT match inside "javascript", "js" must NOT match inside "json".
+ */
+function wordMatch(text: string, term: string): boolean {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`\\b${escaped}\\b`, 'i').test(text);
+}
+
 function getAliases(skill: string): string[] {
     const norm = normalize(skill);
     // return SKILL_ALIASES[norm] || [norm];
@@ -44,7 +53,7 @@ function calculateEvidenceLevel(skill: string, resume: EnhancedResume): { level:
     // 3. Projects
     resume.projects.forEach(p => {
         const text = (p.title + " " + (p.description || "") + " " + (p.tech_stack?.join(" ") || "")).toLowerCase();
-        if (aliases.some(a => text.includes(a))) {
+        if (aliases.some(a => wordMatch(text, a))) {
             level = Math.max(level, 2) as EvidenceLevel;
             descriptions.push(`Used in project "${p.title}"`);
         }
@@ -53,7 +62,7 @@ function calculateEvidenceLevel(skill: string, resume: EnhancedResume): { level:
     // 4. Work Experience
     resume.experience.forEach(e => {
         const text = (e.role + " " + e.company + " " + (e.description || "") + " " + (e.skills_used?.join(" ") || "")).toLowerCase();
-        if (aliases.some(a => text.includes(a))) {
+        if (aliases.some(a => wordMatch(text, a))) {
             level = Math.max(level, 3) as EvidenceLevel; // Professional usage
             descriptions.push(`Used in role at ${e.company}`);
         }
@@ -62,7 +71,7 @@ function calculateEvidenceLevel(skill: string, resume: EnhancedResume): { level:
     // 5. Research Papers
     resume.research_papers.forEach(r => {
         const text = (r.title + " " + (r.field || "") + " " + (r.skills_demonstrated?.join(" ") || "")).toLowerCase();
-        if (aliases.some(a => text.includes(a))) {
+        if (aliases.some(a => wordMatch(text, a))) {
             level = Math.max(level, 4) as EvidenceLevel; // Research usage counts as Expert/High for Research roles
             descriptions.push(`Demonstrated in research "${r.title}"`);
         }
@@ -71,7 +80,7 @@ function calculateEvidenceLevel(skill: string, resume: EnhancedResume): { level:
     // 6. Professional Summary
     if (resume.professional_summary) {
         const summaryText = resume.professional_summary.toLowerCase();
-        if (aliases.some(a => summaryText.includes(a))) {
+        if (aliases.some(a => wordMatch(summaryText, a))) {
             level = Math.max(level, 1) as EvidenceLevel;
             descriptions.push("Mentioned in professional summary");
         }
@@ -80,7 +89,7 @@ function calculateEvidenceLevel(skill: string, resume: EnhancedResume): { level:
     // 7. Soft Skills
     if (resume.soft_skills && resume.soft_skills.length > 0) {
         const softText = resume.soft_skills.join(" ").toLowerCase();
-        if (aliases.some(a => softText.includes(a))) {
+        if (aliases.some(a => wordMatch(softText, a))) {
             level = Math.max(level, 1) as EvidenceLevel;
             descriptions.push("Listed in soft skills");
         }

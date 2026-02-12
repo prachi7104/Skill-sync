@@ -13,6 +13,7 @@ import { db } from "@/lib/db";
 import { jobs, students } from "@/lib/db/schema";
 import { eq, and, asc, desc } from "drizzle-orm";
 import { parseResumeWithAI, mapParsedResumeToProfile } from "@/lib/resume/ai-parser";
+import { extractTextFromUrl } from "@/lib/resume/server-extractor";
 import { computeCompleteness } from "@/lib/profile/completeness";
 import { logger } from "@/lib/logger";
 
@@ -64,10 +65,26 @@ export async function processResumeParseJobs(): Promise<number> {
                 mimeType?: string;
             };
 
-            const { studentId, resumeText } = payload;
+            const { studentId } = payload;
+            let resumeText = (payload.resumeText as string | null) ?? null;
+
+            // If client didn't provide usable text, attempt server-side extraction
+            if (!resumeText || resumeText.length < 50) {
+                logger.info("[ResumeWorker] No client text — attempting server-side extraction", { jobId: job.id, studentId, resumeUrl: payload.resumeUrl });
+
+                if (!payload.resumeUrl) {
+                    throw new Error("Resume text too short or missing and no resumeUrl available for server extraction");
+                }
+
+                try {
+                    resumeText = await extractTextFromUrl(payload.resumeUrl, payload.mimeType);
+                } catch (err) {
+                    throw new Error("Server-side resume extraction failed: " + (err instanceof Error ? err.message : String(err)));
+                }
+            }
 
             if (!resumeText || resumeText.length < 50) {
-                throw new Error("Resume text too short or missing");
+                throw new Error("Resume text too short or missing after server-side extraction");
             }
 
             logger.info("[ResumeWorker] Processing job", { jobId: job.id, studentId, textLength: resumeText.length });
