@@ -78,8 +78,24 @@ function jitterMs(): number {
 function isRetriable(err: unknown): boolean {
     if (err instanceof Error) {
         const msg = err.message.toLowerCase();
-        if (msg.includes("timeout") || msg.includes("5") || msg.includes("network") || msg.includes("econnreset") || msg.includes("fetch failed")) return true;
-        // Rate limit => not retriable on same model, but should fallback
+
+        // Explicitly NOT retriable (Rate limits, Quotas, 4xx errors)
+        if (msg.includes("429") ||
+            msg.includes("quota") ||
+            msg.includes("rate limit") ||
+            msg.includes("too many requests") ||
+            msg.includes("404")) {
+            return false;
+        }
+
+        // Retriable conditions
+        if (msg.includes("timeout") ||
+            msg.includes("network") ||
+            msg.includes("econnreset") ||
+            msg.includes("fetch failed") ||
+            /(?:^|\D)5\d{2}(?:\D|$)/.test(msg)) { // Matches 500, 503 etc. but not "15s"
+            return true;
+        }
     }
     return false;
 }
