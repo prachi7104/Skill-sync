@@ -9,8 +9,13 @@ import { useEffect } from "react";
 const EXPECTED_STEP = 7;
 
 export default function OnboardingCodingProfilesPage() {
-    const { student, isLoading } = useStudent();
+    const { student, isLoading, refresh } = useStudent();
     const router = useRouter();
+
+    // Always re-fetch on mount so we pick up autofilled data from resume parsing
+    useEffect(() => {
+        refresh();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (!isLoading && student) {

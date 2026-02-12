@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import "dotenv/config";
-import { processResumeParseJobs } from "@/lib/workers/parse-resume";
 
 async function main() {
     if (!process.env.DATABASE_URL) {
@@ -10,6 +9,10 @@ async function main() {
 
     console.log("Running resume worker smoke — will process up to a few jobs if present.");
     try {
+        // Dynamically import worker to avoid hoisting server-only imports before
+        // we've verified environment variables. This prevents module resolution
+        // errors when running outside Next.js.
+        const { processResumeParseJobs } = await import("@/lib/workers/parse-resume");
         const processed = await processResumeParseJobs();
         console.log(`Worker processed ${processed} jobs`);
     } catch (err) {

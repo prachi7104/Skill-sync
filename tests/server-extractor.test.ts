@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { extractTextFromUrl } from "@/lib/resume/server-extractor";
 import mammoth from "mammoth";
 

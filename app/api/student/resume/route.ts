@@ -116,6 +116,7 @@ export async function POST(req: NextRequest) {
 
         // 5. Get client-extracted text
         const resumeText = formData.get("resumeText") as string | null;
+        const source = (formData.get("source") as string | null)?.toString() || "";
 
         // 6. Update DB — store URL and raw text immediately (fast response)
         await db
@@ -134,11 +135,12 @@ export async function POST(req: NextRequest) {
         // Post-onboarding uploads are storage-only updates.
         let jobId: string | null = null;
         const isOnboarded = profile.onboardingStep >= 10;
+        const shouldQueue = source === "onboarding" || !isOnboarded;
 
-        // If still in onboarding, always enqueue a parse job so the server
+        // If onboarding flow or not yet complete, enqueue a parse job so the server
         // can attempt server-side extraction when client-side text is missing.
         // We include resumeText if present, otherwise null and the worker will fetch the file.
-        if (!isOnboarded) {
+        if (shouldQueue) {
             // Check for existing pending parse job for this student (dedup)
             const existingJob = await db.query.jobs.findFirst({
                 where: and(
@@ -155,7 +157,7 @@ export async function POST(req: NextRequest) {
                     .set({
                         payload: {
                             studentId: user.id,
-                            resumeText,
+                            resumeText: resumeText && resumeText.length >= 50 ? resumeText : null,
                             resumeUrl,
                             mimeType: file.type,
                         },

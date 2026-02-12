@@ -85,6 +85,7 @@ export default function OnboardingResumeClient() {
             const formData = new FormData();
             formData.append("file", file);
             formData.append("resumeText", resumeText);
+            formData.append("source", "onboarding");
 
             const res = await fetch("/api/student/resume", {
                 method: "POST",
@@ -97,14 +98,23 @@ export default function OnboardingResumeClient() {
             }
 
             const data = await res.json();
-            setUploadedUrl(data.url);
+            const payload = data?.data ?? data;
+            const uploaded = payload?.url ?? null;
+            const jobId = payload?.jobId ?? null;
+            const warnings = payload?.warnings ?? data?.warnings;
+
+            setUploadedUrl(uploaded);
+
+            if (Array.isArray(warnings) && warnings.length > 0) {
+                toast.warning(warnings[0]);
+            }
 
             // Immediate user feedback that upload succeeded and parsing is queued
-            if (data.jobId) {
+            if (jobId) {
                 toast.success("Resume uploaded. Parsing queued — we'll auto-fill your profile shortly.");
                 setParseStatus("queued");
                 // Start polling for AI parsing completion
-                startPolling(data.jobId);
+                startPolling(jobId);
             } else {
                 toast.success("Resume uploaded. No AI parsing was queued — you can continue to fill details manually.");
                 // No job created (text too short or onboarding complete) — allow proceed anyway
@@ -118,10 +128,17 @@ export default function OnboardingResumeClient() {
     };
 
     const handleContinue = async () => {
+        // If parsing is still running, wait for it before navigating
+        if (parseStatus === "queued" || parseStatus === "processing") {
+            toast.info("Waiting for resume parsing to finish...");
+            return;
+        }
+
         setIsLoadingNext(true);
         try {
-            await updateOnboardingStep(2);
+            // Refresh to pick up any autofilled data from parsing
             await refresh();
+            await updateOnboardingStep(2);
             router.push("/student/onboarding/basic");
         } catch (error) {
             toast.error("Failed to proceed");
