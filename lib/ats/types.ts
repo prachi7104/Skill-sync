@@ -26,6 +26,17 @@ export interface SkillMatch {
     flag: string;
     note?: string;
     matched_category?: string;
+    /** 0-100 combined confidence from semantic + keyword analysis */
+    confidence: number;
+    /** Whether this match was found via semantic inference, keyword, or both */
+    primary_evidence_type: "semantic" | "keyword" | "both";
+    /** Detailed semantic evidence chain */
+    semantic_evidence?: Array<{
+        source: string;
+        text: string;
+        inference: string;
+        strength: "strong" | "moderate" | "weak";
+    }>;
 }
 
 export interface MissingSkill {
@@ -35,6 +46,11 @@ export interface MissingSkill {
     alternatives_found?: string[];
     transferability?: number;
     verdict: string;
+    /** If semantic analysis found weak/contextual evidence that didn't meet threshold */
+    semantic_near_miss?: {
+        confidence: number;
+        reason: string;
+    };
 }
 
 export interface SkillAnalysis {

@@ -2,6 +2,7 @@
 import { EnhancedResume, SkillMatch, MissingSkill, SkillAnalysis, EvidenceLevel } from "./types";
 import { StructuredJD } from "@/lib/jd/parser";
 import { SKILL_ALIASES } from "./constants";
+import { extractSemanticSkills, matchSkillSemantically, combineEvidence, SemanticSkillEvidence } from "./semantic-skills";
 
 // ============================================================================
 // HELPERS
@@ -22,7 +23,6 @@ function wordMatch(text: string, term: string): boolean {
 
 function getAliases(skill: string): string[] {
     const norm = normalize(skill);
-    // return SKILL_ALIASES[norm] || [norm];
     for (const [key, aliases] of Object.entries(SKILL_ALIASES)) {
         if (normalize(key) === norm || aliases.map(normalize).includes(norm)) {
             return [normalize(key), ...aliases.map(normalize)];
@@ -31,7 +31,11 @@ function getAliases(skill: string): string[] {
     return [norm];
 }
 
-function calculateEvidenceLevel(skill: string, resume: EnhancedResume): { level: EvidenceLevel; description: string } {
+/**
+ * Keyword-based evidence level (the original 30% channel).
+ * Returns 0-4 based on where the skill appears in the resume.
+ */
+export function calculateEvidenceLevel(skill: string, resume: EnhancedResume): { level: EvidenceLevel; description: string } {
     const aliases = getAliases(skill);
     let level: EvidenceLevel = 0;
 
@@ -72,7 +76,7 @@ function calculateEvidenceLevel(skill: string, resume: EnhancedResume): { level:
     resume.research_papers.forEach(r => {
         const text = (r.title + " " + (r.field || "") + " " + (r.skills_demonstrated?.join(" ") || "")).toLowerCase();
         if (aliases.some(a => wordMatch(text, a))) {
-            level = Math.max(level, 4) as EvidenceLevel; // Research usage counts as Expert/High for Research roles
+            level = Math.max(level, 4) as EvidenceLevel;
             descriptions.push(`Demonstrated in research "${r.title}"`);
         }
     });
@@ -98,16 +102,63 @@ function calculateEvidenceLevel(skill: string, resume: EnhancedResume): { level:
     return { level, description: descriptions.join("; ") };
 }
 
-//Context check
-function checkContext(_skill: string, _resume: EnhancedResume): "High" | "Moderate" | "Low" | "None" {
-    // Simple placeholder for now. 
-    // Real implementation would check 5-word window.
-    return "High";
+// ============================================================================
+// CORE MATCHING — 70% Semantic + 30% Keyword
+// ============================================================================
+
+/**
+ * Build the semantic evidence for a matched skill.
+ */
+function buildSemanticEvidenceChain(evidence: SemanticSkillEvidence[]): SkillMatch["semantic_evidence"] {
+    // Dedupe and take top 5 strongest
+    const sorted = [...evidence].sort((a, b) => b.confidence - a.confidence);
+    const seen = new Set<string>();
+    const result: NonNullable<SkillMatch["semantic_evidence"]> = [];
+
+    for (const e of sorted) {
+        const key = `${e.source}|${e.trigger}`;
+        if (!seen.has(key) && result.length < 5) {
+            seen.add(key);
+            result.push({
+                source: e.source,
+                text: e.trigger,
+                inference: e.inference,
+                strength: e.strength,
+            });
+        }
+    }
+
+    return result;
 }
 
-// ============================================================================
-// CORE MATCHING
-// ============================================================================
+/**
+ * Determine context alignment based on how many different resume sections
+ * the skill appears in.
+ */
+function determineContextAlignment(
+    semanticEvidence: SemanticSkillEvidence[] | undefined,
+    keywordLevel: EvidenceLevel,
+): "High" | "Moderate" | "Low" | "None" {
+    const sections = new Set<string>();
+
+    if (keywordLevel > 0) sections.add("keyword");
+
+    if (semanticEvidence) {
+        for (const e of semanticEvidence) {
+            if (e.source.startsWith("Project:")) sections.add("project");
+            else if (e.source.startsWith("Experience:")) sections.add("experience");
+            else if (e.source.startsWith("Skills")) sections.add("skills");
+            else if (e.source.startsWith("Education:")) sections.add("education");
+            else if (e.source.startsWith("Certification:")) sections.add("certification");
+            else if (e.source.startsWith("Professional")) sections.add("summary");
+        }
+    }
+
+    if (sections.size >= 3) return "High";
+    if (sections.size === 2) return "Moderate";
+    if (sections.size === 1) return "Low";
+    return "None";
+}
 
 export function matchSkills(jd: StructuredJD, resume: EnhancedResume): SkillAnalysis {
     const matched: SkillMatch[] = [];
@@ -115,46 +166,152 @@ export function matchSkills(jd: StructuredJD, resume: EnhancedResume): SkillAnal
     const partial: SkillAnalysis["partial_matches"] = [];
     const transferable: SkillAnalysis["transferable_strengths"] = [];
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // Step 1: Extract ALL semantic evidence from the resume ONCE
+    // ═══════════════════════════════════════════════════════════════════════
+    const semanticEvidence = extractSemanticSkills(resume);
+
     const allRequired = [...jd.requirements.hard_requirements.technical_skills];
     const allPreferred = [...jd.requirements.soft_requirements.technical_skills];
 
-    // Process Required Skills
+    // ═══════════════════════════════════════════════════════════════════════
+    // Step 2: Process Required Skills (hybrid matching)
+    // ═══════════════════════════════════════════════════════════════════════
     for (const req of allRequired) {
-        const evidence = calculateEvidenceLevel(req.skill, resume);
+        // Layer 1: Semantic analysis (70% weight)
+        const semanticResult = matchSkillSemantically(req.skill, semanticEvidence);
 
-        if (evidence.level > 0) {
+        // Layer 2: Keyword matching (30% weight)
+        const keywordResult = calculateEvidenceLevel(req.skill, resume);
+
+        // Combine: 70% semantic + 30% keyword
+        const combined = combineEvidence(semanticResult, keywordResult.level);
+
+        if (combined.matched) {
+            const evidenceChain = semanticResult
+                ? buildSemanticEvidenceChain(semanticResult.evidence)
+                : undefined;
+
+            // The evidence level reflects the best keyword finding
+            const effectiveLevel = keywordResult.level > 0
+                ? keywordResult.level
+                : (combined.confidence >= 90 ? 3 :
+                    combined.confidence >= 70 ? 2 : 1) as EvidenceLevel;
+
+            // Build description combining both channels
+            const descParts: string[] = [];
+            if (keywordResult.description) descParts.push(keywordResult.description);
+            if (semanticResult && semanticResult.evidence.length > 0) {
+                const topEvidence = semanticResult.evidence[0];
+                descParts.push(`Semantic: ${topEvidence.inference} (via ${topEvidence.trigger})`);
+            }
+
             matched.push({
                 skill: req.skill,
-                evidence_level: evidence.level,
-                evidence_description: evidence.description,
-                context_alignment: checkContext(req.skill, resume),
-                flag: evidence.level >= 3 ? "✓✓ Professional experience" : "✓ Demonstrated usage",
-                matched_category: "Hard Requirement"
+                evidence_level: effectiveLevel,
+                evidence_description: descParts.join("; ") || "Matched via semantic analysis",
+                context_alignment: determineContextAlignment(semanticResult?.evidence, keywordResult.level),
+                flag: combined.primary_evidence_type === "both"
+                    ? "✓✓ Verified (keyword + semantic)"
+                    : combined.primary_evidence_type === "semantic"
+                        ? "✓ Inferred from context"
+                        : "✓ Keyword match",
+                matched_category: "Hard Requirement",
+                confidence: combined.confidence,
+                primary_evidence_type: combined.primary_evidence_type as "semantic" | "keyword" | "both",
+                semantic_evidence: evidenceChain,
             });
         } else {
-            // Check for partial/transferable
+            // Check if there's weak semantic evidence (near miss)
+            const nearMiss = semanticResult && combined.confidence > 0 && combined.confidence < 40
+                ? {
+                    confidence: combined.confidence,
+                    reason: `Weak evidence found (${semanticResult.evidence[0]?.inference || "contextual"}) but below match threshold`,
+                }
+                : undefined;
+
             missing.push({
                 skill: req.skill,
                 importance: "Required",
-                impact: "Critical skill missing",
-                verdict: "Not found in resume"
+                impact: "Critical skill not demonstrated in resume",
+                verdict: nearMiss
+                    ? `Weak contextual evidence found (${nearMiss.confidence}% confidence) but insufficient for match`
+                    : "Not found in resume",
+                semantic_near_miss: nearMiss,
             });
         }
     }
 
-    // Process Preferred Skills
+    // ═══════════════════════════════════════════════════════════════════════
+    // Step 3: Process Preferred Skills (same hybrid approach)
+    // ═══════════════════════════════════════════════════════════════════════
     for (const req of allPreferred) {
-        const evidence = calculateEvidenceLevel(req.skill, resume);
-        if (evidence.level > 0) {
+        const semanticResult = matchSkillSemantically(req.skill, semanticEvidence);
+        const keywordResult = calculateEvidenceLevel(req.skill, resume);
+        const combined = combineEvidence(semanticResult, keywordResult.level);
+
+        if (combined.matched) {
+            const evidenceChain = semanticResult
+                ? buildSemanticEvidenceChain(semanticResult.evidence)
+                : undefined;
+
+            const effectiveLevel = keywordResult.level > 0
+                ? keywordResult.level
+                : (combined.confidence >= 90 ? 3 :
+                    combined.confidence >= 70 ? 2 : 1) as EvidenceLevel;
+
+            const descParts: string[] = [];
+            if (keywordResult.description) descParts.push(keywordResult.description);
+            if (semanticResult && semanticResult.evidence.length > 0) {
+                const topEvidence = semanticResult.evidence[0];
+                descParts.push(`Semantic: ${topEvidence.inference} (via ${topEvidence.trigger})`);
+            }
+
             matched.push({
                 skill: req.skill,
-                evidence_level: evidence.level,
-                evidence_description: evidence.description,
-                context_alignment: checkContext(req.skill, resume),
+                evidence_level: effectiveLevel,
+                evidence_description: descParts.join("; ") || "Matched via semantic analysis",
+                context_alignment: determineContextAlignment(semanticResult?.evidence, keywordResult.level),
                 flag: "Bonus skill matched",
-                matched_category: "Soft Requirement"
+                matched_category: "Soft Requirement",
+                confidence: combined.confidence,
+                primary_evidence_type: combined.primary_evidence_type as "semantic" | "keyword" | "both",
+                semantic_evidence: evidenceChain,
             });
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Step 4: Identify transferable strengths
+    // ═══════════════════════════════════════════════════════════════════════
+    // Find strong semantic evidence that doesn't match any JD requirement
+    // but could be relevant transferable skills
+    const matchedSkillNames = new Set(matched.map(m => m.skill.toLowerCase()));
+    const missingSkillNames = new Set(missing.map(m => m.skill.toLowerCase()));
+
+    const transferableEvidence = new Map<string, SemanticSkillEvidence>();
+    for (const e of semanticEvidence) {
+        const skillLower = e.skill.toLowerCase();
+        if (!matchedSkillNames.has(skillLower) && !missingSkillNames.has(skillLower)) {
+            const existing = transferableEvidence.get(skillLower);
+            if (!existing || e.confidence > existing.confidence) {
+                transferableEvidence.set(skillLower, e);
+            }
+        }
+    }
+
+    // Take top 5 strongest transferable skills
+    const sortedTransferable = [...transferableEvidence.values()]
+        .filter(e => e.confidence >= 70)
+        .sort((a, b) => b.confidence - a.confidence)
+        .slice(0, 5);
+
+    for (const e of sortedTransferable) {
+        transferable.push({
+            skill: e.skill,
+            relevance: e.inference,
+            credit: Math.round(e.confidence / 100 * 0.5 * 100) / 100, // 50% credit for non-matched skills
+        });
     }
 
     return {
