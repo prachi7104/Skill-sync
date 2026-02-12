@@ -5,6 +5,7 @@ import { drives, rankings } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET() {
     try {
@@ -23,14 +24,17 @@ export async function GET() {
         const rankingsCount = rankingsResult?.count ?? 0;
 
         return NextResponse.json({
-            activeDrivesCount,
-            rankingsCount,
+            success: true,
+            data: {
+                activeDrivesCount,
+                rankingsCount,
+            }
         });
-    } catch (error) {
+    } catch (error: any) {
         if (error instanceof Error && (error.message.includes("Unauthorized") || error.message.includes("Forbidden"))) {
-            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
         console.error("Error fetching dashboard stats:", error);
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ success: false, error: error.message || "Internal Server Error" }, { status: 500 });
     }
 }

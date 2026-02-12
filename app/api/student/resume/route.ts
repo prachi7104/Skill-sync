@@ -14,6 +14,9 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
     try {
         // 1. Auth Check
@@ -25,7 +28,7 @@ export async function POST(req: NextRequest) {
 
         if (!file) {
             return NextResponse.json(
-                { message: "No file provided" },
+                { success: false, error: "No file provided" },
                 { status: 400 }
             );
         }
@@ -40,14 +43,14 @@ export async function POST(req: NextRequest) {
 
         if (file.size > MAX_SIZE) {
             return NextResponse.json(
-                { message: "File size exceeds 2MB limit" },
+                { success: false, error: "File size exceeds 2MB limit" },
                 { status: 400 }
             );
         }
 
         if (!ALLOWED_TYPES.includes(file.type)) {
             return NextResponse.json(
-                { message: "Invalid file type. Only PDF and DOCX are allowed." },
+                { success: false, error: "Invalid file type. Only PDF and DOCX are allowed." },
                 { status: 400 }
             );
         }
@@ -67,7 +70,7 @@ export async function POST(req: NextRequest) {
 
         if (file.type === "application/pdf" && !isPdfMagic) {
             return NextResponse.json(
-                { message: "File content does not match PDF type." },
+                { success: false, error: "File content does not match PDF type." },
                 { status: 400 }
             );
         }
@@ -77,7 +80,7 @@ export async function POST(req: NextRequest) {
             !isZipMagic
         ) {
             return NextResponse.json(
-                { message: "File content does not match DOCX type." },
+                { success: false, error: "File content does not match DOCX type." },
                 { status: 400 }
             );
         }
@@ -189,17 +192,19 @@ export async function POST(req: NextRequest) {
             {
                 success: true,
                 message: "Resume uploaded. AI parsing queued.",
-                url: resumeUrl,
-                jobId,
-                status: jobId ? "queued" : "uploaded",
+                data: {
+                    url: resumeUrl,
+                    jobId,
+                    status: jobId ? "queued" : "uploaded",
+                }
             },
             { status: 202 }
         );
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Resume upload failed:", error);
         return NextResponse.json(
-            { message: "Internal server error during upload" },
+            { success: false, error: error.message || "Internal server error during upload" },
             { status: 500 }
         );
     }

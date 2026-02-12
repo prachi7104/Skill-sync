@@ -96,6 +96,9 @@ function mapProfileToResumeData(profile: any, skills: Skill[], projects: Project
   };
 }
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     // 1. Auth — require student with profile
@@ -146,7 +149,7 @@ export async function POST(req: NextRequest) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { message: "Validation failed", errors: parsed.error.flatten().fieldErrors },
+        { success: false, error: "Validation failed", errors: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
@@ -208,40 +211,43 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     return NextResponse.json({
-      matchScore: atsResult.match_score.overall,
-      semanticScore: atsResult.component_breakdown.hard_requirements.score, // Mapping hard skills to semantic for backward compat
-      structuredScore: atsResult.component_breakdown.experience_level.score, // Mapping exp to structured for backward compat
-      matchedSkills: atsResult.skill_analysis.matched.map(s => s.skill),
-      missingSkills: atsResult.skill_analysis.missing_critical.map(s => s.skill),
-      shortExplanation: atsResult.match_score.interpretation,
-      detailedExplanation: formatDetailedExplanation(atsResult),
-      isEligible: eligibilityResult.isEligible,
-      ineligibilityReason: eligibilityResult.reason,
-      usage: {
-        dailyUsed: updated?.sandboxUsageToday ?? 0,
-        dailyLimit: 100,
-        monthlyUsed: updated?.sandboxUsageMonth ?? 0,
-        monthlyLimit: 500,
-      },
-      analysis: atsResult // Full new ATS result
+      success: true,
+      data: {
+        matchScore: atsResult.match_score.overall,
+        semanticScore: atsResult.component_breakdown.hard_requirements.score, // Mapping hard skills to semantic for backward compat
+        structuredScore: atsResult.component_breakdown.experience_level.score, // Mapping exp to structured for backward compat
+        matchedSkills: atsResult.skill_analysis.matched.map(s => s.skill),
+        missingSkills: atsResult.skill_analysis.missing_critical.map(s => s.skill),
+        shortExplanation: atsResult.match_score.interpretation,
+        detailedExplanation: formatDetailedExplanation(atsResult),
+        isEligible: eligibilityResult.isEligible,
+        ineligibilityReason: eligibilityResult.reason,
+        usage: {
+          dailyUsed: updated?.sandboxUsageToday ?? 0,
+          dailyLimit: 100,
+          monthlyUsed: updated?.sandboxUsageMonth ?? 0,
+          monthlyLimit: 500,
+        },
+        analysis: atsResult // Full new ATS result
+      }
     });
   } catch (error: any) {
     // Handle guardrail violations with proper status codes
     if (error instanceof GuardrailViolation) {
-      return NextResponse.json(error.toJSON(), { status: error.status });
+      return NextResponse.json({ success: false, error: error.message, ...error.toJSON() }, { status: error.status });
     }
 
     if (error?.message?.includes("Unauthorized") || error?.message?.includes("Forbidden")) {
-      return NextResponse.json({ message: error.message }, { status: 403 });
+      return NextResponse.json({ success: false, error: error.message }, { status: 403 });
     }
 
     if (error?.message?.includes("Student profile not found")) {
-      return NextResponse.json({ message: error.message }, { status: 404 });
+      return NextResponse.json({ success: false, error: error.message }, { status: 404 });
     }
 
     console.error("[api/student/sandbox] POST error:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { success: false, error: error.message || "Internal server error" },
       { status: 500 }
     );
   }

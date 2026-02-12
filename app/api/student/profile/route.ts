@@ -11,6 +11,7 @@ import { processEmbeddingJobs } from "@/lib/workers/generate-embedding";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET() {
     try {
@@ -20,7 +21,7 @@ export async function GET() {
         const session = await getServerSession(authOptions);
         if (!session?.user?.email) {
             console.log("[API] /api/student/profile - No Session");
-            return NextResponse.json({ message: "Unauthorized: No Session" }, { status: 401 });
+            return NextResponse.json({ success: false, error: "Unauthorized: No Session" }, { status: 401 });
         }
         console.log(`[API] Session found for: ${session.user.email}`);
 
@@ -31,7 +32,7 @@ export async function GET() {
 
         if (!user) {
             console.log("[API] User not found in DB");
-            return NextResponse.json({ message: "User not found" }, { status: 404 });
+            return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
         }
 
         // 3. Check Student Profile
@@ -42,17 +43,17 @@ export async function GET() {
         if (!profile) {
             console.log("[API] Student profile missing for user", user.id);
             // Do NOT redirect here for API calls
-            return NextResponse.json({ message: "Profile missing" }, { status: 404 });
+            return NextResponse.json({ success: false, error: "Profile missing" }, { status: 404 });
         }
 
         console.log("[API] Success");
-        return NextResponse.json({ user, profile });
+        return NextResponse.json({ success: true, data: { user, profile } });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("[API] Error in /api/student/profile:", error);
         return NextResponse.json({
-            message: "Internal Server Error",
-            error: error instanceof Error ? error.message : String(error)
+            success: false,
+            error: error.message || "Internal Server Error"
         }, { status: 500 });
     }
 }
@@ -119,7 +120,7 @@ export async function PATCH(req: NextRequest) {
 
         if (Object.keys(updateData).length === 0) {
             return NextResponse.json(
-                { message: "No valid fields to update" },
+                { success: false, error: "No valid fields to update" },
                 { status: 400 }
             );
         }
@@ -175,13 +176,13 @@ export async function PATCH(req: NextRequest) {
         }
 
         return NextResponse.json(
-            { message: "Profile updated successfully", completeness },
+            { success: true, message: "Profile updated successfully", data: { completeness } },
             { status: 200 }
         );
-    } catch (error) {
+    } catch (error: any) {
         if (error instanceof z.ZodError) {
             return NextResponse.json(
-                { message: "Validation failed", errors: error.errors },
+                { success: false, error: "Validation failed", errors: error.errors },
                 { status: 400 }
             );
         }
@@ -189,14 +190,14 @@ export async function PATCH(req: NextRequest) {
         // Handle authentication errors (usually thrown by requireStudentProfile)
         if (error instanceof Error && (error.message.includes("Unauthorized") || error.message.includes("Forbidden"))) {
             return NextResponse.json(
-                { message: error.message },
+                { success: false, error: error.message },
                 { status: 401 }
             );
         }
 
         console.error("Error updating student profile:", error);
         return NextResponse.json(
-            { message: "Internal server error" },
+            { success: false, error: error.message || "Internal server error" },
             { status: 500 }
         );
     }
