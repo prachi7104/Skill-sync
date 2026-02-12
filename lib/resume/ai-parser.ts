@@ -48,7 +48,7 @@ interface ModelDef {
 const MODEL_CHAIN: ModelDef[] = [
     // Groq/Gemma first for text-to-JSON tasks (Gemini reserved for explanations)
     { id: "llama-3.3-70b-versatile", provider: "groq", label: "Groq Llama 3.3 70B", timeoutMs: 8_000 },
-    { id: "gemma-3-27b", provider: "google", label: "Gemma 3 27B", timeoutMs: 20_000 },
+    { id: "gemma-3-27b-it", provider: "google", label: "Gemma 3 27B", timeoutMs: 20_000 },
     // Gemini as fallback only
     { id: "gemini-2.0-flash", provider: "google", label: "Gemini 2.0 Flash", timeoutMs: 10_000 },
     { id: "gemini-2.5-flash-lite", provider: "google", label: "Gemini 2.5 Flash Lite", timeoutMs: 10_000 },

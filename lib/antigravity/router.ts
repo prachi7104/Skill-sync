@@ -102,20 +102,89 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     },
   },
 
+  // GEMMA 3 FAMILY (As requested)
   gemma_3_27b: {
-    id: "gemma-3-27b",
-    provider: "google", // As requested
+    id: "gemma-3-27b-it",
+    provider: "google",
+    tier: 2,
+    rpm: 30,
+    rpd: 500,
+    contextWindow: 8192, // Standardizing to known limit or safe default
+    latency: 800,
+    capabilities: {
+      longContext: false, // 8k isn't considered "long" in this system (usually >32k)
+      structured: true,
+      vision: true,
+      functionCalling: false,
+      json: true,
+    },
+  },
+
+  gemma_3_12b: {
+    id: "gemma-3-12b-it",
+    provider: "google",
     tier: 2,
     rpm: 30,
     rpd: 500,
     contextWindow: 8192,
-    latency: 800,
+    latency: 600,
     capabilities: {
       longContext: false,
       structured: true,
-      vision: false,
+      vision: true,
       functionCalling: false,
       json: true,
+    },
+  },
+
+  gemma_3_4b: {
+    id: "gemma-3-4b-it",
+    provider: "google",
+    tier: 3,
+    rpm: 30,
+    rpd: 500,
+    contextWindow: 8192,
+    latency: 300,
+    capabilities: {
+      longContext: false,
+      structured: true,
+      vision: true,
+      functionCalling: false,
+      json: true,
+    },
+  },
+
+  gemma_3_1b: {
+    id: "gemma-3-1b-it",
+    provider: "google",
+    tier: 3,
+    rpm: 30,
+    rpd: 500,
+    contextWindow: 8192,
+    latency: 150,
+    capabilities: {
+      longContext: false,
+      structured: false, // Smaller models struggle with complex JSON
+      vision: true,
+      functionCalling: false,
+      json: true,
+    },
+  },
+
+  gemma_3_270m: {
+    id: "gemma-3-270m-it",
+    provider: "google",
+    tier: 3,
+    rpm: 30,
+    rpd: 500,
+    contextWindow: 8192,
+    latency: 100,
+    capabilities: {
+      longContext: false,
+      structured: false,
+      vision: true, // Assuming vision capabilities across the family
+      functionCalling: false,
+      json: false, // Too small for reliable JSON
     },
   },
 
