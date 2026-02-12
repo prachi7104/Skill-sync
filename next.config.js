@@ -13,7 +13,6 @@ const nextConfig = {
     serverComponentsExternalPackages: [
       "onnxruntime-node",
       "@xenova/transformers",
-      "pdfjs-dist",
     ],
   },
 };

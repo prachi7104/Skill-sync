@@ -11,6 +11,11 @@ function calculateSeniorityScore(jdSeniority: string, candidate: EnhancedResume)
     const jdLevel = SENIORITY_LEVELS[jdSeniority as keyof typeof SENIORITY_LEVELS] || SENIORITY_LEVELS["Entry"];
     const candidateYears = candidate.computed_seniority.years;
 
+    // Students applying for Intern/Entry/Mid roles shouldn't be heavily penalized
+    if (candidate.computed_seniority.is_student && jdLevel.years_min <= 2) {
+        return candidateYears >= jdLevel.years_min ? 1.0 : 0.80;
+    }
+
     const gap = jdLevel.years_min - candidateYears;
 
     if (gap <= 0) return 1.0;
@@ -20,6 +25,18 @@ function calculateSeniorityScore(jdSeniority: string, candidate: EnhancedResume)
     return 0.10;
 }
 
+const RELATED_CLUSTERS: Record<string, string[]> = {
+    "Java Enterprise": ["MERN Stack", "Python Web"],
+    "MERN Stack": ["Python Web", "Java Enterprise"],
+    "Python ML/AI": ["Research/Academic ML", "Data Engineering"],
+    "Python Web": ["MERN Stack", "Java Enterprise", "Data Engineering"],
+    "Research/Academic ML": ["Python ML/AI", "Data Engineering"],
+    "Data Engineering": ["Python ML/AI", "DevOps/SRE", "Python Web"],
+    "DevOps/SRE": ["Data Engineering", "Java Enterprise", "MERN Stack"],
+    "Android Native": ["iOS Native", "MERN Stack"],
+    "iOS Native": ["Android Native", "MERN Stack"],
+};
+
 function calculateStackAlignment(jd: StructuredJD, resume: EnhancedResume): number {
     const jdCluster = jd.tech_stack_cluster.primary_cluster;
     const candidatePrimary = resume.computed_stack.primary.cluster;
@@ -28,11 +45,12 @@ function calculateStackAlignment(jd: StructuredJD, resume: EnhancedResume): numb
     if (candidatePrimary === jdCluster) return 1.0;
     if (candidateSecondary === jdCluster) return 0.8;
 
-    // Check implicit relatedness (hardcoded for now, could be smarter)
-    // E.g. Java Enterprise <-> Spring Boot = 1.0 (handled by cluster name)
-    // E.g. MERN <-> Full Stack JS = 0.9
+    // Fuzzy cluster matching — related stacks get partial credit
+    const related = RELATED_CLUSTERS[jdCluster] || [];
+    if (related.includes(candidatePrimary)) return 0.6;
+    if (candidateSecondary && related.includes(candidateSecondary)) return 0.5;
 
-    return 0.25; // Default penalty for mismatch
+    return 0.3; // Unrelated but not zero
 }
 
 function getWeights(roleType: string, seniority: string) {
@@ -64,7 +82,7 @@ export function calculateATSScore(
     // 2. Soft Skills Score
     const totalSoft = jd.requirements.soft_requirements.technical_skills.length;
     const matchedSoft = skillAnalysis.matched.filter(m => m.matched_category === "Soft Requirement").length;
-    const softScore = totalSoft > 0 ? (matchedSoft / totalSoft) * 100 : 0; // Default 0 if none matched but required? No, if none required default 0 is fine. Wait, if none required 100? No, soft skills are bonus.
+    const softScore = totalSoft > 0 ? (matchedSoft / totalSoft) * 100 : 100; // If no soft requirements in JD, candidate shouldn't be penalized
 
     // 3. Experience Score
     const expScoreRaw = calculateSeniorityScore(jd.role_metadata.seniority_level, resume);

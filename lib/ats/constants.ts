@@ -76,19 +76,64 @@ export const SENIORITY_LEVELS: Record<SeniorityLevel, { years_min: number; years
 };
 
 export const SKILL_ALIASES: Record<string, string[]> = {
+    // ── JavaScript ecosystem ──
     "Node.js": ["Node", "NodeJS", "node.js", "node"],
-    "React.js": ["React", "ReactJS", "react.js", "react"],
-    "PostgreSQL": ["Postgres", "postgres", "psql"],
-    "Kubernetes": ["K8s", "k8s"],
-    "Machine Learning": ["ML", "machine-learning"],
-    "Deep Learning": ["DL", "deep-learning"],
+    "React.js": ["React", "ReactJS", "react.js", "react", "React Native"],
+    "Next.js": ["Next", "NextJS", "next.js", "nextjs"],
+    "Express.js": ["Express", "ExpressJS", "express.js", "express"],
+    "Vue.js": ["Vue", "VueJS", "vue.js", "vue"],
+    "Angular": ["AngularJS", "angular.js", "Angular 2+"],
+    "JavaScript": ["JS", "ECMAScript", "ES6", "ES2015+", "vanilla js"],
+    "TypeScript": ["TS", "typescript"],
+
+    // ── Java ecosystem ──
+    "Spring Boot": ["Spring", "Spring Framework", "SpringBoot", "spring boot", "Spring MVC"],
+    "Java": ["java", "Java SE", "Java EE", "Jakarta EE", "Core Java", "J2EE"],
+    "Hibernate": ["JPA", "Java Persistence", "hibernate"],
+
+    // ── Python ecosystem ──
+    "Python": ["python", "Python3", "python3", "py"],
+    "Django": ["django", "Django REST", "DRF", "Django REST Framework"],
+    "Flask": ["flask"],
+    "FastAPI": ["fastapi", "fast api"],
+    "TensorFlow": ["tensorflow", "tf"],
+    "PyTorch": ["pytorch", "torch"],
+    "scikit-learn": ["sklearn", "scikit learn"],
+    "Pandas": ["pandas"],
+    "NumPy": ["numpy"],
+
+    // ── Databases ──
+    "PostgreSQL": ["Postgres", "postgres", "psql", "pg"],
+    "MongoDB": ["Mongo", "mongo", "mongoose"],
+    "MySQL": ["mysql", "MariaDB", "mariadb"],
+    "Redis": ["redis"],
+    "SQLite": ["sqlite", "sqlite3"],
+
+    // ── Cloud & DevOps ──
+    "Amazon Web Services": ["aws", "AWS"],
+    "Google Cloud Platform": ["gcp", "GCP", "Google Cloud"],
+    "Microsoft Azure": ["azure", "Azure"],
+    "Kubernetes": ["K8s", "k8s", "kubernetes"],
+    "Docker": ["docker", "containerization", "containers"],
+    "Jenkins": ["jenkins"],
+    "Terraform": ["terraform", "IaC"],
+
+    // ── General ──
+    "Machine Learning": ["ML", "machine-learning", "machine learning"],
+    "Deep Learning": ["DL", "deep-learning", "deep learning"],
+    "Artificial Intelligence": ["AI", "artificial intelligence"],
+    "Natural Language Processing": ["NLP", "nlp"],
+    "Computer Vision": ["CV", "computer vision", "image processing"],
     "Git": ["GitHub", "GitLab", "version control", "git", "bitbucket"],
-    "C++": ["cpp", "c plus plus"],
-    "C#": ["csharp", "c sharp", ".net"],
-    "Go": ["golang"],
-    "Amazon Web Services": ["aws"],
-    "Google Cloud Platform": ["gcp"],
-    "Microsoft Azure": ["azure"]
+    "C++": ["cpp", "c plus plus", "C/C++"],
+    "C#": ["csharp", "c sharp", ".NET", ".net", "dotnet"],
+    "Go": ["golang", "Golang"],
+    "Rust": ["rust"],
+    "REST API": ["REST", "RESTful", "REST APIs", "RESTful API", "RESTful services"],
+    "GraphQL": ["graphql", "graph ql"],
+    "Linux": ["linux", "Unix", "ubuntu", "centos", "debian"],
+    "Agile": ["agile", "Scrum", "scrum", "Kanban"],
+    "Testing": ["unit testing", "integration testing", "JUnit", "Jest", "pytest", "TDD"],
 };
 
 export const IMPLICIT_SKILLS = {

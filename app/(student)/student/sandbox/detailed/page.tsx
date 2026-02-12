@@ -10,6 +10,7 @@ import { Upload, FileText, CheckCircle, AlertTriangle, ArrowRight } from "lucide
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { DetailedAnalysisResult } from "@/lib/ats/detailed-analysis";
+import { extractTextFromResume, cleanResumeText } from "@/lib/resume/text-extractor";
 
 export default function DetailedSandboxPage() {
     const [jdText, setJdText] = useState("");
@@ -42,13 +43,19 @@ export default function DetailedSandboxPage() {
         setResult(null);
 
         try {
-            const formData = new FormData();
-            formData.append("resume", resumeFile);
-            formData.append("jdText", jdText);
+            // Extract text client-side (avoids server-side PDF dependency issues)
+            toast.info("Extracting resume text...");
+            const rawText = await extractTextFromResume(resumeFile);
+            const resumeText = cleanResumeText(rawText);
+
+            if (!resumeText || resumeText.length < 50) {
+                throw new Error("Could not extract meaningful text from this file. Please try a different resume.");
+            }
 
             const res = await fetch("/api/student/sandbox/detailed", {
                 method: "POST",
-                body: formData,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ resumeText, jdText }),
             });
 
             const data = await res.json();

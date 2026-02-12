@@ -6,7 +6,6 @@ import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { enforceDetailedAnalysisLimits, incrementDetailedAnalysisUsage } from "@/lib/guardrails/sandbox-limits";
-import { extractTextFromPDFServer, extractTextFromDOCX, cleanResumeText } from "@/lib/resume/text-extractor";
 import { parseResumeWithAI } from "@/lib/resume/ai-parser";
 import { performDetailedAnalysis } from "@/lib/ats/detailed-analysis";
 import { generateEmbedding } from "@/lib/embeddings/generate";
@@ -43,40 +42,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: error.message }, { status: 403 });
         }
 
-        // 3. Parse FormData
-        const formData = await req.formData();
-        const file = formData.get("resume") as File | null;
-        const jdText = formData.get("jdText") as string | null;
-        // const jdTitle = formData.get("jdTitle") as string | null; // Optional hints
-        // const jdCompany = formData.get("jdCompany") as string | null;
+        // 3. Parse JSON body (text extracted client-side)
+        const body = await req.json();
+        const { resumeText, jdText } = body as { resumeText?: string; jdText?: string };
 
-        if (!file || !jdText) {
-            return NextResponse.json({ error: "Missing resume file or JD text" }, { status: 400 });
+        if (!resumeText || !jdText) {
+            return NextResponse.json({ error: "Missing resume text or JD text" }, { status: 400 });
         }
 
-        // 4. Extract Text from Resume
-        let resumeText = "";
-        const arrayBuffer = await file.arrayBuffer();
-
-        if (file.type === "application/pdf") {
-            try {
-                resumeText = await extractTextFromPDFServer(arrayBuffer);
-            } catch (e) {
-                console.error("PDF Parse Error:", e);
-                return NextResponse.json({ error: "Failed to parse PDF" }, { status: 500 });
-            }
-        } else if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-            try {
-                resumeText = await extractTextFromDOCX(arrayBuffer);
-            } catch (e) {
-                console.error("DOCX Parse Error:", e);
-                return NextResponse.json({ error: "Failed to parse DOCX" }, { status: 500 });
-            }
-        } else {
-            return NextResponse.json({ error: "Unsupported file type. Please upload PDF or DOCX." }, { status: 400 });
-        }
-
-        resumeText = cleanResumeText(resumeText);
         if (resumeText.length < 50) {
             return NextResponse.json({ error: "Resume text is too sparse or empty." }, { status: 400 });
         }

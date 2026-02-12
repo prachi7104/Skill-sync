@@ -2,11 +2,8 @@
  * Client-side resume text extraction.
  *
  * Uses PDF.js loaded from CDN for PDFs and mammoth for DOCX.
- * Designed to run in the browser so parsing happens before upload,
- * eliminating the need for a server-side background job.
- *
- * Server-side (Node.js) usage is also supported via the legacy
- * pdfjs-dist build — see extractTextFromPDFServer().
+ * ALL text extraction runs in the browser — the server never
+ * needs to parse PDF/DOCX files directly.
  */
 
 import mammoth from "mammoth";
@@ -96,46 +93,6 @@ export async function extractTextFromResume(file: File): Promise<string> {
     }
 
     throw new Error(`Unsupported file type: ${file.type}`);
-}
-
-// ---------------------------------------------------------------------------
-// Server-side (Node.js) extraction  — used by the fallback worker
-// ---------------------------------------------------------------------------
-
-/**
- * Extract text from a PDF ArrayBuffer using the pdfjs-dist legacy build.
- * The legacy build avoids browser-only globals like DOMMatrix.
- */
-export async function extractTextFromPDFServer(
-    arrayBuffer: ArrayBuffer,
-): Promise<string> {
-    // Use the legacy build that works in Node.js (no DOMMatrix dependency)
-    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-
-    // Disable the worker — Vercel Lambda doesn't bundle pdf.worker.mjs
-    // and we only need text extraction, not rendering.
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "";
-
-    const pdf = await pdfjsLib.getDocument({
-        data: new Uint8Array(arrayBuffer),
-        disableAutoFetch: true,
-        useWorkerFetch: false,
-    }).promise;
-    const pages: string[] = [];
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const pageText = content.items
-            .map((item: unknown) => {
-                const rec = item as Record<string, unknown>;
-                return typeof rec.str === "string" ? rec.str : "";
-            })
-            .join(" ");
-        pages.push(pageText);
-    }
-
-    return pages.join("\n");
 }
 
 // ---------------------------------------------------------------------------

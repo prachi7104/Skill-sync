@@ -68,6 +68,24 @@ function calculateEvidenceLevel(skill: string, resume: EnhancedResume): { level:
         }
     });
 
+    // 6. Professional Summary
+    if (resume.professional_summary) {
+        const summaryText = resume.professional_summary.toLowerCase();
+        if (aliases.some(a => summaryText.includes(a))) {
+            level = Math.max(level, 1) as EvidenceLevel;
+            descriptions.push("Mentioned in professional summary");
+        }
+    }
+
+    // 7. Soft Skills
+    if (resume.soft_skills && resume.soft_skills.length > 0) {
+        const softText = resume.soft_skills.join(" ").toLowerCase();
+        if (aliases.some(a => softText.includes(a))) {
+            level = Math.max(level, 1) as EvidenceLevel;
+            descriptions.push("Listed in soft skills");
+        }
+    }
+
     return { level, description: descriptions.join("; ") };
 }
 
