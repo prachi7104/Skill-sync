@@ -189,6 +189,44 @@ export const authOptions: NextAuthOptions = {
             }
             return session;
         },
+        async redirect({ url, baseUrl }) {
+            // ── Role-based post-login redirect ──────────────────────────
+            // After sign-in, NextAuth calls this with the callbackUrl.
+            // Problem: if callbackUrl was "/faculty/dashboard" but user is a
+            // student, they get stuck. So we override based on role.
+
+            // If this is a sign-out redirect, just go to the target
+            if (url.startsWith(baseUrl + "/login") || url === baseUrl + "/") {
+                return url;
+            }
+
+            // For any other URL, check if it's an internal URL and if the
+            // role matches. We need to fetch the session/token to know.
+            // However, redirect callback doesn't have token access directly,
+            // so we just ensure the URL goes to "/" which does role routing.
+
+            // If the callbackUrl points to a role-specific path, redirect to
+            // root "/" instead — the root page.tsx will route correctly.
+            const path = url.startsWith(baseUrl) ? url.slice(baseUrl.length) : url;
+
+            // If it's going to a role-specific area, let the root page handle routing
+            if (path.startsWith("/faculty") || path.startsWith("/admin") || path.startsWith("/student")) {
+                return baseUrl + "/";
+            }
+
+            // For relative URLs, ensure they stay on the same origin
+            if (url.startsWith("/")) {
+                return baseUrl + url;
+            }
+
+            // For same-origin URLs, allow
+            if (url.startsWith(baseUrl)) {
+                return url;
+            }
+
+            // Default: go to base URL (root page handles role routing)
+            return baseUrl;
+        },
     },
     pages: {
         signIn: "/login",

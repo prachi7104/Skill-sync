@@ -18,7 +18,10 @@ const AUTH_ERRORS: Record<string, string> = {
 
 function LoginForm() {
     const searchParams = useSearchParams();
-    const callbackUrl = searchParams.get("callbackUrl") || "/";
+    // Always redirect to "/" post-login — root page.tsx handles role-based routing.
+    // This prevents stale callbackUrls (e.g. "/faculty/dashboard") from sending
+    // students to wrong dashboards.
+    const callbackUrl = "/";
     const errorType = searchParams.get("error");
     const errorMessage = errorType ? (AUTH_ERRORS[errorType] ?? AUTH_ERRORS.Default) : null;
 
