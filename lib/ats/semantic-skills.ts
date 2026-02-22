@@ -103,6 +103,19 @@ const TECHNOLOGY_CAPABILITY_MAP: Record<string, CapabilityMapping[]> = {
         { skill: "Backend Development", confidence: 80, inference: "Node.js is a server-side JavaScript runtime" },
         { skill: "JavaScript", confidence: 95, inference: "Node.js runs JavaScript" },
     ],
+    // Common variants: "nodejs", "node js", "node"
+    "nodejs": [
+        { skill: "Backend Development", confidence: 80, inference: "Node.js is a server-side JavaScript runtime" },
+        { skill: "JavaScript", confidence: 95, inference: "Node.js runs JavaScript" },
+    ],
+    "node js": [
+        { skill: "Backend Development", confidence: 80, inference: "Node.js is a server-side JavaScript runtime" },
+        { skill: "JavaScript", confidence: 95, inference: "Node.js runs JavaScript" },
+    ],
+    "node": [
+        { skill: "Backend Development", confidence: 75, inference: "Node (Node.js) is a server-side JavaScript runtime" },
+        { skill: "JavaScript", confidence: 90, inference: "Node.js runs JavaScript" },
+    ],
     "laravel": [
         { skill: "Backend Development", confidence: 90, inference: "Laravel is a backend web framework" },
         { skill: "PHP", confidence: 95, inference: "Laravel is a PHP framework" },
@@ -124,21 +137,74 @@ const TECHNOLOGY_CAPABILITY_MAP: Record<string, CapabilityMapping[]> = {
         { skill: "JavaScript", confidence: 85, inference: "React.js is a JavaScript library" },
         { skill: "Web Development", confidence: 90, inference: "React.js is a web technology" },
     ],
+    "reactjs": [
+        { skill: "Frontend Development", confidence: 95, inference: "React.js is a frontend UI library" },
+        { skill: "JavaScript", confidence: 85, inference: "React.js is a JavaScript library" },
+        { skill: "Web Development", confidence: 90, inference: "React.js is a web technology" },
+    ],
+    // React Native — implies React, JavaScript, and mobile development
+    "react native": [
+        { skill: "Frontend Development", confidence: 90, inference: "React Native is a UI framework" },
+        { skill: "Mobile Development", confidence: 95, inference: "React Native builds mobile apps" },
+        { skill: "JavaScript", confidence: 95, inference: "React Native uses JavaScript/TypeScript" },
+        { skill: "React", confidence: 90, inference: "React Native is built on React" },
+    ],
+    "react-native": [
+        { skill: "Frontend Development", confidence: 90, inference: "React Native is a UI framework" },
+        { skill: "Mobile Development", confidence: 95, inference: "React Native builds mobile apps" },
+        { skill: "JavaScript", confidence: 95, inference: "React Native uses JavaScript/TypeScript" },
+        { skill: "React", confidence: 90, inference: "React Native is built on React" },
+    ],
     "next.js": [
         { skill: "Frontend Development", confidence: 90, inference: "Next.js is a React-based framework" },
         { skill: "Full-stack Development", confidence: 75, inference: "Next.js supports server-side rendering and API routes" },
         { skill: "Web Development", confidence: 95, inference: "Next.js is a web framework" },
         { skill: "React", confidence: 90, inference: "Next.js is built on React" },
+        { skill: "JavaScript", confidence: 85, inference: "Next.js is a JavaScript framework" },
+    ],
+    "nextjs": [
+        { skill: "Frontend Development", confidence: 90, inference: "Next.js is a React-based framework" },
+        { skill: "Full-stack Development", confidence: 75, inference: "Next.js supports server-side rendering and API routes" },
+        { skill: "Web Development", confidence: 95, inference: "Next.js is a web framework" },
+        { skill: "React", confidence: 90, inference: "Next.js is built on React" },
+        { skill: "JavaScript", confidence: 85, inference: "Next.js is a JavaScript framework" },
     ],
     "angular": [
         { skill: "Frontend Development", confidence: 95, inference: "Angular is a frontend framework" },
         { skill: "TypeScript", confidence: 85, inference: "Angular uses TypeScript by default" },
+        { skill: "JavaScript", confidence: 80, inference: "Angular/TypeScript is a JavaScript superset" },
         { skill: "Web Development", confidence: 90, inference: "Angular is a web framework" },
     ],
     "vue.js": [
         { skill: "Frontend Development", confidence: 95, inference: "Vue.js is a frontend framework" },
         { skill: "JavaScript", confidence: 85, inference: "Vue.js is a JavaScript framework" },
         { skill: "Web Development", confidence: 90, inference: "Vue.js is a web technology" },
+    ],
+    "vuejs": [
+        { skill: "Frontend Development", confidence: 95, inference: "Vue.js is a frontend framework" },
+        { skill: "JavaScript", confidence: 85, inference: "Vue.js is a JavaScript framework" },
+        { skill: "Web Development", confidence: 90, inference: "Vue.js is a web technology" },
+    ],
+    // ── JS/TS as explicit skills ──
+    // If student lists "JavaScript" or "JS" explicitly
+    "javascript": [
+        { skill: "Frontend Development", confidence: 70, inference: "JavaScript is the primary web language" },
+        { skill: "Web Development", confidence: 85, inference: "JavaScript is the foundation of web development" },
+    ],
+    "js": [
+        { skill: "Frontend Development", confidence: 70, inference: "JS (JavaScript) is the primary web language" },
+        { skill: "Web Development", confidence: 85, inference: "JS is the foundation of web development" },
+        { skill: "JavaScript", confidence: 95, inference: "JS is the standard abbreviation for JavaScript" },
+    ],
+    // TypeScript implies JavaScript (TS is a superset of JS)
+    "typescript": [
+        { skill: "Frontend Development", confidence: 70, inference: "TypeScript is heavily used in frontend development" },
+        { skill: "JavaScript", confidence: 90, inference: "TypeScript is a superset of JavaScript — TypeScript developers know JavaScript" },
+        { skill: "Web Development", confidence: 75, inference: "TypeScript is a web technology" },
+    ],
+    "ts": [
+        { skill: "JavaScript", confidence: 88, inference: "TS (TypeScript) is a superset of JavaScript" },
+        { skill: "Frontend Development", confidence: 65, inference: "TypeScript is often used for frontend development" },
     ],
 
     // ── Databases ──
@@ -331,6 +397,59 @@ const TECHNOLOGY_CAPABILITY_MAP: Record<string, CapabilityMapping[]> = {
     "cypress": [
         { skill: "Testing", confidence: 90, inference: "Cypress is an end-to-end testing framework" },
         { skill: "Frontend Development", confidence: 60, inference: "Cypress tests frontend applications" },
+    ],
+    // ── Mobile Development ──
+    "kotlin": [
+        { skill: "Android Development", confidence: 95, inference: "Kotlin is the primary language for Android development" },
+        { skill: "Mobile Development", confidence: 90, inference: "Kotlin is used for Android mobile apps" },
+        { skill: "Java", confidence: 70, inference: "Kotlin is interoperable with Java" },
+    ],
+    "swift": [
+        { skill: "iOS Development", confidence: 95, inference: "Swift is the primary language for iOS development" },
+        { skill: "Mobile Development", confidence: 90, inference: "Swift is used for iOS/macOS apps" },
+    ],
+    "flutter": [
+        { skill: "Mobile Development", confidence: 95, inference: "Flutter is a cross-platform mobile framework" },
+        { skill: "Frontend Development", confidence: 75, inference: "Flutter also targets web and desktop" },
+    ],
+    "dart": [
+        { skill: "Mobile Development", confidence: 80, inference: "Dart is Flutter's language, used for mobile development" },
+        { skill: "Flutter", confidence: 90, inference: "Dart is the language used with Flutter" },
+    ],
+    "android": [
+        { skill: "Android Development", confidence: 90, inference: "Explicit Android mention" },
+        { skill: "Mobile Development", confidence: 85, inference: "Android is a mobile platform" },
+        { skill: "Java", confidence: 65, inference: "Android traditionally uses Java" },
+    ],
+    "android sdk": [
+        { skill: "Android Development", confidence: 95, inference: "Android SDK is for building Android apps" },
+        { skill: "Mobile Development", confidence: 90, inference: "Android SDK is for mobile development" },
+    ],
+    "jetpack compose": [
+        { skill: "Android Development", confidence: 95, inference: "Jetpack Compose is Android's UI toolkit" },
+        { skill: "Mobile Development", confidence: 90, inference: "Jetpack Compose is for Android mobile apps" },
+        { skill: "Kotlin", confidence: 90, inference: "Jetpack Compose uses Kotlin" },
+    ],
+    // ── Common Language Shorthands ──
+    "sql": [
+        { skill: "SQL databases", confidence: 90, inference: "SQL indicates relational database knowledge" },
+        { skill: "Database Management", confidence: 85, inference: "SQL is used to manage databases" },
+    ],
+    "c++": [
+        { skill: "Systems Programming", confidence: 85, inference: "C++ is a systems programming language" },
+        { skill: "Competitive Programming", confidence: 70, inference: "C++ is the most popular competitive programming language" },
+    ],
+    "cpp": [
+        { skill: "Systems Programming", confidence: 85, inference: "C++ is a systems programming language" },
+        { skill: "Competitive Programming", confidence: 70, inference: "C++ is the most popular competitive programming language" },
+    ],
+    "java": [
+        { skill: "Backend Development", confidence: 70, inference: "Java is widely used for backend development" },
+        { skill: "Object-Oriented Programming", confidence: 85, inference: "Java is a core OOP language" },
+    ],
+    "python": [
+        { skill: "Scripting", confidence: 75, inference: "Python is widely used for scripting and automation" },
+        { skill: "Data Science", confidence: 70, inference: "Python is the dominant data science language" },
     ],
 };
 

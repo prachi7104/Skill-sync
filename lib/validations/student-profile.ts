@@ -51,7 +51,7 @@ export const skillSchema = z.object({
 
 export const projectSchema = z.object({
     title: z.string().min(1, "Project title is required").max(200),
-    description: z.string().max(500, "Description must be less than 500 characters").optional().nullable(),
+    description: z.string().max(2000, "Description must be less than 2000 characters").optional().nullable(),
     techStack: z.array(z.string().max(50)).max(15).optional(),
     url: z.string().url("Must be a valid URL").optional().or(z.literal("")).nullable(),
     startDate: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")).nullable(),

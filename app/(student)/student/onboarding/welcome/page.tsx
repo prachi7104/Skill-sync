@@ -14,7 +14,8 @@ export default function OnboardingWelcomePage() {
 
     useEffect(() => {
         if (!isLoading && student) {
-            if (student.onboardingStep < EXPECTED_STEP) {
+            // If they've already passed the welcome step, send them to their current step
+            if (student.onboardingStep > EXPECTED_STEP) {
                 router.push(getOnboardingRoute(student.onboardingStep));
             }
         }
