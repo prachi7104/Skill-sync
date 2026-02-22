@@ -3,13 +3,18 @@ import { jobs, students } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { generateEmbedding, composeStudentEmbeddingText } from "@/lib/embeddings";
 
-const MAX_JOBS_PER_TICK = 10;
+const MAX_JOBS_PER_TICK = 3;
 
 /**
  * Worker to process pending generate_embedding jobs.
  * Can be called by cron or inline.
  */
 export async function processEmbeddingJobs() {
+    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+        console.error("[Worker:Embeddings] GOOGLE_GENERATIVE_AI_API_KEY not set — skipping tick");
+        return { processed: 0, failed: 0 };
+    }
+
     console.log("[Worker:Embeddings] Checking for pending generate_embedding jobs...");
 
     let processed = 0;
@@ -106,6 +111,7 @@ export async function processEmbeddingJobs() {
 
             console.log(`[Worker:Embeddings] Job ${job.id} completed successfully.`);
             processed++;
+            await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error: unknown) {
             const message =
                 error instanceof Error ? error.message : "Unknown error";
@@ -126,6 +132,7 @@ export async function processEmbeddingJobs() {
                 .where(eq(jobs.id, job.id));
 
             failed++;
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
     }
 

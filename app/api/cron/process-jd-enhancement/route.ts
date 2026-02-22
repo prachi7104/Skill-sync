@@ -69,6 +69,7 @@ export async function GET(req: NextRequest) {
             rawJd: drives.rawJd,
             roleTitle: drives.roleTitle,
             company: drives.company,
+            parsedJd: drives.parsedJd,
           })
           .from(drives)
           .where(eq(drives.id, driveId))
@@ -76,6 +77,19 @@ export async function GET(req: NextRequest) {
 
         if (!drive) {
           throw new Error(`Drive not found: ${driveId}`);
+        }
+
+        // Idempotency: skip if already enhanced
+        if (drive.parsedJd && typeof drive.parsedJd === "object" &&
+          Object.keys(drive.parsedJd).length > 0) {
+          await db.update(jobs).set({
+            status: "completed",
+            result: { driveId, skipped: true, reason: "already_enhanced" },
+            latencyMs: Date.now() - startTime,
+            updatedAt: new Date(),
+          }).where(eq(jobs.id, job.id));
+          processed++;
+          continue;
         }
 
         // MVP enhancement: Use Antigravity AI Enhancer
@@ -91,8 +105,23 @@ export async function GET(req: NextRequest) {
           summary: enhancedData.summary,
         };
 
-        // We can keep rawJd as enhancedJd text for now if we didn't generate a new one
-        const enhancedJd = drive.rawJd;
+        const enhancedJd = [
+          enhancedData.title,
+          enhancedData.company ? `Company: ${enhancedData.company}` : null,
+          enhancedData.summary,
+          enhancedData.responsibilities?.length > 0
+            ? `Key Responsibilities:\n${enhancedData.responsibilities.map((r: string) => `• ${r}`).join("\n")}`
+            : null,
+          enhancedData.requiredSkills?.length > 0
+            ? `Required Skills: ${enhancedData.requiredSkills.join(", ")}`
+            : null,
+          enhancedData.preferredSkills?.length > 0
+            ? `Preferred Skills: ${enhancedData.preferredSkills.join(", ")}`
+            : null,
+          enhancedData.qualifications?.length > 0
+            ? `Qualifications:\n${enhancedData.qualifications.map((q: string) => `• ${q}`).join("\n")}`
+            : null,
+        ].filter(Boolean).join("\n\n");
 
         // Update drive with enhanced/parsed data
         await db

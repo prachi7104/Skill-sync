@@ -2,7 +2,7 @@
 import { AntigravityRouter } from "@/lib/antigravity/router";
 import { env } from "@/lib/env";
 
-export const EMBEDDING_DIMENSION = 384;
+export const EMBEDDING_DIMENSION = 768; // Gemini text-embedding-004 output dimension
 
 
 // Initialize Router

@@ -6,7 +6,9 @@ import { computeRanking } from "@/lib/matching";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 300; // 5 minutes for ranking computation
+// Vercel Hobby plan: 10s max function duration.
+// Rankings are chunked via MAX_JOBS_PER_TICK (3 per cron trigger).
+// Triggered by Supabase pg_cron every 10 minutes (see drizzle/0006_pg_cron_workers.sql).
 
 
 const MAX_JOBS_PER_TICK = 3;

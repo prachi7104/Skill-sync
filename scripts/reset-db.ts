@@ -1,4 +1,32 @@
 import "dotenv/config";
+
+// ── Production guard ─────────────────────────────────────────────────────────
+const dbUrl = process.env.DATABASE_URL ?? "";
+const isRemote =
+    dbUrl.includes("supabase.co") &&
+    !dbUrl.includes("localhost") &&
+    !dbUrl.includes("127.0.0.1");
+
+if (isRemote) {
+    const readline = await import("readline");
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    await new Promise<void>((resolve) => {
+        rl.question(
+            "⚠️  WARNING: This will DELETE ALL DATA in the remote Supabase database.\n" +
+            'Type "delete everything" to confirm: ',
+            (answer) => {
+                rl.close();
+                if (answer.trim() !== "delete everything") {
+                    console.log("Aborted.");
+                    process.exit(0);
+                }
+                resolve();
+            },
+        );
+    });
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 import { db } from "../lib/db";
 import { sql } from "drizzle-orm";
 

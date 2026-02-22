@@ -1,6 +1,5 @@
-import { AntigravityRouter } from "@/lib/antigravity/router";
-import { env } from "@/lib/env";
-import { jdCache } from "@/lib/cache/jd-cache";
+import { getRouter } from "@/lib/antigravity/instance";
+
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -436,24 +435,14 @@ If you detect:
 // PARSER IMPLEMENTATION
 // ============================================================================
 
-const router = new AntigravityRouter({
-  googleApiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
-  groqApiKey: env.GROQ_API_KEY,
-  enableLogging: true,
-});
 
 export async function parseJD(rawJd: string, titleHint?: string, companyHint?: string): Promise<StructuredJD> {
   if (!rawJd || rawJd.length < 50) {
     throw new Error("JD text too short to process");
   }
 
-  // Check cache first (include hints in key to differentiate context)
-  const cacheKey = rawJd + (titleHint || "") + (companyHint || "");
-  const cached = jdCache.get(cacheKey);
-  if (cached) {
-    console.log("[JD Parser] Using cached result");
-    return validateAndFillDefaults(cached as StructuredJD, titleHint, companyHint);
-  }
+  const router = getRouter();
+
 
   console.log("[JD Parser] Starting advanced JD parsing via Antigravity Router...");
 
@@ -478,8 +467,6 @@ export async function parseJD(rawJd: string, titleHint?: string, companyHint?: s
 
     if (parsed) {
       console.log(`[JD Parser] Success via ${result.modelUsed}`);
-      // Cache successful parse
-      jdCache.set(cacheKey, parsed);
       return validateAndFillDefaults(parsed, titleHint, companyHint);
     }
   }

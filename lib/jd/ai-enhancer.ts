@@ -1,6 +1,5 @@
 
-import { AntigravityRouter } from "@/lib/antigravity/router";
-import { env } from "@/lib/env";
+import { getRouter } from "@/lib/antigravity/instance";
 
 export interface EnhancedJD {
     title: string;
@@ -15,11 +14,6 @@ export interface EnhancedJD {
     formattedContent?: string; // Markdown formatted full JD
 }
 
-const router = new AntigravityRouter({
-    googleApiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
-    groqApiKey: env.GROQ_API_KEY,
-    enableLogging: true,
-});
 
 const JD_ENHANCEMENT_PROMPT = `
 You are an expert technical recruiter and job analyst. 
@@ -54,6 +48,8 @@ export async function enhanceJDWithAI(rawJd: string, titleHint?: string, company
     }
 
     console.log("[JD Enhancer] Starting JD enhancement via Antigravity Router...");
+
+    const router = getRouter();
 
     // Construct prompt
     let prompt = JD_ENHANCEMENT_PROMPT + rawJd;

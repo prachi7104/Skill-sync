@@ -6,7 +6,7 @@
  * Server-only module for generating and working with vector embeddings.
  *
  * Exports:
- * - generateEmbedding: Generate 384-dim embedding from text
+ * - generateEmbedding: Generate 768-dim embedding from text
  * - cosineSimilarity: Compute cosine similarity between embeddings
  * - composeStudentEmbeddingText: Compose student profile for embedding
  * - composeJDEmbeddingText: Compose JD for embedding

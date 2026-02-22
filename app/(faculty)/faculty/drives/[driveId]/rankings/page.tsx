@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, rankings, students, users } from "@/lib/db/schema";

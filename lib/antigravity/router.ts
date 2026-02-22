@@ -15,7 +15,7 @@
  * Providers:
  *   - Google Generative AI (Gemini, Gemma)
  *   - Groq (LLaMA, GPT-OSS, Prompt Guard)
- *   - Local (@xenova/transformers — all-MiniLM-L6-v2)
+ *   - Google Embedding API (text-embedding-004)
  *
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
@@ -38,7 +38,7 @@ export interface ModelCapabilities {
 
 export interface ModelRegistryEntry {
   id: string; // Canonical Provider ID
-  provider: "google" | "groq" | "local";
+  provider: "google" | "groq";
   tier: number;
   rpm: number | null | "unlimited"; // Requests per minute
   rpd: number | null | "unlimited"; // Requests per day
@@ -82,44 +82,6 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     tpm: "unlimited", // NEW FIELD
     contextWindow: 2000000,
     latency: 800,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: true,
-      functionCalling: true,
-      json: true,
-    },
-    jsonModeSupported: true,
-  },
-
-  gemini_3_pro: {
-    id: "gemini-3-pro",
-    provider: "google",
-    tier: 1,
-    rpm: 15,
-    rpd: 1500,
-    tpm: "unlimited",
-    contextWindow: 2000000,
-    latency: 900,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: true,
-      functionCalling: true,
-      json: true,
-    },
-    jsonModeSupported: true,
-  },
-
-  gemini_3_flash: {
-    id: "gemini-3-flash",
-    provider: "google",
-    tier: 1,
-    rpm: 5,
-    rpd: 20,
-    tpm: 250000, // 250K tokens/minute
-    contextWindow: 1000000,
-    latency: 400,
     capabilities: {
       longContext: true,
       structured: true,
@@ -407,13 +369,13 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
 
   // EMBEDDINGS
   gemini_embedding: {
-    id: "gemini-embedding-1",
+    id: "text-embedding-004", // Gemini free tier: 1500 RPM, 768-dim output
     provider: "google",
     tier: 1,
     rpm: 1500,
     rpd: 100000,
     contextWindow: 2048,
-    latency: 100,
+    latency: 200,
     capabilities: {
       longContext: false,
       structured: false,
@@ -423,22 +385,6 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     },
   },
 
-  local_minilm: {
-    id: "Xenova/all-MiniLM-L6-v2",
-    provider: "local",
-    tier: 3,
-    rpm: "unlimited",
-    rpd: "unlimited",
-    contextWindow: 512,
-    latency: 50,
-    capabilities: {
-      longContext: false,
-      structured: false,
-      vision: false,
-      functionCalling: false,
-      json: false,
-    },
-  },
 };
 
 export interface TaskDefinition {
@@ -511,7 +457,6 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
       "groq_qwen_32b",
       "groq_llama_3_3_70b",
       "gemini_2_5_pro",
-      "gemini_3_pro",
       "gemma_3_27b",
       "gemini_2_5_flash",
     ],
@@ -532,19 +477,19 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
 
   // Embeddings
   embed_profile: {
-    priority: ["local_minilm"],
+    priority: ["gemini_embedding"],
     requiresLongContext: false,
     requiresStructured: false,
-    maxLatency: 300,
-    description: "Generate profile embedding vector",
+    maxLatency: 3000,
+    description: "Generate profile embedding vector via Gemini text-embedding-004",
   },
 
   embed_jd: {
-    priority: ["local_minilm"],
+    priority: ["gemini_embedding"],
     requiresLongContext: false,
     requiresStructured: false,
-    maxLatency: 500,
-    description: "Generate JD embedding (prefer quality)",
+    maxLatency: 3000,
+    description: "Generate JD embedding via Gemini text-embedding-004",
   },
 };
 
@@ -739,13 +684,24 @@ export interface ExecuteResult<T = string> {
   blocked?: boolean;
 }
 
+/** Tasks whose inputs are already validated by auth + file upload guards.
+ *  These skip the Prompt Guard to prevent false positives on resume/JD text. */
+const TRUSTED_TASK_TYPES = new Set([
+  "parse_resume_full",
+  "parse_resume_fast",
+  "enhance_jd",
+  "parse_jd_advanced",
+  "generate_questions",
+  "embed_profile",
+  "embed_jd",
+]);
+
 export class AntigravityRouter {
   private rateLimiter: RateLimiter;
   private healthMonitor: ModelHealthMonitor;
   private googleAI: GoogleGenerativeAI | null = null;
   private groqClient: Groq | null = null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private embeddingPipeline: any = null;
+
   private enableLogging: boolean;
 
   constructor(config: {
@@ -836,10 +792,11 @@ export class AntigravityRouter {
       return { success: false, error: `Unknown task type: ${taskType}` };
     }
 
-    // 1. Mandatory Prompt Guard
-    // (Skipped only if the task IS 'sanitize_input', to avoid recursion loop)
+    // Prompt Guard: runs only on untrusted tasks (arbitrary user text).
+    // Trusted tasks (resume parsing, JD enhancement) bypass the guard —
+    // their inputs are already validated by auth middleware and file upload checks.
     const guardKey = "groq_prompt_guard";
-    if (taskType !== "sanitize_input" && MODEL_REGISTRY[guardKey]) {
+    if (!TRUSTED_TASK_TYPES.has(taskType) && MODEL_REGISTRY[guardKey]) {
       const guardModel = MODEL_REGISTRY[guardKey];
 
       // Strict: Guard must be available and allowed
@@ -893,8 +850,6 @@ export class AntigravityRouter {
         } else if (model.provider === "groq") {
           // Assume text generation for Groq unless specific embedding support added later
           result = await this.executeGroq(model.id, prompt, options);
-        } else if (model.provider === "local") {
-          result = await this.executeLocal(prompt);
         } else {
           continue;
         }
@@ -1065,26 +1020,7 @@ export class AntigravityRouter {
     }
   }
 
-  private async executeLocal(text: string): Promise<number[]> {
-    try {
-      if (!this.embeddingPipeline) {
-        const { pipeline } = await import("@xenova/transformers");
-        this.embeddingPipeline = await pipeline(
-          "feature-extraction",
-          "Xenova/all-MiniLM-L6-v2",
-        );
-      }
 
-      const output = await this.embeddingPipeline(text, {
-        pooling: "mean",
-        normalize: true,
-      });
-
-      return Array.from(output.data) as number[];
-    } catch (e: any) {
-      throw new Error(`Local Embedding Error: ${e.message}`);
-    }
-  }
 
   // ── Status / Observability ──────────────────────────────────────────────
 
@@ -1136,7 +1072,7 @@ function cleanJSONString(text: string): string {
   return clean.trim();
 }
 
-import { jdCache } from "@/lib/cache/jd-cache";
+
 
 /**
  * Resume parser with automatic fallback.
@@ -1219,11 +1155,6 @@ export async function enhanceJDWithAntigravity(
   router: AntigravityRouter,
   jdText: string,
 ): Promise<unknown> {
-  // 1. Check Cache
-  const cached = jdCache.get(jdText);
-  if (cached) {
-    return cached;
-  }
 
   const systemPrompt = `You are a job description enhancement expert.
 Structure and enhance the provided JD into this JSON format:
@@ -1277,8 +1208,6 @@ Normalize all skill names. Return ONLY valid JSON.`;
   if (result.success && result.data) {
     try {
       const parsed = JSON.parse(cleanJSONString(result.data as string));
-      // 2. Store in Cache
-      jdCache.set(jdText, parsed);
       return parsed;
     } catch {
       return result.data;

@@ -21,7 +21,6 @@ import { describe, it, expect } from "vitest";
 // INLINED TYPES (from lib/ats/types.ts, avoiding server-only)
 // ============================================================================
 
-type EvidenceLevel = 0 | 1 | 2 | 3 | 4;
 
 interface SemanticSkillEvidence {
     skill: string;

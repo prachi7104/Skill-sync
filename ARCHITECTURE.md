@@ -164,7 +164,7 @@ const button = cva('px-4 py-2 rounded font-semibold', {
 | Google Gemini | Gemini 1.5  | Fast | Free tier | Interview Q&A |
 | Groq | Llama 3.1 | ⚡ Ultra-fast | Free tier | Real-time chat |
 | Mistral | Mistral 7B | Fast | Free tier | Fallback |
-| Local (@xenova) | ONNX models | Instant | Free | Offline, small models |
+| Google Gemini | text-embedding-004 | Fast | Free | Embeddings (768-dim) |
 
 **Fallback Strategy**
 ```typescript
@@ -178,11 +178,11 @@ const providers = [
 ];
 ```
 
-**Why @xenova/transformers (Local Inference)**
-- Run ML models in Node.js/browser without external API
-- Perfect for: Resume parsing, keyword extraction, sentiment analysis
-- No rate limits, no API costs
-- Privacy: Data never leaves your server
+**Why Google Gemini Embeddings**
+- Industry-standard embeddings with 768-dimensional context
+- Seamless integration with the SkillSync multi-provider strategy
+- High quality and performance for semantic matching
+- Centralized management via Antigravity Router
 
 ---
 

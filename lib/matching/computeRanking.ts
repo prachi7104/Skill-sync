@@ -186,7 +186,7 @@ async function fetchEligibleStudents(
 async function ensureJDEmbedding(
   drive: NonNullable<Awaited<ReturnType<typeof fetchDrive>>>,
 ): Promise<number[]> {
-  if (drive.jdEmbedding && drive.jdEmbedding.length === 384) {
+  if (drive.jdEmbedding && drive.jdEmbedding.length === 768) {
     return drive.jdEmbedding;
   }
 
@@ -214,7 +214,7 @@ async function ensureJDEmbedding(
 async function ensureStudentEmbedding(
   student: StudentForRanking,
 ): Promise<number[] | null> {
-  if (student.embedding && student.embedding.length === 384) {
+  if (student.embedding && student.embedding.length === 768) {
     return student.embedding;
   }
 
@@ -315,7 +315,8 @@ export async function computeRanking(
   driveId: string,
 ): Promise<RankingComputationResult> {
   const errors: string[] = [];
-  const startTime = Date.now();
+  const SAFE_DURATION_MS = 8000; // Stay under Vercel's 10s limit
+  const computeStart = Date.now();
   let skippedNoEmbedding = 0;
 
   console.log(`[Ranking] Starting computation for drive ${driveId}`);
@@ -337,8 +338,17 @@ export async function computeRanking(
   };
 
   // 3. Fetch candidate students (DB pre-filtered)
-  const allStudents = await fetchEligibleStudents(eligibility);
+  let allStudents = await fetchEligibleStudents(eligibility);
   console.log(`[Ranking] Found ${allStudents.length} candidate students`);
+
+  const MAX_STUDENTS_PER_RANKING_RUN = 200;
+  if (allStudents.length > MAX_STUDENTS_PER_RANKING_RUN) {
+    console.warn(
+      `[Ranking] Student cap applied — processing ${MAX_STUDENTS_PER_RANKING_RUN}/${allStudents.length} students. Upgrade server for full ranking.`,
+      { driveId },
+    );
+    allStudents = allStudents.slice(0, MAX_STUDENTS_PER_RANKING_RUN);
+  }
 
   // 4. Ensure JD embedding exists
   let jdEmbedding: number[];
@@ -364,9 +374,9 @@ export async function computeRanking(
   };
 
   const scoredStudents: ScoredStudent[] = [];
-  const limit = pLimit(10);
+  const limit = pLimit(5);
 
-  // Parallelize embedding generation with concurrency of 10
+  // Parallelize embedding generation with concurrency of 5
   const embeddingResults = await Promise.allSettled(
     allStudents.map((student) =>
       limit(async () => {
@@ -377,6 +387,11 @@ export async function computeRanking(
   );
 
   for (const result of embeddingResults) {
+    if (Date.now() - computeStart > SAFE_DURATION_MS) {
+      console.warn(`[Ranking] Time limit reached — stopping early`, { driveId });
+      break;
+    }
+
     if (result.status === "rejected") {
       const errorMsg = `Failed to generate embedding: ${result.reason}`;
       console.warn(`[Ranking] ${errorMsg}`);
@@ -501,7 +516,7 @@ export async function computeRanking(
     }
   });
 
-  const durationMs = Date.now() - startTime;
+  const durationMs = Date.now() - computeStart;
   console.log(`[Ranking] Completed in ${durationMs}ms`);
 
   // 11. Return summary

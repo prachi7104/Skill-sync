@@ -2,7 +2,7 @@
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { users, students } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import {
     MICROSOFT_CLIENT_ID,
@@ -41,127 +41,62 @@ export const authOptions: NextAuthOptions = {
     // Disable debug to prevent [next-auth][warn][DEBUG_ENABLED] spam
     debug: false,
     callbacks: {
-        async signIn({ user, account }: { user: import("next-auth").User, account: import("next-auth").Account | null }) {
+        async signIn({ user, account }) {
             if (!user.email) {
-                console.error("[auth] signIn denied — no email in user object");
+                console.error("[auth] signIn denied — no email");
                 return false;
             }
 
             const email = user.email.toLowerCase();
-            console.log(`[auth] 🟢 Starting sign-in flow for: ${email}`);
-
-            // 🔴 FORCE FRESH CONNECTION (User Request)
-            const postgres = require("postgres");
-            const { drizzle } = require("drizzle-orm/postgres-js");
-            const schema = require("@/lib/db/schema");
-            const { eq, sql } = require("drizzle-orm");
-
-            let localClient;
-            let localDb;
 
             try {
-                if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is missing in auth context");
-
-                console.log("[auth] 🔌 Initializing fresh DB connection for this request...");
-                localClient = postgres(process.env.DATABASE_URL, {
-                    prepare: false,
-                    connect_timeout: 10
-                });
-                localDb = drizzle(localClient, { schema });
-
-                // 1. Health check
-                const start = Date.now();
-                await localDb.execute(sql`SELECT 1`);
-                console.log(`[auth] ⚡ DB Connected in ${Date.now() - start}ms`);
-
-                // ── PATH 1: Check if user already exists in DB ──────────────
-                console.log(`[auth] 🔍 Querying 'users' table for existing record...`);
-
-                const existingUser = await localDb.query.users.findFirst({
-                    where: eq(schema.users.email, email),
-                }).catch((err: any) => {
-                    throw new Error(`DB_QUERY_FAILED: ${err.message}`);
+                const existingUser = await db.query.users.findFirst({
+                    where: eq(users.email, email),
                 });
 
                 if (existingUser) {
-                    console.log(`[auth] ✅ User found: ${existingUser.id} (${existingUser.role})`);
-
                     // Link Microsoft ID if not yet linked
                     if (!existingUser.microsoftId && account?.providerAccountId) {
-                        try {
-                            console.log(`[auth] 🔗 Linking Microsoft ID to existing user...`);
-                            await localDb
-                                .update(schema.users)
-                                .set({ microsoftId: account.providerAccountId, updatedAt: new Date() })
-                                .where(eq(schema.users.id, existingUser.id));
-                            console.log(`[auth] ✅ Microsoft ID linked successfully.`);
-                        } catch (linkError) {
-                            console.error("[auth] ⚠️ Failed to link Microsoft ID (non-fatal):", linkError);
-                        }
+                        await db
+                            .update(users)
+                            .set({ microsoftId: account.providerAccountId, updatedAt: new Date() })
+                            .where(eq(users.id, existingUser.id))
+                            .catch((err: unknown) =>
+                                console.warn("[auth] Microsoft ID link failed (non-fatal):", err)
+                            );
                     }
                     return true;
                 }
 
-                console.log(`[auth] ℹ️ User not found in DB.`);
-
-                // ── PATH 2: Student domain → auto-create ─────────────────────
+                // Student domain → auto-create user + profile
                 if (isStudentEmail(email)) {
-                    console.log(`[auth] 🆕 Valid student domain detected. Attempting auto-creation...`);
+                    const [newUser] = await db
+                        .insert(users)
+                        .values({
+                            email,
+                            name: user.name || "Student",
+                            role: "student",
+                            microsoftId: account?.providerAccountId,
+                        })
+                        .returning();
 
-                    try {
-                        const [newUser] = await localDb
-                            .insert(schema.users)
-                            .values({
-                                email: email,
-                                name: user.name || "Unknown",
-                                role: "student",
-                                microsoftId: account?.providerAccountId,
-                            })
-                            .returning();
-
-                        console.log(`[auth] ✅ Created user record: ${newUser.id}`);
-
-                        // Create the student profile row (1:1 extension)
-                        await localDb.insert(schema.students).values({
-                            id: newUser.id,
-                        });
-                        console.log(`[auth] ✅ Created student profile structure.`);
-
-                        return true;
-                    } catch (createError: any) {
-                        throw new Error(`CREATION_FAILED: ${createError.message}`);
-                    }
+                    await db.insert(students).values({ id: newUser.id });
+                    console.log(`[auth] Created new student: ${newUser.id}`);
+                    return true;
                 }
 
-                // ── PATH 3: Not a student domain & not in DB → deny ──────────
-                console.warn(`[auth] ⛔ Access denied: ${email} is not a student and has no account.`);
+                // Not a student domain, not in DB → deny
+                console.warn(`[auth] Access denied: ${email} not in DB and not student domain`);
                 return "/login?error=NotAuthorized";
 
-            } catch (error: any) {
-                console.error("[auth] 🔴 CRITICAL SIGN-IN ERROR:", {
-                    email: email,
-                    message: error.message,
-                    stack: error.stack,
-                });
+            } catch (error: unknown) {
+                const msg = error instanceof Error ? error.message : String(error);
+                console.error("[auth] Sign-in error:", msg);
 
-                if (error.message && (
-                    error.message.includes("connect") ||
-                    error.message.includes("ECONNREFUSED") ||
-                    error.message.includes("terminating connection")
-                )) {
-                    console.error("[auth] 🚨 Database appears to be DOWN or unreachable.");
+                if (msg.includes("connect") || msg.includes("ECONNREFUSED") || msg.includes("terminating")) {
                     return "/login?error=ServiceUnavailable";
                 }
-
                 return "/login?error=DatabaseError";
-            } finally {
-                if (localClient) {
-                    // console.log("[auth] 🧹 Closing local DB connection...");
-                    // localClient.end(); 
-                    // Note: In serverless, we might leave it open, but for "fresh connection" guarantee request,
-                    // we should probably close it... but postgres-js handles pool. 
-                    // Let's NOT close it aggressively to avoid 'connection closed' errors if asyncs are pending.
-                }
             }
         },
         async jwt({ token, user }) {

@@ -6,8 +6,8 @@
  * Server-side enforcement of free-tier sandbox usage limits.
  *
  * Limits (hardcoded):
- *   Daily:   3 sandbox runs
- *   Monthly: 20 sandbox runs
+ *   Daily:   5 sandbox runs
+ *   Monthly: 30 sandbox runs
  *
  * Reset logic:
  *   Daily counter resets when the current UTC date differs from sandboxResetDate.
@@ -27,8 +27,8 @@ import { ERRORS } from "./errors";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const DAILY_LIMIT = 100;
-const MONTHLY_LIMIT = 500;
+const DAILY_LIMIT = 5;
+const MONTHLY_LIMIT = 30;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -140,8 +140,8 @@ export async function incrementSandboxUsage(studentId: string): Promise<void> {
 
 // ── Detailed Analysis Limits ────────────────────────────────────────────────
 
-const DETAILED_DAILY_LIMIT = 100;
-const DETAILED_MONTHLY_LIMIT = 500;
+const DETAILED_DAILY_LIMIT = 3;
+const DETAILED_MONTHLY_LIMIT = 15;
 
 /**
  * Checks whether a student can use the Detailed Analysis feature.

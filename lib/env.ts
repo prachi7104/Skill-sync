@@ -10,9 +10,14 @@
 function requireEnv(key: string): string {
   const value = process.env[key];
   if (!value) {
-    // In development, provide a clear error. In test environments (vitest),
-    // env vars may be absent — return empty to avoid crashing test imports.
-    if (process.env.NODE_ENV === "test" || process.env.VITEST) {
+    // Skip validation during:
+    // 1. Test environments (vitest/jest)
+    // 2. Next.js `next build` static analysis phase
+    if (
+      process.env.NODE_ENV === "test" ||
+      process.env.VITEST ||
+      process.env.NEXT_PHASE === "phase-production-build"
+    ) {
       return "";
     }
     throw new Error(
@@ -45,7 +50,7 @@ export const NEXTAUTH_URL = optionalEnv("NEXTAUTH_URL", "http://localhost:3000")
  * Any Microsoft account with this domain is automatically a student.
  * Example: "stu.upes.ac.in"
  */
-export const STUDENT_EMAIL_DOMAIN = optionalEnv("STUDENT_EMAIL_DOMAIN", "stu.upes.ac.in").toLowerCase();
+export const STUDENT_EMAIL_DOMAIN = requireEnv("STUDENT_EMAIL_DOMAIN").toLowerCase();
 
 // ── Cloudinary ──────────────────────────────────────────────────────────────
 export const CLOUDINARY_CLOUD_NAME = optionalEnv("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME");
@@ -63,19 +68,19 @@ export const GOOGLE_GENERATIVE_AI_API_KEY = optionalEnv("GOOGLE_GENERATIVE_AI_AP
 
 // ── Convenience export for all env vars ─────────────────────────────────────
 export const env = {
-    MICROSOFT_CLIENT_ID,
-    MICROSOFT_CLIENT_SECRET,
-    MICROSOFT_TENANT_ID,
-    DATABASE_URL,
-    NEXTAUTH_SECRET,
-    NEXTAUTH_URL,
-    STUDENT_EMAIL_DOMAIN,
-    CLOUDINARY_CLOUD_NAME,
-    CLOUDINARY_API_KEY,
-    CLOUDINARY_API_SECRET,
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY,
-    GROQ_API_KEY,
-    MISTRAL_API_KEY,
-    GOOGLE_GENERATIVE_AI_API_KEY,
+  MICROSOFT_CLIENT_ID,
+  MICROSOFT_CLIENT_SECRET,
+  MICROSOFT_TENANT_ID,
+  DATABASE_URL,
+  NEXTAUTH_SECRET,
+  NEXTAUTH_URL,
+  STUDENT_EMAIL_DOMAIN,
+  CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET,
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+  GROQ_API_KEY,
+  MISTRAL_API_KEY,
+  GOOGLE_GENERATIVE_AI_API_KEY,
 };

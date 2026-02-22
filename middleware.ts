@@ -6,9 +6,10 @@ import { NextResponse } from "next/server";
  * Optimized Middleware — guards ONLY protected API routes.
  * 
  * Production monitoring:
- * - Logs all requests with method, path, status, duration
- * - Warns on forbidden access attempts (potential auth attacks)
- * - Tracks 500 errors with context for debugging
+ * - Silent on normal 2xx/3xx responses
+ * - Logs 401 unauthenticated blocks (auth debugging)
+ * - Warns on 403 forbidden access attempts (security monitoring)
+ * - Errors on 500+ (debugging)
  */
 export default withAuth(
     function middleware(req) {
@@ -22,9 +23,6 @@ export default withAuth(
             const duration = Date.now() - start;
             const status = res.status;
 
-            // Standard request log
-            console.log(`[REQ] ${method} ${path} ${status} ${duration}ms`);
-
             // ⚠️ Track forbidden access attempts
             if (status === 403) {
                 console.warn(JSON.stringify({
@@ -33,6 +31,11 @@ export default withAuth(
                     msg: "Forbidden access attempt",
                     context: { method, path, role: role || "none", duration, reason: context },
                 }));
+            }
+
+            // 🔒 Track unauthenticated requests blocked by auth middleware
+            if (status === 401) {
+                console.log(`[auth] Unauthenticated request blocked: ${method} ${path}`);
             }
 
             // 🔴 Track 500 errors

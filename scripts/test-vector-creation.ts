@@ -19,10 +19,10 @@ async function testVectorCreation() {
         await sql`DROP TABLE IF EXISTS test_vector_table;`;
 
         console.log('🔨 Creating table with vector column...');
-        // Try simply 'vector(384)' first
-        await sql`CREATE TABLE test_vector_table (id serial primary key, embedding vector(384));`;
+        // Try simply 'vector(768)' first
+        await sql`CREATE TABLE test_vector_table (id serial primary key, embedding vector(768));`;
 
-        console.log('✅ Success! Created table with vector(384).');
+        console.log('✅ Success! Created table with vector(768).');
 
         await sql`DROP TABLE test_vector_table;`;
 
@@ -30,9 +30,9 @@ async function testVectorCreation() {
         console.error('❌ Failed to create vector table:', error);
 
         try {
-            console.log('🔄 Retrying with extensions.vector(384)...');
-            await sql`CREATE TABLE test_vector_table (id serial primary key, embedding extensions.vector(384));`;
-            console.log('✅ Success! Created with extensions.vector(384).');
+            console.log('🔄 Retrying with extensions.vector(768)...');
+            await sql`CREATE TABLE test_vector_table (id serial primary key, embedding extensions.vector(768));`;
+            console.log('✅ Success! Created with extensions.vector(768).');
             await sql`DROP TABLE test_vector_table;`;
         } catch (error2) {
             console.error('❌ Failed again:', error2);

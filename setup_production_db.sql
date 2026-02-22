@@ -115,8 +115,8 @@ CREATE TABLE students (
     resume_text                      text,
     resume_parsed_at                 timestamptz,
 
-    -- Embedding (384-dim, all-MiniLM-L6-v2)
-    embedding                        vector(384),
+    -- Embedding (768-dim, text-embedding-004)
+    embedding                        vector(768),
 
     -- Progress tracking
     profile_completeness             integer NOT NULL DEFAULT 0,
@@ -157,7 +157,7 @@ CREATE TABLE drives (
     raw_jd              text         NOT NULL,
     enhanced_jd         text,
     parsed_jd           jsonb,
-    jd_embedding        vector(384),
+    jd_embedding        vector(768),
     min_cgpa            real,
     eligible_branches   jsonb,
     eligible_batch_years jsonb,

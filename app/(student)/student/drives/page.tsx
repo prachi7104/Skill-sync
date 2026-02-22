@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { db } from "@/lib/db";
 import { drives, rankings } from "@/lib/db/schema";
 import { requireStudentProfile } from "@/lib/auth/helpers";

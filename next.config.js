@@ -12,7 +12,6 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: [
       "onnxruntime-node",
-      "@xenova/transformers",
     ],
   },
 };

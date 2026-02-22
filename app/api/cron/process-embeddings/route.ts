@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
  * GET /api/cron/process-embeddings
  *
  * Cron worker that polls for pending generate_embedding jobs and processes them.
- * Generates 384-dim embeddings for student profiles using all-MiniLM-L6-v2.
+ * Generates 768-dim embeddings for student profiles using text-embedding-004.
  * Authenticated via CRON_SECRET bearer token.
  */
 export async function GET(req: NextRequest) {

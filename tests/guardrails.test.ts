@@ -455,7 +455,7 @@ describe("Guardrails", () => {
     const validStudent: StudentProfileRow = {
       skills: [{ name: "Python", proficiency: 3 }],
       resumeUrl: "https://storage.example.com/resume.pdf",
-      embedding: new Array(384).fill(0.1),
+      embedding: new Array(768).fill(0.1),
       profileCompleteness: 85,
     };
 

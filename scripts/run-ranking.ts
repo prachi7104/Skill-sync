@@ -26,6 +26,7 @@ import { drives, students, rankings } from "../lib/db/schema";
 import type { Skill, ParsedJD } from "../lib/db/schema";
 import { eq } from "drizzle-orm";
 import * as dotenv from "dotenv";
+import { generateEmbedding } from "../lib/embeddings/generate";
 
 dotenv.config({ path: ".env.local" });
 
@@ -45,29 +46,14 @@ const db = drizzle(client, { schema });
 // Embedding Generation (inline to avoid server-only issues in scripts)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MODEL_NAME = "Xenova/all-MiniLM-L6-v2";
-const EMBEDDING_DIMENSION = 384;
+const EMBEDDING_DIMENSION = 768; // text-embedding-004 dimension
 
-let pipelineInstance: any = null;
-
-async function getEmbeddingPipeline() {
-  if (!pipelineInstance) {
-    const { pipeline } = await import("@xenova/transformers");
-    pipelineInstance = await pipeline("feature-extraction", MODEL_NAME, {
-      progress_callback: undefined,
-    });
-  }
-  return pipelineInstance;
-}
-
-async function generateEmbedding(text: string): Promise<number[]> {
+async function generateTextEmbedding(text: string): Promise<number[]> {
   if (!text || text.trim().length === 0) {
     throw new Error("Cannot generate embedding for empty text");
   }
 
-  const pipe = await getEmbeddingPipeline();
-  const output = await pipe(text, { pooling: "mean", normalize: true });
-  const embedding: number[] = Array.from(output.data);
+  const embedding = await generateEmbedding(text);
 
   if (embedding.length !== EMBEDDING_DIMENSION) {
     throw new Error(
@@ -323,18 +309,18 @@ function computeAllScores(
       matchScore >= 80
         ? `Strong semantic match (${matchScore}%)`
         : matchScore >= 60
-        ? `Moderate semantic match (${matchScore}%)`
-        : `Low semantic match (${matchScore}%)`;
+          ? `Moderate semantic match (${matchScore}%)`
+          : `Low semantic match (${matchScore}%)`;
   } else {
     const skillSummary = `${matchedSkills.length}/${totalRequired} skills matched`;
     shortExplanation =
       matchScore >= 80
         ? `Strong match: ${skillSummary}`
         : matchScore >= 60
-        ? `Good match: ${skillSummary}`
-        : matchScore >= 40
-        ? `Partial match: ${skillSummary}`
-        : `Weak match: ${skillSummary}`;
+          ? `Good match: ${skillSummary}`
+          : matchScore >= 40
+            ? `Partial match: ${skillSummary}`
+            : `Weak match: ${skillSummary}`;
   }
 
   return {
@@ -444,7 +430,7 @@ async function main() {
     // 4. Generate JD embedding
     console.log("🧠 Generating JD embedding...");
     let jdEmbedding: number[];
-    if (drive.jdEmbedding && drive.jdEmbedding.length === 384) {
+    if (drive.jdEmbedding && drive.jdEmbedding.length === EMBEDDING_DIMENSION) {
       jdEmbedding = drive.jdEmbedding;
       console.log("   Using existing embedding");
     } else {
@@ -454,7 +440,7 @@ async function main() {
         roleTitle: drive.roleTitle,
         company: drive.company,
       });
-      jdEmbedding = await generateEmbedding(jdText);
+      jdEmbedding = await generateTextEmbedding(jdText);
       console.log("   Generated new embedding");
 
       // Update drive
@@ -481,7 +467,7 @@ async function main() {
       try {
         // Generate student embedding
         let studentEmbedding: number[];
-        if (student.embedding && student.embedding.length === 384) {
+        if (student.embedding && student.embedding.length === EMBEDDING_DIMENSION) {
           studentEmbedding = student.embedding;
         } else {
           const profileText = composeStudentEmbeddingText({
@@ -496,7 +482,7 @@ async function main() {
             continue;
           }
 
-          studentEmbedding = await generateEmbedding(profileText);
+          studentEmbedding = await generateTextEmbedding(profileText);
 
           // Update student
           await db
