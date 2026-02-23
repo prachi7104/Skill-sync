@@ -353,16 +353,6 @@ const TECHNOLOGY_CAPABILITY_MAP: Record<string, CapabilityMapping[]> = {
         { skill: "Computer Vision", confidence: 95, inference: "OpenCV is a computer vision library" },
         { skill: "Machine Learning", confidence: 70, inference: "OpenCV is often used with ML" },
     ],
-    "huggingface": [
-        { skill: "Natural Language Processing", confidence: 85, inference: "HuggingFace is an NLP platform" },
-        { skill: "Machine Learning", confidence: 85, inference: "HuggingFace provides ML models" },
-        { skill: "Deep Learning", confidence: 80, inference: "HuggingFace focuses on transformer models" },
-    ],
-    "transformers": [
-        { skill: "Natural Language Processing", confidence: 80, inference: "Transformers are core to modern NLP" },
-        { skill: "Deep Learning", confidence: 85, inference: "Transformers are deep learning architectures" },
-    ],
-
     // ── Data Engineering ──
     "spark": [
         { skill: "Data Engineering", confidence: 95, inference: "Apache Spark is a data processing engine" },
@@ -450,6 +440,212 @@ const TECHNOLOGY_CAPABILITY_MAP: Record<string, CapabilityMapping[]> = {
     "python": [
         { skill: "Scripting", confidence: 75, inference: "Python is widely used for scripting and automation" },
         { skill: "Data Science", confidence: 70, inference: "Python is the dominant data science language" },
+    ],
+
+    // ── LLMs & Generative AI ──
+    // OpenAI / GPT family
+    "openai": [
+        { skill: "Artificial Intelligence", confidence: 95, inference: "OpenAI is the leading AI lab" },
+        { skill: "Large Language Models", confidence: 95, inference: "OpenAI builds LLMs (GPT-3, GPT-4, etc.)" },
+        { skill: "Generative AI", confidence: 90, inference: "OpenAI's models are generative AI" },
+        { skill: "Machine Learning", confidence: 80, inference: "Working with OpenAI requires ML understanding" },
+        { skill: "Natural Language Processing", confidence: 85, inference: "OpenAI's models are NLP-based" },
+        { skill: "API Integration", confidence: 80, inference: "OpenAI is typically used via API" },
+    ],
+    "gpt": [
+        { skill: "Large Language Models", confidence: 95, inference: "GPT is a large language model" },
+        { skill: "Generative AI", confidence: 95, inference: "GPT is a generative pre-trained transformer" },
+        { skill: "Natural Language Processing", confidence: 90, inference: "GPT is used for NLP tasks" },
+        { skill: "Artificial Intelligence", confidence: 90, inference: "GPT is an AI model" },
+    ],
+    "gpt-3": [
+        { skill: "Large Language Models", confidence: 95, inference: "GPT-3 is a large language model" },
+        { skill: "Generative AI", confidence: 95, inference: "GPT-3 is a generative AI model" },
+        { skill: "Natural Language Processing", confidence: 90, inference: "GPT-3 is used for NLP tasks" },
+    ],
+    "gpt-4": [
+        { skill: "Large Language Models", confidence: 95, inference: "GPT-4 is a large language model" },
+        { skill: "Generative AI", confidence: 95, inference: "GPT-4 is a generative AI model" },
+        { skill: "Natural Language Processing", confidence: 90, inference: "GPT-4 is used for NLP tasks" },
+    ],
+    "chatgpt": [
+        { skill: "Large Language Models", confidence: 90, inference: "ChatGPT is built on GPT-4" },
+        { skill: "Generative AI", confidence: 90, inference: "ChatGPT is a generative AI tool" },
+        { skill: "Natural Language Processing", confidence: 85, inference: "ChatGPT handles NLP tasks" },
+    ],
+    "llm": [
+        { skill: "Large Language Models", confidence: 95, inference: "LLM = Large Language Model" },
+        { skill: "Generative AI", confidence: 90, inference: "LLMs are generative AI models" },
+        { skill: "Natural Language Processing", confidence: 90, inference: "LLMs are used for NLP tasks" },
+        { skill: "Artificial Intelligence", confidence: 85, inference: "LLMs are a subset of AI" },
+    ],
+    "llms": [
+        { skill: "Large Language Models", confidence: 95, inference: "LLMs = Large Language Models" },
+        { skill: "Generative AI", confidence: 90, inference: "LLMs are generative AI models" },
+        { skill: "Natural Language Processing", confidence: 90, inference: "LLMs are used for NLP tasks" },
+        { skill: "Artificial Intelligence", confidence: 85, inference: "LLMs are a subset of AI" },
+    ],
+    // Anthropic Claude
+    "claude": [
+        { skill: "Large Language Models", confidence: 90, inference: "Claude is Anthropic's LLM" },
+        { skill: "Generative AI", confidence: 90, inference: "Claude is a generative AI model" },
+        { skill: "Natural Language Processing", confidence: 85, inference: "Claude handles NLP tasks" },
+    ],
+    "anthropic": [
+        { skill: "Large Language Models", confidence: 90, inference: "Anthropic builds Claude LLMs" },
+        { skill: "Generative AI", confidence: 90, inference: "Anthropic is a generative AI company" },
+        { skill: "Artificial Intelligence", confidence: 85, inference: "Anthropic is an AI safety company" },
+    ],
+    // Google Gemini
+    "gemini": [
+        { skill: "Large Language Models", confidence: 90, inference: "Gemini is Google's LLM" },
+        { skill: "Generative AI", confidence: 90, inference: "Gemini is Google's generative AI model" },
+        { skill: "Natural Language Processing", confidence: 85, inference: "Gemini is used for NLP tasks" },
+    ],
+    // Meta LLaMA
+    "llama": [
+        { skill: "Large Language Models", confidence: 90, inference: "LLaMA is Meta's open-source LLM" },
+        { skill: "Generative AI", confidence: 85, inference: "LLaMA is a generative AI model" },
+        { skill: "Natural Language Processing", confidence: 85, inference: "LLaMA handles NLP tasks" },
+    ],
+    "llama2": [
+        { skill: "Large Language Models", confidence: 90, inference: "LLaMA 2 is Meta's open-source LLM" },
+        { skill: "Generative AI", confidence: 85, inference: "LLaMA 2 is a generative AI model" },
+    ],
+    "ollama": [
+        { skill: "Large Language Models", confidence: 85, inference: "Ollama is used for running local LLMs" },
+        { skill: "Generative AI", confidence: 80, inference: "Ollama enables local generative AI" },
+        { skill: "Machine Learning", confidence: 75, inference: "Ollama is an ML inference tool" },
+    ],
+    // Orchestration frameworks
+    "langchain": [
+        { skill: "Large Language Models", confidence: 95, inference: "LangChain is an LLM application framework" },
+        { skill: "Generative AI", confidence: 95, inference: "LangChain is used to build GenAI apps" },
+        { skill: "Natural Language Processing", confidence: 90, inference: "LangChain enables NLP pipelines" },
+        { skill: "Artificial Intelligence", confidence: 85, inference: "LangChain orchestrates AI models" },
+        { skill: "Python", confidence: 80, inference: "LangChain is primarily a Python library" },
+    ],
+    "llamaindex": [
+        { skill: "Large Language Models", confidence: 95, inference: "LlamaIndex is an LLM data framework" },
+        { skill: "Generative AI", confidence: 95, inference: "LlamaIndex powers GenAI RAG apps" },
+        { skill: "Natural Language Processing", confidence: 85, inference: "LlamaIndex enables NLP retrieval" },
+    ],
+    "llama index": [
+        { skill: "Large Language Models", confidence: 95, inference: "LlamaIndex is an LLM data framework" },
+        { skill: "Generative AI", confidence: 95, inference: "LlamaIndex powers GenAI RAG apps" },
+    ],
+    "hugging face": [
+        { skill: "Machine Learning", confidence: 90, inference: "Hugging Face is an ML model hub" },
+        { skill: "Large Language Models", confidence: 90, inference: "Hugging Face hosts LLMs and transformers" },
+        { skill: "Natural Language Processing", confidence: 90, inference: "Hugging Face is focused on NLP" },
+        { skill: "Deep Learning", confidence: 80, inference: "Hugging Face models use deep learning" },
+        { skill: "Python", confidence: 80, inference: "Hugging Face is a Python library" },
+    ],
+    "huggingface": [
+        { skill: "Machine Learning", confidence: 90, inference: "Hugging Face is an ML model hub" },
+        { skill: "Large Language Models", confidence: 90, inference: "Hugging Face hosts LLMs and transformers" },
+        { skill: "Natural Language Processing", confidence: 90, inference: "Hugging Face is focused on NLP" },
+    ],
+    // Transformers
+    "transformers": [
+        { skill: "Large Language Models", confidence: 90, inference: "Transformers are the architecture behind LLMs" },
+        { skill: "Natural Language Processing", confidence: 90, inference: "Transformers are the dominant NLP architecture" },
+        { skill: "Deep Learning", confidence: 85, inference: "Transformers are a deep learning architecture" },
+        { skill: "Machine Learning", confidence: 80, inference: "Transformers are a machine learning architecture" },
+    ],
+    // RAG & retrieval
+    "rag": [
+        { skill: "Large Language Models", confidence: 90, inference: "RAG (Retrieval-Augmented Generation) is an LLM technique" },
+        { skill: "Generative AI", confidence: 90, inference: "RAG augments generative AI with retrieval" },
+        { skill: "Natural Language Processing", confidence: 80, inference: "RAG is used in NLP applications" },
+    ],
+    "retrieval augmented generation": [
+        { skill: "Large Language Models", confidence: 95, inference: "RAG is an LLM application pattern" },
+        { skill: "Generative AI", confidence: 95, inference: "RAG is a key GenAI architecture pattern" },
+    ],
+    // Vector databases — key for LLM apps
+    "pinecone": [
+        { skill: "Large Language Models", confidence: 80, inference: "Pinecone is a vector DB commonly used with LLMs" },
+        { skill: "Generative AI", confidence: 80, inference: "Pinecone powers RAG pipelines" },
+        { skill: "Machine Learning", confidence: 75, inference: "Pinecone stores ML embeddings" },
+    ],
+    "chromadb": [
+        { skill: "Large Language Models", confidence: 80, inference: "ChromaDB is a vector DB for LLM apps" },
+        { skill: "Generative AI", confidence: 80, inference: "ChromaDB is used in RAG pipelines" },
+    ],
+    "weaviate": [
+        { skill: "Large Language Models", confidence: 80, inference: "Weaviate is a vector database for AI apps" },
+        { skill: "Generative AI", confidence: 75, inference: "Weaviate supports GenAI search" },
+    ],
+    "faiss": [
+        { skill: "Machine Learning", confidence: 80, inference: "FAISS is Facebook's similarity search library" },
+        { skill: "Large Language Models", confidence: 75, inference: "FAISS is used for LLM embedding search" },
+    ],
+    "vector database": [
+        { skill: "Large Language Models", confidence: 85, inference: "Vector DBs are core infrastructure for LLM apps" },
+        { skill: "Generative AI", confidence: 80, inference: "Vector DBs power RAG and semantic search" },
+    ],
+    // Prompt engineering & fine-tuning
+    "prompt engineering": [
+        { skill: "Large Language Models", confidence: 95, inference: "Prompt engineering is an LLM skill" },
+        { skill: "Generative AI", confidence: 95, inference: "Prompt engineering is used with generative AI" },
+        { skill: "Natural Language Processing", confidence: 80, inference: "Prompt engineering is an NLP technique" },
+    ],
+    "fine-tuning": [
+        { skill: "Machine Learning", confidence: 90, inference: "Fine-tuning is an ML training technique" },
+        { skill: "Large Language Models", confidence: 90, inference: "Fine-tuning is applied to pre-trained LLMs" },
+        { skill: "Deep Learning", confidence: 85, inference: "Fine-tuning uses deep learning" },
+    ],
+    "fine tuning": [
+        { skill: "Machine Learning", confidence: 90, inference: "Fine-tuning is an ML training technique" },
+        { skill: "Large Language Models", confidence: 90, inference: "Fine-tuning is applied to pre-trained LLMs" },
+    ],
+    // OpenAI API specifically
+    "openai api": [
+        { skill: "Large Language Models", confidence: 95, inference: "OpenAI API is used to build LLM apps" },
+        { skill: "Generative AI", confidence: 95, inference: "OpenAI API powers GenAI applications" },
+        { skill: "API Integration", confidence: 90, inference: "OpenAI API is an external API integration" },
+        { skill: "Python", confidence: 70, inference: "OpenAI API is most commonly used via Python" },
+    ],
+    // Generative AI as a phrase
+    "generative ai": [
+        { skill: "Large Language Models", confidence: 90, inference: "Generative AI includes LLMs" },
+        { skill: "Artificial Intelligence", confidence: 95, inference: "Generative AI is a branch of AI" },
+        { skill: "Machine Learning", confidence: 85, inference: "Generative AI is built on ML" },
+    ],
+    "gen ai": [
+        { skill: "Large Language Models", confidence: 90, inference: "Gen AI includes LLMs" },
+        { skill: "Artificial Intelligence", confidence: 90, inference: "Gen AI is short for Generative AI" },
+    ],
+    // Embeddings
+    "embeddings": [
+        { skill: "Machine Learning", confidence: 85, inference: "Embeddings are an ML technique" },
+        { skill: "Large Language Models", confidence: 85, inference: "Embeddings are central to LLM applications" },
+        { skill: "Natural Language Processing", confidence: 80, inference: "Word/sentence embeddings are an NLP technique" },
+    ],
+    "word embeddings": [
+        { skill: "Natural Language Processing", confidence: 90, inference: "Word embeddings (e.g. Word2Vec) are an NLP technique" },
+        { skill: "Machine Learning", confidence: 80, inference: "Word embeddings are an ML representation" },
+    ],
+    // Computer vision / image gen
+    "stable diffusion": [
+        { skill: "Generative AI", confidence: 95, inference: "Stable Diffusion is an image generative AI model" },
+        { skill: "Machine Learning", confidence: 85, inference: "Stable Diffusion uses diffusion model ML" },
+        { skill: "Deep Learning", confidence: 85, inference: "Stable Diffusion uses deep learning" },
+    ],
+    "diffusion models": [
+        { skill: "Generative AI", confidence: 90, inference: "Diffusion models are a type of generative AI" },
+        { skill: "Deep Learning", confidence: 90, inference: "Diffusion models are deep learning architectures" },
+    ],
+    // Agents
+    "ai agents": [
+        { skill: "Large Language Models", confidence: 90, inference: "AI agents are built on top of LLMs" },
+        { skill: "Generative AI", confidence: 90, inference: "AI agents use generative AI" },
+        { skill: "Artificial Intelligence", confidence: 90, inference: "AI agents are autonomous AI systems" },
+    ],
+    "autonomous agents": [
+        { skill: "Large Language Models", confidence: 85, inference: "Autonomous agents often use LLMs" },
+        { skill: "Generative AI", confidence: 85, inference: "Autonomous agents leverage generative AI" },
     ],
 };
 

@@ -99,7 +99,7 @@ function mapProfileToResumeData(profile: any, skills: Skill[], projects: Project
 export async function POST(req: NextRequest) {
   try {
     // 1. Auth — require student with profile
-    let { user, profile } = await requireStudentProfile();
+    const { user, profile } = await requireStudentProfile();
 
     // Fix: If embedding is missing (e.g. from legacy profile or failed job), generate it now
     if (!profile.embedding) {
@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
     const parsedResume = mapProfileToResumeData(profile, skills, projects, workExperience);
 
     // Analyze
-    let atsResult = analyzeMatch(parsedJd, parsedResume);
+    const atsResult = analyzeMatch(parsedJd, parsedResume);
 
     // Override score if ineligible
     if (!eligibilityResult.isEligible) {

@@ -35,7 +35,7 @@ export default function OnboardingWelcomeClient() {
             <div className="space-y-2">
                 <h1 className="text-2xl font-bold tracking-tight">Welcome to SkillSync</h1>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                    Let's set up your profile to help you find the best placement opportunities.
+                    Let&apos;s set up your profile to help you find the best placement opportunities.
                     This will only take a few minutes.
                 </p>
             </div>

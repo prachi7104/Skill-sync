@@ -56,7 +56,7 @@ export default function StudentDashboard() {
             <div className="flex flex-col gap-2">
                 <h1 className="text-3xl font-bold tracking-tight">Student Dashboard</h1>
                 <p className="text-muted-foreground">
-                    Welcome back, {user.name}. Here's what's happening with your profile.
+                    Welcome back, {user.name}. Here&apos;s what&apos;s happening with your profile.
                 </p>
             </div>
 

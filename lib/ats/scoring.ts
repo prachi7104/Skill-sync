@@ -55,12 +55,15 @@ function calculateStackAlignment(jd: StructuredJD, resume: EnhancedResume): numb
 
 function getWeights(roleType: string, seniority: string) {
     if (roleType === "Research") {
-        return { hard: 0.40, research: 0.25, soft: 0.15, exp: 0.10, domain: 0.10 };
+        // Research: hard skills + research score matter most
+        return { hard: 0.45, research: 0.30, soft: 0.0, exp: 0.15, domain: 0.10 };
     }
     if (seniority === "Senior" || seniority === "Staff+") {
-        return { hard: 0.35, research: 0.0, soft: 0.15, exp: 0.30, domain: 0.10, leadership: 0.10 };
+        // Senior: hard skills + experience + domain; soft skills are a suggestion only
+        return { hard: 0.45, research: 0.0, soft: 0.0, exp: 0.35, domain: 0.10, leadership: 0.10 };
     }
-    return { hard: 0.50, research: 0.0, soft: 0.15, exp: 0.20, domain: 0.10, context: 0.05 };
+    // Standard: hard skills dominate; soft skills are suggestions only
+    return { hard: 0.65, research: 0.0, soft: 0.0, exp: 0.20, domain: 0.10, context: 0.05 };
 }
 
 // ============================================================================
@@ -96,9 +99,10 @@ export function calculateATSScore(
     const researchScore = resume.research_score * 100;
 
     // Calculate Final Weighted Score
+    // NOTE: soft skills are intentionally excluded from scoring.
+    // They are computed separately and surfaced as suggestions for the student.
     let finalScore =
         (hardScore * weights.hard) +
-        (softScore * weights.soft) +
         (expScore * (weights.exp || 0)) +
         (domainScore * weights.domain) +
         (researchScore * (weights.research || 0));
@@ -167,7 +171,9 @@ export function calculateATSScore(
     // Components Breakdown
     const components = {
         hard_requirements: { score: hardScore, max: 100, percentage: hardScore, verdict: hardScore > 80 ? "Strong" : "Weak" },
-        soft_requirements: { score: softScore, max: 100, percentage: softScore, verdict: softScore > 50 ? "Good" : "Low" },
+        // soft_requirements is informational only — not part of the score
+        // Frontend should use this to suggest soft skills for the student to add to their resume
+        soft_requirements: { score: softScore, max: 100, percentage: softScore, verdict: softScore > 50 ? "Good" : "Could Improve", note: "Not scored — for suggestions only" },
         experience_level: { score: expScore, max: 100, percentage: expScore, gap_years: expAnalysis.gap_years, verdict: expAnalysis.level_gap_verdict },
         domain_alignment: { score: domainScore, max: 100, percentage: domainScore, jd_stack: jd.tech_stack_cluster.primary_cluster, candidate_stack: resume.computed_stack.primary.cluster, verdict: domainScore > 70 ? "Aligned" : "Mismatch" }
     };

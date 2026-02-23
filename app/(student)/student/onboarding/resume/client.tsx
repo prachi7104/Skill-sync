@@ -154,12 +154,12 @@ export default function OnboardingResumeClient() {
             <div className="space-y-2">
                 <h2 className="text-xl font-semibold">Upload Your Resume</h2>
                 <p className="text-sm text-muted-foreground">
-                    Start by uploading your resume. We'll use AI to extract your skills, projects, and experience — pre-filling every step so you just verify and move ahead!
+                    Start by uploading your resume. We&apos;ll use AI to extract your skills, projects, and experience — pre-filling every step so you just verify and move ahead!
                 </p>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-                <strong>Why upload first?</strong> Our AI will parse your resume and auto-fill your entire profile. You'll just need to review and adjust — saving you 5+ minutes of manual entry.
+                <strong>Why upload first?</strong> Our AI will parse your resume and auto-fill your entire profile. You&apos;ll just need to review and adjust — saving you 5+ minutes of manual entry.
             </div>
 
             <div className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center text-center space-y-4">

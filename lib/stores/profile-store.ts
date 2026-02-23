@@ -1,7 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import type {
   Project,
   WorkExperience,
@@ -123,134 +122,123 @@ const INITIAL_STATE = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const useProfileStore = create<ProfileState>()(
-  persist(
-    (set) => ({
-      ...INITIAL_STATE,
+  (set) => ({
+    ...INITIAL_STATE,
 
-      // ── Resume ──────────────────────────────────────────────────────────
-      setResumeUrl: (url) => set({ resumeUrl: url }),
+    // ── Resume ──────────────────────────────────────────────────────────
+    setResumeUrl: (url) => set({ resumeUrl: url }),
 
-      // ── Identity ────────────────────────────────────────────────────────
-      updateIdentity: (data) => set(data),
+    // ── Identity ────────────────────────────────────────────────────────
+    updateIdentity: (data) => set(data),
 
-      // ── Academics ───────────────────────────────────────────────────────
-      updateAcademics: (data) => set(data),
+    // ── Academics ───────────────────────────────────────────────────────
+    updateAcademics: (data) => set(data),
 
-      // ── Projects ────────────────────────────────────────────────────────
-      setProjects: (projects) => set({ projects }),
-      addProject: (project) =>
-        set((state) => ({ projects: [...state.projects, project] })),
-      removeProject: (index) =>
-        set((state) => ({
-          projects: state.projects.filter((_, i) => i !== index),
-        })),
+    // ── Projects ────────────────────────────────────────────────────────
+    setProjects: (projects) => set({ projects }),
+    addProject: (project) =>
+      set((state) => ({ projects: [...state.projects, project] })),
+    removeProject: (index) =>
+      set((state) => ({
+        projects: state.projects.filter((_, i) => i !== index),
+      })),
 
-      // ── Work Experience ─────────────────────────────────────────────────
-      setWorkExperience: (work) => set({ workExperience: work }),
-      addWorkExperience: (exp) =>
-        set((state) => ({
-          workExperience: [...state.workExperience, exp],
-        })),
-      removeWorkExperience: (index) =>
-        set((state) => ({
-          workExperience: state.workExperience.filter((_, i) => i !== index),
-        })),
+    // ── Work Experience ─────────────────────────────────────────────────
+    setWorkExperience: (work) => set({ workExperience: work }),
+    addWorkExperience: (exp) =>
+      set((state) => ({
+        workExperience: [...state.workExperience, exp],
+      })),
+    removeWorkExperience: (index) =>
+      set((state) => ({
+        workExperience: state.workExperience.filter((_, i) => i !== index),
+      })),
 
-      // ── Skills ──────────────────────────────────────────────────────────
-      setSkills: (skills) => set({ skills }),
-      addSkill: (skill) =>
-        set((state) => ({ skills: [...state.skills, skill] })),
-      removeSkill: (index) =>
-        set((state) => ({
-          skills: state.skills.filter((_, i) => i !== index),
-        })),
+    // ── Skills ──────────────────────────────────────────────────────────
+    setSkills: (skills) => set({ skills }),
+    addSkill: (skill) =>
+      set((state) => ({ skills: [...state.skills, skill] })),
+    removeSkill: (index) =>
+      set((state) => ({
+        skills: state.skills.filter((_, i) => i !== index),
+      })),
 
-      // ── Certifications ──────────────────────────────────────────────────
-      setCertifications: (certs) => set({ certifications: certs }),
-      addCertification: (cert) =>
-        set((state) => ({
-          certifications: [...state.certifications, cert],
-        })),
-      removeCertification: (index) =>
-        set((state) => ({
-          certifications: state.certifications.filter((_, i) => i !== index),
-        })),
+    // ── Certifications ──────────────────────────────────────────────────
+    setCertifications: (certs) => set({ certifications: certs }),
+    addCertification: (cert) =>
+      set((state) => ({
+        certifications: [...state.certifications, cert],
+      })),
+    removeCertification: (index) =>
+      set((state) => ({
+        certifications: state.certifications.filter((_, i) => i !== index),
+      })),
 
-      // ── Coding Profiles ─────────────────────────────────────────────────
-      setCodingProfiles: (profiles) => set({ codingProfiles: profiles }),
-      addCodingProfile: (profile) =>
-        set((state) => ({
-          codingProfiles: [...state.codingProfiles, profile],
-        })),
-      removeCodingProfile: (index) =>
-        set((state) => ({
-          codingProfiles: state.codingProfiles.filter((_, i) => i !== index),
-        })),
+    // ── Coding Profiles ─────────────────────────────────────────────────
+    setCodingProfiles: (profiles) => set({ codingProfiles: profiles }),
+    addCodingProfile: (profile) =>
+      set((state) => ({
+        codingProfiles: [...state.codingProfiles, profile],
+      })),
+    removeCodingProfile: (index) =>
+      set((state) => ({
+        codingProfiles: state.codingProfiles.filter((_, i) => i !== index),
+      })),
 
-      // ── Soft Skills ─────────────────────────────────────────────────────
-      setSoftSkills: (skills) => set({ softSkills: skills }),
+    // ── Soft Skills ─────────────────────────────────────────────────────
+    setSoftSkills: (skills) => set({ softSkills: skills }),
 
-      // ── Achievements ────────────────────────────────────────────────────
-      setAchievements: (achievements) => set({ achievements }),
-      addAchievement: (achievement) =>
-        set((state) => ({
-          achievements: [...state.achievements, achievement],
-        })),
-      removeAchievement: (index) =>
-        set((state) => ({
-          achievements: state.achievements.filter((_, i) => i !== index),
-        })),
+    // ── Achievements ────────────────────────────────────────────────────
+    setAchievements: (achievements) => set({ achievements }),
+    addAchievement: (achievement) =>
+      set((state) => ({
+        achievements: [...state.achievements, achievement],
+      })),
+    removeAchievement: (index) =>
+      set((state) => ({
+        achievements: state.achievements.filter((_, i) => i !== index),
+      })),
 
-      // ── Navigation ──────────────────────────────────────────────────────
-      nextStep: () =>
-        set((state) => ({
-          currentStep: Math.min(state.currentStep + 1, 8),
-        })),
-      prevStep: () =>
-        set((state) => ({
-          currentStep: Math.max(state.currentStep - 1, 0),
-        })),
-      goToStep: (step) => set({ currentStep: step }),
+    // ── Navigation ──────────────────────────────────────────────────────
+    nextStep: () =>
+      set((state) => ({
+        currentStep: Math.min(state.currentStep + 1, 8),
+      })),
+    prevStep: () =>
+      set((state) => ({
+        currentStep: Math.max(state.currentStep - 1, 0),
+      })),
+    goToStep: (step) => set({ currentStep: step }),
 
-      // ── Reset ───────────────────────────────────────────────────────────
-      reset: () => set(INITIAL_STATE),
+    // ── Reset ───────────────────────────────────────────────────────────
+    reset: () => set(INITIAL_STATE),
 
-      // ── Load from DB ────────────────────────────────────────────────────
-      loadFromDB: (data: Record<string, unknown>) =>
-        set({
-          name: (data.name as string) || "",
-          email: (data.email as string) || "",
-          phone: (data.phone as string) || "",
-          linkedinUrl: (data.linkedin as string) || "",
-          sapId: (data.sapId as string) || "",
-          rollNo: (data.rollNo as string) || "",
-          tenthPercentage: (data.tenthPercentage as number) ?? null,
-          twelfthPercentage: (data.twelfthPercentage as number) ?? null,
-          cgpa: (data.cgpa as number) ?? null,
-          semester: (data.semester as number) ?? null,
-          branch: (data.branch as string) || "",
-          batchYear: (data.batchYear as number) ?? null,
-          category: (data.category as "alpha" | "beta" | "gamma") ?? null,
-          projects: (data.projects as Project[]) || [],
-          workExperience: (data.workExperience as WorkExperience[]) || [],
-          skills: (data.skills as Skill[]) || [],
-          certifications: (data.certifications as Certification[]) || [],
-          codingProfiles: (data.codingProfiles as CodingProfile[]) || [],
-          researchPapers: (data.researchPapers as ResearchPaper[]) || [],
-          achievements: (data.achievements as Achievement[]) || [],
-          softSkills: (data.softSkills as string[]) || [],
-          resumeUrl: (data.resumeUrl as string) || null,
-          currentStep: (data.onboardingStep as number) || 0,
-        }),
-    }),
-    {
-      name: "profile-storage",
-      // Don't persist File objects — they can't be serialized
-      partialize: (state) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { ...rest } = state;
-        return rest;
-      },
-    }
-  )
+    // ── Load from DB ────────────────────────────────────────────────────
+    loadFromDB: (data: Record<string, unknown>) =>
+      set({
+        name: (data.name as string) || "",
+        email: (data.email as string) || "",
+        phone: (data.phone as string) || "",
+        linkedinUrl: (data.linkedin as string) || "",
+        sapId: (data.sapId as string) || "",
+        rollNo: (data.rollNo as string) || "",
+        tenthPercentage: (data.tenthPercentage as number) ?? null,
+        twelfthPercentage: (data.twelfthPercentage as number) ?? null,
+        cgpa: (data.cgpa as number) ?? null,
+        semester: (data.semester as number) ?? null,
+        branch: (data.branch as string) || "",
+        batchYear: (data.batchYear as number) ?? null,
+        category: (data.category as "alpha" | "beta" | "gamma") ?? null,
+        projects: (data.projects as Project[]) || [],
+        workExperience: (data.workExperience as WorkExperience[]) || [],
+        skills: (data.skills as Skill[]) || [],
+        certifications: (data.certifications as Certification[]) || [],
+        codingProfiles: (data.codingProfiles as CodingProfile[]) || [],
+        researchPapers: (data.researchPapers as ResearchPaper[]) || [],
+        achievements: (data.achievements as Achievement[]) || [],
+        softSkills: (data.softSkills as string[]) || [],
+        resumeUrl: (data.resumeUrl as string) || null,
+        currentStep: (data.onboardingStep as number) || 0,
+      }),
+  })
 );

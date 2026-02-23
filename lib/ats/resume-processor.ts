@@ -92,7 +92,7 @@ export function enhanceResumeData(resume: ParsedResumeData): EnhancedResume {
 
     Object.entries(TECH_STACK_CLUSTERS).forEach(([cluster, keywords]) => {
         let hits = 0;
-        let evidence: string[] = [];
+        const evidence: string[] = [];
         keywords.forEach(kw => {
             const pattern = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
             if (pattern.test(textForStack)) {
@@ -144,7 +144,7 @@ export function enhanceResumeData(resume: ParsedResumeData): EnhancedResume {
     // Calc score 0-1
     // 1 strong = 0.6, 2 strong = 1.0
     // 1 moderate = 0.2
-    let rawResearchScore = (strongCount * 0.5) + (moderateCount * 0.2);
+    const rawResearchScore = (strongCount * 0.5) + (moderateCount * 0.2);
     researchScore = Math.min(rawResearchScore, 1.0);
 
 

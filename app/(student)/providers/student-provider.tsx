@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useCallback, ReactNode 
 import { type InferSelectModel } from "drizzle-orm";
 import { type students } from "@/lib/db/schema";
 import { toast } from "sonner";
+import { useProfileStore } from "@/lib/stores/profile-store";
 
 // Type definition for the student profile from Drizzle
 type Student = InferSelectModel<typeof students>;
@@ -48,8 +49,10 @@ export function StudentProvider({
         const payload = data.data ?? data;
         if (payload.profile) {
             setStudent(payload.profile);
+            useProfileStore.getState().loadFromDB(payload.profile);
         } else {
             setStudent(payload);
+            useProfileStore.getState().loadFromDB(payload);
         }
         if (payload.user) {
             setUser(payload.user);
@@ -102,6 +105,11 @@ export function StudentProvider({
             setError(message);
         }
     }, [applyProfileData]);
+
+    // One-time cleanup: remove any stale data from the old persist middleware
+    useEffect(() => {
+        localStorage.removeItem("profile-storage");
+    }, []);
 
     // Fetch only if no initial data or if explicitly requested (refresh)
     // We skip the effect if initialStudent is provided to avoid double-fetch

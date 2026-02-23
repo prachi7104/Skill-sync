@@ -42,85 +42,54 @@ export const authOptions: NextAuthOptions = {
     debug: false,
     callbacks: {
         async signIn({ user, account }) {
-            if (!user.email) {
-                console.error("[auth] signIn denied — no email");
-                return false;
-            }
-
+            if (!user.email) return false;
             const email = user.email.toLowerCase();
-
             try {
-                const existingUser = await db.query.users.findFirst({
-                    where: eq(users.email, email),
-                });
-
+                const existingUser = await db.query.users.findFirst({ where: eq(users.email, email) });
                 if (existingUser) {
-                    // Link Microsoft ID if not yet linked
                     if (!existingUser.microsoftId && account?.providerAccountId) {
-                        await db
-                            .update(users)
-                            .set({ microsoftId: account.providerAccountId, updatedAt: new Date() })
+                        await db.update(users).set({ microsoftId: account.providerAccountId, updatedAt: new Date() })
                             .where(eq(users.id, existingUser.id))
-                            .catch((err: unknown) =>
-                                console.warn("[auth] Microsoft ID link failed (non-fatal):", err)
-                            );
+                            .catch((err: unknown) => console.warn("[auth] MS ID link failed:", err));
                     }
                     return true;
                 }
-
-                // Student domain → auto-create user + profile
                 if (isStudentEmail(email)) {
-                    const [newUser] = await db
-                        .insert(users)
-                        .values({
-                            email,
-                            name: user.name || "Student",
-                            role: "student",
-                            microsoftId: account?.providerAccountId,
-                        })
-                        .returning();
-
+                    const [newUser] = await db.insert(users).values({
+                        email, name: user.name || "Student", role: "student",
+                        microsoftId: account?.providerAccountId,
+                    }).returning();
                     await db.insert(students).values({ id: newUser.id });
-                    console.log(`[auth] Created new student: ${newUser.id}`);
                     return true;
                 }
-
-                // Not a student domain, not in DB → deny
-                console.warn(`[auth] Access denied: ${email} not in DB and not student domain`);
                 return "/login?error=NotAuthorized";
-
             } catch (error: unknown) {
                 const msg = error instanceof Error ? error.message : String(error);
                 console.error("[auth] Sign-in error:", msg);
-
-                if (msg.includes("connect") || msg.includes("ECONNREFUSED") || msg.includes("terminating")) {
-                    return "/login?error=ServiceUnavailable";
-                }
                 return "/login?error=DatabaseError";
             }
         },
         async jwt({ token, user }) {
-            // Initial sign in
-            if (user && user.email) {
-                try {
-                    const dbUser = await db.query.users.findFirst({
-                        where: eq(users.email, user.email),
-                    });
-
-                    if (dbUser) {
-                        token.id = dbUser.id;
-                        token.role = dbUser.role;
-                    }
-                } catch (e) {
-                    console.error("[auth] ⚠️ JWT role fetch failed (using defaults):", e);
+            if (user) {
+                // First sign-in: fetch from DB and embed in token
+                const dbUser = await db.query.users.findFirst({
+                    where: eq(users.email, user.email!),
+                    columns: { id: true, role: true, name: true, email: true },
+                });
+                if (dbUser) {
+                    token.id = dbUser.id;
+                    token.role = dbUser.role;
+                    token.name = dbUser.name;
+                    token.email = dbUser.email;
                 }
             }
             return token;
         },
         async session({ session, token }) {
-            if (session.user) {
+            if (token) {
                 session.user.id = token.id as string;
                 session.user.role = token.role as "student" | "faculty" | "admin";
+                session.user.name = token.name as string;
             }
             return session;
         },

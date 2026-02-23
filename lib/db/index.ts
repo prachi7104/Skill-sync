@@ -47,8 +47,10 @@ function getDrizzleDb(): ReturnType<typeof drizzle<typeof schema>> {
   if (globalThis._drizzleDb) return globalThis._drizzleDb;
 
   if (!globalThis._postgresClient) {
-    const url = process.env.DATABASE_URL;
-    if (!url) throw new Error("DATABASE_URL is not set");
+    const url = process.env.DATABASE_URL ?? "";
+    if (!url && process.env.NODE_ENV === "production") {
+      throw new Error("DATABASE_URL is not set");
+    }
 
     globalThis._postgresClient = postgres(url, {
       prepare: false,

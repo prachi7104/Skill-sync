@@ -467,12 +467,11 @@ export async function parseResumeWithAI(resumeText: string): Promise<ParsedResum
         while (attempts < maxAttempts) {
             attempts++;
             try {
-                let rawResponse: string;
                 const callFn = model.provider === "google"
                     ? callGemini(model.id, resumeText)
                     : callGroq(model.id, resumeText);
 
-                rawResponse = await withTimeout(callFn, model.timeoutMs, model.label);
+                const rawResponse = await withTimeout(callFn, model.timeoutMs, model.label);
 
                 // Extract JSON from raw response
                 const jsonObj = extractJSON(rawResponse);

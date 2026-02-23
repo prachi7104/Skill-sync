@@ -34,7 +34,7 @@ export default function OnboardingReviewClient({ profile }: { profile: any }) {
     return (
         <div className="space-y-8">
             <div className="space-y-2 text-center">
-                <h2 className="text-2xl font-bold">You're All Set! 🎉</h2>
+                <h2 className="text-2xl font-bold">You&apos;re All Set! 🎉</h2>
                 <p className="text-muted-foreground">
                     Your profile has been built from your resume and your inputs. Review the summary below and save your profile.
                 </p>
