@@ -474,6 +474,12 @@ export const rankings = pgTable("rankings", {
    */
   rankPosition: integer("rank_position").notNull(),
 
+  /**
+   * Whether the student has been shortlisted for this drive.
+   * Null = no decision, true = shortlisted, false = rejected.
+   */
+  shortlisted: boolean("shortlisted"),
+
   // ── Timestamps ────────────────────────────────────────────────────────────
 
   createdAt: timestamp("created_at", { withTimezone: true })

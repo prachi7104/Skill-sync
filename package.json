@@ -30,7 +30,8 @@
     "dev:safe": "node scripts/preflight.js && next dev",
     "clean": "rimraf .next",
     "nuke": "rimraf .next node_modules && npm install",
-    "rebuild": "rimraf .next node_modules && npm install && node scripts/preflight.js && next dev"
+    "rebuild": "rimraf .next node_modules && npm install && node scripts/preflight.js && next dev",
+    "validate:pilot": "npx tsx scripts/validate-pilot.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",

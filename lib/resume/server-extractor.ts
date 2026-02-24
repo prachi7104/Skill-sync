@@ -1,5 +1,4 @@
 import mammoth from "mammoth";
-import pdfParse from "pdf-parse";
 import { cleanResumeText } from "@/lib/resume/text-extractor";
 
 /**
@@ -18,6 +17,9 @@ export async function extractTextFromUrl(url: string, mimeHint?: string): Promis
     let text = "";
 
     if (mime.includes("pdf") || mime.includes("application/pdf")) {
+        // Dynamic import: pdf-parse reads a test PDF at module load time,
+        // which crashes serverless environments without a local filesystem.
+        const pdfParse = (await import("pdf-parse")).default;
         const pdfRes: any = await pdfParse(buffer);
         text = pdfRes?.text || "";
     } else {

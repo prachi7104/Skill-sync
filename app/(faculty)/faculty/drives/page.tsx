@@ -1,119 +1,195 @@
 export const dynamic = "force-dynamic";
 
-import { db } from "@/lib/db";
-import { drives } from "@/lib/db/schema";
 import { requireRole } from "@/lib/auth/helpers";
-import { eq } from "drizzle-orm";
-import Link from "next/link";
+import { db } from "@/lib/db";
+import { drives, rankings, jobs } from "@/lib/db/schema";
+import { eq, count, avg, sql, and, inArray, desc } from "drizzle-orm";
 import { format } from "date-fns";
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Plus, MapPin, IndianRupee, Calendar, ExternalLink } from "lucide-react";
+import { getCompanyColor } from "@/lib/utils/company-color";
+import { TriggerRankingButton } from "@/components/faculty/trigger-ranking-button";
+import { cn } from "@/lib/utils";
 
 export default async function FacultyDrivesPage() {
   const user = await requireRole(["faculty", "admin"]);
 
-  const drivesList = await db.query.drives.findMany({
-    where: eq(drives.createdBy, user.id),
-    orderBy: (drives, { desc }) => [desc(drives.createdAt)],
-  });
+  // Fetch all drives for this faculty
+  const facultyDrives = await db
+    .select({
+      id: drives.id,
+      company: drives.company,
+      roleTitle: drives.roleTitle,
+      location: drives.location,
+      packageOffered: drives.packageOffered,
+      deadline: drives.deadline,
+      isActive: drives.isActive,
+      createdAt: drives.createdAt,
+    })
+    .from(drives)
+    .where(eq(drives.createdBy, user.id))
+    .orderBy(desc(drives.createdAt));
+
+  const driveIds = facultyDrives.map((d) => d.id);
+
+  // STEP 2 — Stats per drive (Single GroupBy)
+  let statsMap = new Map<string, any>();
+  if (driveIds.length > 0) {
+    const driveStats = await db
+      .select({
+        driveId: rankings.driveId,
+        count: count(),
+        avgScore: avg(rankings.matchScore),
+        maxScore: sql<number>`MAX(${rankings.matchScore})`,
+      })
+      .from(rankings)
+      .where(inArray(rankings.driveId, driveIds))
+      .groupBy(rankings.driveId);
+
+    statsMap = new Map(driveStats.map((s) => [s.driveId, s]));
+  }
+
+  // STEP 3 — Active jobs check
+  const activeJobs = await db
+    .select({ payload: jobs.payload })
+    .from(jobs)
+    .where(
+      and(
+        inArray(jobs.status, ["pending", "processing"]),
+        inArray(jobs.type, ["rank_students"])
+      )
+    );
+
+  const processingDriveIds = new Set(
+    activeJobs.map((j) => (j.payload as any)?.driveId).filter(Boolean)
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Placement Drives</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Manage your placement drives and view rankings.
+          <h1 className="text-2xl font-bold tracking-tight">My Drives</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Managing {facultyDrives.length} total placement drives
           </p>
         </div>
-        <Link
-          href="/faculty/drives/new"
-          className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700"
-        >
-          + Create Drive
-        </Link>
+        <Button asChild className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+          <Link href="/faculty/drives/new">
+            <Plus className="h-4 w-4" /> Create Drive
+          </Link>
+        </Button>
       </div>
 
-      {drivesList.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-12 text-center">
-          <h3 className="text-lg font-medium text-gray-900">No drives yet</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Create your first placement drive to get started.
-          </p>
-          <Link
-            href="/faculty/drives/new"
-            className="mt-4 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700"
-          >
-            Create Drive
-          </Link>
+      {/* Grid */}
+      {facultyDrives.length === 0 ? (
+        <div className="py-20 text-center border-2 border-dashed rounded-xl">
+          <p className="text-muted-foreground">No drives created yet.</p>
+          <Button asChild variant="link" className="text-indigo-600 mt-2">
+            <Link href="/faculty/drives/new">Create your first drive &rarr;</Link>
+          </Button>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border bg-white shadow">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Company
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Role
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Deadline
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {drivesList.map((drive) => (
-                <tr key={drive.id} className="hover:bg-gray-50">
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                    {drive.company}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                    {drive.roleTitle}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm">
-                    {drive.isActive ? (
-                      <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
-                        Closed
-                      </span>
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                    {drive.deadline
-                      ? format(new Date(drive.deadline), "MMM d, yyyy")
-                      : "No deadline"}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link
-                        href={`/faculty/drives/${drive.id}/rankings`}
-                        className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-                      >
-                        View Rankings
-                      </Link>
-                      <form action={`/api/drives/${drive.id}/rank`} method="POST">
-                        <button
-                          type="submit"
-                          className="inline-flex items-center rounded-md bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
-                        >
-                          Trigger Ranking
-                        </button>
-                      </form>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {facultyDrives.map((drive) => {
+            const stats = statsMap.get(drive.id);
+            const isProcessing = processingDriveIds.has(drive.id);
+
+            // Status Logic
+            let status: "pending" | "ranked" | "processing" | "closed" = "pending";
+            if (isProcessing) status = "processing";
+            else if (!drive.isActive) status = "closed";
+            else if (stats && Number(stats.count) > 0) status = "ranked";
+
+            const statusConfig = {
+              ranked: { label: "RANKED", className: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+              processing: { label: "PROCESSING", className: "text-indigo-600 bg-indigo-50 border-indigo-200" },
+              pending: { label: "PENDING", className: "text-amber-600 bg-amber-50 border-amber-200" },
+              closed: { label: "CLOSED", className: "text-gray-500 bg-gray-50 border-gray-200" },
+            };
+
+            const config = statusConfig[status];
+
+            return (
+              <Card key={drive.id} className="group hover:ring-1 hover:ring-indigo-500 transition-all shadow-sm flex flex-col">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold text-white uppercase shrink-0 shadow-sm",
+                        getCompanyColor(drive.company)
+                      )}>
+                        {drive.company.slice(0, 2)}
+                      </div>
+                      <div className="space-y-0.5">
+                        <CardTitle className="text-base line-clamp-1">{drive.company}</CardTitle>
+                        <CardDescription className="text-xs line-clamp-1">{drive.roleTitle}</CardDescription>
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <Badge variant="outline" className={cn("rounded px-1.5 py-0 text-[10px] font-bold tracking-wider", config.className)}>
+                      {status === "processing" && (
+                        <span className="relative flex h-2 w-2 mr-1.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                        </span>
+                      )}
+                      {config.label}
+                    </Badge>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4 pb-4 flex-1">
+                  {/* Info Pills */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {drive.location && (
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-50 border text-[10px] text-muted-foreground">
+                        <MapPin className="h-3 w-3" /> {drive.location}
+                      </div>
+                    )}
+                    {drive.packageOffered && (
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-50 border text-[10px] text-muted-foreground">
+                        <IndianRupee className="h-3 w-3" /> {drive.packageOffered}
+                      </div>
+                    )}
+                    {drive.deadline && (
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-50 border text-[10px] text-muted-foreground">
+                        <Calendar className="h-3 w-3" /> {format(new Date(drive.deadline), "MMM d")}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Stats Row */}
+                  <div className="grid grid-cols-3 gap-2 py-3 border-y border-dashed">
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase font-medium">Ranked</p>
+                      <p className="text-lg font-mono font-bold">{stats ? Number(stats.count) : "—"}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase font-medium">Avg %</p>
+                      <p className="text-lg font-mono font-bold">{stats?.avgScore ? Number(stats.avgScore).toFixed(0) : "—"}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase font-medium">Top %</p>
+                      <p className="text-lg font-mono font-bold">{stats?.maxScore ? Number(stats.maxScore).toFixed(0) : "—"}</p>
+                    </div>
+                  </div>
+                </CardContent>
+
+                <CardFooter className="pt-0 flex items-center justify-between gap-4">
+                  <Link
+                    href={`/faculty/drives/${drive.id}/rankings`}
+                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 transition-colors"
+                  >
+                    View Rankings <ExternalLink className="h-3 w-3" />
+                  </Link>
+                  <TriggerRankingButton driveId={drive.id} initialStatus={status} />
+                </CardFooter>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

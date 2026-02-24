@@ -2,7 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QuickSandbox from "./quick-sandbox";
-import DetailedSandboxPage from "./detailed/page";
+import DetailedSandboxClient from "./detailed/client";
 
 export default function SandboxPage() {
   return (
@@ -25,7 +25,7 @@ export default function SandboxPage() {
         </TabsContent>
 
         <TabsContent value="detailed" className="space-y-6">
-          <DetailedSandboxPage />
+          <DetailedSandboxClient />
         </TabsContent>
       </Tabs>
     </div>

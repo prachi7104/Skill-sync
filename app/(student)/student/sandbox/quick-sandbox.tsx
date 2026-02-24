@@ -1,12 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, XCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { AlertTriangle, XCircle, Briefcase, FileText } from "lucide-react";
 
 interface SandboxResult {
     matchScore: number;
@@ -40,11 +48,63 @@ interface ErrorResponse {
     message?: string;
 }
 
+interface DriveOption {
+    id: string;
+    company: string;
+    roleTitle: string;
+    rawJd: string;
+}
+
 export default function QuickSandbox() {
     const [jdText, setJdText] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<SandboxResult | null>(null);
     const [error, setError] = useState<ErrorResponse | null>(null);
+
+    // Dual-mode state
+    const [jdMode, setJdMode] = useState<"paste" | "drive">("paste");
+    const [drives, setDrives] = useState<DriveOption[]>([]);
+    const [drivesLoading, setDrivesLoading] = useState(false);
+    const [drivesLoaded, setDrivesLoaded] = useState(false);
+    const [selectedDriveId, setSelectedDriveId] = useState<string>("");
+
+    // Fetch active drives when "drive" tab is selected for the first time
+    const fetchDrives = useCallback(async () => {
+        if (drivesLoaded) return;
+        setDrivesLoading(true);
+        try {
+            const res = await fetch("/api/drives");
+            const data = await res.json();
+            const list = (data.drives ?? []).map((d: DriveOption) => ({
+                id: d.id,
+                company: d.company,
+                roleTitle: d.roleTitle,
+                rawJd: d.rawJd,
+            }));
+            setDrives(list);
+            setDrivesLoaded(true);
+        } catch {
+            setDrives([]);
+            setDrivesLoaded(true);
+        } finally {
+            setDrivesLoading(false);
+        }
+    }, [drivesLoaded]);
+
+    useEffect(() => {
+        if (jdMode === "drive" && !drivesLoaded) {
+            fetchDrives();
+        }
+    }, [jdMode, drivesLoaded, fetchDrives]);
+
+    // When a drive is selected, copy its rawJd into jdText
+    function handleDriveSelect(driveId: string) {
+        setSelectedDriveId(driveId);
+        const drive = drives.find((d) => d.id === driveId);
+        if (drive) {
+            setJdText(drive.rawJd);
+        }
+    }
 
     async function handleSubmit() {
         if (jdText.trim().length < 20) {
@@ -101,26 +161,89 @@ export default function QuickSandbox() {
         <div className="space-y-6">
 
 
-            {/* Input Section */}
+            {/* Input Section — Dual Mode */}
             <Card>
                 <CardHeader>
                     <CardTitle className="text-lg">Job Description</CardTitle>
                     <CardDescription>
-                        Paste the full JD text below to analyze your match.
+                        Paste a JD or pick from an active placement drive.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <Textarea
-                        value={jdText}
-                        onChange={(e) => setJdText(e.target.value)}
-                        rows={8}
-                        placeholder="Paste the job description here..."
-                        className="resize-y"
-                    />
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-400">
-                            {jdText.length} characters
-                        </span>
+                    <Tabs
+                        value={jdMode}
+                        onValueChange={(v) => setJdMode(v as "paste" | "drive")}
+                        className="space-y-4"
+                    >
+                        <TabsList className="grid w-full grid-cols-2 max-w-[340px]">
+                            <TabsTrigger value="paste" className="gap-1.5">
+                                <FileText className="h-3.5 w-3.5" />
+                                Paste JD
+                            </TabsTrigger>
+                            <TabsTrigger value="drive" className="gap-1.5">
+                                <Briefcase className="h-3.5 w-3.5" />
+                                From Active Drive
+                            </TabsTrigger>
+                        </TabsList>
+
+                        {/* Tab 1: Paste JD */}
+                        <TabsContent value="paste" className="space-y-2">
+                            <Textarea
+                                value={jdText}
+                                onChange={(e) => setJdText(e.target.value)}
+                                rows={8}
+                                placeholder="Paste the job description here..."
+                                className="resize-y"
+                            />
+                            <span className="text-xs text-gray-400">
+                                {jdText.length} characters
+                            </span>
+                        </TabsContent>
+
+                        {/* Tab 2: From Active Drive */}
+                        <TabsContent value="drive" className="space-y-3">
+                            {drivesLoading ? (
+                                <div className="flex items-center gap-2 py-6 justify-center text-sm text-muted-foreground">
+                                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                    </svg>
+                                    Loading drives...
+                                </div>
+                            ) : drives.length === 0 ? (
+                                <div className="py-6 text-center text-sm text-muted-foreground space-y-1">
+                                    <Briefcase className="h-8 w-8 mx-auto text-gray-300 mb-2" />
+                                    <p className="font-medium">No active drives yet.</p>
+                                    <p className="text-xs">
+                                        Use the &quot;Paste JD&quot; tab to analyze any job description.
+                                    </p>
+                                </div>
+                            ) : (
+                                <>
+                                    <Select value={selectedDriveId} onValueChange={handleDriveSelect}>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select a placement drive..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {drives.map((d) => (
+                                                <SelectItem key={d.id} value={d.id}>
+                                                    {d.company} — {d.roleTitle}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {selectedDriveId && (
+                                        <div className="text-xs text-muted-foreground bg-muted rounded-md p-3">
+                                            <p className="font-medium mb-1">JD Preview:</p>
+                                            <p className="line-clamp-4 whitespace-pre-line">{jdText}</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </TabsContent>
+                    </Tabs>
+
+                    <div className="flex justify-end">
                         <Button onClick={handleSubmit} disabled={isLoading || jdText.trim().length < 20}>
                             {isLoading ? (
                                 <span className="flex items-center gap-2">
