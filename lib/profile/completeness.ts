@@ -1,115 +1,134 @@
+/**
+ * Profile completeness calculation.
+ * 
+ * Returns:
+ *   - score: 0-100 integer
+ *   - isGated: true if score < 70 (cannot access placement features)
+ *   - isBlocked: true if critical fields missing (sap_id/roll_no/resume)
+ *   - missing: array of human-readable missing field descriptions
+ *   - blocked: array of critical fields blocking ALL access (sap_id, roll_no, resume)
+ */
 
-import type { Skill, Project, WorkExperience, Certification, CodingProfile } from "@/lib/db/schema";
+export interface CompletenessResult {
+    score: number;
+    isGated: boolean;        // true if < 70%
+    isBlocked: boolean;      // true if critical fields missing (sap_id/roll_no/resume)
+    missing: string[];       // What's missing (for UI hints)
+    blocked: string[];       // Critical blocks (for hard gate message)
+}
 
-interface StudentForCompleteness {
-    name?: string | null;
-    email?: string | null;
-    skills?: Skill[] | null;
-    projects?: Project[] | null;
-    workExperience?: WorkExperience[] | null;
-    certifications?: Certification[] | null;
-    codingProfiles?: CodingProfile[] | null;
+interface ProfileInput {
+    sapId?: string | null;
+    rollNo?: string | null;
+    phone?: string | null;
+    linkedin?: string | null;
+    cgpa?: number | null;
     branch?: string | null;
     batchYear?: number | null;
+    skills?: unknown[] | null;
+    projects?: unknown[] | null;
+    workExperience?: unknown[] | null;
+    certifications?: unknown[] | null;
+    codingProfiles?: unknown[] | null;
+    resumeUrl?: string | null;
+    name?: string | null;
+    email?: string | null;
 }
 
-interface CompletenessResult {
-    score: number;
-    breakdown: Record<string, number>;
-    missing: string[];
-}
-
-export function computeCompleteness(student: StudentForCompleteness): CompletenessResult {
-    let score = 0;
-    const breakdown: Record<string, number> = {};
+export function computeCompleteness(profile: ProfileInput): CompletenessResult {
     const missing: string[] = [];
+    const blocked: string[] = [];
+    let score = 0;
 
-    // 1. Core Info (20)
-    // Name and Email are usually guaranteed by auth/schema, but we check conceptually
-    let coreScore = 0;
-    if (student.name && student.email) coreScore = 20; // Assuming basic info is present
-    score += coreScore;
-    breakdown.core = coreScore;
+    // ── CRITICAL BLOCKS (must have all three to use ANY placement feature) ──────
 
-    // 2. Skills (20)
-    // >= 5 skills -> full (20)
-    // 1-4 -> 4pts each? No, prompt said "1-4 -> partial". Let's do 4pts per skill up to 5.
-    const skillCount = (student.skills as Skill[])?.length || 0;
-    let skillScore = 0;
-    if (skillCount >= 5) {
-        skillScore = 20;
-    } else {
-        skillScore = skillCount * 4;
-        missing.push(`Add ${5 - skillCount} more skill(s)`);
+    if (!profile.sapId?.trim()) {
+        blocked.push("SAP ID is required");
     }
-    score += skillScore;
-    breakdown.skills = skillScore;
 
-    // 3. Projects (20)
-    // >= 2 projects -> full (20)
-    // 1 -> 10pts
-    const projectCount = (student.projects as Project[])?.length || 0;
-    let projectScore = 0;
-    if (projectCount >= 2) {
-        projectScore = 20;
-    } else {
-        projectScore = projectCount * 10;
-        missing.push(`Add ${2 - projectCount} more project(s)`);
+    if (!profile.rollNo?.trim()) {
+        blocked.push("Roll Number is required");
     }
-    score += projectScore;
-    breakdown.projects = projectScore;
 
-    // 4. Work Experience (15)
-    // >= 1 entry -> full
-    const workCount = (student.workExperience as WorkExperience[])?.length || 0;
-    let workScore = 0;
-    if (workCount >= 1) {
-        workScore = 15;
-    } else {
-        // No partial credit as per requirement implied "1 -> full"
-        missing.push("Add at least one internship or work experience");
+    if (!profile.resumeUrl) {
+        blocked.push("Resume upload is required");
     }
-    score += workScore;
-    breakdown.workExperience = workScore;
 
-    // 5. Education (10)
-    // Basic education present (branch, batchYear)
-    let eduScore = 0;
-    if (student.branch && student.batchYear) {
-        eduScore = 10;
-    } else {
-        missing.push("Complete academic details (Branch & Batch)");
-    }
-    score += eduScore;
-    breakdown.education = eduScore;
+    // ── SCORED FIELDS ──────────────────────────────────────────────────────────
 
-    // 6. Certifications (10)
-    // >= 1 -> full
-    const certCount = (student.certifications as Certification[])?.length || 0;
-    let certScore = 0;
-    if (certCount >= 1) {
-        certScore = 10;
+    if (profile.cgpa != null && profile.cgpa > 0) {
+        score += 15;
     } else {
-        missing.push("Add at least one certification");
+        missing.push("Add your CGPA (15 pts)");
     }
-    score += certScore;
-    breakdown.certifications = certScore;
 
-    // 7. Coding Profiles (5)
-    // >= 1 -> full
-    const cpCount = (student.codingProfiles as CodingProfile[])?.length || 0;
-    let cpScore = 0;
-    if (cpCount >= 1) {
-        cpScore = 5;
+    if (profile.branch?.trim()) {
+        score += 10;
     } else {
-        missing.push("Link at least one coding profile");
+        missing.push("Add your branch/department (10 pts)");
     }
-    score += cpScore;
-    breakdown.codingProfiles = cpScore;
+
+    if (profile.batchYear && profile.batchYear > 2000) {
+        score += 10;
+    } else {
+        missing.push("Add your graduation year (10 pts)");
+    }
+
+    const skills = profile.skills as unknown[] | null;
+    if (skills && skills.length > 0) {
+        score += 20;
+    } else {
+        missing.push("Add at least one skill (20 pts)");
+    }
+
+    const projects = profile.projects as unknown[] | null;
+    if (projects && projects.length > 0) {
+        score += 15;
+    } else {
+        missing.push("Add at least one project (15 pts)");
+    }
+
+    if (profile.phone?.trim()) {
+        score += 5;
+    } else {
+        missing.push("Add your phone number (5 pts)");
+    }
+
+    if (profile.linkedin?.trim()) {
+        score += 5;
+    } else {
+        missing.push("Add your LinkedIn URL (5 pts)");
+    }
+
+    const workExp = profile.workExperience as unknown[] | null;
+    if (workExp && workExp.length > 0) {
+        score += 10;
+    } else {
+        missing.push("Add internship/work experience (10 pts)");
+    }
+
+    const coding = profile.codingProfiles as unknown[] | null;
+    if (coding && coding.length > 0) {
+        score += 5;
+    } else {
+        missing.push("Add coding profiles (LeetCode etc.) (5 pts)");
+    }
+
+    const certs = profile.certifications as unknown[] | null;
+    if (certs && certs.length > 0) {
+        score += 5;
+    } else {
+        missing.push("Add certifications (5 pts)");
+    }
+
+    const isBlocked = blocked.length > 0;
+    const isGated = score < 70;
 
     return {
-        score: Math.min(100, score), // Cap at 100 just in case
-        breakdown,
-        missing
+        score,
+        isGated: isBlocked || isGated,
+        isBlocked,
+        missing: missing.slice(0, 5), // Top 5 suggestions
+        blocked,
     };
 }

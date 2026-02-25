@@ -23,8 +23,10 @@ import {
     Sparkles,
     ExternalLink
 } from "lucide-react";
+import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CompletenessCard } from "@/components/student/completeness-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,7 +45,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
@@ -84,6 +85,7 @@ interface ProfileViewProps {
         resumeUploadedAt: string | null;
         parsedResumeJson: any;
         profileCompleteness: number;
+        category: string | null;
     };
 }
 
@@ -94,7 +96,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
     const router = useRouter();
 
     // Compute profile completeness
-    const { score, missing } = computeCompleteness(profile);
+    const { score, missing, isBlocked, isGated, blocked } = computeCompleteness(profile);
 
     // Helper to get initials
     const initials = user.name
@@ -217,52 +219,6 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
         }
     };
 
-    const [isUploading, setIsUploading] = useState(false);
-
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        // Client-side validation
-        if (file.size > 100 * 1024) {
-            toast.error("Resume must be less than 100KB");
-            return;
-        }
-
-        const allowedTypes = [
-            "application/pdf",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        ];
-        if (!allowedTypes.includes(file.type)) {
-            toast.error("Only PDF and DOCX files are allowed");
-            return;
-        }
-
-        setIsUploading(true);
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-            const response = await fetch("/api/student/resume", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || "Upload failed");
-            }
-
-            toast.success("Your resume is being processed. Refresh shortly to see extracted data.");
-
-            router.refresh();
-        } catch (error: any) {
-            toast.error(error.message || "Upload failed");
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
     return (
         <div className="space-y-6">
             {/* Header Section */}
@@ -282,6 +238,11 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                             <Badge variant="secondary" className="ml-2 capitalize">
                                 {user.role}
                             </Badge>
+                            {profile.category && (
+                                <Badge variant="outline" className="ml-2 bg-primary/5 text-primary border-primary/20">
+                                    {profile.category} Category
+                                </Badge>
+                            )}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <User className="h-3 w-3" />
@@ -291,43 +252,15 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                 </div>
 
                 <div className="flex flex-col gap-4 items-end">
-                    <Card className="w-full md:w-64">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium">
-                                Profile Completeness
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
-                                <div className="space-y-1">
-                                    <div className="flex justify-between text-xs font-medium">
-                                        <span>Progress</span>
-                                        <span>{score}%</span>
-                                    </div>
-                                    <Progress value={score} className="h-2" />
-                                </div>
-
-                                {missing.length > 0 && !profile.resumeUrl ? (
-                                    <div className="space-y-1">
-                                        <p className="text-xs font-semibold text-muted-foreground">To improve:</p>
-                                        <ul className="text-xs space-y-1 text-muted-foreground list-disc pl-3">
-                                            {missing.slice(0, 3).map((msg, i) => (
-                                                <li key={i}>{msg}</li>
-                                            ))}
-                                            {missing.length > 3 && (
-                                                <li>+ {missing.length - 3} more...</li>
-                                            )}
-                                        </ul>
-                                    </div>
-                                ) : (
-                                    <p className="text-xs text-green-600 font-medium flex items-center gap-1">
-                                        <Trophy className="h-3 w-3" />
-                                        {profile.resumeUrl ? "Profile detailed via Resume" : "Excellent! Profile complete."}
-                                    </p>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <div className="w-full md:w-80">
+                        <CompletenessCard
+                            score={score}
+                            isBlocked={isBlocked}
+                            isGated={isGated}
+                            missing={missing}
+                            blocked={blocked}
+                        />
+                    </div>
 
                     {!isEditing ? (
                         <Button onClick={() => setIsEditing(true)}>
@@ -793,7 +726,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                     Resume
                                 </CardTitle>
                                 <CardDescription>
-                                    Upload your resume to automatically extract skills and experience.
+                                    Your uploaded resume. Updating it will re-parse and overwrite your profile data.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
@@ -831,25 +764,15 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                 )}
 
                                 {isEditing && (
-                                    <div>
-                                        <Input
-                                            type="file"
-                                            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                                            onChange={handleFileUpload}
-                                            disabled={isUploading}
-                                            className="cursor-pointer"
-                                        />
-                                        {isUploading && (
-                                            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
-                                                <Loader2 className="h-3 w-3 animate-spin" /> Uploading and processing...
-                                            </p>
-                                        )}
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            * Uploading a new resume will automatically process and update your profile data.
-                                        </p>
+                                    <div className="pt-2">
+                                        <Button variant="outline" className="w-full" asChild>
+                                            <Link href="/student/onboarding/resume" target="_blank">
+                                                <Upload className="mr-2 h-4 w-4" />
+                                                Upload / Update Resume
+                                            </Link>
+                                        </Button>
                                     </div>
                                 )}
-
 
                             </CardContent>
                         </Card>

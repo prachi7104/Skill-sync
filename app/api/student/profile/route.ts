@@ -3,12 +3,12 @@ import { requireStudentProfileApi, ApiError } from "@/lib/auth/helpers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
-import { students, users, jobs } from "@/lib/db/schema";
-import { eq, and, sql } from "drizzle-orm";
-import { studentProfileSchema } from "@/lib/validations/student-profile";
+import { students, users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { computeCompleteness } from "@/lib/profile/completeness";
-import { processEmbeddingJobs } from "@/lib/workers/generate-embedding";
+import { processEmbeddingJobs, enqueueEmbeddingJob } from "@/lib/workers/generate-embedding";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -58,152 +58,132 @@ export async function GET() {
     }
 }
 
-
 export async function PATCH(req: NextRequest) {
     try {
         const { user, profile } = await requireStudentProfileApi();
-
-        // Parse Body
         const body = await req.json();
 
-        // Validate - allow partial updates for PATCH
-        const validatedData = studentProfileSchema.partial().parse(body);
+        // Validate incoming data — students cannot set their own category
+        const allowed = z.object({
+            sapId: z.string().length(9).regex(/^\d+$/).optional(),
+            rollNo: z.string().min(1).max(20).optional(),
+            phone: z.string().max(20).optional().nullable(),
+            linkedin: z.string().url().max(500).optional().nullable(),
+            cgpa: z.number().min(0).max(10).optional().nullable(),
+            tenthPercentage: z.number().min(0).max(100).optional().nullable(),
+            twelfthPercentage: z.number().min(0).max(100).optional().nullable(),
+            semester: z.number().int().min(1).max(10).optional().nullable(),
+            branch: z.string().max(100).optional().nullable(),
+            batchYear: z.number().int().min(2020).max(2035).optional().nullable(),
+            skills: z.array(z.object({
+                name: z.string(),
+                proficiency: z.number().int().min(1).max(5),
+                category: z.string().optional(),
+            })).optional(),
+            projects: z.array(z.any()).optional(),
+            workExperience: z.array(z.any()).optional(),
+            certifications: z.array(z.any()).optional(),
+            codingProfiles: z.array(z.any()).optional(),
+            researchPapers: z.array(z.any()).optional(),
+            achievements: z.array(z.any()).optional(),
+            softSkills: z.array(z.string()).optional(),
+        }).strict(); // strict() rejects unknown fields (including category)
 
-        // Build update object
-        const updateData: Record<string, unknown> = {};
+        const data = allowed.parse(body);
 
-        // Academic fields - editable by students
-        if (validatedData.rollNo !== undefined) {
-            updateData.rollNo = validatedData.rollNo;
-        }
-        if (validatedData.sapId !== undefined) {
-            updateData.sapId = validatedData.sapId;
-        }
-        if (validatedData.tenthPercentage !== undefined) {
-            updateData.tenthPercentage = validatedData.tenthPercentage;
-        }
-        if (validatedData.twelfthPercentage !== undefined) {
-            updateData.twelfthPercentage = validatedData.twelfthPercentage;
-        }
-        if (validatedData.cgpa !== undefined) {
-            updateData.cgpa = validatedData.cgpa;
-        }
-        if (validatedData.semester !== undefined) {
-            updateData.semester = validatedData.semester;
-        }
-        if (validatedData.branch !== undefined) {
-            updateData.branch = validatedData.branch;
-        }
-        if (validatedData.batchYear !== undefined) {
-            updateData.batchYear = validatedData.batchYear;
-        }
+        // Build update object — only include provided fields
+        const update: Record<string, unknown> = {};
 
-        // Array fields
-        if (validatedData.skills !== undefined) {
-            updateData.skills = validatedData.skills;
-        }
-        if (validatedData.projects !== undefined) {
-            updateData.projects = validatedData.projects;
-        }
-        if (validatedData.workExperience !== undefined) {
-            updateData.workExperience = validatedData.workExperience;
-        }
-        if (validatedData.certifications !== undefined) {
-            updateData.certifications = validatedData.certifications;
-        }
-        if (validatedData.codingProfiles !== undefined) {
-            updateData.codingProfiles = validatedData.codingProfiles;
-        }
-        if (validatedData.achievements !== undefined) {
-            updateData.achievements = validatedData.achievements;
-        }
-        if (validatedData.researchPapers !== undefined) {
-            updateData.researchPapers = validatedData.researchPapers;
-        }
-        if (validatedData.softSkills !== undefined) {
-            updateData.softSkills = validatedData.softSkills;
+        if (data.sapId !== undefined) update.sapId = data.sapId;
+        if (data.rollNo !== undefined) update.rollNo = data.rollNo;
+        if (data.phone !== undefined) update.phone = data.phone;
+        if (data.linkedin !== undefined) update.linkedin = data.linkedin;
+        if (data.cgpa !== undefined) update.cgpa = data.cgpa;
+        if (data.tenthPercentage !== undefined) update.tenthPercentage = data.tenthPercentage;
+        if (data.twelfthPercentage !== undefined) update.twelfthPercentage = data.twelfthPercentage;
+        if (data.semester !== undefined) update.semester = data.semester;
+        if (data.branch !== undefined) update.branch = data.branch;
+        if (data.batchYear !== undefined) update.batchYear = data.batchYear;
+        if (data.skills !== undefined) update.skills = data.skills;
+        if (data.projects !== undefined) update.projects = data.projects;
+        if (data.workExperience !== undefined) update.workExperience = data.workExperience;
+        if (data.certifications !== undefined) update.certifications = data.certifications;
+        if (data.codingProfiles !== undefined) update.codingProfiles = data.codingProfiles;
+        if (data.researchPapers !== undefined) update.researchPapers = data.researchPapers;
+        if (data.achievements !== undefined) update.achievements = data.achievements;
+        if (data.softSkills !== undefined) update.softSkills = data.softSkills;
+
+        if (Object.keys(update).length === 0) {
+            return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
         }
 
-        if (Object.keys(updateData).length === 0) {
-            return NextResponse.json(
-                { success: false, error: "No valid fields to update" },
-                { status: 400 }
-            );
-        }
+        // Compute updated completeness
+        const mergedProfile = { ...profile, ...update };
+        const { score } = computeCompleteness({
+            sapId: mergedProfile.sapId as string,
+            rollNo: mergedProfile.rollNo as string,
+            cgpa: mergedProfile.cgpa as number,
+            branch: mergedProfile.branch as string,
+            batchYear: mergedProfile.batchYear as number,
+            skills: mergedProfile.skills as unknown[],
+            projects: mergedProfile.projects as unknown[],
+            workExperience: mergedProfile.workExperience as unknown[],
+            certifications: mergedProfile.certifications as unknown[],
+            codingProfiles: mergedProfile.codingProfiles as unknown[],
+            phone: mergedProfile.phone as string,
+            linkedin: mergedProfile.linkedin as string,
+            resumeUrl: mergedProfile.resumeUrl as string,
+        });
+        update.profileCompleteness = score;
+        update.updatedAt = new Date();
 
-        // Merge updates with current profile to compute completeness
-        const updatedProfileSnapshot = { ...profile, ...updateData };
-        // computeCompleteness expects name/email for core score; these live on users table
-        // Since auth is guaranteed, we give them credit
-        (updatedProfileSnapshot as Record<string, unknown>).name = user.name;
-        (updatedProfileSnapshot as Record<string, unknown>).email = user.email;
-
-        const { score: completeness } = computeCompleteness(updatedProfileSnapshot);
-        updateData.profileCompleteness = completeness;
-        updateData.updatedAt = new Date();
-
-        // Perform the update
-        await db
+        // Save to DB
+        const [updated] = await db
             .update(students)
-            .set(updateData)
-            .where(eq(students.id, user.id));
+            .set(update as any)
+            .where(eq(students.id, user.id))
+            .returning();
 
-        // Queue embedding generation when profile is sufficiently complete (>= 50%)
-        if (completeness >= 50) {
-            // Check if there's already a pending embedding job for THIS student
-            const existingJob = await db.query.jobs.findFirst({
-                where: and(
-                    eq(jobs.type, "generate_embedding"),
-                    eq(jobs.status, "pending"),
-                    sql`${jobs.payload}->>'targetId' = ${user.id}`,
-                ),
-            });
-
-            // Only queue if no pending job exists for this student
-            if (!existingJob) {
-                await db.insert(jobs).values({
-                    type: "generate_embedding",
-                    status: "pending",
-                    priority: 5,
-                    payload: {
-                        targetType: "student",
-                        targetId: user.id,
-                    },
-                });
-
-                // Trigger worker immediately (fire-and-forget)
-                processEmbeddingJobs().catch((err) =>
-                    console.error(
-                        "[Profile Update] Inline embedding generation failed:",
-                        err,
-                    ),
-                );
-            }
-        }
-
-        return NextResponse.json(
-            { success: true, message: "Profile updated successfully", data: { completeness } },
-            { status: 200 }
-        );
-    } catch (error: unknown) {
-        if (error instanceof ApiError) {
-            return NextResponse.json(
-                { success: false, error: error.message },
-                { status: error.statusCode }
+        // Re-queue embedding if profile content changed
+        const contentFields = ["skills", "projects", "workExperience", "certifications"];
+        const contentChanged = contentFields.some((f) => f in update);
+        if (contentChanged && score >= 50) {
+            // Use the dedup guard we made in Phase 1B
+            await enqueueEmbeddingJob(user.id, "student", 5);
+            // Trigger worker immediately (fire-and-forget)
+            processEmbeddingJobs().catch((err) =>
+                console.error("[Profile Update] Inline embedding generation failed:", err)
             );
         }
 
+        revalidatePath("/student");
+
+        return NextResponse.json({
+            success: true,
+            profile: updated,
+            completeness: score,
+        });
+
+    } catch (error: unknown) {
         if (error instanceof z.ZodError) {
             return NextResponse.json(
-                { success: false, error: "Validation failed", errors: error.errors },
-                { status: 400 }
+                { error: "Validation failed", details: error.flatten().fieldErrors },
+                { status: 400 },
             );
         }
-
-        console.error("Error updating student profile:", error);
-        return NextResponse.json(
-            { success: false, error: "Internal server error" },
-            { status: 500 }
-        );
+        // Handle unique constraint violations (sap_id or roll_no taken)
+        if (error instanceof Error && error.message.includes("unique")) {
+            if (error.message.includes("sap_id")) {
+                return NextResponse.json({ error: "This SAP ID is already registered to another account" }, { status: 409 });
+            }
+            if (error.message.includes("roll_no")) {
+                return NextResponse.json({ error: "This Roll Number is already registered to another account" }, { status: 409 });
+            }
+        }
+        if (error instanceof ApiError) {
+            return NextResponse.json({ error: error.message }, { status: error.statusCode });
+        }
+        console.error("[PATCH /api/student/profile]", error);
+        return NextResponse.json({ error: "Failed to save profile" }, { status: 500 });
     }
 }
