@@ -90,7 +90,7 @@ export default function NewDrivePage() {
         const d = await res.json();
         setError(d.message ?? "Failed to create drive");
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setIsSubmitting(false);

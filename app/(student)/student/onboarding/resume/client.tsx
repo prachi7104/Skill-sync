@@ -140,7 +140,7 @@ export default function OnboardingResumeClient() {
             await refresh();
             await updateOnboardingStep(2);
             router.push("/student/onboarding/basic");
-        } catch (error) {
+        } catch {
             toast.error("Failed to proceed");
             setIsLoadingNext(false);
         }

@@ -25,7 +25,7 @@ export default function OnboardingReviewClient({ profile }: { profile: any }) {
 
             // Force a hard redirect to clear onboarding state from router/middleware
             window.location.href = "/student/dashboard";
-        } catch (error) {
+        } catch {
             toast.error("Failed to finish onboarding");
             setIsFinishing(false);
         }

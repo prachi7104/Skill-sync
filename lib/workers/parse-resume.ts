@@ -106,7 +106,7 @@ export async function processResumeParseJobs(): Promise<number> {
         });
 
         if (currentProfile) {
-            const updateData: Record<string, any> = {
+            const updateData: Record<string, unknown> = {
                 parsedResumeJson: parsedData,
                 resumeParsedAt: new Date(),
                 updatedAt: new Date(),

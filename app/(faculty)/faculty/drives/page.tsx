@@ -36,7 +36,7 @@ export default async function FacultyDrivesPage() {
   const driveIds = facultyDrives.map((d) => d.id);
 
   // STEP 2 — Stats per drive (Single GroupBy)
-  let statsMap = new Map<string, any>();
+  let statsMap = new Map<string, { driveId: string; count: number; avgScore: string | null; maxScore: number }>();
   if (driveIds.length > 0) {
     const driveStats = await db
       .select({
@@ -64,7 +64,7 @@ export default async function FacultyDrivesPage() {
     );
 
   const processingDriveIds = new Set(
-    activeJobs.map((j) => (j.payload as any)?.driveId).filter(Boolean)
+    activeJobs.map((j) => (j.payload as { driveId?: string })?.driveId).filter(Boolean)
   );
 
   return (

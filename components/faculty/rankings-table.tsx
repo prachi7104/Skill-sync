@@ -357,7 +357,7 @@ export default function RankingsTable({ rankings, distribution, driveId }: Ranki
                                                                     Match Analysis
                                                                 </h4>
                                                                 <blockquote className="border-l-4 border-indigo-500 pl-4 py-1 italic text-sm text-slate-700 leading-relaxed">
-                                                                    "{r.shortExplanation}"
+                                                                    &quot;{r.shortExplanation}&quot;
                                                                 </blockquote>
                                                             </div>
 
