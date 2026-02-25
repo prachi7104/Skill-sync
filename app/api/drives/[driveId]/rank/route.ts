@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth/helpers";
+import { requireRoleApi, ApiError } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { jobs } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
@@ -21,7 +21,7 @@ export async function POST(
 ) {
   try {
     // Auth: faculty or admin only
-    const user = await requireRole(["faculty", "admin"]);
+    const user = await requireRoleApi(["faculty", "admin"]);
 
     const { driveId } = params;
 
@@ -73,27 +73,23 @@ export async function POST(
       { message: "Ranking job queued", jobId: job.id },
       { status: 202 },
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[POST /api/drives/[driveId]/rank]", err);
+
+    if (err instanceof ApiError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
 
     // Phase 5.5: Structured guardrail errors
     if (err instanceof GuardrailViolation) {
       return NextResponse.json(err.toJSON(), { status: err.status });
     }
 
-    const message = err?.message ?? "Internal server error";
+    const message = err instanceof Error ? err.message : "Internal server error";
 
     // Drive not found
     if (message.includes("Drive not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
-    }
-
-    // Auth errors
-    if (message.includes("Unauthorized") || message.includes("Forbidden")) {
-      return NextResponse.json(
-        { error: message },
-        { status: message.includes("Unauthorized") ? 401 : 403 },
-      );
     }
 
     return NextResponse.json(

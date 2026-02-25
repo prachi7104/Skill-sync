@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireStudentProfileApi, ApiError } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, rankings } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
     try {
-        const { user } = await requireStudentProfile();
+        const { user } = await requireStudentProfileApi();
 
         const [activeDrivesResult] = await db
             .select({ count: sql<number>`count(*)::int` })
@@ -30,11 +30,11 @@ export async function GET() {
                 rankingsCount,
             }
         });
-    } catch (error: any) {
-        if (error instanceof Error && (error.message.includes("Unauthorized") || error.message.includes("Forbidden"))) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    } catch (error: unknown) {
+        if (error instanceof ApiError) {
+            return NextResponse.json({ success: false, error: error.message }, { status: error.statusCode });
         }
         console.error("Error fetching dashboard stats:", error);
-        return NextResponse.json({ success: false, error: error.message || "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
     }
 }

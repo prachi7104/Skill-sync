@@ -3,7 +3,7 @@ import "server-only";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth/helpers";
+import { requireRoleApi, ApiError } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { students, drives, rankings, jobs } from "@/lib/db/schema";
 import { eq, isNotNull, sql } from "drizzle-orm";
@@ -23,7 +23,7 @@ import { eq, isNotNull, sql } from "drizzle-orm";
  */
 export async function GET() {
   try {
-    await requireRole(["admin"]);
+    await requireRoleApi(["admin"]);
 
     // Execute all counts in parallel
     const [
@@ -76,14 +76,9 @@ export async function GET() {
       },
       { status: 200 },
     );
-  } catch (err: any) {
-    const message = err?.message ?? "Internal server error";
-
-    if (message.includes("Unauthorized")) {
-      return NextResponse.json({ error: message }, { status: 401 });
-    }
-    if (message.includes("Forbidden")) {
-      return NextResponse.json({ error: message }, { status: 403 });
+  } catch (err: unknown) {
+    if (err instanceof ApiError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
     }
 
     console.error("[GET /api/admin/health]", err);

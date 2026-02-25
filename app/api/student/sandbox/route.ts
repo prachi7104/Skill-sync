@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireStudentProfileApi, ApiError } from "@/lib/auth/helpers";
 import { enforceSandboxLimits, incrementSandboxUsage, enforceProfileGate } from "@/lib/guardrails";
 import { GuardrailViolation } from "@/lib/guardrails/errors";
 import { db } from "@/lib/db";
@@ -99,7 +99,7 @@ function mapProfileToResumeData(profile: any, skills: Skill[], projects: Project
 export async function POST(req: NextRequest) {
   try {
     // 1. Auth — require student with profile
-    const { user, profile } = await requireStudentProfile();
+    const { user, profile } = await requireStudentProfileApi();
 
     // Fix: If embedding is missing (e.g. from legacy profile or failed job), generate it now
     if (!profile.embedding) {
@@ -233,18 +233,15 @@ export async function POST(req: NextRequest) {
       },
       analysis: atsResult // Full new ATS result
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    // Handle ApiError from requireStudentProfileApi
+    if (error instanceof ApiError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
+
     // Handle guardrail violations with proper status codes
     if (error instanceof GuardrailViolation) {
       return NextResponse.json(error.toJSON(), { status: error.status });
-    }
-
-    if (error?.message?.includes("Unauthorized") || error?.message?.includes("Forbidden")) {
-      return NextResponse.json({ message: error.message }, { status: 403 });
-    }
-
-    if (error?.message?.includes("Student profile not found")) {
-      return NextResponse.json({ message: error.message }, { status: 404 });
     }
 
     console.error("[api/student/sandbox] POST error:", error);

@@ -31,6 +31,7 @@ import {
   timestamp,
   jsonb,
   customType,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -600,6 +601,52 @@ export const sampleJds = pgTable("sample_jds", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Table: rate_limit_state
+// ─────────────────────────────────────────────────────────────────────────────
+// Purpose: DB-backed rate limit tracking that survives serverless cold starts.
+// One row per model per UTC day. Atomically incremented via SQL ON CONFLICT.
+
+export const rateLimitState = pgTable("rate_limit_state", {
+  /** Model identifier (e.g., "gemini_embedding"). */
+  modelKey: varchar("model_key", { length: 100 }).notNull(),
+  /** UTC date as YYYY-MM-DD. */
+  date: text("date").notNull(),
+  /** Number of API requests made today. */
+  requestCount: integer("request_count").notNull().default(0),
+  /** Token count (reserved for future use). */
+  tokenCount: integer("token_count").notNull().default(0),
+  /** Last time this model was used. */
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.modelKey, table.date] }),
+}));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Table: system_settings
+// ─────────────────────────────────────────────────────────────────────────────
+// Purpose: Runtime configuration KV store (e.g., embedding_batch_size).
+// Admin-editable without redeployment.
+
+export const systemSettings = pgTable("system_settings", {
+  /** Setting key (e.g., "embedding_batch_size"). */
+  key: varchar("key", { length: 100 }).primaryKey(),
+  /** Setting value as JSON (can be number, string, object). */
+  value: jsonb("value").notNull(),
+  /** Human-readable description of what this setting controls. */
+  description: text("description"),
+  /** Admin who last changed this setting. */
+  updatedBy: uuid("updated_by").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  /** When this setting was last changed. */
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

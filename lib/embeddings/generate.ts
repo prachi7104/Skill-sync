@@ -1,70 +1,117 @@
+import "server-only";
 
-import { AntigravityRouter } from "@/lib/antigravity/router";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { incrementModelUsage, hasCapacity } from "./rate-limit-db";
 import { env } from "@/lib/env";
 
-export const EMBEDDING_DIMENSION = 768; // Gemini text-embedding-004 output dimension
+export const EMBEDDING_DIMENSION = 768;
+// Correct model ID for Gemini Embedding (free tier, 768-dim)
+const EMBEDDING_MODEL = "text-embedding-004";
 
+let googleAI: GoogleGenerativeAI | null = null;
 
-// Initialize Router
-const router = new AntigravityRouter({
-  googleApiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
-  groqApiKey: env.GROQ_API_KEY, // Not used for embeddings but good to have
-  enableLogging: true,
-});
-
-/**
- * Generate an embedding vector for the given text.
- * Uses Antigravity Router to select the best model (Gemini -> Local).
- * 
- * @param text The text to embed
- * @param type Context type ("profile" or "jd") to optimize model selection
- * @returns Array of numbers representing the vector
- */
-export async function generateEmbedding(
-  text: string,
-  type: "profile" | "jd" = "profile"
-): Promise<number[]> {
-  if (!text || text.trim().length === 0) {
-    return [];
+function getGoogleAI(): GoogleGenerativeAI {
+  if (!googleAI) {
+    if (!env.GOOGLE_GENERATIVE_AI_API_KEY) {
+      throw new Error("GOOGLE_GENERATIVE_AI_API_KEY is not set");
+    }
+    googleAI = new GoogleGenerativeAI(env.GOOGLE_GENERATIVE_AI_API_KEY);
   }
-
-  // Clean text to avoid token wastage
-  const cleaned = text.replace(/\s+/g, " ").trim().slice(0, 8000);
-
-  const taskType = type === "jd" ? "embed_jd" : "embed_profile";
-
-  const result = await router.execute<number[]>(taskType, cleaned);
-
-  if (result.success && result.data) {
-    return result.data;
-  }
-
-  throw new Error(`Embedding generation failed: ${result.error}`);
+  return googleAI;
 }
 
 /**
- * Calculate cosine similarity between two vectors.
- * Used for matching candidates to JDs.
+ * Generate a 768-dimensional embedding for text.
+ * Uses DB-backed rate limiting to respect real API limits.
+ *
+ * Throws if:
+ * - API key missing
+ * - Daily limit exhausted
+ * - Google API returns error
+ */
+export async function generateEmbedding(
+  text: string,
+  type: "profile" | "jd" = "profile",
+): Promise<number[]> {
+  if (!text || text.trim().length === 0) {
+    throw new Error("Cannot generate embedding for empty text");
+  }
+
+  // Clean and truncate (embedding model has 2048 token limit)
+  const cleaned = text.replace(/\s+/g, " ").trim().slice(0, 8000);
+
+  // Check DB-tracked rate limit before calling API
+  const ok = await hasCapacity("gemini_embedding", 1);
+  if (!ok) {
+    throw new Error(
+      "RATE_LIMIT_EXCEEDED: Daily embedding limit reached. Will retry tomorrow.",
+    );
+  }
+
+  const ai = getGoogleAI();
+  const model = ai.getGenerativeModel({ model: EMBEDDING_MODEL });
+
+  // Task type hints improve embedding quality
+  const taskType =
+    type === "jd" ? "RETRIEVAL_DOCUMENT" : "RETRIEVAL_QUERY";
+
+  try {
+    const result = await model.embedContent({
+      content: { parts: [{ text: cleaned }], role: "user" },
+      ...(taskType ? { taskType: taskType as unknown as undefined } : {}),
+    } as Parameters<typeof model.embedContent>[0]);
+
+    if (
+      !result.embedding?.values ||
+      result.embedding.values.length !== EMBEDDING_DIMENSION
+    ) {
+      throw new Error(
+        `Invalid embedding: got ${result.embedding?.values?.length ?? 0} dims, expected ${EMBEDDING_DIMENSION}`,
+      );
+    }
+
+    // Record successful request in DB
+    await incrementModelUsage("gemini_embedding", 1);
+
+    return result.embedding.values;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+
+    // If it's a 429, mark in DB anyway to avoid hammering
+    if (
+      msg.includes("429") ||
+      msg.includes("quota") ||
+      msg.includes("rate")
+    ) {
+      await incrementModelUsage("gemini_embedding", 1).catch(() => { });
+      throw new Error(`RATE_LIMIT_429: Google API rate limit hit. ${msg}`);
+    }
+
+    throw new Error(`Embedding failed: ${msg}`);
+  }
+}
+
+/**
+ * Cosine similarity between two vectors.
  */
 export function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  if (vecA.length === 0 || vecB.length === 0) return 0;
   if (vecA.length !== vecB.length) {
-    // Handle dimension mismatch (e.g. padding or truncation) if necessary
-    // For now, strict check
-    console.warn(`Vector dimension mismatch: ${vecA.length} vs ${vecB.length}`);
+    console.warn(
+      `Vector dimension mismatch: ${vecA.length} vs ${vecB.length}`,
+    );
     return 0;
   }
 
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-
+  let dot = 0,
+    normA = 0,
+    normB = 0;
   for (let i = 0; i < vecA.length; i++) {
-    dotProduct += vecA[i] * vecB[i];
+    dot += vecA[i] * vecB[i];
     normA += vecA[i] * vecA[i];
     normB += vecB[i] * vecB[i];
   }
 
   if (normA === 0 || normB === 0) return 0;
-
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }

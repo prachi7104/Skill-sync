@@ -1,4 +1,3 @@
-
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import { db } from "@/lib/db";
@@ -9,15 +8,15 @@ import {
     MICROSOFT_CLIENT_SECRET,
     MICROSOFT_TENANT_ID,
     STUDENT_EMAIL_DOMAIN,
+    ADMIN_EMAIL,
 } from "@/lib/env";
 
-/**
- * Check if the email belongs to the student domain.
- * Students are auto-created; faculty/admin must be pre-added in DB.
- */
 function isStudentEmail(email: string): boolean {
-    const domain = email.toLowerCase().split("@")[1];
-    return domain === STUDENT_EMAIL_DOMAIN;
+    return email.toLowerCase().endsWith(`@${STUDENT_EMAIL_DOMAIN.toLowerCase()}`);
+}
+
+function isAdminEmail(email: string): boolean {
+    return email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 }
 
 export const authOptions: NextAuthOptions = {
@@ -25,7 +24,7 @@ export const authOptions: NextAuthOptions = {
         AzureADProvider({
             clientId: MICROSOFT_CLIENT_ID,
             clientSecret: MICROSOFT_CLIENT_SECRET,
-            tenantId: MICROSOFT_TENANT_ID,
+            tenantId: MICROSOFT_TENANT_ID, // "common" for multi-tenant/personal testing
             authorization: {
                 params: {
                     scope: "openid profile email",
@@ -38,42 +37,82 @@ export const authOptions: NextAuthOptions = {
         strategy: "jwt",
         maxAge: 30 * 24 * 60 * 60, // 30 days
     },
-    // Disable debug to prevent [next-auth][warn][DEBUG_ENABLED] spam
     debug: false,
+    pages: {
+        signIn: "/login",
+        error: "/login",
+    },
     callbacks: {
         async signIn({ user, account }) {
-            if (!user.email) return false;
+            if (!user.email) return "/login?error=NoEmail";
             const email = user.email.toLowerCase();
+
             try {
-                const existingUser = await db.query.users.findFirst({ where: eq(users.email, email) });
+                // Check if user already exists in DB
+                const existingUser = await db.query.users.findFirst({
+                    where: eq(users.email, email),
+                });
+
                 if (existingUser) {
+                    // Update Microsoft ID if not linked yet
                     if (!existingUser.microsoftId && account?.providerAccountId) {
-                        await db.update(users).set({ microsoftId: account.providerAccountId, updatedAt: new Date() })
+                        await db
+                            .update(users)
+                            .set({ microsoftId: account.providerAccountId, updatedAt: new Date() })
                             .where(eq(users.id, existingUser.id))
                             .catch((err: unknown) => console.warn("[auth] MS ID link failed:", err));
                     }
+                    // Ensure admin email always has admin role
+                    if (isAdminEmail(email) && existingUser.role !== "admin") {
+                        await db
+                            .update(users)
+                            .set({ role: "admin", updatedAt: new Date() })
+                            .where(eq(users.id, existingUser.id));
+                    }
                     return true;
                 }
-                if (isStudentEmail(email)) {
-                    const [newUser] = await db.insert(users).values({
-                        email, name: user.name || "Student", role: "student",
+
+                // New user — determine role
+                if (isAdminEmail(email)) {
+                    // Auto-create admin
+                    await db.insert(users).values({
+                        email,
+                        name: user.name || "Admin",
+                        role: "admin",
                         microsoftId: account?.providerAccountId,
-                    }).returning();
+                    });
+                    return true;
+                }
+
+                if (isStudentEmail(email)) {
+                    // Auto-create student + student profile row
+                    const [newUser] = await db
+                        .insert(users)
+                        .values({
+                            email,
+                            name: user.name || email.split("@")[0],
+                            role: "student",
+                            microsoftId: account?.providerAccountId,
+                        })
+                        .returning();
                     await db.insert(students).values({ id: newUser.id });
                     return true;
                 }
-                return "/login?error=NotAuthorized";
+
+                // Not a student domain, not admin, not pre-seeded faculty → reject
+                return "/login?error=WrongEmail";
             } catch (error: unknown) {
                 const msg = error instanceof Error ? error.message : String(error);
                 console.error("[auth] Sign-in error:", msg);
                 return "/login?error=DatabaseError";
             }
         },
-        async jwt({ token, user }) {
-            if (user) {
-                // First sign-in: fetch from DB and embed in token
+
+        async jwt({ token, user, trigger, session }) {
+            // First sign-in: load DB user data into token
+            if (user?.email) {
                 const dbUser = await db.query.users.findFirst({
-                    where: eq(users.email, user.email!),
+                    where: eq(users.email, user.email.toLowerCase()),
                     columns: { id: true, role: true, name: true, email: true },
                 });
                 if (dbUser) {
@@ -83,57 +122,21 @@ export const authOptions: NextAuthOptions = {
                     token.email = dbUser.email;
                 }
             }
+            // Session update trigger (for role changes)
+            if (trigger === "update" && session?.role) {
+                token.role = session.role;
+            }
             return token;
         },
+
         async session({ session, token }) {
             if (token) {
                 session.user.id = token.id as string;
                 session.user.role = token.role as "student" | "faculty" | "admin";
                 session.user.name = token.name as string;
+                session.user.email = token.email as string;
             }
             return session;
         },
-        async redirect({ url, baseUrl }) {
-            // ── Role-based post-login redirect ──────────────────────────
-            // After sign-in, NextAuth calls this with the callbackUrl.
-            // Problem: if callbackUrl was "/faculty/dashboard" but user is a
-            // student, they get stuck. So we override based on role.
-
-            // If this is a sign-out redirect, just go to the target
-            if (url.startsWith(baseUrl + "/login") || url === baseUrl + "/") {
-                return url;
-            }
-
-            // For any other URL, check if it's an internal URL and if the
-            // role matches. We need to fetch the session/token to know.
-            // However, redirect callback doesn't have token access directly,
-            // so we just ensure the URL goes to "/" which does role routing.
-
-            // If the callbackUrl points to a role-specific path, redirect to
-            // root "/" instead — the root page.tsx will route correctly.
-            const path = url.startsWith(baseUrl) ? url.slice(baseUrl.length) : url;
-
-            // If it's going to a role-specific area, let the root page handle routing
-            if (path.startsWith("/faculty") || path.startsWith("/admin") || path.startsWith("/student")) {
-                return baseUrl + "/";
-            }
-
-            // For relative URLs, ensure they stay on the same origin
-            if (url.startsWith("/")) {
-                return baseUrl + url;
-            }
-
-            // For same-origin URLs, allow
-            if (url.startsWith(baseUrl)) {
-                return url;
-            }
-
-            // Default: go to base URL (root page handles role routing)
-            return baseUrl;
-        },
-    },
-    pages: {
-        signIn: "/login",
-        error: "/login",
     },
 };

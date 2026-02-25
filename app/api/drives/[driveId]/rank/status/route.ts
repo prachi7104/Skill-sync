@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth/helpers";
+import { requireRoleApi, ApiError } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { jobs, rankings } from "@/lib/db/schema";
 import { sql, eq } from "drizzle-orm";
@@ -18,7 +18,7 @@ export async function GET(
   { params }: { params: { driveId: string } },
 ) {
   try {
-    await requireRole(["faculty", "admin"]);
+    await requireRoleApi(["faculty", "admin"]);
 
     const { driveId } = params;
 
@@ -57,26 +57,21 @@ export async function GET(
       rankingsCount,
       job: latestJob
         ? {
-            id: latestJob.id,
-            status: latestJob.status,
-            error: latestJob.error,
-            createdAt: latestJob.createdAt,
-            updatedAt: latestJob.updatedAt,
-            latencyMs: latestJob.latencyMs,
-          }
+          id: latestJob.id,
+          status: latestJob.status,
+          error: latestJob.error,
+          createdAt: latestJob.createdAt,
+          updatedAt: latestJob.updatedAt,
+          latencyMs: latestJob.latencyMs,
+        }
         : null,
     });
-  } catch (err: any) {
-    console.error("[GET /api/drives/[driveId]/rank/status]", err);
-
-    const message = err?.message ?? "Internal server error";
-    if (message.includes("Unauthorized") || message.includes("Forbidden")) {
-      return NextResponse.json(
-        { error: message },
-        { status: message.includes("Unauthorized") ? 401 : 403 },
-      );
+  } catch (err: unknown) {
+    if (err instanceof ApiError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
     }
 
+    console.error("[GET /api/drives/[driveId]/rank/status]", err);
     return NextResponse.json(
       { error: "Failed to fetch ranking status" },
       { status: 500 },

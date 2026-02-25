@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { drives, jobs, students, rankings } from "@/lib/db/schema";
-import { requireRole, requireStudentProfile } from "@/lib/auth/helpers";
+import { requireRoleApi, requireStudentProfileApi, ApiError } from "@/lib/auth/helpers";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -27,7 +27,7 @@ const createDriveSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireRole(["faculty", "admin"]);
+    const user = await requireRoleApi(["faculty", "admin"]);
 
     const body = await req.json();
     const parsed = createDriveSchema.safeParse(body);
@@ -70,9 +70,9 @@ export async function POST(req: NextRequest) {
       { message: "Drive created successfully", drive },
       { status: 201 }
     );
-  } catch (error: any) {
-    if (error?.message?.includes("Unauthorized") || error?.message?.includes("Forbidden")) {
-      return NextResponse.json({ message: error.message }, { status: 403 });
+  } catch (error: unknown) {
+    if (error instanceof ApiError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
     console.error("[api/drives] POST error:", error);
     return NextResponse.json(
@@ -87,15 +87,15 @@ export async function POST(req: NextRequest) {
 export async function GET(_req: NextRequest) {
   try {
     // Try faculty/admin first
-    let user: Awaited<ReturnType<typeof requireRole>> | null = null;
+    let user: Awaited<ReturnType<typeof requireRoleApi>> | null = null;
     let isStudent = false;
 
     try {
-      user = await requireRole(["faculty", "admin"]);
+      user = await requireRoleApi(["faculty", "admin"]);
     } catch {
       // Not faculty/admin — try student
       try {
-        const result = await requireStudentProfile();
+        const result = await requireStudentProfileApi();
         user = result.user;
         isStudent = true;
       } catch {
@@ -177,7 +177,10 @@ export async function GET(_req: NextRequest) {
     }));
 
     return NextResponse.json({ drives: drivesWithScore });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (error instanceof ApiError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
     console.error("[api/drives] GET error:", error);
     return NextResponse.json(
       { message: "Internal server error" },

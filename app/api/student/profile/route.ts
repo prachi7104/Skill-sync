@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireStudentProfileApi, ApiError } from "@/lib/auth/helpers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
@@ -61,7 +61,7 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
     try {
-        const { user, profile } = await requireStudentProfile();
+        const { user, profile } = await requireStudentProfileApi();
 
         // Parse Body
         const body = await req.json();
@@ -185,7 +185,14 @@ export async function PATCH(req: NextRequest) {
             { success: true, message: "Profile updated successfully", data: { completeness } },
             { status: 200 }
         );
-    } catch (error: any) {
+    } catch (error: unknown) {
+        if (error instanceof ApiError) {
+            return NextResponse.json(
+                { success: false, error: error.message },
+                { status: error.statusCode }
+            );
+        }
+
         if (error instanceof z.ZodError) {
             return NextResponse.json(
                 { success: false, error: "Validation failed", errors: error.errors },
@@ -193,17 +200,9 @@ export async function PATCH(req: NextRequest) {
             );
         }
 
-        // Handle authentication errors (usually thrown by requireStudentProfile)
-        if (error instanceof Error && (error.message.includes("Unauthorized") || error.message.includes("Forbidden"))) {
-            return NextResponse.json(
-                { success: false, error: error.message },
-                { status: 401 }
-            );
-        }
-
         console.error("Error updating student profile:", error);
         return NextResponse.json(
-            { success: false, error: error.message || "Internal server error" },
+            { success: false, error: "Internal server error" },
             { status: 500 }
         );
     }

@@ -52,6 +52,10 @@ export const NEXTAUTH_URL = optionalEnv("NEXTAUTH_URL", "http://localhost:3000")
  */
 export const STUDENT_EMAIL_DOMAIN = requireEnv("STUDENT_EMAIL_DOMAIN").toLowerCase();
 
+// ── Admin / Security ────────────────────────────────────────────────────────
+export const ADMIN_EMAIL = requireEnv("ADMIN_EMAIL");
+export const CRON_SECRET = requireEnv("CRON_SECRET");
+
 // ── Cloudinary ──────────────────────────────────────────────────────────────
 export const CLOUDINARY_CLOUD_NAME = optionalEnv("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME");
 export const CLOUDINARY_API_KEY = optionalEnv("CLOUDINARY_API_KEY");
@@ -75,6 +79,8 @@ export const env = {
   NEXTAUTH_SECRET,
   NEXTAUTH_URL,
   STUDENT_EMAIL_DOMAIN,
+  ADMIN_EMAIL,
+  CRON_SECRET,
   CLOUDINARY_CLOUD_NAME,
   CLOUDINARY_API_KEY,
   CLOUDINARY_API_SECRET,

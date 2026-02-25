@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireStudentProfileApi, ApiError } from "@/lib/auth/helpers";
 import { eq } from "drizzle-orm";
 import { computeCompleteness } from "@/lib/profile/completeness";
 
@@ -17,7 +17,7 @@ interface MergeSectionRequest {
 export async function POST(req: NextRequest) {
     try {
         // 1. Auth Check
-        const { user, profile } = await requireStudentProfile();
+        const { user, profile } = await requireStudentProfileApi();
 
         // 2. Parse payload
         const body = await req.json() as MergeSectionRequest;
@@ -134,7 +134,10 @@ export async function POST(req: NextRequest) {
             });
         }
 
-    } catch (error) {
+    } catch (error: unknown) {
+        if (error instanceof ApiError) {
+            return NextResponse.json({ error: error.message }, { status: error.statusCode });
+        }
         console.error("Merge failed:", error);
         return NextResponse.json(
             { message: "Internal server error during merge" },

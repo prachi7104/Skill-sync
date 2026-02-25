@@ -1,7 +1,7 @@
 import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth/helpers";
+import { requireRoleApi, ApiError } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { rankings, drives, students, users } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
@@ -32,7 +32,7 @@ export async function GET(
   { params }: { params: { driveId: string } },
 ) {
   try {
-    const user = await requireRole(["faculty", "admin"]);
+    const user = await requireRoleApi(["faculty", "admin"]);
     const { driveId } = params;
 
     // ── Validate driveId format ──────────────────────────────────────────
@@ -126,16 +126,11 @@ export async function GET(
       },
       { status: 200 },
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[GET /api/drives/[driveId]/rankings]", err);
 
-    const message = err?.message ?? "Internal server error";
-
-    if (message.includes("Unauthorized")) {
-      return NextResponse.json({ error: message }, { status: 401 });
-    }
-    if (message.includes("Forbidden")) {
-      return NextResponse.json({ error: message }, { status: 403 });
+    if (err instanceof ApiError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
     }
 
     // Phase 5.5: Structured guardrail errors

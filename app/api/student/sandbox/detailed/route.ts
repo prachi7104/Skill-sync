@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
+import { ApiError } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -125,7 +126,10 @@ export async function POST(req: NextRequest) {
             data: analysisResult
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+        if (error instanceof ApiError) {
+            return NextResponse.json({ error: error.message }, { status: error.statusCode });
+        }
         console.error("Detailed Analysis Error:", error);
         return NextResponse.json({ error: "Analysis failed. Please try again." }, { status: 500 });
     }

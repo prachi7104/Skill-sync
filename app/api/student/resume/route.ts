@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import { db } from "@/lib/db";
 import { students, jobs } from "@/lib/db/schema";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireStudentProfileApi, ApiError } from "@/lib/auth/helpers";
 import { eq, and, sql } from "drizzle-orm";
 import { processResumeParseJobs } from "@/lib/workers/parse-resume";
 
@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
     try {
         // 1. Auth Check
-        const { user, profile } = await requireStudentProfile();
+        const { user, profile } = await requireStudentProfileApi();
 
         // 2. Parse Form Data
         const formData = await req.formData();
@@ -213,10 +213,16 @@ export async function POST(req: NextRequest) {
             { status: 202 }
         );
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+        if (error instanceof ApiError) {
+            return NextResponse.json(
+                { success: false, error: error.message },
+                { status: error.statusCode }
+            );
+        }
         console.error("Resume upload failed:", error);
         return NextResponse.json(
-            { success: false, error: error.message || "Internal server error during upload" },
+            { success: false, error: "Internal server error during upload" },
             { status: 500 }
         );
     }

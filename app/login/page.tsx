@@ -10,6 +10,9 @@ import { Suspense } from "react";
 const AUTH_ERRORS: Record<string, string> = {
     AccessDenied: "Access denied. Your account is not authorized for this application.",
     NotAuthorized: "Your account is not registered. Students must use their @stu.upes.ac.in account. Faculty/admin accounts must be pre-registered by an administrator.",
+    WrongEmail: "Please sign in with your university email (@stu.upes.ac.in). If you're faculty, contact the admin to get access.",
+    NoEmail: "Could not retrieve your email address. Please try again.",
+    DatabaseError: "Sign-in failed due to a server error. Please try again later.",
     Configuration: "There is a problem with the server configuration. Please contact support.",
     Verification: "The verification link has expired or has already been used.",
     OAuthAccountNotLinked: "This email is already linked to another sign-in method.",
