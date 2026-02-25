@@ -22,6 +22,13 @@
       "when": 1770658478191,
       "tag": "0003_same_shiver_man",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1772042813535,
+      "tag": "0003_shocking_beast",
+      "breakpoints": true
     }
   ]
 }

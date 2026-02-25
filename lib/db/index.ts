@@ -97,16 +97,16 @@ export const db = new Proxy(
 
 // ── Pool Health Monitor ─────────────────────────────────────────────────────
 export async function getDbStats() {
+  let client: ReturnType<typeof postgres> | null = null;
   try {
     const url = process.env.DATABASE_URL;
     if (!url) throw new Error("DATABASE_URL is not set");
 
-    // Use a fresh client reference for raw queries (same singleton)
-    const client = postgres(url, {
+    client = postgres(url, {
       prepare: false,
       max: 1,
       ssl: "require",
-      connection: { application_name: "skillsync_app" },
+      connection: { application_name: "skillsync_health" },
     });
 
     const result = await client`
@@ -117,8 +117,6 @@ export async function getDbStats() {
       FROM pg_stat_activity
       WHERE application_name = 'skillsync_app'
     `;
-
-    await client.end();
 
     const stats = result[0] as {
       total_connections: number;
@@ -141,5 +139,10 @@ export async function getDbStats() {
   } catch (err: any) {
     logger.error("Failed to query pool stats", { error: err.message });
     return null;
+  } finally {
+    // ALWAYS close the client — even if query throws
+    if (client) {
+      await client.end().catch(() => { });
+    }
   }
 }

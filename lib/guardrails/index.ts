@@ -3,7 +3,7 @@
  */
 
 export { GuardrailViolation, ERRORS, type GuardrailError } from "./errors";
-export { enforceSandboxLimits, incrementSandboxUsage } from "./sandbox-limits";
+export { checkAndIncrementSandboxUsage, checkAndIncrementDetailedUsage } from "./sandbox-limits";
 export { enforceProfileGate } from "./profile-gate";
 export {
   getDriveState,

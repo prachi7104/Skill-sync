@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireStudentProfileApi, ApiError } from "@/lib/auth/helpers";
-import { enforceSandboxLimits, incrementSandboxUsage, enforceProfileGate } from "@/lib/guardrails";
+import { checkAndIncrementSandboxUsage, enforceProfileGate } from "@/lib/guardrails";
 import { GuardrailViolation } from "@/lib/guardrails/errors";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
     await enforceProfileGate(user.id);
 
     // 3. Sandbox rate limits
-    await enforceSandboxLimits(user.id);
+    await checkAndIncrementSandboxUsage(user.id);
 
     // 4. Parse input
     const body = await req.json();
@@ -194,8 +194,7 @@ export async function POST(req: NextRequest) {
       atsResult.red_flags.push({ flag: eligibilityResult.reason || "Did not meet eligibility criteria", severity: "Critical", impact: -100 });
     }
 
-    // 7. Increment usage counters (AFTER successful computation)
-    await incrementSandboxUsage(user.id);
+    // 7. Increment usage counters (handled atomically in step 3 now)
 
     // 8. Fetch updated usage for request context
     const [updated] = await db

@@ -93,9 +93,14 @@ export async function GET(
         missingSkills: rankings.missingSkills,
         shortExplanation: rankings.shortExplanation,
         detailedExplanation: rankings.detailedExplanation,
+        shortlisted: rankings.shortlisted,
+        studentId: rankings.studentId,
         studentName: users.name,
         sapId: students.sapId,
         rollNo: students.rollNo,
+        branch: students.branch,
+        cgpa: students.cgpa,
+        category: students.category,
       })
       .from(rankings)
       .innerJoin(students, eq(rankings.studentId, students.id))
@@ -112,9 +117,13 @@ export async function GET(
         },
         rankings: rows.map((r) => ({
           rank: r.rankPosition,
+          studentId: r.studentId,
           studentName: r.studentName,
           sapId: r.sapId ?? null,
           rollNo: r.rollNo ?? null,
+          branch: r.branch ?? null,
+          cgpa: r.cgpa ?? null,
+          category: r.category ?? null,
           matchScore: r.matchScore,
           semanticScore: r.semanticScore,
           structuredScore: r.structuredScore,
@@ -122,6 +131,7 @@ export async function GET(
           missingSkills: r.missingSkills,
           shortExplanation: r.shortExplanation,
           detailedExplanation: r.detailedExplanation,
+          shortlisted: r.shortlisted,
         })),
       },
       { status: 200 },

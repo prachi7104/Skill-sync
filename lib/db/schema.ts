@@ -653,6 +653,24 @@ export const systemSettings = pgTable("system_settings", {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Table: faculty_uploads
+// ─────────────────────────────────────────────────────────────────────────────
+// Purpose: Audit trail for CSV and similar bulk operations.
+
+export const facultyUploads = pgTable("faculty_uploads", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  uploadedBy: uuid("uploaded_by")
+    .references(() => users.id, { onDelete: "set null" }),
+  uploadType: varchar("upload_type", { length: 100 }).notNull(),
+  rowsProcessed: integer("rows_processed").notNull().default(0),
+  rowsFailed: integer("rows_failed").notNull().default(0),
+  errors: jsonb("errors"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Relations (Drizzle relational query API)
 // ─────────────────────────────────────────────────────────────────────────────
 // These do NOT create FK constraints (those are in the table definitions above).

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRoleApi, ApiError } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
-import { jobs } from "@/lib/db/schema";
-import { sql } from "drizzle-orm";
+import { jobs, drives } from "@/lib/db/schema";
+import { sql, eq } from "drizzle-orm";
 import { enforceRankingGeneration, GuardrailViolation, ERRORS } from "@/lib/guardrails";
 
 /**
@@ -36,6 +36,25 @@ export async function POST(
     if (!uuidRegex.test(driveId)) {
       const err = ERRORS.DRIVE_INVALID_ID();
       return NextResponse.json(err.toJSON(), { status: err.status });
+    }
+
+    // Verify drive exists and faculty owns it
+    const [drive] = await db
+      .select({ id: drives.id, createdBy: drives.createdBy })
+      .from(drives)
+      .where(eq(drives.id, driveId))
+      .limit(1);
+
+    if (!drive) {
+      return NextResponse.json({ error: "Drive not found" }, { status: 404 });
+    }
+
+    // Faculty must own the drive; admin can rank any drive
+    if (user.role === "faculty" && drive.createdBy !== user.id) {
+      return NextResponse.json(
+        { error: "Forbidden: you do not own this drive" },
+        { status: 403 },
+      );
     }
 
     // Phase 5.5: Block re-ranking unless admin

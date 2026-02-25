@@ -1,38 +1,11 @@
-/**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * SkillSync — Sandbox Usage Limits
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- *
- * Server-side enforcement of free-tier sandbox usage limits.
- *
- * Limits (hardcoded):
- *   Daily:   5 sandbox runs
- *   Monthly: 30 sandbox runs
- *
- * Reset logic:
- *   Daily counter resets when the current UTC date differs from sandboxResetDate.
- *   Monthly counter resets when the current UTC month differs from sandboxMonthResetDate.
- *
- * No cron jobs. Resets are lazy — checked and applied on each usage attempt.
- *
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- */
-
 import "server-only";
 
 import { db } from "@/lib/db";
-import { students } from "@/lib/db/schema";
+import { students, systemSettings } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { ERRORS } from "./errors";
 
-// ── Constants ────────────────────────────────────────────────────────────────
-
-const DAILY_LIMIT = 5;
-const MONTHLY_LIMIT = 30;
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Returns current UTC date as "YYYY-MM-DD". */
+/** Returns today's UTC date as "YYYY-MM-DD". */
 function todayUTC(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -42,188 +15,160 @@ function currentMonthUTC(): string {
   return new Date().toISOString().slice(0, 7);
 }
 
-// ── Core Logic ───────────────────────────────────────────────────────────────
+/** Fetch admin-configured limits from system_settings. */
+async function getSandboxLimits(): Promise<{ daily: number; monthly: number }> {
+  try {
+    const rows = await db
+      .select({ key: systemSettings.key, value: systemSettings.value })
+      .from(systemSettings)
+      .where(
+        sql`${systemSettings.key} IN ('sandbox_daily_limit', 'sandbox_monthly_limit')`,
+      );
+
+    const map = Object.fromEntries(rows.map((r) => [r.key, Number(r.value)]));
+
+    return {
+      daily: map["sandbox_daily_limit"] ?? 5,
+      monthly: map["sandbox_monthly_limit"] ?? 30,
+    };
+  } catch (err) {
+    // Fallback if table doesn't exist yet or query fails
+    return { daily: 5, monthly: 30 };
+  }
+}
 
 /**
- * Checks whether a student can use the sandbox.
- * Throws `GuardrailViolation` if limit is exceeded.
- * Does NOT increment — call `incrementSandboxUsage` after successful sandbox run.
- *
- * This function performs lazy reset: if the day/month has changed since the
- * last recorded reset date, the counters are zeroed in-place before checking.
+ * Atomically check AND increment sandbox usage in a single SQL statement.
+ * 
+ * Uses a conditional UPDATE:
+ *   - If daily/monthly counter < limit: increment and return new values
+ *   - If at limit: update nothing, return null (0 rows affected)
+ * 
+ * No separate read → no race condition.
  */
-export async function enforceSandboxLimits(studentId: string): Promise<void> {
-  // Fetch current counters
-  const [student] = await db
-    .select({
-      sandboxUsageToday: students.sandboxUsageToday,
-      sandboxResetDate: students.sandboxResetDate,
-      sandboxUsageMonth: students.sandboxUsageMonth,
-      sandboxMonthResetDate: students.sandboxMonthResetDate,
-    })
-    .from(students)
-    .where(eq(students.id, studentId))
-    .limit(1);
-
-  if (!student) {
-    throw new Error("Student record not found");
-  }
-
+export async function checkAndIncrementSandboxUsage(
+  studentId: string,
+): Promise<void> {
   const today = todayUTC();
   const month = currentMonthUTC();
+  const { daily, monthly } = await getSandboxLimits();
 
-  let dailyUsage = student.sandboxUsageToday;
-  let monthlyUsage = student.sandboxUsageMonth;
-  const updates: Record<string, unknown> = {};
+  const result = await db.execute(sql`
+    UPDATE students
+    SET
+      sandbox_usage_today = CASE
+        WHEN sandbox_reset_date IS DISTINCT FROM ${today} THEN 1
+        ELSE sandbox_usage_today + 1
+      END,
+      sandbox_reset_date = ${today},
+      sandbox_usage_month = CASE
+        WHEN sandbox_month_reset_date IS DISTINCT FROM ${month} THEN 1
+        ELSE sandbox_usage_month + 1
+      END,
+      sandbox_month_reset_date = ${month},
+      updated_at = now()
+    WHERE id = ${studentId}
+      AND (
+        -- Check daily limit (with lazy reset)
+        CASE WHEN sandbox_reset_date IS DISTINCT FROM ${today} THEN 0
+             ELSE COALESCE(sandbox_usage_today, 0)
+        END
+      ) < ${daily}
+      AND (
+        -- Check monthly limit (with lazy reset)
+        CASE WHEN sandbox_month_reset_date IS DISTINCT FROM ${month} THEN 0
+             ELSE COALESCE(sandbox_usage_month, 0)
+        END
+      ) < ${monthly}
+    RETURNING id
+  `);
 
-  // ── Lazy daily reset ───────────────────────────────────────────────────
-  if (student.sandboxResetDate !== today) {
-    dailyUsage = 0;
-    updates.sandboxUsageToday = 0;
-    updates.sandboxResetDate = today;
-  }
+  if (((result as any).count ?? 0) === 0) {
+    // Determine which limit was hit for a helpful error message
+    const [student] = await db
+      .select({
+        sandboxUsageToday: students.sandboxUsageToday,
+        sandboxResetDate: students.sandboxResetDate,
+        sandboxUsageMonth: students.sandboxUsageMonth,
+        sandboxMonthResetDate: students.sandboxMonthResetDate,
+      })
+      .from(students)
+      .where(eq(students.id, studentId))
+      .limit(1);
 
-  // ── Lazy monthly reset ─────────────────────────────────────────────────
-  if (student.sandboxMonthResetDate !== month) {
-    monthlyUsage = 0;
-    updates.sandboxUsageMonth = 0;
-    updates.sandboxMonthResetDate = month;
-  }
+    if (!student) throw ERRORS.STUDENT_NOT_FOUND();
 
-  // Persist resets if any
-  if (Object.keys(updates).length > 0) {
-    updates.updatedAt = new Date();
-    await db.update(students).set(updates).where(eq(students.id, studentId));
-  }
+    const effectiveDaily =
+      student.sandboxResetDate !== today ? 0 : (student.sandboxUsageToday ?? 0);
+    const effectiveMonthly =
+      student.sandboxMonthResetDate !== month ? 0 : (student.sandboxUsageMonth ?? 0);
 
-  // ── Enforce limits ─────────────────────────────────────────────────────
-  if (dailyUsage >= DAILY_LIMIT) {
+    if (effectiveMonthly >= monthly) throw ERRORS.SANDBOX_MONTHLY_LIMIT();
+    if (effectiveDaily >= daily) throw ERRORS.SANDBOX_DAILY_LIMIT();
+
+    // Shouldn't reach here, but safety net
     throw ERRORS.SANDBOX_DAILY_LIMIT();
   }
+}
 
-  if (monthlyUsage >= MONTHLY_LIMIT) {
-    throw ERRORS.SANDBOX_MONTHLY_LIMIT();
+// Same atomic fix for Detailed Analysis
+async function getDetailedLimits(): Promise<{ daily: number; monthly: number }> {
+  try {
+    const rows = await db
+      .select({ key: systemSettings.key, value: systemSettings.value })
+      .from(systemSettings)
+      .where(
+        sql`${systemSettings.key} IN ('detailed_daily_limit', 'detailed_monthly_limit')`,
+      );
+
+    const map = Object.fromEntries(rows.map((r) => [r.key, Number(r.value)]));
+    return {
+      daily: map["detailed_daily_limit"] ?? 3,
+      monthly: map["detailed_monthly_limit"] ?? 15,
+    };
+  } catch (err) {
+    return { daily: 3, monthly: 15 };
   }
 }
 
-/**
- * Increments both daily and monthly sandbox counters atomically using SQL.
- * Uses conditional CASE expressions to handle lazy resets in a single UPDATE,
- * preventing race conditions from concurrent read-then-write patterns.
- * Call this AFTER a successful sandbox run.
- */
-export async function incrementSandboxUsage(studentId: string): Promise<void> {
+export async function checkAndIncrementDetailedUsage(
+  studentId: string,
+): Promise<void> {
   const today = todayUTC();
   const month = currentMonthUTC();
+  const { daily, monthly } = await getDetailedLimits();
 
-  await db
-    .update(students)
-    .set({
-      // Atomic daily: if date changed, reset to 1; otherwise increment
-      sandboxUsageToday: sql`CASE
-        WHEN ${students.sandboxResetDate} IS DISTINCT FROM ${today}
-        THEN 1
-        ELSE ${students.sandboxUsageToday} + 1
-      END`,
-      sandboxResetDate: today,
-      // Atomic monthly: if month changed, reset to 1; otherwise increment
-      sandboxUsageMonth: sql`CASE
-        WHEN ${students.sandboxMonthResetDate} IS DISTINCT FROM ${month}
-        THEN 1
-        ELSE ${students.sandboxUsageMonth} + 1
-      END`,
-      sandboxMonthResetDate: month,
-      updatedAt: new Date(),
-    } as any)
-    .where(eq(students.id, studentId));
-}
+  const result = await db.execute(sql`
+    UPDATE students
+    SET
+      detailed_analysis_usage_today = CASE
+        WHEN detailed_analysis_reset_date IS DISTINCT FROM ${today} THEN 1
+        ELSE detailed_analysis_usage_today + 1
+      END,
+      detailed_analysis_reset_date = ${today},
+      detailed_analysis_usage_month = CASE
+        WHEN detailed_analysis_month_reset_date IS DISTINCT FROM ${month} THEN 1
+        ELSE detailed_analysis_usage_month + 1
+      END,
+      detailed_analysis_month_reset_date = ${month},
+      updated_at = now()
+    WHERE id = ${studentId}
+      AND (
+        CASE WHEN detailed_analysis_reset_date IS DISTINCT FROM ${today} THEN 0
+             ELSE COALESCE(detailed_analysis_usage_today, 0)
+        END
+      ) < ${daily}
+      AND (
+        CASE WHEN detailed_analysis_month_reset_date IS DISTINCT FROM ${month} THEN 0
+             ELSE COALESCE(detailed_analysis_usage_month, 0)
+        END
+      ) < ${monthly}
+    RETURNING id
+  `);
 
-// ── Detailed Analysis Limits ────────────────────────────────────────────────
-
-const DETAILED_DAILY_LIMIT = 3;
-const DETAILED_MONTHLY_LIMIT = 15;
-
-/**
- * Checks whether a student can use the Detailed Analysis feature.
- * Throws `GuardrailViolation` if limit is exceeded.
- */
-export async function enforceDetailedAnalysisLimits(studentId: string): Promise<void> {
-  const [student] = await db
-    .select({
-      detailedAnalysisUsageToday: students.detailedAnalysisUsageToday,
-      detailedAnalysisResetDate: students.detailedAnalysisResetDate,
-      detailedAnalysisUsageMonth: students.detailedAnalysisUsageMonth,
-      detailedAnalysisMonthResetDate: students.detailedAnalysisMonthResetDate,
-    })
-    .from(students)
-    .where(eq(students.id, studentId))
-    .limit(1);
-
-  if (!student) {
-    throw new Error("Student record not found");
+  if (((result as any).count ?? 0) === 0) {
+    throw new Error(
+      `Detailed analysis limit reached. Limits are ${daily}/day and ${monthly}/month.`,
+    );
   }
-
-  const today = todayUTC();
-  const month = currentMonthUTC();
-
-  let dailyUsage = student.detailedAnalysisUsageToday;
-  let monthlyUsage = student.detailedAnalysisUsageMonth;
-  const updates: Record<string, unknown> = {};
-
-  // Lazy daily reset
-  if (student.detailedAnalysisResetDate !== today) {
-    dailyUsage = 0;
-    updates.detailedAnalysisUsageToday = 0;
-    updates.detailedAnalysisResetDate = today;
-  }
-
-  // Lazy monthly reset
-  if (student.detailedAnalysisMonthResetDate !== month) {
-    monthlyUsage = 0;
-    updates.detailedAnalysisUsageMonth = 0;
-    updates.detailedAnalysisMonthResetDate = month;
-  }
-
-  // Persist resets
-  if (Object.keys(updates).length > 0) {
-    updates.updatedAt = new Date();
-    await db.update(students).set(updates).where(eq(students.id, studentId));
-  }
-
-  // Enforce limits
-  if (dailyUsage >= DETAILED_DAILY_LIMIT) {
-    // We can reuse the same error for now or create a specific one
-    throw new Error(`Daily limit reached (${DETAILED_DAILY_LIMIT} detailed analyses/day). Please try again tomorrow.`);
-  }
-
-  if (monthlyUsage >= DETAILED_MONTHLY_LIMIT) {
-    throw new Error(`Monthly limit reached (${DETAILED_MONTHLY_LIMIT} detailed analyses/month). Please try again next month.`);
-  }
-}
-
-/**
- * Increments daily/monthly counters for Detailed Analysis.
- */
-export async function incrementDetailedAnalysisUsage(studentId: string): Promise<void> {
-  const today = todayUTC();
-  const month = currentMonthUTC();
-
-  await db
-    .update(students)
-    .set({
-      detailedAnalysisUsageToday: sql`CASE
-        WHEN ${students.detailedAnalysisResetDate} IS DISTINCT FROM ${today}
-        THEN 1
-        ELSE ${students.detailedAnalysisUsageToday} + 1
-      END`,
-      detailedAnalysisResetDate: today,
-      detailedAnalysisUsageMonth: sql`CASE
-        WHEN ${students.detailedAnalysisMonthResetDate} IS DISTINCT FROM ${month}
-        THEN 1
-        ELSE ${students.detailedAnalysisUsageMonth} + 1
-      END`,
-      detailedAnalysisMonthResetDate: month,
-      updatedAt: new Date(),
-    } as any)
-    .where(eq(students.id, studentId));
 }

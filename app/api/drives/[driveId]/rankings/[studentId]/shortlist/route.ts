@@ -3,6 +3,7 @@ import { requireRoleApi, ApiError } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, rankings } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { z } from "zod";
 
 export async function PATCH(
     req: Request,
@@ -28,7 +29,21 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const shortlisted = body.shortlisted; // boolean | null
+
+        const shortlistSchema = z.object({
+            shortlisted: z.boolean().nullable(),
+        });
+
+        const parsed = shortlistSchema.safeParse(body);
+
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: "shortlisted must be true, false, or null" },
+                { status: 400 },
+            );
+        }
+
+        const { shortlisted } = parsed.data;
 
         await db
             .update(rankings)

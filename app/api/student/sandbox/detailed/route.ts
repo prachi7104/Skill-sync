@@ -6,7 +6,7 @@ import { ApiError } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { enforceDetailedAnalysisLimits, incrementDetailedAnalysisUsage } from "@/lib/guardrails/sandbox-limits";
+import { checkAndIncrementDetailedUsage } from "@/lib/guardrails/sandbox-limits";
 import { parseResumeWithAI } from "@/lib/resume/ai-parser";
 import { performDetailedAnalysis } from "@/lib/ats/detailed-analysis";
 import { generateEmbedding } from "@/lib/embeddings/generate";
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
         // 2. Limit Check
         try {
-            await enforceDetailedAnalysisLimits(student.id);
+            await checkAndIncrementDetailedUsage(student.id);
         } catch (error: any) {
             return NextResponse.json({ error: error.message }, { status: 403 });
         }
@@ -118,8 +118,7 @@ export async function POST(req: NextRequest) {
             studentProfileEmbedding
         );
 
-        // 8. Increment Usage
-        await incrementDetailedAnalysisUsage(student.id);
+        // 8. Increment Usage (handled atomically in step 2 now)
 
         return NextResponse.json({
             success: true,
