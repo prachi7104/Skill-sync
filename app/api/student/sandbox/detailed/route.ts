@@ -7,6 +7,8 @@ import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { checkAndIncrementDetailedUsage } from "@/lib/guardrails/sandbox-limits";
+import { enforceProfileGate } from "@/lib/guardrails";
+import { GuardrailViolation } from "@/lib/guardrails/errors";
 import { parseResumeWithAI } from "@/lib/resume/ai-parser";
 import { performDetailedAnalysis } from "@/lib/ats/detailed-analysis";
 import { generateEmbedding } from "@/lib/embeddings/generate";
@@ -56,14 +58,24 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Student profile not found" }, { status: 404 });
         }
 
-        // 2. Limit Check
+        // 2. Profile Gate — require complete profile before detailed analysis
+        try {
+            await enforceProfileGate(student.id);
+        } catch (error: unknown) {
+            if (error instanceof GuardrailViolation) {
+                return NextResponse.json(error.toJSON(), { status: error.status });
+            }
+            throw error;
+        }
+
+        // 3. Limit Check
         try {
             await checkAndIncrementDetailedUsage(student.id);
         } catch (error: any) {
             return NextResponse.json({ error: error.message }, { status: 403 });
         }
 
-        // 3. Parse JSON body (text extracted client-side)
+        // 4. Parse JSON body (text extracted client-side)
         const body = await req.json();
         const { resumeText, jdText } = body as { resumeText?: string; jdText?: string };
 
@@ -118,7 +130,7 @@ export async function POST(req: NextRequest) {
             studentProfileEmbedding
         );
 
-        // 8. Increment Usage (handled atomically in step 2 now)
+        // 8. Increment Usage (handled atomically in step 3 now)
 
         return NextResponse.json({
             success: true,

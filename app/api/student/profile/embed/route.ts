@@ -13,10 +13,19 @@ export async function POST() {
         const { user, profile } = await requireStudentProfileApi();
 
         // Check completeness
-        const { score } = computeCompleteness(profile as any);
-        if (score < 50) {
+        const { score, blocked } = computeCompleteness(profile as any);
+
+        // Must meet the same bar as the sandbox gate (70%) plus have no critical blocks
+        if (blocked.length > 0) {
             return NextResponse.json(
-                { error: `Profile is only ${score}% complete. Minimum 50% required.` },
+                { error: `Cannot generate embedding: ${blocked[0]}` },
+                { status: 400 }
+            );
+        }
+
+        if (score < 70) {
+            return NextResponse.json(
+                { error: `Profile is only ${score}% complete. Reach 70% to enable sandbox and matching.` },
                 { status: 400 }
             );
         }

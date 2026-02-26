@@ -98,8 +98,8 @@ export default function StudentDashboard() {
                         <EyeIcon className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{sandboxUsageToday}/3</div>
-                        <p className="text-xs text-muted-foreground">Today</p>
+                        <div className="text-2xl font-bold">{sandboxUsageToday}</div>
+                        <p className="text-xs text-muted-foreground">Used today</p>
                     </CardContent>
                 </Card>
             </div>

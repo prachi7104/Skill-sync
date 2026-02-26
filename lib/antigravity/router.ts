@@ -224,9 +224,9 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
   parse_resume_fast: {
     priority: [
-      "groq_llama_4_scout", 
-      "groq_llama_3_1_8b", 
-      "gemini_2_5_flash", 
+      "groq_llama_4_scout",
+      "groq_llama_3_1_8b",
+      "gemini_2_5_flash",
       "gemini_1_5_flash",
       "groq_kimi_k2"
     ],
@@ -237,8 +237,8 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
   generate_questions: {
     priority: [
-      "gemini_2_0_flash", 
-      "groq_llama_4_scout", 
+      "gemini_2_0_flash",
+      "groq_llama_4_scout",
       "groq_llama_3_3_70b",
       "gemini_2_5_pro",
       "groq_gpt_oss_120b"
@@ -275,7 +275,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
   sanitize_input: {
     priority: [
-      "groq_prompt_guard", 
+      "groq_prompt_guard",
       "groq_llama_3_1_8b"
     ],
     requiresLongContext: false,
@@ -782,9 +782,15 @@ export class AntigravityRouter {
     }
     try {
       const model = this.googleAI.getGenerativeModel({ model: modelId });
-      const result = await model.embedContent(text);
+      const result = await model.embedContent({
+        content: { parts: [{ text }], role: "user" },
+        outputDimensionality: 768,
+      } as Parameters<typeof model.embedContent>[0]);
       if (!result.embedding || !result.embedding.values) {
         throw new Error("No embedding returned");
+      }
+      if (result.embedding.values.length !== 768) {
+        throw new Error(`Unexpected embedding dimension: ${result.embedding.values.length}`);
       }
       return result.embedding.values;
     } catch (e: any) {

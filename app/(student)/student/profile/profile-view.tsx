@@ -87,6 +87,7 @@ interface ProfileViewProps {
         parsedResumeJson: any;
         profileCompleteness: number;
         category: string | null;
+        embedding: number[] | null;
     };
 }
 
@@ -328,8 +329,17 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
 
             <Separator />
 
-            {/* Embedding Status Banner */}
-            {score >= 50 && (
+            {/* Hint for students who are close but not yet at 70% */}
+            {!profile.embedding && score >= 50 && score < 70 && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800 font-medium">
+                        Almost there! Reach 70% to enable AI sandbox and placement matching.
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">Current: {score}% — need {70 - score}% more</p>
+                </div>
+            )}
+            {/* Embedding Status Banner — show only when embedding is missing */}
+            {!profile.embedding && score >= 70 && (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-amber-800">Generate your profile embedding</p>
@@ -348,6 +358,12 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                             <><Sparkles className="h-3 w-3 mr-1" /> Generate Now</>
                         )}
                     </Button>
+                </div>
+            )}
+            {profile.embedding && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-green-500 flex-shrink-0" />
+                    <p className="text-sm text-green-700 font-medium">Profile embedding active — sandbox and matching enabled</p>
                 </div>
             )}
 

@@ -66,6 +66,7 @@ export async function generateEmbedding(
       const result = await model.embedContent({
         content: { parts: [{ text: cleaned }], role: "user" },
         taskType: taskType as unknown as undefined,
+        outputDimensionality: EMBEDDING_DIMENSION,
       } as Parameters<typeof model.embedContent>[0]);
 
       if (

@@ -111,6 +111,14 @@ export async function checkAndIncrementSandboxUsage(
   }
 }
 
+/**
+ * Public read-only export of sandbox limits for use in API responses.
+ * Matches the same logic used internally for enforcement.
+ */
+export async function getSandboxLimitsPublic(): Promise<{ daily: number; monthly: number }> {
+  return getSandboxLimits();
+}
+
 // Same atomic fix for Detailed Analysis
 async function getDetailedLimits(): Promise<{ daily: number; monthly: number }> {
   try {

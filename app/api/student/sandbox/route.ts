@@ -12,7 +12,6 @@ import { ATSScore } from "@/lib/ats/types";
 import { ParsedResumeData } from "@/lib/resume/ai-parser";
 import { z } from "zod";
 import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
-import { generateEmbedding } from "@/lib/embeddings";
 
 const sandboxSchema = z.object({
   jdText: z.string().min(20, "Job description must be at least 20 characters").max(10000),
@@ -149,15 +148,6 @@ export async function POST(req: NextRequest) {
 
     const parsedResume = mapProfileToResumeData(profile, skills, projects, workExperience);
 
-    // Optional: Try to generate JD Embedding (used for future semantic matching)
-    try {
-      const { composeJDEmbeddingText } = await import("@/lib/embeddings/compose");
-      const jdEmbeddingText = composeJDEmbeddingText({ parsedJd: parsedJd as any, rawJd: jdText, roleTitle: "Sandbox", company: "Sandbox" });
-      await generateEmbedding(jdEmbeddingText, "jd");
-    } catch (embedErr) {
-      console.warn("[Sandbox] JD embedding failed, proceeding with text-based analysis only:", embedErr);
-    }
-
     // Analyze (passing existing student embedding if available)
     const atsResult = analyzeMatch(parsedJd, parsedResume);
 
@@ -181,6 +171,10 @@ export async function POST(req: NextRequest) {
       .where(eq(students.id, user.id))
       .limit(1);
 
+    // Fetch real limits from system_settings
+    const { getSandboxLimitsPublic } = await import("@/lib/guardrails/sandbox-limits");
+    const realLimits = await getSandboxLimitsPublic();
+
     return NextResponse.json({
       matchScore: atsResult.match_score.overall,
       // 4-dimension breakdown (new scoring system)
@@ -201,9 +195,9 @@ export async function POST(req: NextRequest) {
       redFlags: atsResult.red_flags,
       usage: {
         dailyUsed: updated?.sandboxUsageToday ?? 0,
-        dailyLimit: 100,
+        dailyLimit: realLimits.daily,
         monthlyUsed: updated?.sandboxUsageMonth ?? 0,
-        monthlyLimit: 500,
+        monthlyLimit: realLimits.monthly,
       },
       analysis: atsResult // Full new ATS result
     });

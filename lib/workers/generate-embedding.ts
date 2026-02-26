@@ -226,6 +226,28 @@ export async function processEmbeddingJobs() {
                 break; // Stop processing this tick
             }
 
+            // Dimension mismatch — deterministic failure, mark failed immediately without retry
+            if (msg.includes("Invalid embedding:") || msg.includes("dims, expected")) {
+                await db
+                    .update(jobs)
+                    .set({
+                        status: "failed",
+                        error: `Non-retryable: ${msg}`,
+                        retryCount: (job.retryCount ?? 0) + 1,
+                        latencyMs: Date.now() - startTime,
+                        updatedAt: new Date(),
+                    })
+                    .where(eq(jobs.id, job.id));
+
+                errors.push(`Job ${job.id}: ${msg}`);
+                failed++;
+                logger.error("Embedding job failed (non-retryable dimension mismatch)", {
+                    jobId: job.id,
+                    error: msg,
+                });
+                continue; // Don't break — process next job
+            }
+
             const newRetryCount = (job.retryCount ?? 0) + 1;
             const maxRetries = job.maxRetries ?? 3;
 
