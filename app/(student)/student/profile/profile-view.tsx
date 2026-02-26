@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useStudent } from "@/app/(student)/providers/student-provider";
 
 import {
     Briefcase,
@@ -93,7 +94,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const router = useRouter();
+    const { refresh: refreshStudentData } = useStudent();
 
     // Compute profile completeness
     const { score, missing, isBlocked, isGated, blocked } = computeCompleteness(profile);
@@ -205,12 +206,38 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || "Failed to update profile");
+                throw new Error(errorData.message || errorData.error || "Failed to update profile");
             }
 
-            toast.success("Your changes have been saved successfully.");
+            const result = await response.json();
 
-            router.refresh();
+            toast.success("Profile updated successfully.");
+
+            // Re-fetch the full profile into context so the UI reflects saved data
+            await refreshStudentData();
+
+            // Reset form with the returned updated profile so defaultValues are fresh
+            if (result.profile) {
+                form.reset({
+                    rollNo: result.profile.rollNo || "",
+                    sapId: result.profile.sapId || "",
+                    branch: result.profile.branch || "",
+                    batchYear: result.profile.batchYear || undefined,
+                    cgpa: result.profile.cgpa || undefined,
+                    semester: result.profile.semester || undefined,
+                    tenthPercentage: result.profile.tenthPercentage || undefined,
+                    twelfthPercentage: result.profile.twelfthPercentage || undefined,
+                    skills: result.profile.skills || [],
+                    projects: result.profile.projects || [],
+                    codingProfiles: result.profile.codingProfiles || [],
+                    workExperience: result.profile.workExperience || [],
+                    certifications: result.profile.certifications || [],
+                    researchPapers: result.profile.researchPapers || [],
+                    achievements: result.profile.achievements || [],
+                    softSkills: result.profile.softSkills || [],
+                });
+            }
+
             setIsEditing(false);
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Something went wrong");
