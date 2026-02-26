@@ -13,7 +13,15 @@ import { useStudent } from "@/app/(student)/providers/student-provider";
 import { toast } from "sonner";
 import { WorkExperience } from "@/lib/db/schema";
 
-export default function OnboardingExperienceClient({ initialWork }: { initialWork: WorkExperience[] }) {
+// Use form-compatible type that matches the Zod validation schema (publicationDate, not datePublished)
+interface ResearchPaperForm {
+    title: string;
+    abstract?: string;
+    url?: string;
+    publicationDate?: string;
+}
+
+export default function OnboardingExperienceClient({ initialWork, initialPapers }: { initialWork: WorkExperience[]; initialPapers?: ResearchPaperForm[] }) {
     const router = useRouter();
     const { refresh } = useStudent();
 
@@ -37,13 +45,21 @@ export default function OnboardingExperienceClient({ initialWork }: { initialWor
     );
     const [isLoading, setIsLoading] = useState(false);
 
-    // Form State
+    // Work Experience Form State
     const [role, setRole] = useState("");
     const [company, setCompany] = useState("");
     const [desc, setDesc] = useState("");
     const [start, setStart] = useState("");
 
     const [isAdding, setIsAdding] = useState(false);
+
+    // Research Papers State
+    const [papers, setPapers] = useState<ResearchPaperForm[]>(initialPapers || []);
+    const [isAddingPaper, setIsAddingPaper] = useState(false);
+    const [paperTitle, setPaperTitle] = useState("");
+    const [paperDate, setPaperDate] = useState("");
+    const [paperUrl, setPaperUrl] = useState("");
+    const [paperAbstract, setPaperAbstract] = useState("");
 
     const handleAddWork = () => {
         if (!role.trim() || !company.trim()) {
@@ -74,31 +90,48 @@ export default function OnboardingExperienceClient({ initialWork }: { initialWor
         setWorks(updated);
     };
 
+    const handleAddPaper = () => {
+        if (!paperTitle.trim()) {
+            toast.error("Paper title is required");
+            return;
+        }
+
+        const newPaper: ResearchPaperForm = {
+            title: paperTitle.trim(),
+            publicationDate: paperDate,
+            url: paperUrl.trim(),
+            abstract: paperAbstract.trim(),
+        };
+
+        setPapers([...papers, newPaper]);
+
+        // Reset
+        setPaperTitle("");
+        setPaperDate("");
+        setPaperUrl("");
+        setPaperAbstract("");
+        setIsAddingPaper(false);
+    };
+
+    const handleRemovePaper = (index: number) => {
+        const updated = [...papers];
+        updated.splice(index, 1);
+        setPapers(updated);
+    };
+
     const handleContinue = async () => {
         setIsLoading(true);
         try {
-            // 1. Save Work (even if empty)
+            // Save work experience and research papers
             const res = await fetch("/api/student/profile", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ workExperience: works }), // Note mapped key `workExperience` needs to match schema? 
-                // wait, PATCH `api/student/profile` expects `workExperience`? 
-                // Let me check schema. Yes, `workExperience` is the column. The route validation?
-                // `studentProfileSchema` likely maps it.
+                body: JSON.stringify({ workExperience: works, researchPapers: papers }),
             });
-            // Just double checking - the route reads `studentProfileSchema` then uses `updateData` matching schema keys.
-            // Drizzle schema key is `workExperience`. Zod schema? I should assume camelCase `workExperience`.
-            // Update: Checked route in previous steps, it expects `workExperience` but I didn't explicitly see it in the `updateData` construction block I edited myself (I saw skills, projects, codingProfiles).
-            // Wait, looking at Step 354 log:
-            // if (validatedData.skills) ...
-            // if (validatedData.projects) ...
-            // if (validatedData.codingProfiles) ...
-            // I DID NOT ADD workExperience to the PATCH route update block!
-            // I need to fix the PATCH route to support `workExperience` or else this save will fail silently or just do nothing for work exp.
 
             if (!res.ok) throw new Error("Failed to save work experience");
 
-            // 2. Update Step (6 → 7: Experience → Coding Profiles)
+            // Update Step (6 → 7: Experience → Coding Profiles)
             await updateOnboardingStep(7);
             await refresh();
             router.push("/student/onboarding/coding-profiles");
@@ -118,7 +151,7 @@ export default function OnboardingExperienceClient({ initialWork }: { initialWor
                 </p>
             </div>
 
-            {/* List */}
+            {/* Work Experience List */}
             <div className="space-y-4">
                 {works.map((work, index) => (
                     <Card key={index} className="relative group">
@@ -141,7 +174,7 @@ export default function OnboardingExperienceClient({ initialWork }: { initialWor
                 ))}
             </div>
 
-            {/* Add Form */}
+            {/* Add Work Form */}
             {isAdding ? (
                 <Card className="border-dashed">
                     <CardHeader className="pb-2">
@@ -178,17 +211,91 @@ export default function OnboardingExperienceClient({ initialWork }: { initialWor
                 </Button>
             )}
 
+            {/* ── Research Papers Section (Optional) ──────────────────── */}
+            <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                        <h3 className="text-lg font-semibold">Research Papers (Optional)</h3>
+                        <p className="text-sm text-muted-foreground">
+                            Published papers, conference proceedings, or preprints.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Papers List */}
+                <div className="space-y-4">
+                    {papers.map((paper, index) => (
+                        <Card key={index} className="relative group">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10"
+                                onClick={() => handleRemovePaper(index)}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-base">{paper.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="text-sm text-muted-foreground">
+                                {paper.publicationDate && <p>{paper.publicationDate}</p>}
+                                {paper.abstract && <p className="mt-1 line-clamp-2">{paper.abstract}</p>}
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+
+                {/* Add Paper Form */}
+                {isAddingPaper ? (
+                    <Card className="border-dashed">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm">New Research Paper</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <div className="space-y-1">
+                                <Label>Title *</Label>
+                                <Input value={paperTitle} onChange={e => setPaperTitle(e.target.value)} placeholder="Paper title" />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>Publication Date</Label>
+                                <Input type="month" value={paperDate} onChange={e => setPaperDate(e.target.value)} />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>Link / DOI</Label>
+                                <Input value={paperUrl} onChange={e => setPaperUrl(e.target.value)} placeholder="https://..." />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>Abstract (Optional)</Label>
+                                <Textarea value={paperAbstract} onChange={e => setPaperAbstract(e.target.value)} placeholder="Brief abstract..." rows={3} />
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                                <Button onClick={handleAddPaper} size="sm">Add Paper</Button>
+                                <Button onClick={() => setIsAddingPaper(false)} variant="ghost" size="sm">Cancel</Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <Button onClick={() => setIsAddingPaper(true)} variant="outline" className="w-full border-dashed">
+                        <Plus className="mr-2 h-4 w-4" /> Add Paper
+                    </Button>
+                )}
+
+                {papers.length === 0 && !isAddingPaper && (
+                    <p className="text-sm text-muted-foreground italic">No research papers added. This section is optional.</p>
+                )}
+            </div>
+
             <div className="flex justify-between items-center pt-4 border-t">
                 <Button variant="ghost" onClick={() => router.push("/student/onboarding/projects")} disabled={isLoading}>
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
                 <div className="flex items-center gap-2">
                     <p className="text-sm text-muted-foreground italic hidden md:block">
-                        {works.length === 0 ? "Optional - you can skip this." : `${works.length} entries added.`}
+                        {works.length === 0 && papers.length === 0 ? "Optional - you can skip this." : `${works.length} experience${works.length !== 1 ? "s" : ""}, ${papers.length} paper${papers.length !== 1 ? "s" : ""} added.`}
                     </p>
                     <Button onClick={handleContinue} disabled={isLoading}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {works.length === 0 ? "Skip" : "Continue"} <ArrowRight className="ml-2 h-4 w-4" />
+                        {works.length === 0 && papers.length === 0 ? "Skip" : "Continue"} <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                 </div>
             </div>

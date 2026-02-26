@@ -76,10 +76,10 @@ export async function PATCH(req: NextRequest) {
             branch: z.string().max(100).optional().nullable(),
             batchYear: z.number().int().min(2020).max(2035).optional().nullable(),
             skills: z.array(z.object({
-                name: z.string(),
-                proficiency: z.number().int().min(1).max(5),
-                category: z.string().optional(),
-            })).optional(),
+                name: z.string().min(1).max(100),
+                proficiency: z.number().int().min(1).max(5).default(3),
+                category: z.string().max(50).optional().nullable(),
+            }).passthrough()).optional(),
             projects: z.array(z.any()).optional(),
             workExperience: z.array(z.any()).optional(),
             certifications: z.array(z.any()).optional(),
@@ -87,7 +87,7 @@ export async function PATCH(req: NextRequest) {
             researchPapers: z.array(z.any()).optional(),
             achievements: z.array(z.any()).optional(),
             softSkills: z.array(z.string()).optional(),
-        }).strict(); // strict() rejects unknown fields (including category)
+        }).passthrough(); // passthrough() allows extra fields like `id` from useFieldArray
 
         const data = allowed.parse(body);
 

@@ -27,5 +27,5 @@ export default function OnboardingExperiencePage() {
 
     if (isLoading || !student) return null;
 
-    return <OnboardingExperienceClient initialWork={student.workExperience || []} />;
+    return <OnboardingExperienceClient initialWork={student.workExperience || []} initialPapers={student.researchPapers || []} />;
 }

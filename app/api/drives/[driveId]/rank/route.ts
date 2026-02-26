@@ -88,6 +88,29 @@ export async function POST(
       })
       .returning({ id: jobs.id });
 
+    // Fire-and-forget: inline ranking so faculty doesn't wait for cron
+    import("@/lib/matching").then(({ computeRanking }) => {
+      // Claim the job first
+      db.update(jobs)
+        .set({ status: "processing", updatedAt: new Date() })
+        .where(sql`${jobs.id} = ${job.id} AND ${jobs.status} = 'pending'`)
+        .then(() => computeRanking(driveId))
+        .then((result) => {
+          db.update(jobs)
+            .set({
+              status: "completed",
+              result: result as any,
+              updatedAt: new Date(),
+            })
+            .where(eq(jobs.id, job.id))
+            .catch(console.error);
+        })
+        .catch((err) => {
+          console.error("[Rank] Inline ranking failed:", err);
+          // Job stays pending for cron to retry
+        });
+    }).catch(console.error);
+
     return NextResponse.json(
       { message: "Ranking job queued", jobId: job.id },
       { status: 202 },

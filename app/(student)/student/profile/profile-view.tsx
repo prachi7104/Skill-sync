@@ -93,6 +93,7 @@ interface ProfileViewProps {
 export default function ProfileView({ user, profile }: ProfileViewProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isGeneratingEmbedding, setIsGeneratingEmbedding] = useState(false);
 
     const { refresh: refreshStudentData } = useStudent();
 
@@ -246,6 +247,24 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
         }
     };
 
+    const handleGenerateEmbedding = async () => {
+        setIsGeneratingEmbedding(true);
+        try {
+            const res = await fetch("/api/student/profile/embed", { method: "POST" });
+            const data = await res.json();
+            if (res.ok) {
+                toast.success(data.message || "Embedding generation started!");
+                await refreshStudentData();
+            } else {
+                toast.error(data.error || "Failed to generate embedding");
+            }
+        } catch {
+            toast.error("Failed to generate embedding");
+        } finally {
+            setIsGeneratingEmbedding(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Header Section */}
@@ -308,6 +327,29 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
             </div>
 
             <Separator />
+
+            {/* Embedding Status Banner */}
+            {score >= 50 && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-amber-800">Generate your profile embedding</p>
+                        <p className="text-xs text-amber-600 mt-0.5">Required for sandbox and placement matching</p>
+                    </div>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleGenerateEmbedding}
+                        disabled={isGeneratingEmbedding}
+                        className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                    >
+                        {isGeneratingEmbedding ? (
+                            <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Generating...</>
+                        ) : (
+                            <><Sparkles className="h-3 w-3 mr-1" /> Generate Now</>
+                        )}
+                    </Button>
+                </div>
+            )}
 
             <Form {...form}>
                 <div className="grid gap-6 md:grid-cols-2">
@@ -588,7 +630,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => appendSkill({ name: "", proficiency: 1 })}
+                                            onClick={() => appendSkill({ name: "", proficiency: 3, category: "technical" })}
                                         >
                                             <Plus className="h-4 w-4 mr-2" /> Add
                                         </Button>
@@ -1235,7 +1277,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => appendProject({ title: "", description: "", techStack: [], url: "" })}
+                                            onClick={() => appendProject({ title: "", description: "", techStack: [], url: "", startDate: "", endDate: "" })}
                                         >
                                             <Plus className="h-4 w-4 mr-2" /> Add
                                         </Button>

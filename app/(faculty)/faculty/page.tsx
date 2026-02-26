@@ -198,7 +198,14 @@ export default async function FacultyDashboardPage() {
             {/* ── Header ─────────────────────────────────────────────────────── */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Good morning, {user.name.split(" ")[0]}</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        {(() => {
+                            const hour = new Date().getHours();
+                            if (hour < 12) return "Good morning";
+                            if (hour < 17) return "Good afternoon";
+                            return "Good evening";
+                        })()}, {user.name.split(" ")[0]}
+                    </h1>
                     <p className="text-sm text-muted-foreground mt-0.5">
                         Faculty Dashboard &mdash; UPES Placement Portal
                     </p>
@@ -261,7 +268,7 @@ export default async function FacultyDashboardPage() {
                                                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-wide">
                                                     <span>{item.type.replace("_", " ")}</span>
                                                     <span>•</span>
-                                                    <span>{formatDistanceToNow(item.updatedAt)} ago</span>
+                                                    <span>{formatDistanceToNow(new Date(item.updatedAt))} ago</span>
                                                 </div>
                                             </div>
                                         </div>

@@ -5,11 +5,15 @@ import { incrementModelUsage, hasCapacity } from "./rate-limit-db";
 import { env } from "@/lib/env";
 
 export const EMBEDDING_DIMENSION = 768;
-// Correct model ID for Gemini Embedding (free tier, 768-dim)
+
+// Correct model ID for Gemini Embedding (768-dim)
 const EMBEDDING_MODEL = "gemini-embedding-001";
 
+// Max retries for transient errors
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1000;
+
 let googleAI: GoogleGenerativeAI | null = null;
-let huggingFaceExtractor: any = null;
 
 function getGoogleAI(): GoogleGenerativeAI {
   if (!googleAI) {
@@ -21,41 +25,13 @@ function getGoogleAI(): GoogleGenerativeAI {
   return googleAI;
 }
 
-async function getHuggingFaceExtractor() {
-  if (!huggingFaceExtractor) {
-    const { pipeline } = await import("@huggingface/transformers");
-    huggingFaceExtractor = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2", {
-      dtype: "fp32",
-    });
-  }
-  return huggingFaceExtractor;
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * Adjusts vector dimensions to strictly match DESIRED_DIM (768).
- * - Truncates if too large (e.g. 3072 -> 768)
- * - Pads with zeros if too small (e.g. 384 -> 768)
- */
-function adjustDimensions(vector: number[]): number[] {
-  if (vector.length === EMBEDDING_DIMENSION) return vector;
-
-  if (vector.length > EMBEDDING_DIMENSION) {
-    console.log(`[Embeddings] Truncating vector from ${vector.length} to ${EMBEDDING_DIMENSION}`);
-    return vector.slice(0, EMBEDDING_DIMENSION);
-  }
-
-  console.log(`[Embeddings] Padding vector from ${vector.length} to ${EMBEDDING_DIMENSION}`);
-  const padded = new Array(EMBEDDING_DIMENSION).fill(0);
-  for (let i = 0; i < vector.length; i++) {
-    padded[i] = vector[i];
-  }
-  return padded;
-}
-
-/**
- * Generate a 768-dimensional embedding for text.
- * Primary: Gemini API
- * Fallback: Local Xenova/all-MiniLM-L6-v2 (padded to 768)
+ * Generate a 768-dimensional embedding for text using gemini-embedding-001.
+ * Retries on transient errors. Throws on rate limit or permanent failure.
  */
 export async function generateEmbedding(
   text: string,
@@ -67,39 +43,68 @@ export async function generateEmbedding(
 
   const cleaned = text.replace(/\s+/g, " ").trim().slice(0, 8000);
 
-  // 1. Try Gemini Primary
-  try {
-    const ok = await hasCapacity("gemini_embedding", 1);
-    if (!ok) throw new Error("GEMINI_LIMIT_REACHED");
+  // Check DB-tracked rate limit before calling API
+  const ok = await hasCapacity("gemini_embedding", 1);
+  if (!ok) {
+    throw new Error(
+      "RATE_LIMIT_EXCEEDED: Daily embedding limit reached. Will retry tomorrow.",
+    );
+  }
 
-    const ai = getGoogleAI();
-    const model = ai.getGenerativeModel({ model: EMBEDDING_MODEL });
-    const taskType = type === "jd" ? "RETRIEVAL_DOCUMENT" : "RETRIEVAL_QUERY";
+  const ai = getGoogleAI();
+  const model = ai.getGenerativeModel({ model: EMBEDDING_MODEL });
+  const taskType = type === "jd" ? "RETRIEVAL_DOCUMENT" : "RETRIEVAL_QUERY";
 
-    const result = await model.embedContent({
-      content: { parts: [{ text: cleaned }], role: "user" },
-      taskType: taskType as any,
-    });
+  let lastError: Error | null = null;
 
-    if (result.embedding?.values) {
-      await incrementModelUsage("gemini_embedding", 1);
-      return adjustDimensions(result.embedding.values);
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      await sleep(RETRY_DELAY_MS * attempt);
     }
-    throw new Error("Empty Gemini response");
-  } catch (err: any) {
-    console.warn(`[Embeddings] Gemini Primary failed, falling back to local: ${err.message}`);
 
-    // 2. Local Fallback (Xenova)
     try {
-      const extractor = await getHuggingFaceExtractor();
-      const output = await extractor(cleaned, { pooling: "mean", normalize: true });
-      const vector = Array.from(output.data) as number[];
-      return adjustDimensions(vector);
-    } catch (fallbackErr: any) {
-      console.error(`[Embeddings] Local fallback also failed: ${fallbackErr.message}`);
-      throw new Error(`Embedding generation failed completely: ${fallbackErr.message}`);
+      const result = await model.embedContent({
+        content: { parts: [{ text: cleaned }], role: "user" },
+        taskType: taskType as unknown as undefined,
+      } as Parameters<typeof model.embedContent>[0]);
+
+      if (
+        !result.embedding?.values ||
+        result.embedding.values.length !== EMBEDDING_DIMENSION
+      ) {
+        throw new Error(
+          `Invalid embedding: got ${result.embedding?.values?.length ?? 0} dims, expected ${EMBEDDING_DIMENSION}`,
+        );
+      }
+
+      await incrementModelUsage("gemini_embedding", 1);
+      return result.embedding.values;
+
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+
+      // Rate limit — don't retry
+      if (msg.includes("429") || msg.includes("quota") || msg.includes("RATE_LIMIT")) {
+        await incrementModelUsage("gemini_embedding", 1).catch(() => { });
+        throw new Error(`RATE_LIMIT_429: Google API rate limit hit. ${msg}`);
+      }
+
+      // Non-retryable errors
+      if (msg.includes("403") || msg.includes("API key") || msg.includes("not found")) {
+        throw new Error(`Embedding failed: ${msg}`);
+      }
+
+      lastError = new Error(`Embedding failed: ${msg}`);
+
+      // Retryable (5xx, timeout, network)
+      if (attempt < MAX_RETRIES) {
+        console.warn(`[Embedding] Attempt ${attempt + 1} failed, retrying: ${msg}`);
+        continue;
+      }
     }
   }
+
+  throw lastError ?? new Error("Embedding failed after retries");
 }
 
 /**
@@ -107,17 +112,16 @@ export async function generateEmbedding(
  */
 export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   if (vecA.length === 0 || vecB.length === 0) return 0;
-
-  // Dimensions must match for mathematical operation
-  // If they don't, we adjust them on the fly (though they should already be 768)
-  const a = vecA.length !== EMBEDDING_DIMENSION ? adjustDimensions(vecA) : vecA;
-  const b = vecB.length !== EMBEDDING_DIMENSION ? adjustDimensions(vecB) : vecB;
+  if (vecA.length !== vecB.length) {
+    console.warn(`Vector dimension mismatch: ${vecA.length} vs ${vecB.length}`);
+    return 0;
+  }
 
   let dot = 0, normA = 0, normB = 0;
-  for (let i = 0; i < EMBEDDING_DIMENSION; i++) {
-    dot += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
+  for (let i = 0; i < vecA.length; i++) {
+    dot += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
   }
 
   if (normA === 0 || normB === 0) return 0;
