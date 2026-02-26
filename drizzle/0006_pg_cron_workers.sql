@@ -1,7 +1,7 @@
--- ============================================================
 -- Migration 0006: pg_cron worker schedules
 -- 
--- REPLACES Vercel Cron (Pro plan only) with Supabase pg_cron (free).
+-- OPTIONAL: Use Supabase pg_cron for sub-daily job processing.
+-- Vercel Hobby tier now uses a single daily cron (/api/cron/process-all).
 -- pg_cron calls your Vercel API endpoints via HTTP using pg_net.
 --
 -- BEFORE RUNNING:
