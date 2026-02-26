@@ -52,248 +52,29 @@ export interface ModelRegistryEntry {
 }
 
 export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
-  // TIER 1: Primary Models (Fast, Long-Context, Free-Tier Friendly)
-  gemini_2_0_flash: {
-    id: "gemini-2.0-flash",
-    provider: "google",
-    tier: 1,
-    rpm: 15,
-    rpd: 1500,
-    tpm: 1000000,
-    contextWindow: 1000000,
-    latency: 600,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: true,
-      functionCalling: true,
-      json: true,
-    },
-    jsonModeSupported: true,
-  },
-
-  // GEMINI PRO & 3.0 FAMILY
-  gemini_2_5_pro: {
-    id: "gemini-2.5-pro",
-    provider: "google",
-    tier: 1,
-    rpm: 15,
-    rpd: 1500,
-    tpm: "unlimited", // NEW FIELD
-    contextWindow: 2000000,
-    latency: 800,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: true,
-      functionCalling: true,
-      json: true,
-    },
-    jsonModeSupported: true,
-  },
-
-  gemini_2_5_flash_lite: {
-    id: "gemini-2.5-flash-lite",
-    provider: "google",
-    tier: 1,
-    rpm: 15,
-    rpd: 1500,
-    contextWindow: 1000000,
-    latency: 400,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: false,
-      functionCalling: false,
-      json: true,
-    },
-  },
-
-  gemini_2_5_flash: {
-    id: "gemini-2.5-flash",
-    provider: "google",
-    tier: 1,
-    rpm: 15,
-    rpd: 1500,
-    contextWindow: 1000000,
-    latency: 500,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: true,
-      functionCalling: true,
-      json: true,
-    },
-  },
-
-  // GEMMA 3 FAMILY (As requested)
-  gemma_3_27b: {
-    id: "gemma-3-27b-it",
-    provider: "google",
-    tier: 2,
-    rpm: 30,
-    rpd: 14400, // CORRECT VALUE
-    tpm: 15000,
-    contextWindow: 8192, // Standardizing to known limit or safe default
-    latency: 800,
-    capabilities: {
-      longContext: false, // 8k isn't considered "long" in this system (usually >32k)
-      structured: true,
-      vision: true,
-      functionCalling: false,
-      json: false, // Can parse but no native mode
-    },
-    jsonModeSupported: false, // CRITICAL
-  },
-
-  gemma_3_12b: {
-    id: "gemma-3-12b-it",
-    provider: "google",
-    tier: 2,
-    rpm: 30,
-    rpd: 14400,
-    tpm: 15000,
-    contextWindow: 8192,
-    latency: 600,
-    capabilities: {
-      longContext: false,
-      structured: true,
-      vision: true,
-      functionCalling: false,
-      json: false,
-    },
-    jsonModeSupported: false,
-  },
-
-  gemma_3_4b: {
-    id: "gemma-3-4b-it",
-    provider: "google",
-    tier: 3,
-    rpm: 30,
-    rpd: 14400,
-    tpm: 15000,
-    contextWindow: 8192,
-    latency: 300,
-    capabilities: {
-      longContext: false,
-      structured: true,
-      vision: true,
-      functionCalling: false,
-      json: false,
-    },
-    jsonModeSupported: false,
-  },
-
-  gemma_3_1b: {
-    id: "gemma-3-1b-it",
-    provider: "google",
-    tier: 3,
-    rpm: 30,
-    rpd: 500,
-    contextWindow: 8192,
-    latency: 150,
-    capabilities: {
-      longContext: false,
-      structured: false, // Smaller models struggle with complex JSON
-      vision: true,
-      functionCalling: false,
-      json: true,
-    },
-    jsonModeSupported: false,
-  },
-
-  gemma_3_270m: {
-    id: "gemma-3-270m-it",
-    provider: "google",
-    tier: 3,
-    rpm: 30,
-    rpd: 500,
-    contextWindow: 8192,
-    latency: 100,
-    capabilities: {
-      longContext: false,
-      structured: false,
-      vision: true, // Assuming vision capabilities across the family
-      functionCalling: false,
-      json: false, // Too small for reliable JSON
-    },
-    jsonModeSupported: false,
-  },
-
-  // GROQ HIGH-CAPACITY MODELS (500K TPD each)
+  // --- PRIMARY GROQ ---
   groq_llama_4_scout: {
     id: "meta-llama/llama-4-scout-17b-16e-instruct",
     provider: "groq",
-    tier: 1, // PRIMARY TIER - high capacity + quality
+    tier: 1,
     rpm: 30,
-    rpd: 500000, // 500K tokens/day
+    rpd: 500000,
     contextWindow: 128000,
     latency: 500,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: false,
-      functionCalling: true,
-      json: true,
-    },
+    capabilities: { longContext: true, structured: true, vision: false, functionCalling: true, json: true },
     jsonModeSupported: true,
   },
-
-  groq_llama_4_maverick: {
-    id: "meta-llama/llama-4-maverick-17b-128e-instruct",
-    provider: "groq",
-    tier: 1,
-    rpm: 30,
-    rpd: 500000,
-    contextWindow: 128000,
-    latency: 600,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: false,
-      functionCalling: true,
-      json: true,
-    },
-    jsonModeSupported: true,
-  },
-
-  groq_qwen_32b: {
-    id: "qwen/qwen3-32b",
-    provider: "groq",
-    tier: 1,
-    rpm: 60,
-    rpd: 500000,
-    contextWindow: 32768,
-    latency: 400,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: false,
-      functionCalling: false,
-      json: true,
-    },
-    jsonModeSupported: true,
-  },
-
-  // TIER 2: Secondary / Specialized Models (Groq Llama)
   groq_llama_3_3_70b: {
     id: "llama-3.3-70b-versatile",
     provider: "groq",
-    tier: 2,
+    tier: 1,
     rpm: 30,
     rpd: 14400,
     contextWindow: 32768,
     latency: 400,
-    capabilities: {
-      longContext: false,
-      structured: true,
-      vision: false,
-      functionCalling: true,
-      json: true,
-    },
+    capabilities: { longContext: false, structured: true, vision: false, functionCalling: true, json: true },
     jsonModeSupported: true,
   },
-
   groq_llama_3_1_8b: {
     id: "llama-3.1-8b-instant",
     provider: "groq",
@@ -302,89 +83,121 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
     rpd: 14400,
     contextWindow: 8000,
     latency: 250,
-    capabilities: {
-      longContext: false,
-      structured: true,
-      vision: false,
-      functionCalling: true,
-      json: true,
-    },
+    capabilities: { longContext: false, structured: true, vision: false, functionCalling: true, json: true },
     jsonModeSupported: true,
   },
-
-  // FALLBACK / SPECIALTY
   groq_gpt_oss_120b: {
-    id: "openai/gpt-oss-120b",
+    id: process.env.GROQ_GPT_OSS_MODEL_ID || "openai/gpt-oss-120b",
     provider: "groq",
     tier: 2,
     rpm: 30,
     rpd: 200000,
     contextWindow: 8192,
     latency: 800,
-    capabilities: {
-      longContext: false,
-      structured: true,
-      vision: false,
-      functionCalling: false,
-      json: true,
-    },
+    capabilities: { longContext: false, structured: true, vision: false, functionCalling: false, json: true },
     jsonModeSupported: true,
   },
-
   groq_gpt_oss_20b: {
-    id: "openai/gpt-oss-20b",
+    id: process.env.GROQ_GPT_OSS_20B_MODEL_ID || "openai/gpt-oss-20b",
     provider: "groq",
     tier: 2,
     rpm: 30,
     rpd: 200000,
     contextWindow: 8192,
     latency: 400,
-    capabilities: {
-      longContext: false,
-      structured: true,
-      vision: false,
-      functionCalling: false,
-      json: true,
-    },
+    capabilities: { longContext: false, structured: true, vision: false, functionCalling: false, json: true },
     jsonModeSupported: true,
   },
-
-  // GUARD
+  groq_kimi_k2: {
+    id: "moonshotai/kimi-k2-instruct-0905",
+    provider: "groq",
+    tier: 2,
+    rpm: 30,
+    rpd: 200000,
+    contextWindow: 8192,
+    latency: 500,
+    capabilities: { longContext: false, structured: true, vision: false, functionCalling: false, json: true },
+    jsonModeSupported: true,
+  },
   groq_prompt_guard: {
-    id: "llama-3.1-8b-instant",
+    id: "openai/gpt-oss-safeguard-20b",
     provider: "groq",
     tier: 1,
     rpm: 100,
     rpd: 100000,
     contextWindow: 2048,
     latency: 150,
-    capabilities: {
-      longContext: false,
-      structured: false,
-      vision: false,
-      functionCalling: false,
-      json: false,
-    },
+    capabilities: { longContext: false, structured: false, vision: false, functionCalling: false, json: false },
   },
 
-  // EMBEDDINGS
+  // --- GEMINI ---
+  gemini_1_5_pro: {
+    id: "gemini-1.5-pro",
+    provider: "google",
+    tier: 1,
+    rpm: 15,
+    rpd: 1500,
+    contextWindow: 2000000,
+    latency: 800,
+    capabilities: { longContext: true, structured: true, vision: true, functionCalling: true, json: true },
+    jsonModeSupported: true,
+  },
+  gemini_1_5_flash: {
+    id: "gemini-1.5-flash",
+    provider: "google",
+    tier: 1,
+    rpm: 15,
+    rpd: 1500,
+    contextWindow: 1000000,
+    latency: 400,
+    capabilities: { longContext: true, structured: true, vision: true, functionCalling: true, json: true },
+    jsonModeSupported: true,
+  },
+  gemini_2_0_flash: {
+    id: process.env.GEMINI_FREE_TIER_MODEL_ID || "gemini-2.0-flash",
+    provider: "google",
+    tier: 1,
+    rpm: 15,
+    rpd: 1500,
+    contextWindow: 1000000,
+    latency: 600,
+    capabilities: { longContext: true, structured: true, vision: true, functionCalling: true, json: true },
+    jsonModeSupported: true,
+  },
+  gemini_2_5_pro: {
+    id: "gemini-2.5-pro",
+    provider: "google",
+    tier: 1,
+    rpm: 15,
+    rpd: 1500,
+    contextWindow: 2000000,
+    latency: 800,
+    capabilities: { longContext: true, structured: true, vision: true, functionCalling: true, json: true },
+    jsonModeSupported: true,
+  },
+  gemini_2_5_flash: {
+    id: "gemini-2.5-flash",
+    provider: "google",
+    tier: 1,
+    rpm: 15,
+    rpd: 1500,
+    contextWindow: 1000000,
+    latency: 500,
+    capabilities: { longContext: true, structured: true, vision: true, functionCalling: true, json: true },
+    jsonModeSupported: true,
+  },
+
+  // --- EMBEDDINGS ---
   gemini_embedding: {
-    id: "gemini-embedding-001", // Gemini free tier: 1500 RPM, 768-dim output
+    id: "gemini-embedding-001",
     provider: "google",
     tier: 1,
     rpm: 1500,
     rpd: 100000,
     contextWindow: 2048,
     latency: 200,
-    capabilities: {
-      longContext: false,
-      structured: false,
-      vision: false,
-      functionCalling: false,
-      json: false,
-    },
+    capabilities: { longContext: false, structured: false, vision: false, functionCalling: false, json: false },
   },
-
 };
 
 export interface TaskDefinition {
@@ -396,103 +209,95 @@ export interface TaskDefinition {
 }
 
 export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
-  // Resume Processing — Groq/Gemma first for JSON tasks, Gemini for explanations only
   parse_resume_full: {
     priority: [
-      // High-capacity Groq first
       "groq_llama_4_scout",
-      "groq_llama_4_maverick",
-      "groq_qwen_32b",
-      "groq_llama_3_3_70b",
-      // Gemini unlimited TPM
       "gemini_2_5_pro",
-      "gemini_3_pro",
-      // Gemma (manual JSON extraction)
-      "gemma_3_27b",
-      "gemma_3_12b",
-      // Flash models
-      "gemini_2_5_flash",
-      "gemini_3_flash",
+      "groq_llama_3_3_70b",
+      "groq_gpt_oss_120b",
+      "gemini_2_0_flash"
     ],
     requiresLongContext: true,
     requiresStructured: true,
-    maxLatency: 60000, // 60s
+    maxLatency: 60000,
     description: "Full resume parsing including projects, education, skills",
   },
-
   parse_resume_fast: {
-    priority: ["groq_llama_4_scout", "groq_llama_3_1_8b", "gemma_3_27b", "gemini_2_5_flash_lite"],
+    priority: [
+      "groq_llama_4_scout", 
+      "groq_llama_3_1_8b", 
+      "gemini_2_5_flash", 
+      "gemini_1_5_flash",
+      "groq_kimi_k2"
+    ],
     requiresLongContext: false,
     requiresStructured: true,
-    maxLatency: 10000, // 10s
+    maxLatency: 10000,
     description: "Quick extraction of contact info and summary",
   },
-
-  // Content Generation
   generate_questions: {
-    priority: ["gemini_2_0_flash", "groq_llama_4_scout", "groq_llama_3_3_70b"],
+    priority: [
+      "gemini_2_0_flash", 
+      "groq_llama_4_scout", 
+      "groq_llama_3_3_70b",
+      "gemini_2_5_pro",
+      "groq_gpt_oss_120b"
+    ],
     requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 15000,
     description: "Generate interview questions based on context",
   },
-
   enhance_jd: {
     priority: [
       "groq_llama_4_scout",
-      "groq_qwen_32b",
       "gemini_2_5_pro",
       "groq_llama_3_3_70b",
-      "gemma_3_27b",
+      "gemini_1_5_pro"
     ],
-    requiresLongContext: false, // JD is usually short enough
+    requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 20000,
     description: "Enhance and structure job descriptions",
   },
-
   parse_jd_advanced: {
     priority: [
       "groq_llama_4_scout",
-      "groq_qwen_32b",
       "groq_llama_3_3_70b",
       "gemini_2_5_pro",
-      "gemma_3_27b",
-      "gemini_2_5_flash",
+      "groq_gpt_oss_120b",
+      "gemini_2_5_flash"
     ],
     requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 30000,
     description: "Deep structural extraction of JD requirements",
   },
-
-  // Utility
   sanitize_input: {
-    priority: ["groq_prompt_guard", "groq_llama_3_1_8b"],
+    priority: [
+      "groq_prompt_guard", 
+      "groq_llama_3_1_8b"
+    ],
     requiresLongContext: false,
     requiresStructured: false,
     maxLatency: 200,
     description: "Detect prompt injection attempts",
   },
-
-  // Embeddings
   embed_profile: {
     priority: ["gemini_embedding"],
     requiresLongContext: false,
     requiresStructured: false,
     maxLatency: 3000,
-    description: "Generate profile embedding vector via Gemini gemini-embedding-001",
+    description: "Generate profile embedding vector",
   },
-
   embed_jd: {
     priority: ["gemini_embedding"],
     requiresLongContext: false,
     requiresStructured: false,
     maxLatency: 3000,
-    description: "Generate JD embedding via Gemini gemini-embedding-001",
+    description: "Generate JD embedding",
   },
 };
-
 // ============================================================================
 // RATE LIMITER — Track Usage Across All Models
 // ============================================================================

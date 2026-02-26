@@ -9,6 +9,7 @@ export const EMBEDDING_DIMENSION = 768;
 const EMBEDDING_MODEL = "gemini-embedding-001";
 
 let googleAI: GoogleGenerativeAI | null = null;
+let huggingFaceExtractor: any = null;
 
 function getGoogleAI(): GoogleGenerativeAI {
   if (!googleAI) {
@@ -20,14 +21,41 @@ function getGoogleAI(): GoogleGenerativeAI {
   return googleAI;
 }
 
+async function getHuggingFaceExtractor() {
+  if (!huggingFaceExtractor) {
+    const { pipeline } = await import("@huggingface/transformers");
+    huggingFaceExtractor = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2", {
+      dtype: "fp32",
+    });
+  }
+  return huggingFaceExtractor;
+}
+
+/**
+ * Adjusts vector dimensions to strictly match DESIRED_DIM (768).
+ * - Truncates if too large (e.g. 3072 -> 768)
+ * - Pads with zeros if too small (e.g. 384 -> 768)
+ */
+function adjustDimensions(vector: number[]): number[] {
+  if (vector.length === EMBEDDING_DIMENSION) return vector;
+
+  if (vector.length > EMBEDDING_DIMENSION) {
+    console.log(`[Embeddings] Truncating vector from ${vector.length} to ${EMBEDDING_DIMENSION}`);
+    return vector.slice(0, EMBEDDING_DIMENSION);
+  }
+
+  console.log(`[Embeddings] Padding vector from ${vector.length} to ${EMBEDDING_DIMENSION}`);
+  const padded = new Array(EMBEDDING_DIMENSION).fill(0);
+  for (let i = 0; i < vector.length; i++) {
+    padded[i] = vector[i];
+  }
+  return padded;
+}
+
 /**
  * Generate a 768-dimensional embedding for text.
- * Uses DB-backed rate limiting to respect real API limits.
- *
- * Throws if:
- * - API key missing
- * - Daily limit exhausted
- * - Google API returns error
+ * Primary: Gemini API
+ * Fallback: Local Xenova/all-MiniLM-L6-v2 (padded to 768)
  */
 export async function generateEmbedding(
   text: string,
@@ -37,57 +65,40 @@ export async function generateEmbedding(
     throw new Error("Cannot generate embedding for empty text");
   }
 
-  // Clean and truncate (embedding model has 2048 token limit)
   const cleaned = text.replace(/\s+/g, " ").trim().slice(0, 8000);
 
-  // Check DB-tracked rate limit before calling API
-  const ok = await hasCapacity("gemini_embedding", 1);
-  if (!ok) {
-    throw new Error(
-      "RATE_LIMIT_EXCEEDED: Daily embedding limit reached. Will retry tomorrow.",
-    );
-  }
-
-  const ai = getGoogleAI();
-  const model = ai.getGenerativeModel({ model: EMBEDDING_MODEL });
-
-  // Task type hints improve embedding quality
-  const taskType =
-    type === "jd" ? "RETRIEVAL_DOCUMENT" : "RETRIEVAL_QUERY";
-
+  // 1. Try Gemini Primary
   try {
+    const ok = await hasCapacity("gemini_embedding", 1);
+    if (!ok) throw new Error("GEMINI_LIMIT_REACHED");
+
+    const ai = getGoogleAI();
+    const model = ai.getGenerativeModel({ model: EMBEDDING_MODEL });
+    const taskType = type === "jd" ? "RETRIEVAL_DOCUMENT" : "RETRIEVAL_QUERY";
+
     const result = await model.embedContent({
       content: { parts: [{ text: cleaned }], role: "user" },
-      ...(taskType ? { taskType: taskType as unknown as undefined } : {}),
-    } as Parameters<typeof model.embedContent>[0]);
+      taskType: taskType as any,
+    });
 
-    if (
-      !result.embedding?.values ||
-      result.embedding.values.length !== EMBEDDING_DIMENSION
-    ) {
-      throw new Error(
-        `Invalid embedding: got ${result.embedding?.values?.length ?? 0} dims, expected ${EMBEDDING_DIMENSION}`,
-      );
+    if (result.embedding?.values) {
+      await incrementModelUsage("gemini_embedding", 1);
+      return adjustDimensions(result.embedding.values);
     }
+    throw new Error("Empty Gemini response");
+  } catch (err: any) {
+    console.warn(`[Embeddings] Gemini Primary failed, falling back to local: ${err.message}`);
 
-    // Record successful request in DB
-    await incrementModelUsage("gemini_embedding", 1);
-
-    return result.embedding.values;
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-
-    // If it's a 429, mark in DB anyway to avoid hammering
-    if (
-      msg.includes("429") ||
-      msg.includes("quota") ||
-      msg.includes("rate")
-    ) {
-      await incrementModelUsage("gemini_embedding", 1).catch(() => { });
-      throw new Error(`RATE_LIMIT_429: Google API rate limit hit. ${msg}`);
+    // 2. Local Fallback (Xenova)
+    try {
+      const extractor = await getHuggingFaceExtractor();
+      const output = await extractor(cleaned, { pooling: "mean", normalize: true });
+      const vector = Array.from(output.data) as number[];
+      return adjustDimensions(vector);
+    } catch (fallbackErr: any) {
+      console.error(`[Embeddings] Local fallback also failed: ${fallbackErr.message}`);
+      throw new Error(`Embedding generation failed completely: ${fallbackErr.message}`);
     }
-
-    throw new Error(`Embedding failed: ${msg}`);
   }
 }
 
@@ -96,20 +107,17 @@ export async function generateEmbedding(
  */
 export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   if (vecA.length === 0 || vecB.length === 0) return 0;
-  if (vecA.length !== vecB.length) {
-    console.warn(
-      `Vector dimension mismatch: ${vecA.length} vs ${vecB.length}`,
-    );
-    return 0;
-  }
 
-  let dot = 0,
-    normA = 0,
-    normB = 0;
-  for (let i = 0; i < vecA.length; i++) {
-    dot += vecA[i] * vecB[i];
-    normA += vecA[i] * vecA[i];
-    normB += vecB[i] * vecB[i];
+  // Dimensions must match for mathematical operation
+  // If they don't, we adjust them on the fly (though they should already be 768)
+  const a = vecA.length !== EMBEDDING_DIMENSION ? adjustDimensions(vecA) : vecA;
+  const b = vecB.length !== EMBEDDING_DIMENSION ? adjustDimensions(vecB) : vecB;
+
+  let dot = 0, normA = 0, normB = 0;
+  for (let i = 0; i < EMBEDDING_DIMENSION; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
   }
 
   if (normA === 0 || normB === 0) return 0;
