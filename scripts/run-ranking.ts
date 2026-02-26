@@ -46,7 +46,7 @@ const db = drizzle(client, { schema });
 // Embedding Generation (inline to avoid server-only issues in scripts)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const EMBEDDING_DIMENSION = 768; // text-embedding-004 dimension
+const EMBEDDING_DIMENSION = 768; // gemini-embedding-001 dimension
 
 async function generateTextEmbedding(text: string): Promise<number[]> {
   if (!text || text.trim().length === 0) {
