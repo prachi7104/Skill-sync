@@ -194,10 +194,10 @@ export async function processEmbeddingJobs() {
                     status: "completed",
                     result: {
                         dimension: embedding.length,
-                        model: "text-embedding-004",
+                        model: "gemini-embedding-001",
                     },
                     latencyMs: Date.now() - startTime,
-                    modelUsed: "text-embedding-004",
+                    modelUsed: "gemini-embedding-001",
                     updatedAt: new Date(),
                 })
                 .where(eq(jobs.id, job.id));

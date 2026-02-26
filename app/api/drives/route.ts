@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
         eligibleBatchYears: data.eligibleBatchYears ?? null,
         eligibleCategories: data.eligibleCategories ?? null,
         deadline: data.deadline ? new Date(data.deadline) : null,
+        isActive: true,
       })
       .returning();
 

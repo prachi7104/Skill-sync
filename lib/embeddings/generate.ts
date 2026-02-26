@@ -6,7 +6,7 @@ import { env } from "@/lib/env";
 
 export const EMBEDDING_DIMENSION = 768;
 // Correct model ID for Gemini Embedding (free tier, 768-dim)
-const EMBEDDING_MODEL = "text-embedding-004";
+const EMBEDDING_MODEL = "gemini-embedding-001";
 
 let googleAI: GoogleGenerativeAI | null = null;
 

@@ -15,7 +15,7 @@
  * Providers:
  *   - Google Generative AI (Gemini, Gemma)
  *   - Groq (LLaMA, GPT-OSS, Prompt Guard)
- *   - Google Embedding API (text-embedding-004)
+ *   - Google Embedding API (gemini-embedding-001)
  *
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
@@ -369,7 +369,7 @@ export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
 
   // EMBEDDINGS
   gemini_embedding: {
-    id: "text-embedding-004", // Gemini free tier: 1500 RPM, 768-dim output
+    id: "gemini-embedding-001", // Gemini free tier: 1500 RPM, 768-dim output
     provider: "google",
     tier: 1,
     rpm: 1500,
@@ -481,7 +481,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
     requiresLongContext: false,
     requiresStructured: false,
     maxLatency: 3000,
-    description: "Generate profile embedding vector via Gemini text-embedding-004",
+    description: "Generate profile embedding vector via Gemini gemini-embedding-001",
   },
 
   embed_jd: {
@@ -489,7 +489,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
     requiresLongContext: false,
     requiresStructured: false,
     maxLatency: 3000,
-    description: "Generate JD embedding via Gemini text-embedding-004",
+    description: "Generate JD embedding via Gemini gemini-embedding-001",
   },
 };
 
