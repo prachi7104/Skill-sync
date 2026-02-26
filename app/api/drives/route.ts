@@ -67,6 +67,11 @@ export async function POST(req: NextRequest) {
       priority: 7,
     });
 
+    // Revalidate student drives page cache
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/student/drives");
+    revalidatePath("/faculty/drives");
+
     return NextResponse.json(
       { message: "Drive created successfully", drive },
       { status: 201 }
