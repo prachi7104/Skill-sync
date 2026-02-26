@@ -1,5 +1,5 @@
 // 1. Bypass env validation and mock server-only deps
-process.env.NODE_ENV = "test";
+Object.defineProperty(process.env, 'NODE_ENV', { value: 'test', writable: true });
 
 import * as Module from 'module';
 const originalRequire = (Module as any).prototype.require;

@@ -75,6 +75,15 @@ export async function enforceProfileGate(studentId: string): Promise<void> {
 
   // ── Check 3: Embedding must exist ──────────────────────────────────────
   if (!student.embedding) {
+    // Try to trigger embedding generation asynchronously
+    try {
+      const { enqueueEmbeddingJob, processEmbeddingJobs } = await import("@/lib/workers/generate-embedding");
+      await enqueueEmbeddingJob(studentId, "student", 10); // High priority
+      // Fire-and-forget inline processing attempt
+      processEmbeddingJobs().catch((e) => console.error("[ProfileGate] Inline embed failed:", e));
+    } catch (triggerErr) {
+      console.error("[ProfileGate] Failed to trigger embedding:", triggerErr);
+    }
     throw ERRORS.EMBEDDING_MISSING();
   }
 

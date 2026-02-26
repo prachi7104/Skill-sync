@@ -20,7 +20,7 @@ export async function extractTextFromUrl(url: string, mimeHint?: string): Promis
         // Dynamic import: pdf-parse reads a test PDF at module load time,
         // which crashes serverless environments without a local filesystem.
         const pdfParse = (await import("pdf-parse")).default;
-        const pdfRes: any = await pdfParse(buffer);
+        const pdfRes: { text?: string } = await pdfParse(buffer);
         text = pdfRes?.text || "";
     } else {
         const docRes = await mammoth.extractRawText({ arrayBuffer });

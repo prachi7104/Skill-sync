@@ -21,6 +21,7 @@ import type {
   Certification,
   ParsedJD,
 } from "@/lib/db/schema";
+import type { StructuredJD } from "@/lib/jd/parser";
 
 /**
  * Maximum character length for embedding text input.
@@ -124,43 +125,53 @@ export function composeStudentEmbeddingText(profile: {
  * @returns Deterministic text representation for embedding generation
  */
 export function composeJDEmbeddingText(jd: {
-  parsedJd?: ParsedJD | null;
+  parsedJd?: ParsedJD | StructuredJD | null;
   rawJd: string;
   roleTitle: string;
   company: string;
 }): string {
   // If we have a parsed JD, use structured data (no company / summary)
   if (jd.parsedJd) {
+    const parsed = jd.parsedJd;
     const parts: string[] = [];
 
-    // Role title only (no company)
-    if (jd.parsedJd.title) {
-      parts.push(`Role: ${jd.parsedJd.title}`);
+    // Detect: StructuredJD has role_metadata, ParsedJD has title
+    if ('role_metadata' in parsed && parsed.role_metadata?.job_title) {
+      // StructuredJD format
+      parts.push(`Role: ${parsed.role_metadata.job_title}`);
+
+      if (parsed.responsibilities?.primary_tasks && parsed.responsibilities.primary_tasks.length > 0) {
+        parts.push(`Responsibilities: ${parsed.responsibilities.primary_tasks.join("; ")}`);
+      }
+
+      if (parsed.requirements?.hard_requirements?.technical_skills && parsed.requirements.hard_requirements.technical_skills.length > 0) {
+        const skills = parsed.requirements.hard_requirements.technical_skills.map((s: any) => s.skill).join(", ");
+        parts.push(`Required Skills: ${skills}`);
+      }
+
+      if (parsed.requirements?.soft_requirements?.technical_skills && parsed.requirements.soft_requirements.technical_skills.length > 0) {
+        const skills = parsed.requirements.soft_requirements.technical_skills.map((s: any) => s.skill).join(", ");
+        parts.push(`Preferred Skills: ${skills}`);
+      }
+    } else if ('title' in parsed) {
+      // ParsedJD format (legacy DB data)
+      const legacy = parsed as ParsedJD;
+      if (legacy.title) parts.push(`Role: ${legacy.title}`);
+      if (legacy.responsibilities && legacy.responsibilities.length > 0) {
+        parts.push(`Responsibilities: ${legacy.responsibilities.join("; ")}`);
+      }
+      if (legacy.requiredSkills && legacy.requiredSkills.length > 0) {
+        parts.push(`Required Skills: ${legacy.requiredSkills.join(", ")}`);
+      }
+      if (legacy.preferredSkills && legacy.preferredSkills.length > 0) {
+        parts.push(`Preferred Skills: ${legacy.preferredSkills.join(", ")}`);
+      }
+      if (legacy.qualifications && legacy.qualifications.length > 0) {
+        parts.push(`Qualifications: ${legacy.qualifications.join("; ")}`);
+      }
     }
 
-    // Responsibilities — what they'll actually do
-    if (jd.parsedJd.responsibilities && jd.parsedJd.responsibilities.length > 0) {
-      parts.push(`Responsibilities: ${jd.parsedJd.responsibilities.join("; ")}`);
-    }
-
-    // Requirements (required skills) — highest signal
-    if (jd.parsedJd.requiredSkills && jd.parsedJd.requiredSkills.length > 0) {
-      parts.push(`Required Skills: ${jd.parsedJd.requiredSkills.join(", ")}`);
-    }
-
-    // Preferred skills
-    if (jd.parsedJd.preferredSkills && jd.parsedJd.preferredSkills.length > 0) {
-      parts.push(`Preferred Skills: ${jd.parsedJd.preferredSkills.join(", ")}`);
-    }
-
-    // Qualifications
-    if (jd.parsedJd.qualifications && jd.parsedJd.qualifications.length > 0) {
-      parts.push(`Qualifications: ${jd.parsedJd.qualifications.join("; ")}`);
-    }
-
-    // NOTE: Intentionally omitting jd.parsedJd.company and jd.parsedJd.summary
-
-    return parts.join(". ");
+    if (parts.length > 0) return parts.join(". ");
   }
 
   // Fallback to raw JD with role title prefix only (no company)
@@ -182,13 +193,23 @@ export function extractStudentSkillNames(skills: Skill[] | null | undefined): st
 
 /**
  * Extracts required skill names from a parsed JD.
+ * Supports both ParsedJD (legacy DB format) and StructuredJD (new parser format).
  *
  * @param parsedJd - Parsed job description
  * @returns Array of required skill name strings (lowercase, trimmed)
  */
-export function extractJDRequiredSkills(parsedJd: ParsedJD | null | undefined): string[] {
-  if (!parsedJd || !parsedJd.requiredSkills || parsedJd.requiredSkills.length === 0) {
-    return [];
+export function extractJDRequiredSkills(parsedJd: ParsedJD | StructuredJD | null | undefined): string[] {
+  if (!parsedJd) return [];
+
+  // StructuredJD format
+  if ('requirements' in parsedJd && parsedJd.requirements?.hard_requirements?.technical_skills) {
+    return parsedJd.requirements.hard_requirements.technical_skills.map((s: any) => s.skill.toLowerCase().trim());
   }
-  return parsedJd.requiredSkills.map((s) => s.toLowerCase().trim());
+
+  // ParsedJD format (legacy)
+  if ('requiredSkills' in parsedJd && parsedJd.requiredSkills && parsedJd.requiredSkills.length > 0) {
+    return parsedJd.requiredSkills.map((s: string) => s.toLowerCase().trim());
+  }
+
+  return [];
 }
