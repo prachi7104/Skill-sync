@@ -89,7 +89,7 @@ export const ERRORS = {
       code: "EMBEDDING_MISSING",
       reason: "Profile embedding has not been generated yet.",
       nextStep:
-        "Ensure your profile is at least 50% complete and a resume is uploaded. Embedding generation may take a few minutes.",
+        "Ensure your profile is at least 70% complete and a resume is uploaded. Click 'Generate Now' on your profile page.",
       status: 403,
     }),
 

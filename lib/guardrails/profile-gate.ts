@@ -23,7 +23,7 @@ import { db } from "@/lib/db";
 import { students, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { computeCompleteness } from "@/lib/profile/completeness";
-import { ERRORS } from "./errors";
+import { ERRORS, GuardrailViolation } from "./errors";
 import type { Skill } from "@/lib/db/schema";
 
 const MIN_COMPLETENESS = 70;
@@ -75,16 +75,34 @@ export async function enforceProfileGate(studentId: string): Promise<void> {
 
   // ── Check 3: Embedding must exist ──────────────────────────────────────
   if (!student.embedding) {
-    // Try to trigger embedding generation asynchronously
+    // Try to generate embedding inline and re-check before blocking
     try {
       const { enqueueEmbeddingJob, processEmbeddingJobs } = await import("@/lib/workers/generate-embedding");
       await enqueueEmbeddingJob(studentId, "student", 10); // High priority
-      // Fire-and-forget inline processing attempt
-      processEmbeddingJobs().catch((e) => console.error("[ProfileGate] Inline embed failed:", e));
+      // AWAIT inline processing (don't fire-and-forget)
+      const result = await processEmbeddingJobs();
+      console.log("[ProfileGate] Inline embed result:", result);
+
+      // Re-check DB — the job may have generated the embedding just now
+      const [recheck] = await db
+        .select({ embedding: students.embedding })
+        .from(students)
+        .where(eq(students.id, studentId))
+        .limit(1);
+
+      if (!recheck?.embedding) {
+        // Still no embedding after inline attempt — block the request
+        throw ERRORS.EMBEDDING_MISSING();
+      }
+      // Embedding generated successfully — continue
     } catch (triggerErr) {
-      console.error("[ProfileGate] Failed to trigger embedding:", triggerErr);
+      // Re-throw our own guardrail errors (e.g. when re-check finds no embedding)
+      if (triggerErr instanceof GuardrailViolation) {
+        throw triggerErr;
+      }
+      console.error("[ProfileGate] Inline embed failed:", triggerErr);
+      throw ERRORS.EMBEDDING_MISSING();
     }
-    throw ERRORS.EMBEDDING_MISSING();
   }
 
   // ── Check 4: Profile completeness ≥ 70% ───────────────────────────────
