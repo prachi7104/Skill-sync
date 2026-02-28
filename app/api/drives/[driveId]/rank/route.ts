@@ -4,16 +4,19 @@ import { db } from "@/lib/db";
 import { jobs, drives } from "@/lib/db/schema";
 import { sql, eq } from "drizzle-orm";
 import { enforceRankingGeneration, GuardrailViolation, ERRORS } from "@/lib/guardrails";
+import { computeRanking } from "@/lib/matching";
+
+// Vercel: allow up to 60s for this serverless function
+export const maxDuration = 60;
 
 /**
  * POST /api/drives/[driveId]/rank
  *
- * Queues a rank_students background job for a specific drive.
+ * Synchronously computes rankings for a specific drive.
  * Only faculty and admin users can invoke this.
  *
- * Phase 5.5 guardrails:
- *   - Faculty can only rank drives that have NOT been ranked yet.
- *   - Admin can regenerate rankings for any drive.
+ * Returns 200 with ranking result on success.
+ * Returns 409 if a ranking job is already actively processing.
  */
 export async function POST(
   _req: NextRequest,
@@ -57,10 +60,10 @@ export async function POST(
       );
     }
 
-    // Phase 5.5: Block re-ranking unless admin
-    await enforceRankingGeneration(driveId, user.role as "faculty" | "admin");
+    // Phase 5.5: Block if a ranking job is actively processing
+    await enforceRankingGeneration(driveId);
 
-    // Dedup: skip if a pending/processing rank_students job already exists for this drive
+    // Dedup: return 409 if a pending/processing rank_students job already exists
     const [existing] = await db
       .select({ id: jobs.id })
       .from(jobs)
@@ -73,47 +76,17 @@ export async function POST(
 
     if (existing) {
       return NextResponse.json(
-        { message: "Ranking job already queued", jobId: existing.id },
-        { status: 202 },
+        { message: "Rankings are currently being computed. Please wait.", jobId: existing.id },
+        { status: 409 },
       );
     }
 
-    // Queue the ranking job
-    const [job] = await db
-      .insert(jobs)
-      .values({
-        type: "rank_students",
-        payload: { driveId },
-        priority: 8,
-      })
-      .returning({ id: jobs.id });
-
-    // Fire-and-forget: inline ranking so faculty doesn't wait for cron
-    import("@/lib/matching").then(({ computeRanking }) => {
-      // Claim the job first
-      db.update(jobs)
-        .set({ status: "processing", updatedAt: new Date() })
-        .where(sql`${jobs.id} = ${job.id} AND ${jobs.status} = 'pending'`)
-        .then(() => computeRanking(driveId))
-        .then((result) => {
-          db.update(jobs)
-            .set({
-              status: "completed",
-              result: result as any,
-              updatedAt: new Date(),
-            })
-            .where(eq(jobs.id, job.id))
-            .catch(console.error);
-        })
-        .catch((err) => {
-          console.error("[Rank] Inline ranking failed:", err);
-          // Job stays pending for cron to retry
-        });
-    }).catch(console.error);
+    // Run ranking synchronously — this works on Vercel because we await before returning
+    const result = await computeRanking(driveId);
 
     return NextResponse.json(
-      { message: "Ranking job queued", jobId: job.id },
-      { status: 202 },
+      { message: "Rankings computed successfully", result },
+      { status: 200 },
     );
   } catch (err: unknown) {
     console.error("[POST /api/drives/[driveId]/rank]", err);
@@ -135,7 +108,7 @@ export async function POST(
     }
 
     return NextResponse.json(
-      { error: "Failed to queue ranking job" },
+      { error: "Failed to compute rankings", details: message },
       { status: 500 },
     );
   }

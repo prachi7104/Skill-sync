@@ -120,12 +120,39 @@ export const authOptions: NextAuthOptions = {
                     token.role = dbUser.role;
                     token.name = dbUser.name;
                     token.email = dbUser.email;
+                    token.roleLastFetched = Date.now();
                 }
+                return token;
             }
-            // Session update trigger (for role changes)
+
+            // Session update trigger (explicit update call)
             if (trigger === "update" && session?.role) {
                 token.role = session.role;
+                token.roleLastFetched = Date.now();
+                return token;
             }
+
+            // Periodic re-fetch: refresh role from DB every 5 minutes
+            // This means role changes propagate within 5 minutes, not 30 days
+            const ROLE_REFRESH_MS = 5 * 60 * 1000; // 5 minutes
+            const lastFetched = (token.roleLastFetched as number) ?? 0;
+
+            if (Date.now() - lastFetched > ROLE_REFRESH_MS && token.id) {
+                try {
+                    const dbUser = await db.query.users.findFirst({
+                        where: eq(users.id, token.id as string),
+                        columns: { role: true },
+                    });
+                    if (dbUser) {
+                        token.role = dbUser.role;
+                        token.roleLastFetched = Date.now();
+                    }
+                } catch (e) {
+                    // Non-fatal: use cached role on DB error
+                    console.error("[auth] ⚠️ JWT role refresh failed (using cached):", e);
+                }
+            }
+
             return token;
         },
 

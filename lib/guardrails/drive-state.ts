@@ -21,7 +21,7 @@
 import "server-only";
 
 import { db } from "@/lib/db";
-import { drives, rankings } from "@/lib/db/schema";
+import { drives, rankings, jobs } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { ERRORS } from "./errors";
 
@@ -112,16 +112,14 @@ export async function enforceRankingsExist(driveId: string): Promise<DriveStateI
 }
 
 /**
- * Enforces that ranking regeneration is allowed.
- * Only admins can regenerate rankings once they exist.
- * Faculty can only rank a drive that has NOT been ranked yet.
+ * Enforces that ranking generation is allowed.
+ * Faculty and admins can always re-trigger ranking.
+ * The only block is when a ranking job is actively pending or processing.
  *
  * @param driveId - The drive to check
- * @param userRole - The current user's role
  */
 export async function enforceRankingGeneration(
   driveId: string,
-  userRole: "faculty" | "admin",
 ): Promise<void> {
   const info = await getDriveState(driveId);
 
@@ -129,8 +127,18 @@ export async function enforceRankingGeneration(
     throw ERRORS.DRIVE_NOT_FOUND();
   }
 
-  // If rankings already exist, only admin can regenerate
-  if (info.state !== "not_ranked" && userRole !== "admin") {
+  // Block only if a ranking job is actively running right now
+  const [activeJob] = await db
+    .select({ id: jobs.id })
+    .from(jobs)
+    .where(
+      sql`${jobs.type} = 'rank_students'
+        AND ${jobs.status} IN ('pending', 'processing')
+        AND ${jobs.payload}->>'driveId' = ${driveId}`,
+    )
+    .limit(1);
+
+  if (activeJob) {
     throw ERRORS.RANKING_REGEN_BLOCKED();
   }
 }

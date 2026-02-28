@@ -15,11 +15,23 @@ type ParseStatus = "idle" | "uploading" | "queued" | "processing" | "completed" 
 
 export default function OnboardingResumeClient() {
     const router = useRouter();
-    const { refresh } = useStudent();
-    const [parseStatus, setParseStatus] = useState<ParseStatus>("idle");
-    const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+    const { student, refresh } = useStudent();
+    const [parseStatus, setParseStatus] = useState<ParseStatus>(
+        student?.resumeUrl ? "completed" : "idle"
+    );
+    const [uploadedUrl, setUploadedUrl] = useState<string | null>(
+        student?.resumeUrl || null
+    );
     const [isLoadingNext, setIsLoadingNext] = useState(false);
     const pollRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Also watch for late-arriving student data
+    useEffect(() => {
+        if (student?.resumeUrl && parseStatus === "idle") {
+            setParseStatus("completed");
+            setUploadedUrl(student.resumeUrl);
+        }
+    }, [student?.resumeUrl, parseStatus]);
 
     // Clean up polling on unmount
     useEffect(() => {
@@ -192,13 +204,19 @@ export default function OnboardingResumeClient() {
                     <div className="space-y-2">
                         <div className="flex items-center gap-2 text-green-600 justify-center">
                             <Sparkles className="h-5 w-5" />
-                            <span className="font-medium">Resume Parsed & Profile Auto-Filled!</span>
+                            <span className="font-medium">
+                                {student?.resumeUrl === uploadedUrl
+                                    ? "Resume Already Uploaded"
+                                    : "Resume Parsed & Profile Auto-Filled!"}
+                            </span>
                         </div>
                         <a href={uploadedUrl} target="_blank" className="text-xs text-primary hover:underline block">
                             View Uploaded File ↗
                         </a>
                         <p className="text-xs text-muted-foreground">
-                            Click <strong>Continue</strong> to review your auto-filled profile.
+                            {student?.resumeUrl === uploadedUrl
+                                ? "Your resume is already uploaded. Upload a different file to replace it, or continue to the next step."
+                                : <>Click <strong>Continue</strong> to review your auto-filled profile.</>}
                         </p>
                         <div className="pt-2">
                             <Label htmlFor="re-upload" className="cursor-pointer text-xs text-muted-foreground hover:text-foreground underline">
@@ -276,7 +294,7 @@ export default function OnboardingResumeClient() {
                     )}
                     <Button
                         onClick={handleContinue}
-                        disabled={!canContinue && parseStatus !== "idle" || isLoadingNext}
+                        disabled={(parseStatus !== "idle" && !canContinue) || isLoadingNext}
                     >
                         {isLoadingNext && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {isProcessing ? "Processing..." : "Continue"}

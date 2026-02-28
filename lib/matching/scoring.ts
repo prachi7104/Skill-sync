@@ -27,14 +27,16 @@ import "server-only";
 
 import { cosineSimilarity } from "@/lib/embeddings";
 
-// ── Scoring weights (locked) ────────────────────────────────────────────────
-const SEMANTIC_WEIGHT = 0.7;
-const STRUCTURED_WEIGHT = 0.3;
-
-// ── Structured sub-weights (out of 100) ─────────────────────────────────────
-const REQUIRED_SKILLS_PTS = 60;
-const PREFERRED_SKILLS_PTS = 25;
-const PROJECT_KEYWORD_PTS = 15;
+// ⚠️ These constants are copied into tests/ranking-pipeline.test.ts
+// If you change them here, update the test file too.
+// Better: the test imports a mock version since scoring.ts has "server-only"
+import {
+  SEMANTIC_WEIGHT,
+  STRUCTURED_WEIGHT,
+  REQUIRED_SKILLS_PTS,
+  PREFERRED_SKILLS_PTS,
+  PROJECT_KEYWORD_PTS,
+} from "./scoring-constants";
 
 /**
  * Eligibility criteria for a drive.

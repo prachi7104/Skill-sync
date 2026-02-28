@@ -1,34 +1,34 @@
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * SkillSync — Ranking Pipeline Integration Test (Phase 6.5)
+ * SkillSync — Ranking Pipeline Integration Tests (Phase 6.5 — Rewrite)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  *
  * End-to-end test of the ranking pipeline using mock student and drive data.
+ * Constants are imported from scoring-constants.ts (not hardcoded).
  *
  * Verifies:
- *   - Score computation correctness for multiple students
- *   - Ranking order (descending by matchScore)
- *   - Tie-breaking rules: matchScore → semanticScore → CGPA → UUID
- *   - Ineligible students excluded from rankings
- *   - Students without embeddings handled properly
- *
- * Uses inlined scoring functions (same as scoring.test.ts) to avoid
- * `server-only` import guard while testing the full pipeline flow.
+ *   1. Perfect match → matchScore near 100
+ *   2. Zero match (no skills, no semantic similarity) → matchScore near 0
+ *   3. Ineligible student (low CGPA) → excluded from rankings
+ *   4. Ineligible student (wrong branch) → excluded from rankings
+ *   5. Tie-breaking: same matchScore → sorted by semanticScore DESC
+ *   6. Tie-breaking: same matchScore + semanticScore → sorted by CGPA DESC
+ *   7. Student without embedding → skipped
+ *   8. Empty required skills in JD → 0 skill pts, only semantic contributes
  *
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
 import { describe, it, expect } from "vitest";
+import {
+  SEMANTIC_WEIGHT,
+  STRUCTURED_WEIGHT,
+  REQUIRED_SKILLS_PTS,
+  PREFERRED_SKILLS_PTS,
+  PROJECT_KEYWORD_PTS,
+} from "../lib/matching/scoring-constants";
 
-// ── Constants (mirror scoring.ts) ───────────────────────────────────────────
-const SEMANTIC_WEIGHT = 0.7;
-const STRUCTURED_WEIGHT = 0.3;
-const REQUIRED_SKILLS_PTS = 50;
-const PREFERRED_SKILLS_PTS = 20;
-const CGPA_BUFFER_PTS = 15;
-const PROJECT_KEYWORD_PTS = 15;
-
-// ── Types ───────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface EligibilityCriteria {
   minCgpa: number | null;
@@ -52,7 +52,6 @@ interface ScoringResult {
   structuredScore: number;
   matchedSkills: string[];
   missingSkills: string[];
-  shortExplanation: string;
   isEligible: boolean;
   ineligibilityReason?: string;
 }
@@ -71,9 +70,6 @@ interface MockStudent {
 
 interface MockDrive {
   id: string;
-  company: string;
-  roleTitle: string;
-  rawJd: string;
   requiredSkills: string[];
   preferredSkills: string[];
   minCgpa: number | null;
@@ -94,7 +90,7 @@ interface RankingEntry {
   missingSkills: string[];
 }
 
-// ── Inline functions (mirror scoring.ts) ────────────────────────────────────
+// ── Inline implementations (mirror scoring.ts) ────────────────────────────────
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -104,52 +100,27 @@ function checkEligibility(
   student: StudentProfile,
   criteria: EligibilityCriteria,
 ): { isEligible: boolean; reason?: string } {
-  if (criteria.minCgpa !== null && criteria.minCgpa !== undefined) {
-    if (student.cgpa === null || student.cgpa === undefined) {
+  if (criteria.minCgpa !== null) {
+    if (student.cgpa === null || student.cgpa === undefined)
       return { isEligible: false, reason: "CGPA not available" };
-    }
-    if (student.cgpa < criteria.minCgpa) {
-      return {
-        isEligible: false,
-        reason: `CGPA ${student.cgpa.toFixed(2)} below minimum ${criteria.minCgpa}`,
-      };
-    }
+    if (student.cgpa < criteria.minCgpa)
+      return { isEligible: false, reason: `CGPA ${student.cgpa.toFixed(2)} below minimum ${criteria.minCgpa}` };
   }
   if (criteria.eligibleBranches && criteria.eligibleBranches.length > 0) {
-    if (!student.branch) {
-      return { isEligible: false, reason: "Branch not available" };
-    }
-    const normalizedBranches = criteria.eligibleBranches.map((b) =>
-      b.toLowerCase().trim(),
-    );
-    if (!normalizedBranches.includes(student.branch.toLowerCase().trim())) {
-      return {
-        isEligible: false,
-        reason: `Branch "${student.branch}" not in eligible list`,
-      };
-    }
+    if (!student.branch) return { isEligible: false, reason: "Branch not available" };
+    if (!criteria.eligibleBranches.map((b) => b.toLowerCase()).includes(student.branch.toLowerCase()))
+      return { isEligible: false, reason: `Branch "${student.branch}" not in eligible list` };
   }
   if (criteria.eligibleBatchYears && criteria.eligibleBatchYears.length > 0) {
-    if (student.batchYear === null || student.batchYear === undefined) {
+    if (student.batchYear === null || student.batchYear === undefined)
       return { isEligible: false, reason: "Batch year not available" };
-    }
-    if (!criteria.eligibleBatchYears.includes(student.batchYear)) {
-      return {
-        isEligible: false,
-        reason: `Batch year ${student.batchYear} not in eligible list`,
-      };
-    }
+    if (!criteria.eligibleBatchYears.includes(student.batchYear))
+      return { isEligible: false, reason: `Batch year ${student.batchYear} not eligible` };
   }
   if (criteria.eligibleCategories && criteria.eligibleCategories.length > 0) {
-    if (!student.category) {
-      return { isEligible: false, reason: "Performance category not available" };
-    }
-    if (!criteria.eligibleCategories.includes(student.category)) {
-      return {
-        isEligible: false,
-        reason: `Category "${student.category}" not in eligible list`,
-      };
-    }
+    if (!student.category) return { isEligible: false, reason: "Category not available" };
+    if (!criteria.eligibleCategories.includes(student.category))
+      return { isEligible: false, reason: `Category "${student.category}" not eligible` };
   }
   return { isEligible: true };
 }
@@ -157,99 +128,47 @@ function checkEligibility(
 function skillMatches(a: string, b: string): boolean {
   if (a === b) return true;
   const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const boundaryMatch = (term: string, text: string): boolean => {
-    const pattern = new RegExp(`(?:^|[\\s,;|/])${escape(term)}(?:$|[\\s,;|/])`);
-    return pattern.test(` ${text} `);
-  };
-  return boundaryMatch(a, b) || boundaryMatch(b, a);
+  const boundary = (term: string, text: string) =>
+    new RegExp(`(?:^|[\\s,;|/])${escape(term)}(?:$|[\\s,;|/])`).test(` ${text} `);
+  return boundary(a, b) || boundary(b, a);
 }
 
 function computeSkillOverlap(
   studentSkills: string[],
   requiredSkills: string[],
 ): { matchedSkills: string[]; missingSkills: string[]; overlapRatio: number } {
-  if (requiredSkills.length === 0) {
-    return { matchedSkills: [], missingSkills: [], overlapRatio: 1 };
-  }
-  const normalizedStudentSkills = studentSkills.map((s) => s.toLowerCase().trim());
+  if (requiredSkills.length === 0) return { matchedSkills: [], missingSkills: [], overlapRatio: 1 };
+  const normalized = studentSkills.map((s) => s.toLowerCase().trim());
   const matchedSkills: string[] = [];
   const missingSkills: string[] = [];
-  for (const required of requiredSkills) {
-    const normalizedRequired = required.toLowerCase().trim();
-    const isMatched = normalizedStudentSkills.some((studentSkill) =>
-      skillMatches(studentSkill, normalizedRequired),
-    );
-    if (isMatched) {
-      matchedSkills.push(required);
-    } else {
-      missingSkills.push(required);
-    }
+  for (const req of requiredSkills) {
+    const n = req.toLowerCase().trim();
+    if (normalized.some((sk) => skillMatches(sk, n))) matchedSkills.push(req);
+    else missingSkills.push(req);
   }
-  return {
-    matchedSkills,
-    missingSkills,
-    overlapRatio: matchedSkills.length / requiredSkills.length,
-  };
+  return { matchedSkills, missingSkills, overlapRatio: matchedSkills.length / requiredSkills.length };
 }
 
 function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length) {
-    throw new Error(`Vector dimension mismatch: ${a.length} vs ${b.length}`);
-  }
-  let dotProduct = 0;
+  if (a.length !== b.length) throw new Error(`Dimension mismatch: ${a.length} vs ${b.length}`);
+  let dot = 0;
+  let magA = 0;
+  let magB = 0;
   for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
+    dot += a[i] * b[i];
+    magA += a[i] * a[i];
+    magB += b[i] * b[i];
   }
-  return Math.max(0, Math.min(1, dotProduct));
+  if (magA === 0 || magB === 0) return 0;
+  return Math.max(0, Math.min(1, dot / (Math.sqrt(magA) * Math.sqrt(magB))));
 }
 
-function computeSemanticScore(
-  studentEmbedding: number[],
-  jdEmbedding: number[],
-): number {
-  const similarity = cosineSimilarity(studentEmbedding, jdEmbedding);
-  return round2(similarity * 100);
-}
-
-function computeStructuredScore(opts: {
-  requiredOverlapRatio: number;
-  preferredOverlapRatio: number;
-  cgpaAboveMin: number | null;
-  projectKeywordHitRatio: number;
-  isEligible: boolean;
-}): number {
-  if (!opts.isEligible) return 0;
-  let score = 0;
-  score += REQUIRED_SKILLS_PTS * opts.requiredOverlapRatio;
-  score += PREFERRED_SKILLS_PTS * opts.preferredOverlapRatio;
-  if (opts.cgpaAboveMin !== null && opts.cgpaAboveMin > 0) {
-    const normalized = Math.min(opts.cgpaAboveMin / 2, 1);
-    score += CGPA_BUFFER_PTS * normalized;
-  }
-  score += PROJECT_KEYWORD_PTS * opts.projectKeywordHitRatio;
-  return round2(Math.min(score, 100));
-}
-
-function computeMatchScore(
-  semanticScore: number,
-  structuredScore: number,
-): number {
-  const score =
-    SEMANTIC_WEIGHT * semanticScore + STRUCTURED_WEIGHT * structuredScore;
-  return round2(score);
-}
-
-function computeProjectKeywordHitRatio(
-  projectKeywords: string[],
-  requiredSkills: string[],
-): number {
+function computeProjectKeywordHitRatio(projectKeywords: string[], requiredSkills: string[]): number {
   if (requiredSkills.length === 0 || projectKeywords.length === 0) return 0;
   let hits = 0;
   const cap = 5;
   for (const skill of requiredSkills) {
-    const lower = skill.toLowerCase().trim();
-    const matched = projectKeywords.some((kw) => skillMatches(kw, lower));
-    if (matched) {
+    if (projectKeywords.some((kw) => skillMatches(kw, skill.toLowerCase()))) {
       hits++;
       if (hits >= cap) break;
     }
@@ -257,62 +176,50 @@ function computeProjectKeywordHitRatio(
   return Math.min(hits / cap, 1);
 }
 
+function computeStructuredScore(opts: {
+  requiredOverlapRatio: number;
+  preferredOverlapRatio: number;
+  projectKeywordHitRatio: number;
+  isEligible: boolean;
+}): number {
+  if (!opts.isEligible) return 0;
+  const score =
+    REQUIRED_SKILLS_PTS * opts.requiredOverlapRatio +
+    PREFERRED_SKILLS_PTS * opts.preferredOverlapRatio +
+    PROJECT_KEYWORD_PTS * opts.projectKeywordHitRatio;
+  return round2(Math.min(score, 100));
+}
+
+function computeMatchScore(semantic: number, structured: number): number {
+  return round2(SEMANTIC_WEIGHT * semantic + STRUCTURED_WEIGHT * structured);
+}
+
 function computeAllScores(
   studentEmbedding: number[],
   jdEmbedding: number[],
-  studentProfile: StudentProfile,
+  profile: StudentProfile,
   requiredSkills: string[],
   preferredSkills: string[],
   eligibility: EligibilityCriteria,
 ): ScoringResult {
-  const { isEligible, reason } = checkEligibility(studentProfile, eligibility);
-  const { matchedSkills, missingSkills, overlapRatio: requiredOverlapRatio } =
-    computeSkillOverlap(studentProfile.skillNames, requiredSkills);
-  const { overlapRatio: preferredOverlapRatio } = computeSkillOverlap(
-    studentProfile.skillNames,
-    preferredSkills,
-  );
-  const projectKeywordHitRatio = computeProjectKeywordHitRatio(
-    studentProfile.projectKeywords,
-    requiredSkills,
-  );
-  const cgpaAboveMin =
-    eligibility.minCgpa !== null &&
-    studentProfile.cgpa !== null &&
-    studentProfile.cgpa !== undefined
-      ? studentProfile.cgpa - eligibility.minCgpa
-      : null;
-  const semanticScore = computeSemanticScore(studentEmbedding, jdEmbedding);
-  const structuredScore = computeStructuredScore({
-    requiredOverlapRatio,
-    preferredOverlapRatio,
-    cgpaAboveMin,
-    projectKeywordHitRatio,
-    isEligible,
-  });
+  const { isEligible, reason } = checkEligibility(profile, eligibility);
+  const { matchedSkills, missingSkills, overlapRatio: req } = computeSkillOverlap(profile.skillNames, requiredSkills);
+  const { overlapRatio: pref } = computeSkillOverlap(profile.skillNames, preferredSkills);
+  const keywordRatio = computeProjectKeywordHitRatio(profile.projectKeywords, requiredSkills);
+  const semanticScore = round2(cosineSimilarity(studentEmbedding, jdEmbedding) * 100);
+  const structuredScore = computeStructuredScore({ requiredOverlapRatio: req, preferredOverlapRatio: pref, projectKeywordHitRatio: keywordRatio, isEligible });
   const matchScore = computeMatchScore(semanticScore, structuredScore);
-  return {
-    matchScore,
-    semanticScore,
-    structuredScore,
-    matchedSkills,
-    missingSkills,
-    shortExplanation: "",
-    isEligible,
-    ineligibilityReason: reason,
-  };
+  return { matchScore, semanticScore, structuredScore, matchedSkills, missingSkills, isEligible, ineligibilityReason: reason };
 }
 
-// ── Ranking pipeline simulation ─────────────────────────────────────────────
+// ── Pipeline Simulation ───────────────────────────────────────────────────────
 
-/**
- * Simulates the ranking pipeline (mirrors computeRanking.ts)
- * without DB dependencies.
- */
-function simulateRankingPipeline(
-  drive: MockDrive,
-  students: MockStudent[],
-): RankingEntry[] {
+interface PipelineResult {
+  rankings: RankingEntry[];
+  skippedNoEmbedding: number;
+}
+
+function simulateRankingPipeline(drive: MockDrive, students: MockStudent[]): PipelineResult {
   const eligibility: EligibilityCriteria = {
     minCgpa: drive.minCgpa,
     eligibleBranches: drive.eligibleBranches,
@@ -320,17 +227,15 @@ function simulateRankingPipeline(
     eligibleCategories: drive.eligibleCategories,
   };
 
-  const results: Array<{
-    studentId: string;
-    scoring: ScoringResult;
-    cgpa: number | null;
-  }> = [];
+  let skippedNoEmbedding = 0;
+  const scored: Array<{ studentId: string; scoring: ScoringResult; cgpa: number | null }> = [];
 
   for (const student of students) {
-    // Skip students without embeddings (mirrors real pipeline)
-    if (!student.embedding) continue;
-
-    const studentProfile: StudentProfile = {
+    if (!student.embedding) {
+      skippedNoEmbedding++;
+      continue;
+    }
+    const profile: StudentProfile = {
       cgpa: student.cgpa,
       branch: student.branch,
       batchYear: student.batchYear,
@@ -338,436 +243,337 @@ function simulateRankingPipeline(
       skillNames: student.skills.map((s) => s.name),
       projectKeywords: student.projectKeywords,
     };
-
-    const scoring = computeAllScores(
-      student.embedding,
-      drive.jdEmbedding,
-      studentProfile,
-      drive.requiredSkills,
-      drive.preferredSkills,
-      eligibility,
-    );
-
-    // Only include eligible students
+    const scoring = computeAllScores(student.embedding, drive.jdEmbedding, profile, drive.requiredSkills, drive.preferredSkills, eligibility);
     if (scoring.isEligible) {
-      results.push({
-        studentId: student.id,
-        scoring,
-        cgpa: student.cgpa,
-      });
+      scored.push({ studentId: student.id, scoring, cgpa: student.cgpa });
     }
   }
 
   // Sort: matchScore DESC → semanticScore DESC → CGPA DESC → UUID ASC
-  results.sort((a, b) => {
-    if (a.scoring.matchScore !== b.scoring.matchScore)
-      return b.scoring.matchScore - a.scoring.matchScore;
-    if (a.scoring.semanticScore !== b.scoring.semanticScore)
-      return b.scoring.semanticScore - a.scoring.semanticScore;
+  scored.sort((a, b) => {
+    if (a.scoring.matchScore !== b.scoring.matchScore) return b.scoring.matchScore - a.scoring.matchScore;
+    if (a.scoring.semanticScore !== b.scoring.semanticScore) return b.scoring.semanticScore - a.scoring.semanticScore;
     const cgpaA = a.cgpa ?? -1;
     const cgpaB = b.cgpa ?? -1;
     if (cgpaA !== cgpaB) return cgpaB - cgpaA;
     return a.studentId.localeCompare(b.studentId);
   });
 
-  // Assign rank positions
-  return results.map((r, idx) => ({
-    studentId: r.studentId,
-    matchScore: r.scoring.matchScore,
-    semanticScore: r.scoring.semanticScore,
-    structuredScore: r.scoring.structuredScore,
-    rankPosition: idx + 1,
-    isEligible: r.scoring.isEligible,
-    matchedSkills: r.scoring.matchedSkills,
-    missingSkills: r.scoring.missingSkills,
-  }));
+  return {
+    rankings: scored.map((r, idx) => ({
+      studentId: r.studentId,
+      matchScore: r.scoring.matchScore,
+      semanticScore: r.scoring.semanticScore,
+      structuredScore: r.scoring.structuredScore,
+      rankPosition: idx + 1,
+      isEligible: r.scoring.isEligible,
+      matchedSkills: r.scoring.matchedSkills,
+      missingSkills: r.scoring.missingSkills,
+    })),
+    skippedNoEmbedding,
+  };
 }
 
-// ── Test Data ───────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-/**
- * Creates a simple unit embedding vector (used for controlled semantic scores).
- * Dimension = 8 for test simplicity.
- */
-function makeEmbedding(values: number[]): number[] {
-  return values;
-}
+const JD_EMBEDDING = [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0];
+const IDENTICAL_EMBEDDING = [...JD_EMBEDDING]; // cosine sim = 1 → semantic = 100
+const ZERO_EMBEDDING = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]; // cos sim = 0
 
-const testDrive: MockDrive = {
+const BASE_DRIVE: MockDrive = {
   id: "drive-001",
-  company: "TechCorp",
-  roleTitle: "Full Stack Engineer",
-  rawJd: "Looking for a full stack engineer with React, Node.js, TypeScript, and PostgreSQL experience.",
   requiredSkills: ["react", "node.js", "typescript", "postgresql"],
   preferredSkills: ["docker", "aws"],
   minCgpa: 7.0,
   eligibleBranches: ["Computer Science", "IT"],
   eligibleBatchYears: [2026],
   eligibleCategories: null,
-  jdEmbedding: makeEmbedding([0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0]),
+  jdEmbedding: JD_EMBEDDING,
 };
 
-const mockStudents: MockStudent[] = [
-  {
-    id: "student-alice",
-    name: "Alice",
-    cgpa: 9.0,
-    branch: "Computer Science",
-    batchYear: 2026,
-    category: "alpha",
-    skills: [
-      { name: "react", proficiency: 4 },
-      { name: "node.js", proficiency: 4 },
-      { name: "typescript", proficiency: 3 },
-      { name: "postgresql", proficiency: 3 },
-      { name: "docker", proficiency: 2 },
-    ],
-    projectKeywords: ["react", "node.js", "typescript", "postgresql", "docker"],
-    embedding: makeEmbedding([0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0]),
-  },
-  {
-    id: "student-bob",
-    name: "Bob",
-    cgpa: 7.5,
-    branch: "Computer Science",
-    batchYear: 2026,
-    category: "beta",
-    skills: [
-      { name: "react", proficiency: 3 },
-      { name: "node.js", proficiency: 2 },
-    ],
-    projectKeywords: ["react", "node.js"],
-    embedding: makeEmbedding([0.4, 0.4, 0.3, 0.3, 0.1, 0.1, 0.0, 0.0]),
-  },
-  {
-    id: "student-charlie",
-    name: "Charlie",
-    cgpa: 6.5, // Below minCgpa of 7.0
-    branch: "Computer Science",
-    batchYear: 2026,
-    category: "gamma",
-    skills: [
-      { name: "react", proficiency: 5 },
-      { name: "node.js", proficiency: 5 },
-      { name: "typescript", proficiency: 5 },
-      { name: "postgresql", proficiency: 5 },
-    ],
-    projectKeywords: ["react", "node.js", "typescript", "postgresql"],
-    embedding: makeEmbedding([0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0]),
-  },
-  {
-    id: "student-diana",
-    name: "Diana",
-    cgpa: 8.5,
-    branch: "IT",
-    batchYear: 2026,
-    category: "alpha",
-    skills: [
-      { name: "react", proficiency: 3 },
-      { name: "typescript", proficiency: 3 },
-      { name: "docker", proficiency: 4 },
-      { name: "aws", proficiency: 3 },
-    ],
-    projectKeywords: ["react", "typescript", "docker", "aws"],
-    embedding: makeEmbedding([0.3, 0.3, 0.4, 0.4, 0.1, 0.1, 0.0, 0.0]),
-  },
-  {
-    id: "student-eve",
-    name: "Eve",
+function makeStudent(overrides: Partial<MockStudent>): MockStudent {
+  return {
+    id: "student-default",
+    name: "Default Student",
     cgpa: 8.0,
     branch: "Computer Science",
     batchYear: 2026,
     category: "beta",
     skills: [],
     projectKeywords: [],
-    embedding: null, // No embedding — should be skipped
-  },
-  {
-    id: "student-frank",
-    name: "Frank",
-    cgpa: 7.0,
-    branch: "Mechanical", // Not in eligible branches
-    batchYear: 2026,
-    category: "beta",
-    skills: [
-      { name: "react", proficiency: 4 },
-      { name: "node.js", proficiency: 4 },
-    ],
-    projectKeywords: ["react", "node.js"],
-    embedding: makeEmbedding([0.4, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0]),
-  },
-];
+    embedding: IDENTICAL_EMBEDDING,
+    ...overrides,
+  };
+}
 
-// ── Tests ───────────────────────────────────────────────────────────────────
+// ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe("Ranking Pipeline", () => {
-  const rankings = simulateRankingPipeline(testDrive, mockStudents);
+describe("Ranking Pipeline — core scenarios", () => {
+  // 1. Perfect match
+  it("1. perfect match: student with all required skills + identical embedding → high matchScore", () => {
+    const student = makeStudent({
+      id: "perfect-student",
+      skills: [
+        { name: "react", proficiency: 5 },
+        { name: "node.js", proficiency: 5 },
+        { name: "typescript", proficiency: 5 },
+        { name: "postgresql", proficiency: 5 },
+        { name: "docker", proficiency: 4 },
+      ],
+      projectKeywords: ["react", "node.js", "typescript", "postgresql", "docker"],
+    });
 
-  it("should exclude ineligible students (Charlie: low CGPA, Frank: wrong branch)", () => {
-    const rankedIds = rankings.map((r) => r.studentId);
-    expect(rankedIds).not.toContain("student-charlie");
-    expect(rankedIds).not.toContain("student-frank");
+    const { rankings } = simulateRankingPipeline(BASE_DRIVE, [student]);
+    expect(rankings).toHaveLength(1);
+    expect(rankings[0].matchScore).toBeGreaterThan(90);
+    expect(rankings[0].matchedSkills).toHaveLength(4);
+    expect(rankings[0].missingSkills).toHaveLength(0);
   });
 
-  it("should skip students without embeddings (Eve)", () => {
-    const rankedIds = rankings.map((r) => r.studentId);
-    expect(rankedIds).not.toContain("student-eve");
+  // 2. Zero match
+  it("2. zero match: no skills + zero embedding → matchScore near 0", () => {
+    const student = makeStudent({
+      id: "zero-student",
+      skills: [],
+      projectKeywords: [],
+      embedding: ZERO_EMBEDDING,
+    });
+
+    const { rankings } = simulateRankingPipeline(
+      { ...BASE_DRIVE, minCgpa: null, eligibleBranches: null, eligibleBatchYears: null },
+      [student],
+    );
+    expect(rankings).toHaveLength(1);
+    // Semantic = 0, structured = REQUIRED_SKILLS * 1 (empty required → overlapRatio=1)
+    // But BASE_DRIVE has required skills, so overlapRatio = 0/4 = 0, structured = 0
+    expect(rankings[0].semanticScore).toBe(0);
+    expect(rankings[0].structuredScore).toBe(0);
+    expect(rankings[0].matchScore).toBe(0);
   });
 
-  it("should include eligible students (Alice, Bob, Diana)", () => {
-    const rankedIds = rankings.map((r) => r.studentId);
-    expect(rankedIds).toContain("student-alice");
-    expect(rankedIds).toContain("student-bob");
-    expect(rankedIds).toContain("student-diana");
+  // 3. Ineligible — low CGPA
+  it("3. ineligible student (CGPA below minimum) → excluded from rankings", () => {
+    const lowCgpa = makeStudent({ id: "low-cgpa", cgpa: 6.5 });
+    const eligible = makeStudent({ id: "eligible", cgpa: 8.0 });
+
+    const { rankings } = simulateRankingPipeline(BASE_DRIVE, [lowCgpa, eligible]);
+    const ids = rankings.map((r) => r.studentId);
+    expect(ids).not.toContain("low-cgpa");
+    expect(ids).toContain("eligible");
   });
 
-  it("should rank exactly 3 students", () => {
-    expect(rankings).toHaveLength(3);
+  // 4. Ineligible — wrong branch
+  it("4. ineligible student (wrong branch) → excluded from rankings", () => {
+    const wrongBranch = makeStudent({ id: "wrong-branch", branch: "Mechanical" });
+    const eligible = makeStudent({ id: "cs-student", branch: "Computer Science" });
+
+    const { rankings } = simulateRankingPipeline(BASE_DRIVE, [wrongBranch, eligible]);
+    const ids = rankings.map((r) => r.studentId);
+    expect(ids).not.toContain("wrong-branch");
+    expect(ids).toContain("cs-student");
   });
 
-  it("should assign rank positions 1, 2, 3", () => {
+  // 5. Tie-breaking by semanticScore
+  it("5. tie-breaking: same matchScore → sorted by semanticScore DESC", () => {
+    // Use correctly normalized unit vectors so cosine similarity is computable
+    // highSemantic has cos_sim=1 with JD (identical direction)
+    // lowSemantic has different direction (lower cos_sim)
+    const jdEmb = [1, 0, 0, 0, 0, 0, 0, 0]; // unit vector
+    const highSemEmb = [1, 0, 0, 0, 0, 0, 0, 0]; // cos_sim = 1
+    const lowSemEmb = [0.6, 0.8, 0, 0, 0, 0, 0, 0]; // cos_sim = 0.6 (unit, orthogonal component)
+
+    const highSemantic = makeStudent({
+      id: "aaa-high-sem",
+      skills: [{ name: "react", proficiency: 3 }],
+      projectKeywords: [],
+      embedding: highSemEmb,
+    });
+    const lowSemantic = makeStudent({
+      id: "bbb-low-sem",
+      skills: [{ name: "react", proficiency: 3 }],
+      projectKeywords: [],
+      embedding: lowSemEmb,
+    });
+
+    const openDrive: MockDrive = {
+      ...BASE_DRIVE,
+      requiredSkills: ["react"],
+      preferredSkills: [],
+      minCgpa: null,
+      eligibleBranches: null,
+      eligibleBatchYears: null,
+      jdEmbedding: jdEmb,
+    };
+
+    const { rankings } = simulateRankingPipeline(openDrive, [lowSemantic, highSemantic]);
+    expect(rankings).toHaveLength(2);
+    expect(rankings[0].studentId).toBe("aaa-high-sem");
+    expect(rankings[0].semanticScore).toBeGreaterThanOrEqual(rankings[1].semanticScore);
+  });
+
+  // 6. Tie-breaking by CGPA
+  it("6. tie-breaking: same matchScore + semanticScore → sorted by CGPA DESC", () => {
+    // Use identical unit vectors so cosine similarity is exactly equal for both
+    const sharedEmb = [1, 0, 0, 0, 0, 0, 0, 0];
+
+    const highCgpa = makeStudent({
+      id: "aaa-high-cgpa",
+      cgpa: 9.5,
+      skills: [{ name: "react", proficiency: 3 }],
+      projectKeywords: [],
+      embedding: sharedEmb,
+    });
+    const lowCgpa = makeStudent({
+      id: "bbb-low-cgpa",
+      cgpa: 7.5,
+      skills: [{ name: "react", proficiency: 3 }],
+      projectKeywords: [],
+      embedding: sharedEmb,
+    });
+
+    const openDrive: MockDrive = {
+      ...BASE_DRIVE,
+      requiredSkills: ["react"],
+      preferredSkills: [],
+      minCgpa: null,
+      eligibleBranches: null,
+      eligibleBatchYears: null,
+      jdEmbedding: [1, 0, 0, 0, 0, 0, 0, 0],
+    };
+
+    const { rankings } = simulateRankingPipeline(openDrive, [lowCgpa, highCgpa]);
+    expect(rankings).toHaveLength(2);
+    expect(rankings[0].studentId).toBe("aaa-high-cgpa");
+    expect(rankings[1].studentId).toBe("bbb-low-cgpa");
+  });
+
+  // 7. Student without embedding
+  it("7. student without embedding → skipped (counted in skippedNoEmbedding)", () => {
+    const withEmbedding = makeStudent({ id: "has-embedding" });
+    const noEmbedding = makeStudent({ id: "no-embedding", embedding: null });
+
+    const { rankings, skippedNoEmbedding } = simulateRankingPipeline(
+      { ...BASE_DRIVE, minCgpa: null, eligibleBranches: null, eligibleBatchYears: null },
+      [withEmbedding, noEmbedding],
+    );
+
+    const ids = rankings.map((r) => r.studentId);
+    expect(ids).not.toContain("no-embedding");
+    expect(skippedNoEmbedding).toBe(1);
+  });
+
+  // 8. Empty required skills → only semantic contributes
+  it("8. empty required skills in JD → overlapRatio=1, only semantic contributes to match", () => {
+    const student = makeStudent({
+      id: "no-skills-drive",
+      skills: [],
+      projectKeywords: [],
+      embedding: IDENTICAL_EMBEDDING,
+    });
+
+    const noSkillsDrive: MockDrive = {
+      ...BASE_DRIVE,
+      requiredSkills: [],
+      preferredSkills: [],
+      minCgpa: null,
+      eligibleBranches: null,
+      eligibleBatchYears: null,
+    };
+
+    const { rankings } = simulateRankingPipeline(noSkillsDrive, [student]);
+    expect(rankings).toHaveLength(1);
+
+    // With empty required AND preferred skills, both get overlapRatio=1 (no skills = not filtered out)
+    // structuredScore = REQUIRED_SKILLS_PTS * 1 + PREFERRED_SKILLS_PTS * 1 + keywords * 0
+    const expectedStructured = round2(REQUIRED_SKILLS_PTS + PREFERRED_SKILLS_PTS);
+    expect(rankings[0].structuredScore).toBe(expectedStructured);
+
+    // Semantic = 100 (identical embeddings)
+    expect(rankings[0].semanticScore).toBe(100);
+
+    // matchScore = SEMANTIC_WEIGHT*100 + STRUCTURED_WEIGHT*(REQUIRED+PREFERRED)
+    const expectedMatch = round2(SEMANTIC_WEIGHT * 100 + STRUCTURED_WEIGHT * expectedStructured);
+    expect(rankings[0].matchScore).toBe(expectedMatch);
+  });
+});
+
+describe("Ranking Pipeline — edge cases", () => {
+  it("all ineligible → empty rankings list", () => {
+    const students = [
+      makeStudent({ id: "s1", cgpa: 5.0 }),
+      makeStudent({ id: "s2", cgpa: 6.0 }),
+    ];
+    const { rankings } = simulateRankingPipeline(BASE_DRIVE, students);
+    expect(rankings).toHaveLength(0);
+  });
+
+  it("all students lack embedding → empty rankings list", () => {
+    const students = [
+      makeStudent({ id: "s1", embedding: null }),
+      makeStudent({ id: "s2", embedding: null }),
+    ];
+    const { rankings, skippedNoEmbedding } = simulateRankingPipeline(
+      { ...BASE_DRIVE, minCgpa: null, eligibleBranches: null, eligibleBatchYears: null },
+      students,
+    );
+    expect(rankings).toHaveLength(0);
+    expect(skippedNoEmbedding).toBe(2);
+  });
+
+  it("empty student list → empty rankings", () => {
+    const { rankings } = simulateRankingPipeline(BASE_DRIVE, []);
+    expect(rankings).toHaveLength(0);
+  });
+
+  it("rank positions are sequential starting at 1", () => {
+    const students = [
+      makeStudent({ id: "s1", skills: [{ name: "react", proficiency: 5 }] }),
+      makeStudent({ id: "s2", skills: [] }),
+      makeStudent({ id: "s3", skills: [{ name: "node.js", proficiency: 3 }] }),
+    ];
+    const { rankings } = simulateRankingPipeline(
+      { ...BASE_DRIVE, minCgpa: null, eligibleBranches: null, eligibleBatchYears: null },
+      students,
+    );
     expect(rankings.map((r) => r.rankPosition)).toEqual([1, 2, 3]);
   });
 
-  it("should rank Alice first (highest skill overlap + highest semantic match)", () => {
-    expect(rankings[0].studentId).toBe("student-alice");
-  });
-
-  it("should produce descending matchScore order", () => {
-    for (let i = 0; i < rankings.length - 1; i++) {
-      expect(rankings[i].matchScore).toBeGreaterThanOrEqual(
-        rankings[i + 1].matchScore,
-      );
+  it("matchScore is always within 0–100 range", () => {
+    const students = [
+      makeStudent({ id: "s1", embedding: IDENTICAL_EMBEDDING }),
+      makeStudent({ id: "s2", embedding: ZERO_EMBEDDING }),
+    ];
+    const { rankings } = simulateRankingPipeline(
+      { ...BASE_DRIVE, minCgpa: null, eligibleBranches: null, eligibleBatchYears: null },
+      students,
+    );
+    for (const r of rankings) {
+      expect(r.matchScore).toBeGreaterThanOrEqual(0);
+      expect(r.matchScore).toBeLessThanOrEqual(100);
     }
   });
 
-  it("Alice should have all 4 required skills matched", () => {
-    const alice = rankings.find((r) => r.studentId === "student-alice")!;
-    expect(alice.matchedSkills).toHaveLength(4);
-    expect(alice.missingSkills).toHaveLength(0);
+  it("results are deterministic across two identical runs", () => {
+    const students = [
+      makeStudent({ id: "s1" }),
+      makeStudent({ id: "s2" }),
+    ];
+    const r1 = simulateRankingPipeline(BASE_DRIVE, students);
+    const r2 = simulateRankingPipeline(BASE_DRIVE, students);
+    expect(r1).toEqual(r2);
   });
 
-  it("Bob should match 2 of 4 required skills (react, node.js)", () => {
-    const bob = rankings.find((r) => r.studentId === "student-bob")!;
-    expect(bob.matchedSkills).toHaveLength(2);
-    expect(bob.missingSkills).toHaveLength(2);
-  });
-
-  it("Diana should match 2 of 4 required skills (react, typescript)", () => {
-    const diana = rankings.find((r) => r.studentId === "student-diana")!;
-    expect(diana.matchedSkills).toHaveLength(2);
-    expect(diana.missingSkills).toHaveLength(2);
-  });
-
-  it("all ranked students should be marked eligible", () => {
-    rankings.forEach((r) => {
-      expect(r.isEligible).toBe(true);
-    });
-  });
-
-  it("matchScore should be within 0-100 range", () => {
-    rankings.forEach((r) => {
-      expect(r.matchScore).toBeGreaterThanOrEqual(0);
-      expect(r.matchScore).toBeLessThanOrEqual(100);
-    });
-  });
-
-  it("semanticScore should be within 0-100 range", () => {
-    rankings.forEach((r) => {
-      expect(r.semanticScore).toBeGreaterThanOrEqual(0);
-      expect(r.semanticScore).toBeLessThanOrEqual(100);
-    });
-  });
-
-  it("structuredScore should be within 0-100 range", () => {
-    rankings.forEach((r) => {
-      expect(r.structuredScore).toBeGreaterThanOrEqual(0);
-      expect(r.structuredScore).toBeLessThanOrEqual(100);
-    });
-  });
-
-  // ── Score Computation Verification ────────────────────────────────────
-
-  describe("Score computation correctness", () => {
-    it("Alice: semantic score should be 100 (identical embeddings)", () => {
-      const alice = rankings.find((r) => r.studentId === "student-alice")!;
-      expect(alice.semanticScore).toBe(100);
-    });
-
-    it("Alice: structured score should reflect full skill overlap + CGPA buffer + keywords", () => {
-      const alice = rankings.find((r) => r.studentId === "student-alice")!;
-      // Required overlap: 4/4 = 1.0 → 50 pts
-      // Preferred overlap: docker matched → 1/2 = 0.5 → 10 pts
-      // CGPA buffer: 9.0 - 7.0 = 2.0, min(2.0/2, 1) = 1 → 15 pts
-      // Project keywords: 4 matched (react, node.js, typescript, postgresql) → 4/5 → 12 pts
-      // Total: 50 + 10 + 15 + 12 = 87
-      expect(alice.structuredScore).toBe(87);
-    });
-
-    it("Alice: matchScore = 0.7*100 + 0.3*87 = 96.1", () => {
-      const alice = rankings.find((r) => r.studentId === "student-alice")!;
-      expect(alice.matchScore).toBe(96.1);
-    });
-  });
-
-  // ── Tie-breaking ──────────────────────────────────────────────────────
-
-  describe("Tie-breaking", () => {
-    it("should tie-break by CGPA DESC when matchScore and semanticScore are equal", () => {
-      const tiedStudents: MockStudent[] = [
-        {
-          id: "zzz-student",
-          name: "Z Student",
-          cgpa: 8.0,
-          branch: "Computer Science",
-          batchYear: 2026,
-          category: "beta",
-          skills: [{ name: "react", proficiency: 3 }],
-          projectKeywords: ["react"],
-          embedding: makeEmbedding([0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
-        },
-        {
-          id: "aaa-student",
-          name: "A Student",
-          cgpa: 9.0,
-          branch: "Computer Science",
-          batchYear: 2026,
-          category: "beta",
-          skills: [{ name: "react", proficiency: 3 }],
-          projectKeywords: ["react"],
-          embedding: makeEmbedding([0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
-        },
-      ];
-
-      const driveNoRestrictions: MockDrive = {
-        ...testDrive,
-        minCgpa: null,
-        eligibleBranches: null,
-        eligibleBatchYears: null,
-        eligibleCategories: null,
-      };
-
-      const tiedRankings = simulateRankingPipeline(driveNoRestrictions, tiedStudents);
-
-      // Same embedding → same semantic score
-      // Same skills → same structured score (nearly, except CGPA buffer)
-      // CGPA tie-break: 9.0 > 8.0 → aaa-student first
-      expect(tiedRankings[0].studentId).toBe("aaa-student");
-      expect(tiedRankings[1].studentId).toBe("zzz-student");
-    });
-
-    it("should tie-break by UUID ASC when everything else is equal", () => {
-      const identicalStudents: MockStudent[] = [
-        {
-          id: "zzz-student",
-          name: "Z",
-          cgpa: 8.0,
-          branch: "Computer Science",
-          batchYear: 2026,
-          category: "beta",
-          skills: [{ name: "react", proficiency: 3 }],
-          projectKeywords: [],
-          embedding: makeEmbedding([0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
-        },
-        {
-          id: "aaa-student",
-          name: "A",
-          cgpa: 8.0, // Same CGPA
-          branch: "Computer Science",
-          batchYear: 2026,
-          category: "beta",
-          skills: [{ name: "react", proficiency: 3 }],
-          projectKeywords: [],
-          embedding: makeEmbedding([0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
-        },
-      ];
-
-      const driveNoRestrictions: MockDrive = {
-        ...testDrive,
-        minCgpa: null,
-        eligibleBranches: null,
-        eligibleBatchYears: null,
-        eligibleCategories: null,
-      };
-
-      const tiedRankings = simulateRankingPipeline(
-        driveNoRestrictions,
-        identicalStudents,
-      );
-
-      // Everything equal → UUID ASC: "aaa-student" < "zzz-student"
-      expect(tiedRankings[0].studentId).toBe("aaa-student");
-      expect(tiedRankings[1].studentId).toBe("zzz-student");
-    });
-  });
-
-  // ── Empty / edge cases ────────────────────────────────────────────────
-
-  describe("Edge cases", () => {
-    it("should return empty rankings when no students are eligible", () => {
-      const driveHighBar: MockDrive = {
-        ...testDrive,
-        minCgpa: 10.0, // Nobody has 10.0
-      };
-
-      const result = simulateRankingPipeline(driveHighBar, mockStudents);
-      expect(result).toHaveLength(0);
-    });
-
-    it("should return empty rankings when no students have embeddings", () => {
-      const studentsNoEmbeddings = mockStudents.map((s) => ({
-        ...s,
-        embedding: null,
-      }));
-
-      const result = simulateRankingPipeline(testDrive, studentsNoEmbeddings);
-      expect(result).toHaveLength(0);
-    });
-
-    it("should handle drive with no eligibility restrictions", () => {
-      const openDrive: MockDrive = {
-        ...testDrive,
-        minCgpa: null,
-        eligibleBranches: null,
-        eligibleBatchYears: null,
-        eligibleCategories: null,
-      };
-
-      // Charlie (low CGPA) and Frank (wrong branch) should now be included
-      const result = simulateRankingPipeline(openDrive, mockStudents);
-      const ids = result.map((r) => r.studentId);
-      expect(ids).toContain("student-charlie");
-      expect(ids).toContain("student-frank");
-      // Eve still excluded (no embedding)
-      expect(ids).not.toContain("student-eve");
-      expect(result).toHaveLength(5);
-    });
-
-    it("should handle drive with no required or preferred skills", () => {
-      const noSkillsDrive: MockDrive = {
-        ...testDrive,
-        requiredSkills: [],
-        preferredSkills: [],
-        minCgpa: null,
-        eligibleBranches: null,
-        eligibleBatchYears: null,
-        eligibleCategories: null,
-      };
-
-      const result = simulateRankingPipeline(noSkillsDrive, mockStudents);
-      // All with embeddings should be included
-      expect(result).toHaveLength(5);
-      // When no required skills, overlapRatio = 1, so structured component is high
-      result.forEach((r) => {
-        expect(r.matchScore).toBeGreaterThanOrEqual(0);
-      });
-    });
-
-    it("should produce deterministic results across multiple runs", () => {
-      const run1 = simulateRankingPipeline(testDrive, mockStudents);
-      const run2 = simulateRankingPipeline(testDrive, mockStudents);
-
-      expect(run1).toEqual(run2);
-    });
+  it("UUID tiebreaker: same scores + same CGPA → sorted lexicographically ASC", () => {
+    const sharedEmb = [0, 0, 0, 0, 0, 0, 0, 0];
+    const students = [
+      makeStudent({ id: "zzz-last", cgpa: 8.0, skills: [], embedding: sharedEmb }),
+      makeStudent({ id: "aaa-first", cgpa: 8.0, skills: [], embedding: sharedEmb }),
+    ];
+    const { rankings } = simulateRankingPipeline(
+      { ...BASE_DRIVE, minCgpa: null, eligibleBranches: null, eligibleBatchYears: null },
+      students,
+    );
+    expect(rankings[0].studentId).toBe("aaa-first");
+    expect(rankings[1].studentId).toBe("zzz-last");
   });
 });

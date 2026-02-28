@@ -233,12 +233,10 @@ export async function completeOnboarding() {
                 },
             });
 
-            // Trigger worker immediately and await to ensure it runs
-            try {
-                await processEmbeddingJobs();
-            } catch (err) {
-                console.error("[Onboarding] Inline embedding generation failed:", err);
-            }
+            // Trigger worker in background — don't await, don't throw
+            processEmbeddingJobs().catch((err) => {
+                console.error("[Onboarding] Background embedding failed (non-fatal):", err);
+            });
         }
     }
 

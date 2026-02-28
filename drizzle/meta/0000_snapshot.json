@@ -65,7 +65,7 @@
         },
         "jd_embedding": {
           "name": "jd_embedding",
-          "type": "vector(384)",
+          "type": "vector(768)",
           "primaryKey": false,
           "notNull": false
         },
@@ -576,7 +576,7 @@
         },
         "embedding": {
           "name": "embedding",
-          "type": "vector(384)",
+          "type": "vector(768)",
           "primaryKey": false,
           "notNull": false
         },

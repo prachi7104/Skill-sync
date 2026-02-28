@@ -315,7 +315,7 @@ export async function computeRanking(
   driveId: string,
 ): Promise<RankingComputationResult> {
   const errors: string[] = [];
-  const SAFE_DURATION_MS = 8000; // Stay under Vercel's 10s limit
+  const SAFE_DURATION_MS = 45000; // Stay under Vercel Hobby's 60s limit
   const computeStart = Date.now();
   let skippedNoEmbedding = 0;
 
@@ -348,6 +348,20 @@ export async function computeRanking(
       { driveId },
     );
     allStudents = allStudents.slice(0, MAX_STUDENTS_PER_RANKING_RUN);
+  }
+
+  // PILOT BEHAVIOUR: Students with NULL branch / batchYear / category are
+  // deliberately included in rankings so newly-onboarded students appear even
+  // before they complete their profile. This is intentional and acceptable for
+  // the pilot; revisit before a production rollout with a larger student cohort.
+  const nullFieldStudents = allStudents.filter(
+    (s) => s.branch === null || s.batchYear === null || s.category === null,
+  ).length;
+  if (nullFieldStudents > 0) {
+    console.warn(
+      `[Ranking] ${nullFieldStudents} students have incomplete eligibility fields and were included by default`,
+      { driveId },
+    );
   }
 
   // 4. Ensure JD embedding exists
@@ -518,6 +532,15 @@ export async function computeRanking(
 
   const durationMs = Date.now() - computeStart;
   console.log(`[Ranking] Completed in ${durationMs}ms`);
+
+  // Log first 5 ranked student IDs for debugging
+  if (rankedWithPositions.length > 0) {
+    const sample = rankedWithPositions
+      .slice(0, 5)
+      .map((r) => `${r.rankPosition}. ${r.studentId} (${r.scoring.matchScore.toFixed(1)})`)
+      .join(", ");
+    console.log(`[Ranking] Top-ranked students: ${sample}`);
+  }
 
   // 11. Return summary
   return {

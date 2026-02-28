@@ -23,11 +23,13 @@
 import { describe, it, expect } from "vitest";
 
 // ── Constants (mirror scoring.ts) ───────────────────────────────────────────
-const SEMANTIC_WEIGHT = 0.7;
-const STRUCTURED_WEIGHT = 0.3;
-const REQUIRED_SKILLS_PTS = 60;
-const PREFERRED_SKILLS_PTS = 25;
-const PROJECT_KEYWORD_PTS = 15;
+import {
+  SEMANTIC_WEIGHT,
+  STRUCTURED_WEIGHT,
+  REQUIRED_SKILLS_PTS,
+  PREFERRED_SKILLS_PTS,
+  PROJECT_KEYWORD_PTS,
+} from "../lib/matching/scoring-constants";
 
 // ── Inline types (mirror scoring.ts) ────────────────────────────────────────
 

@@ -268,7 +268,7 @@ export default async function FacultyDashboardPage() {
                                                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-wide">
                                                     <span>{item.type.replace("_", " ")}</span>
                                                     <span>•</span>
-                                                    <span>{formatDistanceToNow(new Date(item.updatedAt))} ago</span>
+                                                    <span>{item.updatedAt ? formatDistanceToNow(new Date(item.updatedAt)) : "just now"} ago</span>
                                                 </div>
                                             </div>
                                         </div>

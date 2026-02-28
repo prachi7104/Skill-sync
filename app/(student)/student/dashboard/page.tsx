@@ -107,6 +107,16 @@ export default function StudentDashboard() {
             <div className="grid gap-6 md:grid-cols-7">
                 {/* Main Content Area */}
                 <div className="md:col-span-4 space-y-6">
+                    {/* Processing Banner */}
+                    {!student.embedding && (
+                        <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg flex items-start gap-3 text-sm shadow-sm">
+                            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                            <p>
+                                <strong>Your profile is being processed.</strong> Rankings will include you once processing completes (~5 minutes).
+                            </p>
+                        </div>
+                    )}
+
                     {/* Resume Status */}
                     <Card>
                         <CardHeader>
