@@ -60,6 +60,30 @@ describe("Auth — isStudentEmail", () => {
   it("should not match a domain ending with same suffix", () => {
     expect(isStudentEmail("user@notstu.upes.ac.in")).toBe(false);
   });
+
+  // ── Faculty email domains (should all return false) ─────────────────────
+
+  it("should return false for @outlook.com", () => {
+    expect(isStudentEmail("faculty@outlook.com")).toBe(false);
+  });
+
+  it("should return false for @hotmail.com", () => {
+    expect(isStudentEmail("faculty@hotmail.com")).toBe(false);
+  });
+
+  it("should return false for @upes.ac.in (non-student UPES domain)", () => {
+    expect(isStudentEmail("admin@upes.ac.in")).toBe(false);
+  });
+
+  // ── Edge cases ──────────────────────────────────────────────────────────
+
+  it("should handle fully uppercase input (case insensitive)", () => {
+    expect(isStudentEmail("JOHN@STU.UPES.AC.IN")).toBe(true);
+  });
+
+  it("should return false for empty string", () => {
+    expect(isStudentEmail("")).toBe(false);
+  });
 });
 
 describe("Auth — sign-in decision logic", () => {

@@ -1,0 +1,82 @@
+﻿
+> skillsync@0.1.0 build
+> next build
+
+  Γû▓ Next.js 14.2.35
+
+   Creating an optimized production build ...
+node.exe : Failed to 
+compile.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Failed to com   
+ pile.:String) [],     
+RemoteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+
+./lib/embeddings/genera
+te.ts
+Module not found: 
+Can't resolve 
+'@xenova/transformers'
+
+https://nextjs.org/docs
+/messages/module-not-fo
+und
+
+Import trace for 
+requested module:
+./lib/embeddings/index.
+ts
+./lib/workers/generate-
+embedding.ts
+./app/actions/onboardin
+g.ts
+./node_modules/next/dis
+t/build/webpack/loaders
+/next-flight-action-ent
+ry-loader.js?actions=%5
+B%5B%22C%3A%5C%5Cprojec
+ts%5C%5CSkillsync%5C%5C
+app%5C%5Cactions%5C%5Co
+nboarding.ts%22%2C%5B%2
+2updateSoftSkillsAndAch
+ievements%22%2C%22updat
+eAcademics%22%2C%22comp
+leteOnboarding%22%2C%22
+updateOnboardingStep%22
+%2C%22updateCodingProfi
+les%22%5D%5D%5D&__clien
+t_imported__=true!
+
+./lib/embeddings/genera
+te.ts
+Module not found: 
+Can't resolve 
+'@xenova/transformers'
+
+https://nextjs.org/docs
+/messages/module-not-fo
+und
+
+Import trace for 
+requested module:
+./app/api/student/sandb
+ox/detailed/route.ts
+
+
+> Build failed because 
+of webpack errors

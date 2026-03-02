@@ -1,70 +1,56 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-import { AntigravityRouter } from "@/lib/antigravity/router";
-import { env } from "@/lib/env";
-
-export const EMBEDDING_DIMENSION = 768; // Gemini text-embedding-004 output dimension
-
-
-// Initialize Router
-const router = new AntigravityRouter({
-  googleApiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
-  groqApiKey: env.GROQ_API_KEY, // Not used for embeddings but good to have
-  enableLogging: true,
-});
+export const EMBEDDING_DIMENSION = 768;
 
 /**
- * Generate an embedding vector for the given text.
- * Uses Antigravity Router to select the best model (Gemini -> Local).
- * 
- * @param text The text to embed
- * @param type Context type ("profile" or "jd") to optimize model selection
- * @returns Array of numbers representing the vector
+ * Generate a 768-dim embedding vector.
+ * Fallback chain:
+ *   1. Gemini text-embedding-004 (primary, 768-dim native)
+ *   2. Zero vector — app doesn't crash, logs error, semantic scoring skipped
+ *
+ * NOTE: To add a local fallback, install @xenova/transformers and add
+ * all-mpnet-base-v2 (768-dim) as tier 2 before the zero vector.
  */
 export async function generateEmbedding(
   text: string,
-  type: "profile" | "jd" = "profile"
+  _type: "profile" | "jd" = "profile"
 ): Promise<number[]> {
-  if (!text || text.trim().length === 0) {
-    return [];
-  }
-
-  // Clean text to avoid token wastage
+  if (!text || text.trim().length === 0) return [];
   const cleaned = text.replace(/\s+/g, " ").trim().slice(0, 8000);
 
-  const taskType = type === "jd" ? "embed_jd" : "embed_profile";
-
-  const result = await router.execute<number[]>(taskType, cleaned);
-
-  if (result.success && result.data) {
-    return result.data;
+  // ── 1. Gemini text-embedding-004 ────────────────────────────────────────
+  const googleKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  if (googleKey) {
+    try {
+      const genAI = new GoogleGenerativeAI(googleKey);
+      const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+      const result = await model.embedContent(cleaned);
+      const vec = result.embedding.values;
+      if (vec.length !== EMBEDDING_DIMENSION) {
+        throw new Error(`Unexpected dimension: ${vec.length}`);
+      }
+      return vec;
+    } catch (err) {
+      console.warn("[embeddings] Gemini failed:", err);
+    }
   }
 
-  throw new Error(`Embedding generation failed: ${result.error}`);
+  // ── 2. Zero vector fallback — never crashes the app ─────────────────────
+  console.error("[embeddings] All providers failed. Returning zero vector. Semantic scoring will be skipped.");
+  return new Array(EMBEDDING_DIMENSION).fill(0);
 }
 
 /**
- * Calculate cosine similarity between two vectors.
- * Used for matching candidates to JDs.
+ * Cosine similarity between two vectors. Returns 0 on mismatch or zero vectors.
  */
 export function cosineSimilarity(vecA: number[], vecB: number[]): number {
-  if (vecA.length !== vecB.length) {
-    // Handle dimension mismatch (e.g. padding or truncation) if necessary
-    // For now, strict check
-    console.warn(`Vector dimension mismatch: ${vecA.length} vs ${vecB.length}`);
-    return 0;
-  }
-
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-
+  if (!vecA.length || !vecB.length || vecA.length !== vecB.length) return 0;
+  let dot = 0, normA = 0, normB = 0;
   for (let i = 0; i < vecA.length; i++) {
-    dotProduct += vecA[i] * vecB[i];
+    dot += vecA[i] * vecB[i];
     normA += vecA[i] * vecA[i];
     normB += vecB[i] * vecB[i];
   }
-
   if (normA === 0 || normB === 0) return 0;
-
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }

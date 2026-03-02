@@ -1,9 +1,10 @@
 
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/lib/db";
-import { users, students } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { users, students, magicLinkTokens } from "@/lib/db/schema";
+import { eq, and, gt } from "drizzle-orm";
 import {
     MICROSOFT_CLIENT_ID,
     MICROSOFT_CLIENT_SECRET,
@@ -15,7 +16,7 @@ import {
  * Check if the email belongs to the student domain.
  * Students are auto-created; faculty/admin must be pre-added in DB.
  */
-function isStudentEmail(email: string): boolean {
+export function isStudentEmail(email: string): boolean {
     const domain = email.toLowerCase().split("@")[1];
     return domain === STUDENT_EMAIL_DOMAIN;
 }
@@ -31,6 +32,55 @@ export const authOptions: NextAuthOptions = {
                     scope: "openid profile email",
                     prompt: "select_account",
                 },
+            },
+        }),
+        CredentialsProvider({
+            id: "magic-link",
+            name: "Magic Link",
+            credentials: {
+                token: { label: "Token", type: "text" },
+            },
+            async authorize(credentials) {
+                const token = credentials?.token;
+                if (!token) return null;
+
+                // Find valid, unused, non-expired token joined with user
+                const [row] = await db
+                    .select({
+                        tokenId: magicLinkTokens.id,
+                        userId: users.id,
+                        email: users.email,
+                        name: users.name,
+                        role: users.role,
+                    })
+                    .from(magicLinkTokens)
+                    .innerJoin(users, eq(magicLinkTokens.userId, users.id))
+                    .where(
+                        and(
+                            eq(magicLinkTokens.token, token),
+                            eq(magicLinkTokens.used, false),
+                            gt(magicLinkTokens.expiresAt, new Date()),
+                        )
+                    )
+                    .limit(1);
+
+                if (!row) return null;
+
+                // Only allow faculty or admin
+                if (row.role !== "faculty" && row.role !== "admin") return null;
+
+                // Mark token as used
+                await db
+                    .update(magicLinkTokens)
+                    .set({ used: true })
+                    .where(eq(magicLinkTokens.id, row.tokenId));
+
+                return {
+                    id: row.userId,
+                    email: row.email,
+                    name: row.name,
+                    role: row.role,
+                };
             },
         }),
     ],

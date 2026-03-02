@@ -81,31 +81,41 @@ export async function POST(req: NextRequest) {
         // C. Resume Embedding (Model)
         // D. JD Embedding (Model)
 
-        // Let's run independent tasks in parallel to speed up.
-
-        const [parsedResume, structuredJD, jdEmbedding] = await Promise.all([
+        // Run AI parsing in parallel (these are independent of embeddings)
+        const [parsedResume, structuredJD] = await Promise.all([
             parseResumeWithAI(resumeText),
-            parseJD(jdText), // This internally calls AI
-            generateEmbedding(jdText, "jd")
+            parseJD(jdText),
         ]);
 
-        // 6. Profile Embedding (Fetch or Generate)
-        let studentProfileEmbedding = student.embedding;
+        // Embeddings: fail gracefully — analysis continues without them
+        let jdEmbedding: number[] | null = null;
+        let studentProfileEmbedding: number[] | null = student.embedding ?? null;
+        let embeddingWarning = false;
+
+        try {
+            jdEmbedding = await generateEmbedding(jdText, "jd");
+        } catch (err) {
+            console.warn("[sandbox/detailed] JD embedding failed, using keyword match:", err);
+            embeddingWarning = true;
+        }
+
         if (!studentProfileEmbedding) {
-            // Generate on the fly if missing
-            const profileString = `
-                ${student.softSkills?.join(", ")}
-                ${student.skills?.map(s => s.name).join(" ")}
-                ${student.projects?.map(p => p.title + " " + p.description).join(" ")}
-                ${student.workExperience?.map(e => e.role + " " + e.description).join(" ")}
-            `;
-            studentProfileEmbedding = await generateEmbedding(profileString);
+            try {
+                const profileString = [
+                    student.softSkills?.join(", "),
+                    student.skills?.map((s: any) => s.name).join(" "),
+                    student.projects?.map((p: any) => p.title + " " + p.description).join(" "),
+                    student.workExperience?.map((e: any) => e.role + " " + e.description).join(" "),
+                ].filter(Boolean).join(" ");
+                studentProfileEmbedding = await generateEmbedding(profileString);
+            } catch (err) {
+                console.warn("[sandbox/detailed] Profile embedding failed, using keyword match:", err);
+                embeddingWarning = true;
+            }
         }
 
         // 7. Perform Analysis
-        // We need to validate/type the student profile from DB to match Zod schema expectation
-        // The DB schema is close to Zod but might have nulls where Zod expects optionals.
-        // We'll cast it for now, assuming DB consistency.
+        // performDetailedAnalysis accepts null embeddings and falls back to keyword scoring
         const typedProfile = student as unknown as StudentProfileInput;
 
         const analysisResult = await performDetailedAnalysis(
@@ -122,7 +132,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            data: analysisResult
+            data: analysisResult,
+            ...(embeddingWarning && { warning: "Semantic matching unavailable — keyword analysis used instead" }),
         });
 
     } catch (error: any) {

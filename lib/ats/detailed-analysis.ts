@@ -361,25 +361,33 @@ function applyConsistencyChecks(overall: number, breakdown: ScoreBreakdown): num
 
 export async function performDetailedAnalysis(
     jd: StructuredJD,
-    jdEmbedding: number[],
+    jdEmbedding: number[] | null,
     _resumeText: string,
     parsedResume: ParsedResumeData,
     studentProfile: z.infer<typeof studentProfileSchema>,
-    studentProfileEmbedding: number[]
+    studentProfileEmbedding: number[] | null
 ): Promise<DetailedAnalysisResult> {
 
-    // 1. Generate Resume Embedding
-    const resumeString = [
-        parsedResume.professional_summary,
-        parsedResume.skills.map(s => s.name).join(" "),
-        parsedResume.experience.map(e => `${e.role} ${e.description}`).join(" "),
-        parsedResume.projects.map(p => `${p.title} ${p.tech_stack?.join(" ")}`).join(" "),
-    ].filter(Boolean).join(". ");
-    const resumeEmbedding = await generateEmbedding(resumeString);
+    // 1. Generate Resume Embedding (fail gracefully if embedding service is down)
+    let resumeEmbedding: number[] | null = null;
+    if (jdEmbedding) {
+        try {
+            const resumeString = [
+                parsedResume.professional_summary,
+                parsedResume.skills.map(s => s.name).join(" "),
+                parsedResume.experience.map(e => `${e.role} ${e.description}`).join(" "),
+                parsedResume.projects.map(p => `${p.title} ${p.tech_stack?.join(" ")}`).join(" "),
+            ].filter(Boolean).join(". ");
+            resumeEmbedding = await generateEmbedding(resumeString);
+        } catch (err) {
+            console.warn("[detailed-analysis] Resume embedding failed, falling back to keyword scoring:", err);
+        }
+    }
 
     // 2. Semantic Scores (used as project overlap component of domain match)
-    const resumeSemanticScore = cosineSimilarity(resumeEmbedding, jdEmbedding);
-    const profileSemanticScore = cosineSimilarity(studentProfileEmbedding, jdEmbedding);
+    //    Falls back to 0 when embeddings are unavailable — keyword scoring compensates.
+    const resumeSemanticScore = (resumeEmbedding && jdEmbedding) ? cosineSimilarity(resumeEmbedding, jdEmbedding) : 0;
+    const profileSemanticScore = (studentProfileEmbedding && jdEmbedding) ? cosineSimilarity(studentProfileEmbedding, jdEmbedding) : 0;
 
     // 3. Build EnhancedResume for matching
     const enhancedResume: EnhancedResume = {
