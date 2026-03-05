@@ -7,6 +7,7 @@ import { requireStudentProfile } from "@/lib/auth/helpers";
 import { eq, and, sql } from "drizzle-orm";
 import { processResumeParseJobs } from "@/lib/workers/parse-resume";
 import { logger } from "@/lib/logger";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 // Configure Cloudinary
 cloudinary.config({
@@ -215,6 +216,7 @@ export async function POST(req: NextRequest) {
         );
 
     } catch (error: any) {
+        if (isRedirectError(error)) throw error;
         console.error("Resume upload failed:", error);
         return NextResponse.json(
             { success: false, error: error.message || "Internal server error during upload" },

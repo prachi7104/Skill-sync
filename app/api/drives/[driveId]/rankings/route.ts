@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { rankings, drives, students, users } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { enforceRankingsExist, GuardrailViolation } from "@/lib/guardrails";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 /**
  * GET /api/drives/[driveId]/rankings
@@ -127,6 +128,7 @@ export async function GET(
       { status: 200 },
     );
   } catch (err: any) {
+    if (isRedirectError(err)) throw err;
     console.error("[GET /api/drives/[driveId]/rankings]", err);
 
     const message = err?.message ?? "Internal server error";

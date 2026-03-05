@@ -4,6 +4,7 @@ import { requireStudentProfile } from "@/lib/auth/helpers";
 import { enforceSandboxLimits, incrementSandboxUsage, enforceProfileGate } from "@/lib/guardrails";
 import { GuardrailViolation } from "@/lib/guardrails/errors";
 import { db } from "@/lib/db";
+import { isRedirectError } from "next/dist/client/components/redirect";
 import { students } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { checkEligibility, type EligibilityCriteria, type StudentProfile } from "@/lib/matching";
@@ -235,6 +236,7 @@ export async function POST(req: NextRequest) {
       analysis: atsResult // Full new ATS result
     });
   } catch (error: any) {
+    if (isRedirectError(error)) throw error;
     // Handle guardrail violations with proper status codes
     if (error instanceof GuardrailViolation) {
       return NextResponse.json(error.toJSON(), { status: error.status });

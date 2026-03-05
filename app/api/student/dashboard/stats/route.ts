@@ -3,6 +3,7 @@ import { requireStudentProfile } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, rankings } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -31,6 +32,7 @@ export async function GET() {
             }
         });
     } catch (error: any) {
+        if (isRedirectError(error)) throw error;
         if (error instanceof Error && (error.message.includes("Unauthorized") || error.message.includes("Forbidden"))) {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }

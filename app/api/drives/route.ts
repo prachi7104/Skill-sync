@@ -4,6 +4,7 @@ import { drives, jobs, students, rankings } from "@/lib/db/schema";
 import { requireRole, requireStudentProfile } from "@/lib/auth/helpers";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 // ── Zod Schema for drive creation ───────────────────────────────────────────
 
@@ -71,6 +72,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (err: unknown) {
+    if (isRedirectError(err)) throw err;
     const message = err instanceof Error ? err.message : String(err);
     if (message.includes("Unauthorized") || message.includes("Forbidden")) {
       return NextResponse.json({ message }, { status: 403 });
@@ -179,6 +181,7 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json({ drives: drivesWithScore });
   } catch (err: unknown) {
+    if (isRedirectError(err)) throw err;
     console.error("[api/drives] GET error:", err);
     return NextResponse.json(
       { message: "Internal server error" },

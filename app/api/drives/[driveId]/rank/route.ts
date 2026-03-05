@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { jobs } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
 import { enforceRankingGeneration, GuardrailViolation, ERRORS } from "@/lib/guardrails";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 /**
  * POST /api/drives/[driveId]/rank
@@ -74,6 +75,7 @@ export async function POST(
       { status: 202 },
     );
   } catch (err: any) {
+    if (isRedirectError(err)) throw err;
     console.error("[POST /api/drives/[driveId]/rank]", err);
 
     // Phase 5.5: Structured guardrail errors

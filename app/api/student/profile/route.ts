@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
 import { students, users, jobs } from "@/lib/db/schema";
+import { isRedirectError } from "next/dist/client/components/redirect";
 import { eq, and, sql } from "drizzle-orm";
 import { studentProfileSchema } from "@/lib/validations/student-profile";
 import { computeCompleteness } from "@/lib/profile/completeness";
@@ -51,6 +52,7 @@ export async function GET() {
         return NextResponse.json({ success: true, data: { user, profile } });
 
     } catch (error: any) {
+        if (isRedirectError(error)) throw error;
         console.error("[API] Error in /api/student/profile:", error);
         return NextResponse.json({
             success: false,
@@ -187,6 +189,7 @@ export async function PATCH(req: NextRequest) {
             { status: 200 }
         );
     } catch (error: any) {
+        if (isRedirectError(error)) throw error;
         if (error instanceof z.ZodError) {
             return NextResponse.json(
                 { success: false, error: "Validation failed", errors: error.errors },

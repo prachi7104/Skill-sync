@@ -7,6 +7,7 @@ import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { students, drives, rankings, jobs } from "@/lib/db/schema";
 import { eq, isNotNull, sql } from "drizzle-orm";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 /**
  * GET /api/admin/health
@@ -77,6 +78,7 @@ export async function GET() {
       { status: 200 },
     );
   } catch (err: any) {
+    if (isRedirectError(err)) throw err;
     const message = err?.message ?? "Internal server error";
 
     if (message.includes("Unauthorized")) {

@@ -5,6 +5,7 @@ import { students } from "@/lib/db/schema";
 import { requireStudentProfile } from "@/lib/auth/helpers";
 import { eq } from "drizzle-orm";
 import { computeCompleteness } from "@/lib/profile/completeness";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 interface MergeSectionRequest {
     sections: {
@@ -135,6 +136,7 @@ export async function POST(req: NextRequest) {
         }
 
     } catch (error) {
+        if (isRedirectError(error)) throw error;
         console.error("Merge failed:", error);
         return NextResponse.json(
             { message: "Internal server error during merge" },

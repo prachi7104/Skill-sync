@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { jobs, rankings } from "@/lib/db/schema";
 import { sql, eq } from "drizzle-orm";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 /**
  * GET /api/drives/[driveId]/rank/status
@@ -57,16 +58,17 @@ export async function GET(
       rankingsCount,
       job: latestJob
         ? {
-            id: latestJob.id,
-            status: latestJob.status,
-            error: latestJob.error,
-            createdAt: latestJob.createdAt,
-            updatedAt: latestJob.updatedAt,
-            latencyMs: latestJob.latencyMs,
-          }
+          id: latestJob.id,
+          status: latestJob.status,
+          error: latestJob.error,
+          createdAt: latestJob.createdAt,
+          updatedAt: latestJob.updatedAt,
+          latencyMs: latestJob.latencyMs,
+        }
         : null,
     });
   } catch (err: any) {
+    if (isRedirectError(err)) throw err;
     console.error("[GET /api/drives/[driveId]/rank/status]", err);
 
     const message = err?.message ?? "Internal server error";

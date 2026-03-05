@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { rankings, drives } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { enforceProfileGate, enforceRankingsExist, GuardrailViolation } from "@/lib/guardrails";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 /**
  * GET /api/drives/[driveId]/rankings/me
@@ -111,20 +112,21 @@ export async function GET(
         },
         ranking: myRanking
           ? {
-              rank: myRanking.rankPosition,
-              matchScore: myRanking.matchScore,
-              semanticScore: myRanking.semanticScore,
-              structuredScore: myRanking.structuredScore,
-              matchedSkills: myRanking.matchedSkills,
-              missingSkills: myRanking.missingSkills,
-              shortExplanation: myRanking.shortExplanation,
-              detailedExplanation: myRanking.detailedExplanation,
-            }
+            rank: myRanking.rankPosition,
+            matchScore: myRanking.matchScore,
+            semanticScore: myRanking.semanticScore,
+            structuredScore: myRanking.structuredScore,
+            matchedSkills: myRanking.matchedSkills,
+            missingSkills: myRanking.missingSkills,
+            shortExplanation: myRanking.shortExplanation,
+            detailedExplanation: myRanking.detailedExplanation,
+          }
           : null,
       },
       { status: 200 },
     );
   } catch (err: any) {
+    if (isRedirectError(err)) throw err;
     console.error("[GET /api/drives/[driveId]/rankings/me]", err);
 
     const message = err?.message ?? "Internal server error";
