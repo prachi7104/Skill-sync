@@ -9,21 +9,22 @@ import { studentProfileSchema } from "@/lib/validations/student-profile";
 import { computeCompleteness } from "@/lib/profile/completeness";
 import { processEmbeddingJobs } from "@/lib/workers/generate-embedding";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET() {
     try {
-        console.log("[API] /api/student/profile - Check started");
+        logger.info("[API] /api/student/profile - Check started");
 
         // 1. Check Session
         const session = await getServerSession(authOptions);
         if (!session?.user?.email) {
-            console.log("[API] /api/student/profile - No Session");
+            logger.info("[API] /api/student/profile - No Session");
             return NextResponse.json({ success: false, error: "Unauthorized: No Session" }, { status: 401 });
         }
-        console.log(`[API] Session found for: ${session.user.email}`);
+        logger.info(`[API] Session found for: ${session.user.email}`);
 
         // 2. Check User in DB
         const user = await db.query.users.findFirst({
@@ -31,7 +32,7 @@ export async function GET() {
         });
 
         if (!user) {
-            console.log("[API] User not found in DB");
+            logger.info("[API] User not found in DB");
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
         }
 
@@ -41,12 +42,12 @@ export async function GET() {
         });
 
         if (!profile) {
-            console.log("[API] Student profile missing for user", user.id);
+            logger.info("[API] Student profile missing for user", { userId: user.id });
             // Do NOT redirect here for API calls
             return NextResponse.json({ success: false, error: "Profile missing" }, { status: 404 });
         }
 
-        console.log("[API] Success");
+        logger.info("[API] Success");
         return NextResponse.json({ success: true, data: { user, profile } });
 
     } catch (error: any) {

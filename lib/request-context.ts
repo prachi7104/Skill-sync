@@ -12,13 +12,11 @@ export const getRequestStats = cache(() => {
 export const incrementDbQuery = () => {
     const stats = getRequestStats();
     stats.dbQueries++;
-    console.log(`[DB] Query executed. Count: ${stats.dbQueries}`);
 };
 
 export const incrementSessionCheck = () => {
     const stats = getRequestStats();
     stats.sessionChecks++;
-    console.log(`[AUTH] Session check. Count: ${stats.sessionChecks}`);
 };
 
 export const getRequestId = () => {

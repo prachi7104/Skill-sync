@@ -70,11 +70,12 @@ export async function POST(req: NextRequest) {
       { message: "Drive created successfully", drive },
       { status: 201 }
     );
-  } catch (error: any) {
-    if (error?.message?.includes("Unauthorized") || error?.message?.includes("Forbidden")) {
-      return NextResponse.json({ message: error.message }, { status: 403 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes("Unauthorized") || message.includes("Forbidden")) {
+      return NextResponse.json({ message }, { status: 403 });
     }
-    console.error("[api/drives] POST error:", error);
+    console.error("[api/drives] POST error:", err);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -177,8 +178,8 @@ export async function GET(_req: NextRequest) {
     }));
 
     return NextResponse.json({ drives: drivesWithScore });
-  } catch (error: any) {
-    console.error("[api/drives] GET error:", error);
+  } catch (err: unknown) {
+    console.error("[api/drives] GET error:", err);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

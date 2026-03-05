@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jobs, drives } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, lt } from "drizzle-orm";
 import { enhanceJDWithAI } from "@/lib/jd/ai-enhancer";
+import { CRON_SECRET } from "@/lib/env";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +22,20 @@ export async function GET(req: NextRequest) {
   try {
     // Security: Verify cron secret
     const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${CRON_SECRET}`) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    console.log("[Cron:JDEnhance] Checking for pending enhance_jd jobs...");
+    // Recover stuck jobs (processing for >5 minutes and still have retries left)
+    await db.update(jobs)
+      .set({ status: 'pending', updatedAt: new Date() })
+      .where(and(
+        eq(jobs.status, 'processing'),
+        lt(jobs.updatedAt, new Date(Date.now() - 5 * 60 * 1000)),
+        lt(jobs.retryCount, jobs.maxRetries)
+      ));
+
+    logger.info("[Cron:JDEnhance] Checking for pending enhance_jd jobs...");
 
     let processed = 0;
     let failed = 0;
@@ -58,9 +69,7 @@ export async function GET(req: NextRequest) {
       try {
         const { driveId } = job.payload as { driveId: string };
 
-        console.log(
-          `[Cron:JDEnhance] Processing job ${job.id} for drive ${driveId}`,
-        );
+        logger.info(`[Cron:JDEnhance] Processing job ${job.id} for drive ${driveId}`);
 
         // Fetch drive
         const [drive] = await db
@@ -144,9 +153,7 @@ export async function GET(req: NextRequest) {
           })
           .where(eq(jobs.id, job.id));
 
-        console.log(
-          `[Cron:JDEnhance] Job ${job.id} completed — ${parsedJd.requiredSkills.length} skills extracted`,
-        );
+        logger.info(`[Cron:JDEnhance] Job ${job.id} completed — ${parsedJd.requiredSkills.length} skills extracted`);
         processed++;
       } catch (error: unknown) {
         const message =
@@ -175,8 +182,9 @@ export async function GET(req: NextRequest) {
       { message: "JD enhancement worker executed", processed, failed },
       { status: 200 },
     );
-  } catch (error: any) {
-    console.error("[Cron:JDEnhance] Worker failed:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[Cron:JDEnhance] Worker failed:", err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

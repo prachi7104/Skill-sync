@@ -1,5 +1,6 @@
 
 import { getRouter } from "@/lib/antigravity/instance";
+import { logger } from "@/lib/logger";
 
 export interface EnhancedJD {
     title: string;
@@ -47,7 +48,7 @@ export async function enhanceJDWithAI(rawJd: string, titleHint?: string, company
         throw new Error("JD text too short to process");
     }
 
-    console.log("[JD Enhancer] Starting JD enhancement via Antigravity Router...");
+    logger.info("[JD Enhancer] Starting JD enhancement via Antigravity Router...");
 
     const router = getRouter();
 
@@ -71,7 +72,7 @@ export async function enhanceJDWithAI(rawJd: string, titleHint?: string, company
         const parsed = parseAIResponse(text);
 
         if (parsed) {
-            console.log(`[JD Enhancer] Success via ${result.modelUsed}`);
+            logger.info(`[JD Enhancer] Success via ${result.modelUsed}`);
 
             // Fallback to hints if extraction failed/null
             if (!parsed.title && titleHint) parsed.title = titleHint;

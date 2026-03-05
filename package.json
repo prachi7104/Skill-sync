@@ -2,7 +2,7 @@
   "name": "skillsync",
   "version": "0.1.0",
   "engines": {
-    "node": ">=20.0.0"
+    "node": "20.x"
   },
   "private": true,
   "scripts": {
@@ -59,7 +59,7 @@
     "nanoid": "^4.0.2",
     "next": "^14.1.0",
     "next-auth": "^4.24.13",
-    "p-limit": "^4.0.0",
+    "p-limit": "3.1.0",
     "pdf-parse": "^1.1.1",
     "postgres": "^3.4.3",
     "react": "^18.3.1",

@@ -31,7 +31,7 @@ import pLimit from "p-limit";
 import { db } from "@/lib/db";
 import { students, drives, rankings } from "@/lib/db/schema";
 import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
-import { eq, and, gte, inArray, or, isNull } from "drizzle-orm";
+import { eq, and, gte, inArray, or, isNull, type SQL } from "drizzle-orm";
 import {
   generateEmbedding,
   composeStudentEmbeddingText,
@@ -46,6 +46,7 @@ import {
   type StudentProfile,
   type ScoringResult,
 } from "./scoring";
+import { logger } from "@/lib/logger";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -107,7 +108,7 @@ async function fetchDrive(driveId: string) {
 async function fetchEligibleStudents(
   criteria: EligibilityCriteria,
 ): Promise<StudentForRanking[]> {
-  const conditions: any[] = [];
+  const conditions: (SQL | undefined)[] = [];
 
   if (criteria.minCgpa !== null && criteria.minCgpa !== undefined) {
     conditions.push(
@@ -355,8 +356,8 @@ export async function computeRanking(
   try {
     jdEmbedding = await ensureJDEmbedding(drive);
     console.log(`[Ranking] JD embedding ready (${jdEmbedding.length} dims)`);
-  } catch (err) {
-    throw new Error(`Failed to generate JD embedding: ${err}`);
+  } catch (err: unknown) {
+    throw new Error(`Failed to generate JD embedding: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   // 5. Extract required + preferred skills from JD
@@ -440,9 +441,9 @@ export async function computeRanking(
         scoring,
         cgpa: student.cgpa,
       });
-    } catch (err) {
-      const errorMsg = `Failed to process student ${student.id}: ${err}`;
-      console.warn(`[Ranking] ${errorMsg}`);
+    } catch (err: unknown) {
+      const errorMsg = `Failed to process student ${student.id}: ${err instanceof Error ? err.message : String(err)}`;
+      logger.warn(`[Ranking] ${errorMsg}`);
       errors.push(errorMsg);
     }
   }

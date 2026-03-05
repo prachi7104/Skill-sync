@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 const AUTH_ERRORS: Record<string, string> = {
     AccessDenied: "Access denied. Your account is not authorized for this application.",
@@ -19,11 +19,38 @@ const AUTH_ERRORS: Record<string, string> = {
 function LoginForm() {
     const searchParams = useSearchParams();
     // Always redirect to "/" post-login — root page.tsx handles role-based routing.
-    // This prevents stale callbackUrls (e.g. "/faculty/dashboard") from sending
-    // students to wrong dashboards.
     const callbackUrl = "/";
     const errorType = searchParams.get("error");
-    const errorMessage = errorType ? (AUTH_ERRORS[errorType] ?? AUTH_ERRORS.Default) : null;
+    const [errorMessage, setErrorMessage] = useState<string | null>(
+        errorType ? (AUTH_ERRORS[errorType] ?? AUTH_ERRORS.Default) : null
+    );
+    const [isAutoSigningIn, setIsAutoSigningIn] = useState(false);
+
+    useEffect(() => {
+        const token = searchParams.get("token");
+        const type = searchParams.get("type");
+        if (!token || type !== "magic") return;
+
+        setIsAutoSigningIn(true);
+        signIn("magic-link", { token, callbackUrl: "/" }).catch((err) => {
+            console.error("[magic-link] signIn failed:", err);
+            setErrorMessage(AUTH_ERRORS.Default);
+            setIsAutoSigningIn(false);
+        });
+        // Only run once on mount — searchParams is stable.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    if (isAutoSigningIn) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+                <div className="text-center space-y-3">
+                    <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <p className="text-sm text-muted-foreground">Verifying your access link...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">

@@ -42,7 +42,8 @@ export const DATABASE_URL = requireEnv("DATABASE_URL");
 
 // ── NextAuth ────────────────────────────────────────────────────────────────
 export const NEXTAUTH_SECRET = requireEnv("NEXTAUTH_SECRET");
-export const NEXTAUTH_URL = optionalEnv("NEXTAUTH_URL", "http://localhost:3000");
+export const NEXTAUTH_URL = process.env.NEXTAUTH_URL
+  || (process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000');
 
 // ── Role Assignment ─────────────────────────────────────────────────────────
 /**
@@ -60,6 +61,10 @@ export const CLOUDINARY_API_SECRET = optionalEnv("CLOUDINARY_API_SECRET");
 // ── Supabase ────────────────────────────────────────────────────────────────
 export const SUPABASE_URL = optionalEnv("NEXT_PUBLIC_SUPABASE_URL");
 export const SUPABASE_ANON_KEY = optionalEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+export const SUPABASE_SERVICE_ROLE_KEY = optionalEnv("SUPABASE_SERVICE_ROLE_KEY");
+
+// ── Cron Jobs ────────────────────────────────────────────────────────────────
+export const CRON_SECRET = requireEnv("CRON_SECRET");
 
 // ── AI Providers (Free Tier) ────────────────────────────────────────────────
 export const GROQ_API_KEY = optionalEnv("GROQ_API_KEY");

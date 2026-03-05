@@ -76,10 +76,8 @@ function getDrizzleDb(): ReturnType<typeof drizzle<typeof schema>> {
     logger: queryLogger,
   });
 
-  // Cache drizzle instance in dev to survive HMR reloads
-  if (process.env.NODE_ENV !== "production") {
-    globalThis._drizzleDb = instance;
-  }
+  // Cache drizzle instance globally — survives HMR in dev and warm invocations in production.
+  globalThis._drizzleDb = instance;
 
   return instance;
 }

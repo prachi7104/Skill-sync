@@ -22,6 +22,7 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import Groq from "groq-sdk";
+import { logger } from "@/lib/logger";
 
 // ============================================================================
 // MODEL REGISTRY & CONFIGURATION
@@ -757,7 +758,7 @@ export class AntigravityRouter {
 
       if (!this.rateLimiter.canMakeRequest(modelKey)) {
         if (this.enableLogging) {
-          console.log(`[antigravity] ⚠️ ${modelKey} rate-limited, skipping`);
+          logger.info(`[antigravity] ⚠️ ${modelKey} rate-limited, skipping`);
         }
         continue;
       }
@@ -765,13 +766,13 @@ export class AntigravityRouter {
       // Check health
       if (!this.healthMonitor.isHealthy(modelKey)) {
         if (this.enableLogging) {
-          console.log(`[antigravity] ⚠️ ${modelKey} unhealthy, skipping`);
+          logger.info(`[antigravity] ⚠️ ${modelKey} unhealthy, skipping`);
         }
         continue;
       }
 
       if (this.enableLogging) {
-        console.log(`[antigravity] ✅ Selected ${modelKey} for ${taskType}`);
+        logger.info(`[antigravity] ✅ Selected ${modelKey} for ${taskType}`);
       }
 
       return modelKey;
@@ -1122,8 +1123,8 @@ Return ONLY valid JSON. No markdown, no explanations.`;
   try {
     const { sanitizeInput } = await import("./sanitize");
     cleanedText = sanitizeInput(resumeText);
-  } catch (e) {
-    // Safe to proceed if sanitizer missing, guard will catch strict issues
+  } catch (e: unknown) {
+    console.warn('[antigravity] JSON extraction error:', e instanceof Error ? e.message : String(e));
   }
 
   const result = await router.execute(
@@ -1190,8 +1191,8 @@ Normalize all skill names. Return ONLY valid JSON.`;
   try {
     const { sanitizeInput } = await import("./sanitize");
     cleanedJd = sanitizeInput(jdText);
-  } catch (e) {
-    // Safe fallback
+  } catch (e: unknown) {
+    console.warn('[antigravity] JSON extraction error:', e instanceof Error ? e.message : String(e));
   }
 
   const result = await router.execute(

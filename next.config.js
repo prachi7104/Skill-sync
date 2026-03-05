@@ -13,6 +13,7 @@ const nextConfig = {
     serverComponentsExternalPackages: [
       "onnxruntime-node",
       "pdf-parse",
+      "p-limit",
     ],
   },
 };

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jobs } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, lt } from "drizzle-orm";
 import { computeRanking } from "@/lib/matching";
 import { logger } from "@/lib/logger";
+import { CRON_SECRET } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 // Vercel Hobby plan: 10s max function duration.
@@ -23,9 +24,18 @@ export async function GET(req: NextRequest) {
   try {
     // Security: Verify cron secret
     const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${CRON_SECRET}`) {
       return new Response('Unauthorized', { status: 401 });
     }
+
+    // Recover stuck jobs (processing for >5 minutes and still have retries left)
+    await db.update(jobs)
+      .set({ status: 'pending', updatedAt: new Date() })
+      .where(and(
+        eq(jobs.status, 'processing'),
+        lt(jobs.updatedAt, new Date(Date.now() - 5 * 60 * 1000)),
+        lt(jobs.retryCount, jobs.maxRetries)
+      ));
 
     logger.info("Checking for pending rank_students jobs");
 
@@ -59,8 +69,7 @@ export async function GET(req: NextRequest) {
 
       try {
         const { driveId } = job.payload as { driveId: string };
-        console.log(`[Cron:Rankings] Processing job ${job.id} for drive ${driveId}`);
-
+        logger.info(`[Cron:Rankings] Processing job ${job.id} for drive ${driveId}`);
         const result = await computeRanking(driveId);
 
         // Mark complete

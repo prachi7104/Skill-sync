@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
 import { users, magicLinkTokens } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { randomBytes } from "crypto";
 
 // ── POST /api/admin/faculty/invite ──────────────────────────────────────────
@@ -50,6 +50,10 @@ export async function POST(req: NextRequest) {
     // Generate token
     const token = randomBytes(32).toString("hex"); // 64-char hex
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    // Invalidate any existing unused tokens for this user
+    await db.update(magicLinkTokens)
+        .set({ used: true })
+        .where(and(eq(magicLinkTokens.userId, facultyUser.id), eq(magicLinkTokens.used, false)));
 
     await db.insert(magicLinkTokens).values({
         userId: facultyUser.id,
@@ -59,8 +63,7 @@ export async function POST(req: NextRequest) {
 
     const loginUrl =
         (process.env.NEXTAUTH_URL || "http://localhost:3000") +
-        "/api/auth/callback/magic-link?token=" +
-        token;
+        "/login?token=" + token + "&type=magic";
 
     return NextResponse.json({
         success: true,

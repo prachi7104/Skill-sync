@@ -31,6 +31,7 @@ import {
   timestamp,
   jsonb,
   customType,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -635,6 +636,38 @@ export const sampleJds = pgTable("sample_jds", {
     .notNull()
     .defaultNow(),
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Table: ai_rate_limits
+// ─────────────────────────────────────────────────────────────────────────────
+// Purpose: Multi-model rate limiting using the database.
+//
+// Free-tier tokens are shared. We use this table to track request counts
+// per model per minute window to prevent 429 errors from providers.
+// Keyed by (model_key, window_start).
+
+export const aiRateLimits = pgTable(
+  "ai_rate_limits",
+  {
+    /** Primary key. */
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    /** Model identifier (e.g., "gemini-1.5-flash", "llama-3.1-8b"). */
+    modelKey: varchar("model_key", { length: 100 }).notNull(),
+
+    /**
+     * Start of the 1-minute window (ISO 8601, truncated to minute).
+     * E.g., "2025-03-04T12:05:00Z".
+     */
+    windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+
+    /** Number of requests made in this window across all server instances. */
+    requestCount: integer("request_count").notNull().default(1),
+  },
+  (table) => ({
+    unq: unique().on(table.modelKey, table.windowStart),
+  }),
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Relations (Drizzle relational query API)

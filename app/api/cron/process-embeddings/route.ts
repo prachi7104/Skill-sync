@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processEmbeddingJobs } from "@/lib/workers/generate-embedding";
+import { CRON_SECRET } from "@/lib/env";
+import { db } from "@/lib/db";
+import { jobs } from "@/lib/db/schema";
+import { eq, and, lt } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -16,9 +20,18 @@ export async function GET(req: NextRequest) {
   try {
     // Security: Verify cron secret
     const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${CRON_SECRET}`) {
       return new Response('Unauthorized', { status: 401 });
     }
+
+    // Recover stuck jobs (processing for >5 minutes and still have retries left)
+    await db.update(jobs)
+      .set({ status: 'pending', updatedAt: new Date() })
+      .where(and(
+        eq(jobs.status, 'processing'),
+        lt(jobs.updatedAt, new Date(Date.now() - 5 * 60 * 1000)),
+        lt(jobs.retryCount, jobs.maxRetries)
+      ));
 
     const result = await processEmbeddingJobs();
 
@@ -26,8 +39,9 @@ export async function GET(req: NextRequest) {
       { message: "Embeddings worker executed", ...result },
       { status: 200 },
     );
-  } catch (error: any) {
-    console.error("[Cron:Embeddings] Worker failed:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[Cron:Embeddings] Worker failed:", err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
