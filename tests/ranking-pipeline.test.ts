@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 
 // ── Constants (mirror scoring.ts) ───────────────────────────────────────────
 const SEMANTIC_WEIGHT = 0.7;
@@ -474,7 +474,7 @@ interface TriggerResult {
 
 async function simulateRankTrigger(
   driveId: string,
-  userRole: string,
+  _userRole: string,
   guardResult: { ok: boolean; error?: string; code?: number },
   existingJobId: string | null,
 ): Promise<TriggerResult> {

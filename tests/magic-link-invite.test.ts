@@ -23,11 +23,11 @@ const mockDb = {
     query: {
         users: { findFirst: vi.fn() },
     },
-    insert: vi.fn(() => ({
-        values: vi.fn().mockResolvedValue({}),
+    insert: vi.fn((_table?: string) => ({
+        values: vi.fn((_vals?: Record<string, unknown>) => ({})).mockResolvedValue({}),
     })),
-    update: vi.fn(() => ({
-        set: vi.fn(() => ({
+    update: vi.fn((_table?: string) => ({
+        set: vi.fn((_vals?: Record<string, unknown>) => ({
             where: vi.fn().mockResolvedValue({}),
         })),
     })),

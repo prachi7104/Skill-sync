@@ -28,13 +28,13 @@ const mockDb = {
     query: {
         users: { findFirst: vi.fn() },
     },
-    insert: vi.fn(() => ({
-        values: vi.fn(() => ({
+    insert: vi.fn((_table?: string) => ({
+        values: vi.fn((_vals?: Record<string, unknown>) => ({
             returning: vi.fn(() => [{ id: "new-user-id" }]),
         })),
     })),
-    update: vi.fn(() => ({
-        set: vi.fn(() => ({
+    update: vi.fn((_table?: string) => ({
+        set: vi.fn((_vals?: Record<string, unknown>) => ({
             where: vi.fn().mockResolvedValue({}),
         })),
     })),
@@ -57,7 +57,7 @@ async function simulateSignIn(
     if (!user.email) return false;
     const email = user.email.toLowerCase();
     try {
-        const existingUser = await mockDb.query.users.findFirst({ where: email });
+        const existingUser = await mockDb.query.users.findFirst({ where: email } as any);
         if (existingUser) {
             if (!(existingUser as any).microsoftId && account?.providerAccountId) {
                 await mockDb.update("users")
@@ -93,7 +93,7 @@ async function simulateAuthorize(token: string | undefined) {
     if (row.role !== "faculty" && row.role !== "admin") return null;
 
     // Mark token as used
-    await mockDb.update("magicLinkTokens").set({ used: true }).where(row.tokenId);
+    await (mockDb.update as any)("magicLinkTokens").set({ used: true }).where(row.tokenId);
 
     return {
         id: row.userId,

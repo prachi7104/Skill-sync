@@ -13,7 +13,7 @@
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 // ── Inlined extractJSON (mirrors AntigravityRouter.extractJSON) ──────────────
 
@@ -59,10 +59,7 @@ function cleanJSONString(text: string): string {
 
 // ── Inlined Model Selection Logic ───────────────────────────────────────────
 
-interface ModelEntry {
-    id: string;
-    provider: "google" | "groq";
-}
+// ModelEntry interface removed (unused in tests)
 
 interface TaskDef {
     priority: string[];
@@ -92,7 +89,7 @@ interface ExecuteResult<T = string> {
 
 async function simulateExecute(
     taskDef: TaskDef | null,
-    prompt: string,
+    _prompt: string,
     executors: Record<string, () => Promise<string>>,
     isHealthy: (key: string) => boolean,
     isRateLimited: (key: string) => boolean,
