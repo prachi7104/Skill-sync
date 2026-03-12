@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { enforceDetailedAnalysisLimits, incrementDetailedAnalysisUsage } from "@/lib/guardrails/sandbox-limits";
+import { GuardrailViolation } from "@/lib/guardrails/errors";
 import { parseResumeWithAI } from "@/lib/resume/ai-parser";
 import { performDetailedAnalysis } from "@/lib/ats/detailed-analysis";
 import { generateEmbedding } from "@/lib/embeddings/generate";
@@ -59,6 +60,10 @@ export async function POST(req: NextRequest) {
         try {
             await enforceDetailedAnalysisLimits(student.id);
         } catch (error: any) {
+            // GuardrailViolation carries the correct status (429) and structured JSON
+            if (error instanceof GuardrailViolation) {
+                return NextResponse.json(error.toJSON(), { status: error.status });
+            }
             return NextResponse.json({ error: error.message }, { status: 403 });
         }
 

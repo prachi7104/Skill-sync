@@ -47,7 +47,11 @@ export default function StudentDashboard() {
         return <div className="p-8">Loading dashboard...</div>;
     }
 
-    const { score, missing } = computeCompleteness(student);
+    const { score, missing } = computeCompleteness({
+        ...student,
+        name: user.name,
+        email: user.email,
+    });
     const sandboxUsageToday = student.sandboxUsageToday ?? 0;
     const profileCompleteness = score;
 

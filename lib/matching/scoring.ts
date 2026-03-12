@@ -10,9 +10,8 @@
  *   match_score = 0.7 * semantic_score + 0.3 * structured_score
  *
  * Structured Score Breakdown (0–100):
- *   - Required skills overlap:  50 pts  (50 × overlapRatio)
- *   - Preferred skills overlap: 20 pts  (20 × preferredOverlapRatio)
- *   - CGPA buffer above min:    15 pts  (min(cgpaAboveMin / 2, 1) × 15)
+ *   - Required skills overlap:  60 pts  (60 × overlapRatio)
+ *   - Preferred skills overlap: 25 pts  (25 × preferredOverlapRatio)
  *   - Project/work keywords:    15 pts  (15 × keywordHitRatio, max 5 keywords)
  *
  * Rules:
@@ -232,9 +231,8 @@ export function computeSemanticScore(
  * Computes the structured score (0–100).
  *
  * Sub-components:
- *   required skills  (50 pts)
- *   preferred skills (20 pts)
- *   CGPA buffer      (15 pts)
+ *   required skills  (60 pts)
+ *   preferred skills (25 pts)
  *   project keywords (15 pts)
  */
 export function computeStructuredScore(opts: {

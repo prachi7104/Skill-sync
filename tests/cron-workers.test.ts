@@ -30,7 +30,7 @@ interface Job {
 // ── Inlined cron worker logic ───────────────────────────────────────────────
 
 const CRON_SECRET = "test-secret";
-const MAX_JOBS_PER_TICK = 3;
+const MAX_JOBS_PER_TICK = 1; // matches app/api/cron/process-rankings/route.ts
 
 // Instead of nested mock chains, use a simple job queue + processor pattern
 let jobQueue: Job[] = [];
@@ -160,19 +160,19 @@ describe("Cron Workers", () => {
         });
     });
 
-    it("should process up to MAX_JOBS_PER_TICK jobs", async () => {
+    it("should process exactly MAX_JOBS_PER_TICK (1) job per tick", async () => {
         jobQueue = [
             { id: "j1", type: "rank_students", status: "pending", payload: {}, retryCount: 0, maxRetries: 3 },
             { id: "j2", type: "rank_students", status: "pending", payload: {}, retryCount: 0, maxRetries: 3 },
             { id: "j3", type: "rank_students", status: "pending", payload: {}, retryCount: 0, maxRetries: 3 },
-            { id: "j4", type: "rank_students", status: "pending", payload: {}, retryCount: 0, maxRetries: 3 },
         ];
         mockProcessor.mockResolvedValue({});
 
         const result = await simulateCronHandler("Bearer test-secret");
 
-        expect(result.body.processed).toBe(3); // MAX_JOBS_PER_TICK = 3
-        expect(jobQueue[3].status).toBe("pending"); // 4th job still pending
+        expect(result.body.processed).toBe(1); // MAX_JOBS_PER_TICK = 1
+        expect(jobQueue[1].status).toBe("pending"); // 2nd job untouched this tick
+        expect(jobQueue[2].status).toBe("pending"); // 3rd job untouched this tick
     });
 
     it("should handle mix of success and failure", async () => {
@@ -184,33 +184,16 @@ describe("Cron Workers", () => {
             .mockResolvedValueOnce({}) // j1 succeeds
             .mockRejectedValueOnce(new Error("fail")); // j2 fails
 
-        const result = await simulateCronHandler("Bearer test-secret");
+        const firstTick = await simulateCronHandler("Bearer test-secret");
 
-        expect(result.body.processed).toBe(1);
-        expect(result.body.failed).toBe(1);
+        expect(firstTick.body.processed).toBe(1);
+        expect(firstTick.body.failed).toBe(0);
+
+        const secondTick = await simulateCronHandler("Bearer test-secret");
+
+        expect(secondTick.body.processed).toBe(0);
+        expect(secondTick.body.failed).toBe(1);
     });
-
-  it("should process only 1 job per tick (MAX_JOBS_PER_TICK = 1 rule)", async () => {
-    // Simulate the single-job-per-tick policy
-    jobQueue = [
-      { id: "j1", type: "rank_students", status: "pending", payload: {}, retryCount: 0, maxRetries: 3 },
-      { id: "j2", type: "rank_students", status: "pending", payload: {}, retryCount: 0, maxRetries: 3 },
-    ];
-    mockProcessor.mockResolvedValue({});
-
-    // Run a tick that only allows 1 job
-    let processed = 0;
-    const pendingJob = jobQueue.find(j => j.status === "pending");
-    if (pendingJob) {
-      pendingJob.status = "processing";
-      await mockProcessor(pendingJob);
-      pendingJob.status = "completed";
-      processed++;
-    }
-
-    expect(processed).toBe(1);
-    expect(jobQueue[1].status).toBe("pending"); // 2nd job untouched
-  });
 
   it("should pick highest priority job first (desc order)", () => {
     // desc(priority) means higher number = higher priority = processed first

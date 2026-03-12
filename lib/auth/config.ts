@@ -131,8 +131,29 @@ export const authOptions: NextAuthOptions = {
                     token.role = dbUser.role;
                     token.name = dbUser.name;
                     token.email = dbUser.email;
+                    token.roleCheckedAt = Date.now();
                 }
             }
+
+            // Re-fetch role from DB once per hour.
+            // Guards against: admin changes a user's role without them signing out.
+            const ROLE_REFRESH_MS = 60 * 60 * 1000; // 60 minutes
+            const lastChecked = (token.roleCheckedAt as number | undefined) ?? 0;
+            if (token.id && Date.now() - lastChecked > ROLE_REFRESH_MS) {
+                try {
+                    const freshUser = await db.query.users.findFirst({
+                        where: eq(users.id, token.id as string),
+                        columns: { role: true },
+                    });
+                    if (freshUser) {
+                        token.role = freshUser.role;
+                        token.roleCheckedAt = Date.now();
+                    }
+                } catch {
+                    // Non-fatal: keep the existing role if the DB check fails
+                }
+            }
+
             return token;
         },
         async session({ session, token }) {

@@ -48,6 +48,15 @@ export async function POST(req: NextRequest) {
         );
     }
 
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return NextResponse.json(
+            { error: "Invalid email format" },
+            { status: 400 }
+        );
+    }
+
     // Check if user already exists
     const existing = await db.query.users.findFirst({
         where: eq(users.email, email.toLowerCase()),

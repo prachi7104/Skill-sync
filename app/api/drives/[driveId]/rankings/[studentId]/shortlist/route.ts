@@ -27,7 +27,15 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const shortlisted = body.shortlisted; // boolean | null
+    const shortlisted = body.shortlisted;
+
+    // Validate: only boolean or null is accepted
+    if (shortlisted !== true && shortlisted !== false && shortlisted !== null) {
+        return NextResponse.json(
+            { error: "shortlisted must be true, false, or null" },
+            { status: 400 }
+        );
+    }
 
     await db
         .update(rankings)

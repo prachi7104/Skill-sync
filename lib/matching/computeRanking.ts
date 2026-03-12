@@ -200,6 +200,15 @@ async function ensureJDEmbedding(
 
   const embedding = await generateEmbedding(jdText);
 
+  // Guard: zero vectors mean Gemini failed silently — ranking with a zero JD
+  // embedding would assign semanticScore=0 to every student, so abort entirely.
+  const isZeroJD = embedding.length === 768 && embedding.every((v) => v === 0);
+  if (isZeroJD) {
+    throw new Error(
+      "JD embedding generation returned a zero vector — Gemini failed. Ranking aborted. Will retry on next cron tick.",
+    );
+  }
+
   await db
     .update(drives)
     .set({ jdEmbedding: embedding, updatedAt: new Date() })
@@ -231,6 +240,17 @@ async function ensureStudentEmbedding(
   }
 
   const embedding = await generateEmbedding(profileText);
+
+  // Guard: do not store zero vectors — they corrupt semantic scoring.
+  // Return null so this student is treated as having no embedding and is skipped.
+  const isZeroStudent =
+    embedding.length === 768 && embedding.every((v) => v === 0);
+  if (isZeroStudent) {
+    console.warn(
+      `[Ranking] Zero vector for student ${student.id} — skipping.`,
+    );
+    return null;
+  }
 
   await db
     .update(students)
@@ -316,7 +336,7 @@ export async function computeRanking(
   driveId: string,
 ): Promise<RankingComputationResult> {
   const errors: string[] = [];
-  const SAFE_DURATION_MS = 8000; // Stay under Vercel's 10s limit
+  const SAFE_DURATION_MS = 50000; // Stay under Vercel's 60s cron limit (10s buffer)
   const computeStart = Date.now();
   let skippedNoEmbedding = 0;
 
