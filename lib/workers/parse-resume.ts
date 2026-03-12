@@ -10,7 +10,7 @@
  */
 
 import { db } from "@/lib/db";
-import { jobs, students } from "@/lib/db/schema";
+import { jobs, students, users } from "@/lib/db/schema";
 import { eq, and, asc, desc } from "drizzle-orm";
 import { parseResumeWithAI, mapParsedResumeToProfile } from "@/lib/resume/ai-parser";
 import { extractTextFromUrl } from "@/lib/resume/server-extractor";
@@ -133,7 +133,7 @@ export async function processResumeParseJobs(): Promise<number> {
             const freshProfile = await db.query.students.findFirst({ where: eq(students.id, studentId) });
             if (freshProfile) {
                 const user = await db.query.users.findFirst({
-                    where: eq(students.id, studentId),
+                    where: eq(users.id, studentId),
                     columns: { name: true, email: true },
                 });
                 if (user) {

@@ -192,12 +192,11 @@ export async function enforceDetailedAnalysisLimits(studentId: string): Promise<
 
   // Enforce limits
   if (dailyUsage >= DETAILED_DAILY_LIMIT) {
-    // We can reuse the same error for now or create a specific one
-    throw new Error(`Daily limit reached (${DETAILED_DAILY_LIMIT} detailed analyses/day). Please try again tomorrow.`);
+    throw ERRORS.DETAILED_DAILY_LIMIT();
   }
 
   if (monthlyUsage >= DETAILED_MONTHLY_LIMIT) {
-    throw new Error(`Monthly limit reached (${DETAILED_MONTHLY_LIMIT} detailed analyses/month). Please try again next month.`);
+    throw ERRORS.DETAILED_MONTHLY_LIMIT();
   }
 }
 

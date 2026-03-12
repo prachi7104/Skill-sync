@@ -76,3 +76,26 @@ describe("cosineSimilarity", () => {
         expect(cosineSimilarity(vecA, vecB)).toBeCloseTo(-1, 5);
     });
 });
+
+describe("Zero vector detection", () => {
+  it("should detect an all-zero 768-dim vector as zero", () => {
+    const zero768 = new Array(768).fill(0);
+    const isZero = zero768.length === 768 && zero768.every(v => v === 0);
+    expect(isZero).toBe(true);
+  });
+
+  it("should not flag a real embedding as zero", () => {
+    const real = new Array(768).fill(0);
+    real[42] = 0.31;
+    const isZero = real.length === 768 && real.every(v => v === 0);
+    expect(isZero).toBe(false);
+  });
+
+  it("should return 0 cosine similarity for zero vectors (unchanged behavior)", () => {
+    const zero = new Array(768).fill(0);
+    const real = new Array(768).fill(0.1);
+    // cosineSimilarity already handles zero vectors — confirm it returns 0
+    expect(cosineSimilarity(zero, real)).toBe(0);
+    expect(cosineSimilarity(real, zero)).toBe(0);
+  });
+});

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useStudent } from "@/app/(student)/providers/student-provider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle, UploadCloud, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, XCircle, UploadCloud, Sparkles } from "lucide-react";
 import { updateOnboardingStep } from "@/app/actions/onboarding";
 import { toast } from "sonner";
 import { extractTextFromResume, cleanResumeText } from "@/lib/resume/text-extractor";
@@ -221,7 +221,7 @@ export default function OnboardingResumeClient() {
                 {parseStatus === "failed" && (
                     <div className="space-y-2">
                         <div className="flex items-center gap-2 text-amber-600 justify-center">
-                            <CheckCircle className="h-5 w-5" />
+                            <XCircle className="h-5 w-5 text-red-500" />
                             <span className="font-medium">Resume uploaded, but AI parsing had an issue</span>
                         </div>
                         <p className="text-xs text-muted-foreground">

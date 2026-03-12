@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { users, magicLinkTokens } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { randomBytes } from "crypto";
+import { NEXTAUTH_URL } from "@/lib/env";
 
 // ── POST /api/admin/faculty/invite ──────────────────────────────────────────
 // Generate a magic link login token for a faculty user. Admin only.
@@ -61,9 +62,7 @@ export async function POST(req: NextRequest) {
         expiresAt,
     });
 
-    const loginUrl =
-        (process.env.NEXTAUTH_URL || "http://localhost:3000") +
-        "/login?token=" + token + "&type=magic";
+    const loginUrl = NEXTAUTH_URL + "/login?token=" + token + "&type=magic";
 
     return NextResponse.json({
         success: true,

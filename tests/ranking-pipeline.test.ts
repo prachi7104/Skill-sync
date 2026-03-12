@@ -3,9 +3,8 @@ import { describe, it, expect } from "vitest";
 // ── Constants (mirror scoring.ts) ───────────────────────────────────────────
 const SEMANTIC_WEIGHT = 0.7;
 const STRUCTURED_WEIGHT = 0.3;
-const REQUIRED_SKILLS_PTS = 50;
-const PREFERRED_SKILLS_PTS = 20;
-const CGPA_BUFFER_PTS = 15;
+const REQUIRED_SKILLS_PTS = 60;
+const PREFERRED_SKILLS_PTS = 25;
 const PROJECT_KEYWORD_PTS = 15;
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -194,7 +193,6 @@ function computeSemanticScore(
 function computeStructuredScore(opts: {
   requiredOverlapRatio: number;
   preferredOverlapRatio: number;
-  cgpaAboveMin: number | null;
   projectKeywordHitRatio: number;
   isEligible: boolean;
 }): number {
@@ -202,10 +200,6 @@ function computeStructuredScore(opts: {
   let score = 0;
   score += REQUIRED_SKILLS_PTS * opts.requiredOverlapRatio;
   score += PREFERRED_SKILLS_PTS * opts.preferredOverlapRatio;
-  if (opts.cgpaAboveMin !== null && opts.cgpaAboveMin > 0) {
-    const normalized = Math.min(opts.cgpaAboveMin / 2, 1);
-    score += CGPA_BUFFER_PTS * normalized;
-  }
   score += PROJECT_KEYWORD_PTS * opts.projectKeywordHitRatio;
   return round2(Math.min(score, 100));
 }
@@ -256,17 +250,10 @@ function computeAllScores(
     studentProfile.projectKeywords,
     requiredSkills,
   );
-  const cgpaAboveMin =
-    eligibility.minCgpa !== null &&
-      studentProfile.cgpa !== null &&
-      studentProfile.cgpa !== undefined
-      ? studentProfile.cgpa - eligibility.minCgpa
-      : null;
   const semanticScore = computeSemanticScore(studentEmbedding, jdEmbedding);
   const structuredScore = computeStructuredScore({
     requiredOverlapRatio,
     preferredOverlapRatio,
-    cgpaAboveMin,
     projectKeywordHitRatio,
     isEligible,
   });

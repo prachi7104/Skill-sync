@@ -54,7 +54,7 @@ const ERRORS = {
   SANDBOX_DAILY_LIMIT: (): GuardrailViolation =>
     new GuardrailViolation({
       code: "SANDBOX_DAILY_LIMIT",
-      reason: "Daily sandbox limit exceeded (100/day).",
+      reason: "Daily sandbox limit exceeded (5/day).",
       nextStep: "Try again tomorrow. Limits reset at midnight UTC.",
       status: 429,
     }),
@@ -62,7 +62,7 @@ const ERRORS = {
   SANDBOX_MONTHLY_LIMIT: (): GuardrailViolation =>
     new GuardrailViolation({
       code: "SANDBOX_MONTHLY_LIMIT",
-      reason: "Monthly sandbox limit exceeded (500/month).",
+      reason: "Monthly sandbox limit exceeded (30/month).",
       nextStep: "Limit resets at the start of next month.",
       status: 429,
     }),
@@ -114,8 +114,8 @@ const ERRORS = {
 
 // ── Inline sandbox limits logic (mirrors sandbox-limits.ts) ─────────────────
 
-const DAILY_LIMIT = 100;
-const MONTHLY_LIMIT = 500;
+const DAILY_LIMIT = 5;
+const MONTHLY_LIMIT = 30;
 
 function todayUTC(): string {
   return new Date().toISOString().slice(0, 10);
@@ -288,23 +288,23 @@ describe("Guardrails", () => {
 
     it("should pass when usage is below daily and monthly limits", () => {
       const student: StudentSandboxRow = {
-        sandboxUsageToday: 99,
+        sandboxUsageToday: 4,
         sandboxResetDate: today,
-        sandboxUsageMonth: 490,
+        sandboxUsageMonth: 25,
         sandboxMonthResetDate: month,
       };
 
       const result = checkSandboxLimits(student);
-      expect(result.effectiveDailyUsage).toBe(99);
-      expect(result.effectiveMonthlyUsage).toBe(490);
+      expect(result.effectiveDailyUsage).toBe(4);
+      expect(result.effectiveMonthlyUsage).toBe(25);
       expect(Object.keys(result.updates)).toHaveLength(0);
     });
 
-    it("should throw SANDBOX_DAILY_LIMIT when daily usage >= 100", () => {
+    it("should throw SANDBOX_DAILY_LIMIT when daily usage >= 5", () => {
       const student: StudentSandboxRow = {
-        sandboxUsageToday: 100,
+        sandboxUsageToday: 5,
         sandboxResetDate: today,
-        sandboxUsageMonth: 100,
+        sandboxUsageMonth: 5,
         sandboxMonthResetDate: month,
       };
 
@@ -317,11 +317,11 @@ describe("Guardrails", () => {
       }
     });
 
-    it("should throw SANDBOX_MONTHLY_LIMIT when monthly usage >= 500", () => {
+    it("should throw SANDBOX_MONTHLY_LIMIT when monthly usage >= 30", () => {
       const student: StudentSandboxRow = {
         sandboxUsageToday: 0,
         sandboxResetDate: today,
-        sandboxUsageMonth: 500,
+        sandboxUsageMonth: 30,
         sandboxMonthResetDate: month,
       };
 
@@ -336,7 +336,7 @@ describe("Guardrails", () => {
     it("should lazy-reset daily counter when date has changed", () => {
       const yesterday = "2025-01-01";
       const student: StudentSandboxRow = {
-        sandboxUsageToday: 100,
+        sandboxUsageToday: 5,
         sandboxResetDate: yesterday, // old date
         sandboxUsageMonth: 5,
         sandboxMonthResetDate: month,
@@ -354,7 +354,7 @@ describe("Guardrails", () => {
       const student: StudentSandboxRow = {
         sandboxUsageToday: 0,
         sandboxResetDate: today,
-        sandboxUsageMonth: 500,
+        sandboxUsageMonth: 30,
         sandboxMonthResetDate: oldMonth, // old month
       };
 
@@ -367,9 +367,9 @@ describe("Guardrails", () => {
 
     it("should reset both daily and monthly when both dates are stale", () => {
       const student: StudentSandboxRow = {
-        sandboxUsageToday: 100,
+        sandboxUsageToday: 5,
         sandboxResetDate: "2024-06-15",
-        sandboxUsageMonth: 500,
+        sandboxUsageMonth: 30,
         sandboxMonthResetDate: "2024-06",
       };
 
@@ -395,9 +395,9 @@ describe("Guardrails", () => {
 
     it("should pass at usage = limit - 1", () => {
       const student: StudentSandboxRow = {
-        sandboxUsageToday: 99, // DAILY_LIMIT - 1
+        sandboxUsageToday: 4, // DAILY_LIMIT - 1
         sandboxResetDate: today,
-        sandboxUsageMonth: 499, // MONTHLY_LIMIT - 1
+        sandboxUsageMonth: 29, // MONTHLY_LIMIT - 1
         sandboxMonthResetDate: month,
       };
 
@@ -406,9 +406,9 @@ describe("Guardrails", () => {
 
     it("daily limit takes precedence over monthly when both exceeded", () => {
       const student: StudentSandboxRow = {
-        sandboxUsageToday: 100,
+        sandboxUsageToday: 5,
         sandboxResetDate: today,
-        sandboxUsageMonth: 500,
+        sandboxUsageMonth: 30,
         sandboxMonthResetDate: month,
       };
 
@@ -419,6 +419,33 @@ describe("Guardrails", () => {
         expect((err as GuardrailViolation).code).toBe("SANDBOX_DAILY_LIMIT");
       }
     });
+
+  it("real daily limit should be 5 (not 100)", () => {
+    // The API response previously reported 100 — the real limit is 5
+    const student: StudentSandboxRow = {
+      sandboxUsageToday: 5,
+      sandboxResetDate: todayUTC(),
+      sandboxUsageMonth: 0,
+      sandboxMonthResetDate: currentMonthUTC(),
+    };
+    // With limit=5, usage=5 should throw
+    expect(() => checkSandboxLimits(student)).toThrow(GuardrailViolation);
+    // With usage=4 should pass
+    const passing = { ...student, sandboxUsageToday: 4 };
+    expect(() => checkSandboxLimits(passing)).not.toThrow();
+  });
+
+  it("real monthly limit should be 30 (not 500)", () => {
+    const student: StudentSandboxRow = {
+      sandboxUsageToday: 0,
+      sandboxResetDate: todayUTC(),
+      sandboxUsageMonth: 30,
+      sandboxMonthResetDate: currentMonthUTC(),
+    };
+    expect(() => checkSandboxLimits(student)).toThrow(GuardrailViolation);
+    const passing = { ...student, sandboxUsageMonth: 29 };
+    expect(() => checkSandboxLimits(passing)).not.toThrow();
+  });
   });
 
   // ── Atomic Increment Logic ────────────────────────────────────────────
@@ -585,6 +612,60 @@ describe("Guardrails", () => {
         expect(violation.nextStep).toContain("Link coding profiles");
         // 4th item should be sliced off (max 3)
         expect(violation.nextStep).not.toContain("Add projects");
+      }
+    });
+  });
+
+  describe("Detailed Analysis Limits — enforceDetailedAnalysisLimits logic", () => {
+    const DETAILED_DAILY_LIMIT = 3;
+    const DETAILED_MONTHLY_LIMIT = 15;
+
+    function checkDetailedLimits(daily: number, monthly: number): void {
+      if (daily >= DETAILED_DAILY_LIMIT) {
+        throw new GuardrailViolation({
+          code: "DETAILED_DAILY_LIMIT",
+          reason: "Daily detailed analysis limit exceeded (3/day).",
+          nextStep: "Try again tomorrow. Limits reset at midnight UTC.",
+          status: 429,
+        });
+      }
+      if (monthly >= DETAILED_MONTHLY_LIMIT) {
+        throw new GuardrailViolation({
+          code: "DETAILED_MONTHLY_LIMIT",
+          reason: "Monthly detailed analysis limit exceeded (15/month).",
+          nextStep: "Limit resets at the start of next month.",
+          status: 429,
+        });
+      }
+    }
+
+    it("should throw DETAILED_DAILY_LIMIT at exactly 3 uses", () => {
+      expect(() => checkDetailedLimits(3, 0)).toThrow(GuardrailViolation);
+      try { checkDetailedLimits(3, 0); } catch (e) {
+        expect((e as GuardrailViolation).code).toBe("DETAILED_DAILY_LIMIT");
+        expect((e as GuardrailViolation).status).toBe(429);
+      }
+    });
+
+    it("should pass at 2 daily uses", () => {
+      expect(() => checkDetailedLimits(2, 0)).not.toThrow();
+    });
+
+    it("should throw DETAILED_MONTHLY_LIMIT at 15 monthly uses", () => {
+      expect(() => checkDetailedLimits(0, 15)).toThrow(GuardrailViolation);
+      try { checkDetailedLimits(0, 15); } catch (e) {
+        expect((e as GuardrailViolation).code).toBe("DETAILED_MONTHLY_LIMIT");
+        expect((e as GuardrailViolation).status).toBe(429);
+      }
+    });
+
+    it("detailed daily error should be GuardrailViolation (not plain Error)", () => {
+      try {
+        checkDetailedLimits(3, 0);
+      } catch (e) {
+        expect(e).toBeInstanceOf(GuardrailViolation);
+        expect(e).toBeInstanceOf(Error);
+        expect((e as GuardrailViolation).name).toBe("GuardrailViolation");
       }
     });
   });

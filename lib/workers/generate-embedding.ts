@@ -89,6 +89,12 @@ export async function processEmbeddingJobs() {
 
                 const embedding = await generateEmbedding(text);
 
+                // Guard: reject zero vectors — they indicate a failed Gemini call
+                const isZeroVector = embedding.length === 768 && embedding.every(v => v === 0);
+                if (isZeroVector) {
+                    throw new Error("Gemini returned a zero vector — embedding generation failed. Will retry.");
+                }
+
                 await db
                     .update(students)
                     .set({ embedding, updatedAt: new Date() })

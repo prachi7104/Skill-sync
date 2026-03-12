@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jobs } from "@/lib/db/schema";
-import { eq, and, lt } from "drizzle-orm";
+import { eq, and, lt, desc, asc } from "drizzle-orm";
 import { computeRanking } from "@/lib/matching";
 import { logger } from "@/lib/logger";
 import { CRON_SECRET } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
-// Vercel Hobby plan: 10s max function duration.
-// Rankings are chunked via MAX_JOBS_PER_TICK (3 per cron trigger).
-// Triggered by Supabase pg_cron every 10 minutes (see drizzle/0006_pg_cron_workers.sql).
-
-
-const MAX_JOBS_PER_TICK = 3;
+// Process exactly ONE ranking job per cron tick.
+// computeRanking() can take 8-40s for real datasets. Running 1 job per tick
+// (cron fires every 1 minute via pg_cron) gives each job up to 60s.
+// See SkillSync_DB_Fixes.sql Section 5 to update pg_cron schedule.
+const MAX_JOBS_PER_TICK = 1;
 
 /**
  * GET /api/cron/process-rankings
@@ -50,7 +49,7 @@ export async function GET(req: NextRequest) {
         .where(
           and(eq(jobs.type, "rank_students"), eq(jobs.status, "pending")),
         )
-        .orderBy(jobs.priority, jobs.createdAt)
+        .orderBy(desc(jobs.priority), asc(jobs.createdAt))
         .limit(1);
 
       if (!pendingJob) break; // queue drained

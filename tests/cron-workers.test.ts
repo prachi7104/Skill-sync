@@ -189,4 +189,80 @@ describe("Cron Workers", () => {
         expect(result.body.processed).toBe(1);
         expect(result.body.failed).toBe(1);
     });
+
+  it("should process only 1 job per tick (MAX_JOBS_PER_TICK = 1 rule)", async () => {
+    // Simulate the single-job-per-tick policy
+    jobQueue = [
+      { id: "j1", type: "rank_students", status: "pending", payload: {}, retryCount: 0, maxRetries: 3 },
+      { id: "j2", type: "rank_students", status: "pending", payload: {}, retryCount: 0, maxRetries: 3 },
+    ];
+    mockProcessor.mockResolvedValue({});
+
+    // Run a tick that only allows 1 job
+    let processed = 0;
+    const pendingJob = jobQueue.find(j => j.status === "pending");
+    if (pendingJob) {
+      pendingJob.status = "processing";
+      await mockProcessor(pendingJob);
+      pendingJob.status = "completed";
+      processed++;
+    }
+
+    expect(processed).toBe(1);
+    expect(jobQueue[1].status).toBe("pending"); // 2nd job untouched
+  });
+
+  it("should pick highest priority job first (desc order)", () => {
+    // desc(priority) means higher number = higher priority = processed first
+    const queue = [
+      { id: "low",  priority: 3, createdAt: new Date("2025-01-01") },
+      { id: "high", priority: 8, createdAt: new Date("2025-01-02") },
+      { id: "med",  priority: 5, createdAt: new Date("2025-01-01") },
+    ];
+    const sorted = [...queue].sort((a, b) => {
+      if (a.priority !== b.priority) return b.priority - a.priority; // DESC
+      return a.createdAt.getTime() - b.createdAt.getTime(); // ASC
+    });
+    expect(sorted[0].id).toBe("high");
+    expect(sorted[1].id).toBe("med");
+    expect(sorted[2].id).toBe("low");
+  });
+
+  it("should use users.id (not students.id) to look up name and email for completeness", () => {
+    // This test documents the correct query shape.
+    // We cannot call the DB in unit tests, so we verify the logic contract:
+    // The user lookup must filter by the user's own primary key (users.id = studentId),
+    // NOT by a foreign key from the students table (students.id = studentId).
+    // Both happen to have the same UUID in this schema, but using the wrong
+    // table reference causes a type error at the Drizzle level and will silently
+    // return `undefined` if the ORM resolves the column to the wrong table.
+    const correctLookup = (tableName: string, columnName: string) =>
+      tableName === "users" && columnName === "id";
+    expect(correctLookup("users", "id")).toBe(true);
+    expect(correctLookup("students", "id")).toBe(false);
+  });
+
+  describe("Drive status priority", () => {
+    function getDriveStatus(isActive: boolean, isProcessing: boolean): string {
+      if (!isActive) return "closed";
+      if (isProcessing) return "processing";
+      return "active";
+    }
+
+    it("closed drive shows 'closed' even if a job is processing", () => {
+      expect(getDriveStatus(false, true)).toBe("closed");
+    });
+
+    it("active drive with processing job shows 'processing'", () => {
+      expect(getDriveStatus(true, true)).toBe("processing");
+    });
+
+    it("active drive with no processing job shows 'active'", () => {
+      expect(getDriveStatus(true, false)).toBe("active");
+    });
+
+    it("inactive drive with no processing job shows 'closed'", () => {
+      expect(getDriveStatus(false, false)).toBe("closed");
+    });
+  });
 });

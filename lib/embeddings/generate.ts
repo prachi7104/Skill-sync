@@ -5,7 +5,7 @@ export const EMBEDDING_DIMENSION = 768;
 /**
  * Generate a 768-dim embedding vector.
  * Fallback chain:
- *   1. Gemini text-embedding-004 (primary, 768-dim native)
+ *   1. Gemini gemini-embedding-001 (primary, 768-dim native)
  *   2. Zero vector — app doesn't crash, logs error, semantic scoring skipped
  *
  * NOTE: To add a local fallback, install @xenova/transformers and add
@@ -18,12 +18,12 @@ export async function generateEmbedding(
   if (!text || text.trim().length === 0) return [];
   const cleaned = text.replace(/\s+/g, " ").trim().slice(0, 8000);
 
-  // ── 1. Gemini text-embedding-004 ────────────────────────────────────────
+  // ── 1. Gemini gemini-embedding-001 ──────────────────────────────────────
   const googleKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (googleKey) {
     try {
       const genAI = new GoogleGenerativeAI(googleKey);
-      const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+      const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
       const result = await model.embedContent(cleaned);
       const vec = result.embedding.values;
       if (vec.length !== EMBEDDING_DIMENSION) {

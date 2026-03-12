@@ -140,4 +140,20 @@ export const ERRORS = {
       nextStep: "Ensure the student has completed onboarding and a profile exists.",
       status: 404,
     }),
+
+  DETAILED_DAILY_LIMIT: (): GuardrailViolation =>
+    new GuardrailViolation({
+      code: "DETAILED_DAILY_LIMIT",
+      reason: "Daily detailed analysis limit exceeded (3/day).",
+      nextStep: "Try again tomorrow. Limits reset at midnight UTC.",
+      status: 429,
+    }),
+
+  DETAILED_MONTHLY_LIMIT: (): GuardrailViolation =>
+    new GuardrailViolation({
+      code: "DETAILED_MONTHLY_LIMIT",
+      reason: "Monthly detailed analysis limit exceeded (15/month).",
+      nextStep: "Limit resets at the start of next month.",
+      status: 429,
+    }),
 } as const;

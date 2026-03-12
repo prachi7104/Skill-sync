@@ -100,8 +100,8 @@ export default async function FacultyDrivesPage() {
 
             // Status Logic
             let status: "pending" | "ranked" | "processing" | "closed" = "pending";
-            if (isProcessing) status = "processing";
-            else if (!drive.isActive) status = "closed";
+            if (!drive.isActive) status = "closed";
+            else if (isProcessing) status = "processing";
             else if (stats && Number(stats.count) > 0) status = "ranked";
 
             const statusConfig = {

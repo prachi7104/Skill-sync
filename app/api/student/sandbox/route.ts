@@ -59,9 +59,9 @@ function formatDetailedExplanation(result: ATSScore): string {
   return lines.join("\n");
 }
 
-function mapProfileToResumeData(profile: any, skills: Skill[], projects: Project[], workExperience: WorkExperience[]): ParsedResumeData {
+function mapProfileToResumeData(profile: any, skills: Skill[], projects: Project[], workExperience: WorkExperience[], userName?: string | null): ParsedResumeData {
   return {
-    full_name: profile.fullName || "Candidate",
+    full_name: userName || "Candidate",
     email: profile.email || null,
     phone: profile.phone || null,
     linkedin_url: profile.linkedin || null,
@@ -183,7 +183,7 @@ export async function POST(req: NextRequest) {
     const projects = (profile.projects as Project[] | null) ?? [];
     const workExperience = (profile.workExperience as WorkExperience[] | null) ?? [];
 
-    const parsedResume = mapProfileToResumeData(profile, skills, projects, workExperience);
+    const parsedResume = mapProfileToResumeData(profile, skills, projects, workExperience, user.name);
 
     // Analyze
     const atsResult = analyzeMatch(parsedJd, parsedResume);
@@ -229,9 +229,9 @@ export async function POST(req: NextRequest) {
       redFlags: atsResult.red_flags,
       usage: {
         dailyUsed: updated?.sandboxUsageToday ?? 0,
-        dailyLimit: 100,
+        dailyLimit: 5,
         monthlyUsed: updated?.sandboxUsageMonth ?? 0,
-        monthlyLimit: 500,
+        monthlyLimit: 30,
       },
       analysis: atsResult // Full new ATS result
     });
