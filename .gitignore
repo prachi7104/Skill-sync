@@ -54,3 +54,6 @@ Thumbs.db
 dev.err
 dev.out
 tsc_output.txt
+
+# database
+/drizzle/
