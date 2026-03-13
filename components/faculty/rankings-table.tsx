@@ -397,7 +397,7 @@ export default function RankingsTable({ rankings, distribution, driveId }: Ranki
                                                             <div className="flex-1 space-y-4">
                                                                 <h4 className="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
                                                                     <div className="h-1 w-4 bg-slate-700 rounded-full" />
-                                                                    Full AI Reasoning
+                                                                    Score Breakdown & Analysis
                                                                 </h4>
                                                                 <div className="p-4 bg-white rounded-lg border border-indigo-100 text-sm leading-relaxed text-slate-600 shadow-sm max-h-[250px] overflow-y-auto">
                                                                     {r.detailedExplanation.split('\n').map((line, i) => (
@@ -438,8 +438,19 @@ export default function RankingsTable({ rankings, distribution, driveId }: Ranki
                                                                     </Button>
                                                                 </div>
 
-                                                                <Button variant="link" size="sm" className="text-indigo-600 gap-1 font-bold">
-                                                                    <BookOpen className="h-4 w-4" /> Full Profile
+                                                                <Button
+                                                                    variant="link"
+                                                                    size="sm"
+                                                                    asChild
+                                                                    className="text-indigo-600 gap-1 font-bold"
+                                                                >
+                                                                    <a
+                                                                        href={`/admin/students/${r.studentId}`}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                    >
+                                                                        <BookOpen className="h-4 w-4" /> Full Profile
+                                                                    </a>
                                                                 </Button>
                                                             </div>
                                                         </div>

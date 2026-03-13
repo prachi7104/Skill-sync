@@ -205,7 +205,12 @@ Based on skills, categorize the primary tech stack:
 - **DevOps**: Docker, Kubernetes, Jenkins, Terraform
 - **Full-Stack JavaScript**: React + Node.js
 - **Data Engineering**: Spark, Airflow, Kafka
+- **Automation/No-Code**: Make.com, Zapier, n8n, workflow automation, no-code tools, email campaigns, LinkedIn automation, lead generation, process automation, RPA, HubSpot, Integromat
+- **AI/LLM Engineering**: OpenAI, GPT, Gemini, LangChain, RAG, prompt engineering, LLM inference, OCR pipelines, Whisper, HuggingFace, vector databases, document parsing, AI pipelines
 - etc.
+
+NOTE: If a JD involves Python scripting + automation tools (Make.com, Zapier, email tools), classify as "Automation/No-Code" even if Python is present.
+The primary_cluster field MUST NEVER be an empty string. If you cannot determine a cluster, use "General Software Engineering" as the default.
 
 ## STEP 4: Experience & Seniority Detection
 

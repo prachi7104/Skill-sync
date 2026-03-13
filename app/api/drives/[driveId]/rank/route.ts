@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
-import { jobs } from "@/lib/db/schema";
-import { sql } from "drizzle-orm";
+import { jobs, drives } from "@/lib/db/schema";
+import { sql, eq } from "drizzle-orm";
 import { enforceRankingGeneration, GuardrailViolation, ERRORS } from "@/lib/guardrails";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
@@ -41,6 +41,29 @@ export async function POST(
 
     // Phase 5.5: Block re-ranking unless admin
     await enforceRankingGeneration(driveId, user.role as "faculty" | "admin");
+
+    // Ensure JD enhancement has completed before queuing ranking
+    const [driveCheck] = await db
+      .select({ parsedJd: drives.parsedJd })
+      .from(drives)
+      .where(eq(drives.id, driveId))
+      .limit(1);
+
+    const hasParsedJd =
+      driveCheck?.parsedJd &&
+      typeof driveCheck.parsedJd === "object" &&
+      Object.keys(driveCheck.parsedJd as unknown as Record<string, unknown>)
+        .length > 0;
+
+    if (!hasParsedJd) {
+      return NextResponse.json(
+        {
+          error:
+            "JD enhancement has not completed yet. Please wait a few minutes and try again.",
+        },
+        { status: 422 },
+      );
+    }
 
     // Dedup: skip if a pending/processing rank_students job already exists for this drive
     const [existing] = await db

@@ -7,7 +7,7 @@
  * from structured student profiles and job descriptions.
  *
  * These functions produce consistent text representations that can be
- * embedded using all-MiniLM-L6-v2 for semantic similarity matching.
+ * embedded using the current semantic embedding model for similarity matching.
  *
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
@@ -24,7 +24,7 @@ import type {
 
 /**
  * Maximum character length for embedding text input.
- * all-MiniLM-L6-v2 has a 256 word-piece token limit (~1500 chars).
+ * Tuned to keep inputs within typical embedding model limits.
  * Prioritizes skills and project titles over long descriptions.
  */
 const MAX_EMBEDDING_TEXT_LENGTH = 1500;

@@ -111,9 +111,9 @@ export default async function AdminDrivesPage() {
             {totalRanked} students ranked
           </p>
         </div>
-        {/* Admin can create drives — reuses the faculty create page since admin has faculty-level access */}
+        {/* Admin can create drives — reuse faculty create page but return to admin drives after creation */}
         <Button asChild className="gap-2 bg-indigo-600 hover:bg-indigo-700">
-          <Link href="/faculty/drives/new">
+          <Link href="/faculty/drives/new?returnTo=/admin/drives">
             <Plus className="h-4 w-4" /> Create Drive
           </Link>
         </Button>
@@ -268,7 +268,7 @@ export default async function AdminDrivesPage() {
 
                 <CardFooter className="pt-0 flex items-center justify-between gap-4">
                   <Link
-                    href={`/faculty/drives/${drive.id}/rankings`}
+                    href={`/admin/drives/${drive.id}/rankings`}
                     className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
                   >
                     View Rankings <ExternalLink className="h-3 w-3" />

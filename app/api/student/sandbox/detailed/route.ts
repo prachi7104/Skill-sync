@@ -1,12 +1,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/config";
-import { db } from "@/lib/db";
-import { students } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { enforceDetailedAnalysisLimits, incrementDetailedAnalysisUsage } from "@/lib/guardrails/sandbox-limits";
-import { GuardrailViolation } from "@/lib/guardrails/errors";
+import { requireStudentProfile } from "@/lib/auth/helpers";
+import { enforceProfileGate, enforceDetailedAnalysisLimits, incrementDetailedAnalysisUsage, GuardrailViolation } from "@/lib/guardrails";
 import { parseResumeWithAI } from "@/lib/resume/ai-parser";
 import { performDetailedAnalysis } from "@/lib/ats/detailed-analysis";
 import { generateEmbedding } from "@/lib/embeddings/generate";
@@ -20,43 +15,13 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
     try {
-        // 1. Auth Check
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.email) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        // 1. Auth + profile
+        const { profile: student } = await requireStudentProfile();
 
-        // Get student ID and profile data
-        // Primary: look up by session user ID (DB UUID stored in JWT)
-        let student;
-        const directResult = await db
-            .select()
-            .from(students)
-            .where(eq(students.id, session.user.id));
-        student = directResult[0];
+        // 2. Profile gate (must meet placement profile requirements)
+        await enforceProfileGate(student.id);
 
-        // Fallback: if ID lookup fails (e.g. JWT has provider ID instead of DB ID),
-        // look up user by email first, then fetch student by that user's ID
-        if (!student && session.user.email) {
-            const { users } = await import("@/lib/db/schema");
-            const [dbUser] = await db
-                .select()
-                .from(users)
-                .where(eq(users.email, session.user.email.toLowerCase()));
-            if (dbUser) {
-                const [fallbackStudent] = await db
-                    .select()
-                    .from(students)
-                    .where(eq(students.id, dbUser.id));
-                student = fallbackStudent;
-            }
-        }
-
-        if (!student) {
-            return NextResponse.json({ error: "Student profile not found" }, { status: 404 });
-        }
-
-        // 2. Limit Check
+        // 3. Limit Check
         try {
             await enforceDetailedAnalysisLimits(student.id);
         } catch (error: any) {
@@ -67,7 +32,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: error.message }, { status: 403 });
         }
 
-        // 3. Parse JSON body (text extracted client-side)
+        // 4. Parse JSON body (text extracted client-side)
         const body = await req.json();
         const { resumeText, jdText } = body as { resumeText?: string; jdText?: string };
 

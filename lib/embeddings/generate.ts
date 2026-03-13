@@ -54,3 +54,15 @@ export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   if (normA === 0 || normB === 0) return 0;
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
+
+/**
+ * Validates that an embedding is a real, non-zero vector.
+ * Returns false for null, empty, or all-zeros vectors.
+ * Use this before writing embeddings to the DB to prevent caching broken vectors.
+ */
+export function isValidEmbedding(embedding: number[] | null | undefined): boolean {
+  if (!embedding || embedding.length === 0) return false;
+  // An all-zero vector is not a real embedding — it means generation failed
+  const hasNonZero = embedding.some(v => v !== 0);
+  return hasNonZero;
+}

@@ -99,6 +99,28 @@ const TECHNOLOGY_CAPABILITY_MAP: Record<string, CapabilityMapping[]> = {
     "aws": [
         { skill: "Cloud platforms", confidence: 100, inference: "AWS is a major cloud platform" },
     ],
+    "make.com": [
+        { skill: "workflow automation", confidence: 95, inference: "Make.com is a visual workflow automation platform" },
+        { skill: "no-code tools", confidence: 95, inference: "Make.com is a no-code integration tool" },
+        { skill: "API integrations", confidence: 85, inference: "Make.com connects apps via APIs" },
+    ],
+    "zapier": [
+        { skill: "workflow automation", confidence: 95, inference: "Zapier automates workflows between apps" },
+    ],
+    "llm": [
+        { skill: "Large Language Models", confidence: 95, inference: "LLM is a Large Language Model" },
+        { skill: "AI pipeline", confidence: 90, inference: "LLM inference is a production AI pipeline component" },
+    ],
+    "ocr": [
+        { skill: "document parsing", confidence: 95, inference: "OCR is used for extracting text" },
+    ],
+    "whisper": [
+        { skill: "Speech Recognition", confidence: 95, inference: "Whisper is ASR" },
+        { skill: "AI pipeline", confidence: 85, inference: "Whisper implies an AI pipeline" },
+    ],
+    "prompt engineering": [
+        { skill: "prompt engineering", confidence: 95, inference: "Prompt engineering is an LLM skill" },
+    ],
 };
 
 const TECH_STACK_BUNDLES: Record<string, CapabilityMapping[]> = {
@@ -989,6 +1011,83 @@ describe("Semantic Skill Extraction Engine", () => {
 
             // Should appear in at least skills section + project
             expect(sources.size).toBeGreaterThanOrEqual(2);
+        });
+    });
+
+    // ────────────────────────────────────────────────────────
+    // 9. Automation and LLM tool coverage
+    // ────────────────────────────────────────────────────────
+    describe("Automation and LLM tool coverage", () => {
+        const makeComResume = makeResume({
+            skills: [{ name: "Make.com" }, { name: "Python" }],
+            projects: [{
+                title: "Lead Gen Automation",
+                description: "Built Make.com workflows to automate LinkedIn outreach and email sequences for lead generation. Integrated CRM via webhooks.",
+                tech_stack: ["Make.com", "Python", "HubSpot"]
+            }],
+            experience: [{
+                role: "Automation Intern",
+                company: "LeadFreak",
+                description: "Used Make.com and Zapier to automate sales workflows. Built email drip campaigns.",
+                skills_used: ["Make.com", "Zapier"]
+            }]
+        });
+
+        it("should infer 'workflow automation' from Make.com mention", () => {
+            const evidence = extractSemanticSkills(makeComResume);
+            const skills = evidence.map(e => e.skill.toLowerCase());
+            expect(skills).toContain("workflow automation");
+        });
+
+        it("should infer 'no-code tools' from Make.com mention", () => {
+            const evidence = extractSemanticSkills(makeComResume);
+            const skills = evidence.map(e => e.skill.toLowerCase());
+            expect(skills).toContain("no-code tools");
+        });
+
+        it("should infer 'API integrations' from Make.com + webhooks context", () => {
+            const evidence = extractSemanticSkills(makeComResume);
+            const skills = evidence.map(e => e.skill.toLowerCase());
+            expect(skills).toContain("api integrations");
+        });
+
+        const llmResume = makeResume({
+            skills: [{ name: "LLM" }, { name: "OCR" }, { name: "Whisper" }],
+            projects: [{
+                title: "AI Document Parser",
+                description: "Built OCR preprocessing LLM inference pipeline. Used Whisper for audio transcription. Integrated OpenAI API with prompt engineering.",
+                tech_stack: ["OCR", "LLM", "Whisper", "Python"]
+            }],
+            experience: [{
+                role: "Model Development Intern",
+                company: "Sentienta",
+                description: "Engineered pipelines integrating OCR, preprocessing, and LLM inference for document parsing.",
+                skills_used: ["LLM", "OCR"]
+            }]
+        });
+
+        it("should infer 'document parsing' from OCR mention", () => {
+            const evidence = extractSemanticSkills(llmResume);
+            const skills = evidence.map(e => e.skill.toLowerCase());
+            expect(skills).toContain("document parsing");
+        });
+
+        it("should infer 'AI pipeline' from LLM inference mention", () => {
+            const evidence = extractSemanticSkills(llmResume);
+            const skills = evidence.map(e => e.skill.toLowerCase());
+            expect(skills.some(s => s.includes("pipeline") || s.includes("llm"))).toBe(true);
+        });
+
+        it("should infer 'Speech Recognition' from Whisper mention", () => {
+            const evidence = extractSemanticSkills(llmResume);
+            const skills = evidence.map(e => e.skill.toLowerCase());
+            expect(skills.some(s => s.includes("speech") || s.includes("transcription"))).toBe(true);
+        });
+
+        it("should infer 'prompt engineering' from 'prompt engineering' in project description", () => {
+            const evidence = extractSemanticSkills(llmResume);
+            const skills = evidence.map(e => e.skill.toLowerCase());
+            expect(skills.some(s => s.includes("prompt"))).toBe(true);
         });
     });
 });

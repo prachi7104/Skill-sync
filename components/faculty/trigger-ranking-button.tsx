@@ -42,7 +42,12 @@ export function TriggerRankingButton({ driveId, initialStatus }: TriggerRankingB
                 setState("already_processing");
             } else if (!res.ok) {
                 const data = await res.json();
-                throw new Error(data.message || "Failed to trigger ranking");
+                throw new Error(
+                    data.error ||
+                    data.reason ||
+                    data.message ||
+                    "Failed to trigger ranking",
+                );
             } else {
                 // Unexpected success (usually 202)
                 setState("queued");

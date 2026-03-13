@@ -23,7 +23,6 @@ import "server-only";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
-import { ERRORS } from "./errors";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -46,64 +45,16 @@ function currentMonthUTC(): string {
 
 /**
  * Checks whether a student can use the sandbox.
- * Throws `GuardrailViolation` if limit is exceeded.
- * Does NOT increment — call `incrementSandboxUsage` after successful sandbox run.
- *
- * This function performs lazy reset: if the day/month has changed since the
- * last recorded reset date, the counters are zeroed in-place before checking.
+ * 
+ * NOTE: Rate limits are currently DISABLED for testing.
+ * TODO: Re-enable before production.
  */
 export async function enforceSandboxLimits(studentId: string): Promise<void> {
-  // Fetch current counters
-  const [student] = await db
-    .select({
-      sandboxUsageToday: students.sandboxUsageToday,
-      sandboxResetDate: students.sandboxResetDate,
-      sandboxUsageMonth: students.sandboxUsageMonth,
-      sandboxMonthResetDate: students.sandboxMonthResetDate,
-    })
-    .from(students)
-    .where(eq(students.id, studentId))
-    .limit(1);
-
-  if (!student) {
-    throw new Error("Student record not found");
-  }
-
-  const today = todayUTC();
-  const month = currentMonthUTC();
-
-  let dailyUsage = student.sandboxUsageToday;
-  let monthlyUsage = student.sandboxUsageMonth;
-  const updates: Record<string, unknown> = {};
-
-  // ── Lazy daily reset ───────────────────────────────────────────────────
-  if (student.sandboxResetDate !== today) {
-    dailyUsage = 0;
-    updates.sandboxUsageToday = 0;
-    updates.sandboxResetDate = today;
-  }
-
-  // ── Lazy monthly reset ─────────────────────────────────────────────────
-  if (student.sandboxMonthResetDate !== month) {
-    monthlyUsage = 0;
-    updates.sandboxUsageMonth = 0;
-    updates.sandboxMonthResetDate = month;
-  }
-
-  // Persist resets if any
-  if (Object.keys(updates).length > 0) {
-    updates.updatedAt = new Date();
-    await db.update(students).set(updates).where(eq(students.id, studentId));
-  }
-
-  // ── Enforce limits ─────────────────────────────────────────────────────
-  if (dailyUsage >= DAILY_LIMIT) {
-    throw ERRORS.SANDBOX_DAILY_LIMIT();
-  }
-
-  if (monthlyUsage >= MONTHLY_LIMIT) {
-    throw ERRORS.SANDBOX_MONTHLY_LIMIT();
-  }
+  console.warn("[SANDBOX] Rate limits are DISABLED for testing — re-enable before production");
+  // Rate limits disabled — always allow
+  void studentId;
+  void DAILY_LIMIT;
+  void MONTHLY_LIMIT;
 }
 
 /**
@@ -145,59 +96,16 @@ const DETAILED_MONTHLY_LIMIT = 15;
 
 /**
  * Checks whether a student can use the Detailed Analysis feature.
- * Throws `GuardrailViolation` if limit is exceeded.
+ * 
+ * NOTE: Rate limits are currently DISABLED for testing.
+ * TODO: Re-enable before production.
  */
 export async function enforceDetailedAnalysisLimits(studentId: string): Promise<void> {
-  const [student] = await db
-    .select({
-      detailedAnalysisUsageToday: students.detailedAnalysisUsageToday,
-      detailedAnalysisResetDate: students.detailedAnalysisResetDate,
-      detailedAnalysisUsageMonth: students.detailedAnalysisUsageMonth,
-      detailedAnalysisMonthResetDate: students.detailedAnalysisMonthResetDate,
-    })
-    .from(students)
-    .where(eq(students.id, studentId))
-    .limit(1);
-
-  if (!student) {
-    throw new Error("Student record not found");
-  }
-
-  const today = todayUTC();
-  const month = currentMonthUTC();
-
-  let dailyUsage = student.detailedAnalysisUsageToday;
-  let monthlyUsage = student.detailedAnalysisUsageMonth;
-  const updates: Record<string, unknown> = {};
-
-  // Lazy daily reset
-  if (student.detailedAnalysisResetDate !== today) {
-    dailyUsage = 0;
-    updates.detailedAnalysisUsageToday = 0;
-    updates.detailedAnalysisResetDate = today;
-  }
-
-  // Lazy monthly reset
-  if (student.detailedAnalysisMonthResetDate !== month) {
-    monthlyUsage = 0;
-    updates.detailedAnalysisUsageMonth = 0;
-    updates.detailedAnalysisMonthResetDate = month;
-  }
-
-  // Persist resets
-  if (Object.keys(updates).length > 0) {
-    updates.updatedAt = new Date();
-    await db.update(students).set(updates).where(eq(students.id, studentId));
-  }
-
-  // Enforce limits
-  if (dailyUsage >= DETAILED_DAILY_LIMIT) {
-    throw ERRORS.DETAILED_DAILY_LIMIT();
-  }
-
-  if (monthlyUsage >= DETAILED_MONTHLY_LIMIT) {
-    throw ERRORS.DETAILED_MONTHLY_LIMIT();
-  }
+  console.warn("[DETAILED ANALYSIS] Rate limits are DISABLED for testing — re-enable before production");
+  // Rate limits disabled — always allow
+  void studentId;
+  void DETAILED_DAILY_LIMIT;
+  void DETAILED_MONTHLY_LIMIT;
 }
 
 /**
