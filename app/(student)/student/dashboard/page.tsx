@@ -2,12 +2,11 @@
 
 import { useStudent } from "@/app/(student)/providers/student-provider";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { computeCompleteness } from "@/lib/profile/completeness";
-import { FileText, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
+import { 
+    FileText, ArrowRight, Sparkles, AlertCircle, 
+    Briefcase, Award, BarChart3, Eye, CheckCircle2 
+} from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
@@ -34,17 +33,17 @@ export default function StudentDashboard() {
                     const data = await res.json();
                     setStats(data);
                 }
-            } catch (error) {
-                console.error("Failed to fetch dashboard stats", error);
-            }
+            } catch (error) {}
         }
-        if (student) {
-            fetchStats();
-        }
+        if (student) fetchStats();
     }, [student]);
 
     if (isLoading || !student || !user) {
-        return <div className="p-8">Loading dashboard...</div>;
+        return (
+            <div className="flex items-center justify-center h-full min-h-[60vh]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+            </div>
+        );
     }
 
     const { score, missing } = computeCompleteness({
@@ -52,284 +51,188 @@ export default function StudentDashboard() {
         name: user.name,
         email: user.email,
     });
+    
+    const activeDrives = stats?.activeDrivesCount ?? 0;
+    const rankings = stats?.rankingsCount ?? 0;
     const sandboxUsageToday = student.sandboxUsageToday ?? 0;
-    const profileCompleteness = score;
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">Student Dashboard</h1>
-                <p className="text-muted-foreground">
-                    Welcome back, {user.name}. Here&apos;s what&apos;s happening with your profile.
+        <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 p-8 md:p-10 pb-20">
+            
+            {/* Header */}
+            <div className="space-y-2">
+                <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white drop-shadow-sm">
+                    Student Dashboard
+                </h1>
+                <p className="text-slate-400 text-lg font-medium">
+                    Welcome back, <span className="text-slate-200">{user.name}</span>. Here's what's happening.
                 </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {/* Quick Stats - Real Data */}
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Placement Drives</CardTitle>
-                        <BriefcaseIcon className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.activeDrivesCount}</div>
-                        <p className="text-xs text-muted-foreground">Active now</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Rankings</CardTitle>
-                        <SendIcon className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.rankingsCount}</div>
-                        <p className="text-xs text-muted-foreground">Received</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Profile Score</CardTitle>
-                        <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{profileCompleteness}%</div>
-                        <p className="text-xs text-muted-foreground">Completeness</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Sandbox Usage</CardTitle>
-                        <EyeIcon className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{sandboxUsageToday}/3</div>
-                        <p className="text-xs text-muted-foreground">Today</p>
-                    </CardContent>
-                </Card>
+            {/* Top Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <StatCard title="Placement Drives" value={activeDrives} icon={Briefcase} subtitle="Active now" />
+                <StatCard title="Rankings" value={rankings} icon={Award} subtitle="Received" />
+                <StatCard title="Profile Score" value={`${score}%`} icon={BarChart3} subtitle="Completeness" />
+                <StatCard title="Sandbox Usage" value={`${sandboxUsageToday}/5`} icon={Eye} subtitle="Today" />
             </div>
 
-            <div className="grid gap-6 md:grid-cols-7">
-                {/* Main Content Area */}
-                <div className="md:col-span-4 space-y-6">
-                    {/* Resume Status */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <FileText className="h-5 w-5 text-blue-600" />
-                                Resume Status
-                            </CardTitle>
-                            <CardDescription>Your current resume on file.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {student.resumeUrl ? (
-                                <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/10">
-                                    <div className="space-y-1">
-                                        <p className="font-medium text-sm truncate max-w-[200px]">{student.resumeFilename}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            Uploaded {student.resumeUploadedAt ? format(new Date(student.resumeUploadedAt), "MMM d, yyyy") : "Unknown"}
-                                        </p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" size="sm" asChild>
-                                            <a href={student.resumeUrl} target="_blank">View</a>
-                                        </Button>
-                                        <Button variant="secondary" size="sm" asChild>
-                                            <Link href="/student/profile">Update</Link>
-                                        </Button>
-                                    </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                
+                {/* Resume Status Card */}
+                <div className="lg:col-span-2 bg-slate-900/60 rounded-[2rem] border border-white/5 p-8 space-y-6 relative overflow-hidden group">
+                    <div className="flex items-center space-x-3 text-indigo-400 relative z-10">
+                        <FileText className="w-6 h-6" />
+                        <h3 className="font-bold text-white text-xl tracking-tight">Resume Status</h3>
+                    </div>
+                    <p className="text-slate-400 font-medium relative z-10">Your current master resume on file.</p>
+                    
+                    <div className="bg-slate-950/50 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between border border-white/5 hover:border-indigo-500/40 transition-colors duration-300 relative z-10">
+                        {student.resumeUrl ? (
+                            <>
+                                <div className="mb-5 sm:mb-0">
+                                    <p className="font-bold text-slate-200 text-base truncate max-w-[300px]">
+                                        {student.resumeFilename || "Resume.pdf"}
+                                    </p>
+                                    <p className="text-xs text-slate-400 mt-1.5 font-bold tracking-wide uppercase">
+                                        Uploaded {student.resumeUploadedAt ? format(new Date(student.resumeUploadedAt), "MMM d, yyyy") : "Recently"}
+                                    </p>
                                 </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg bg-muted/5">
-                                    <AlertCircle className="h-8 w-8 text-amber-500 mb-2" />
-                                    <p className="font-medium text-sm">No Resume Uploaded</p>
-                                    <Button variant="link" size="sm" asChild>
-                                        <Link href="/student/onboarding/resume">Upload Now</Link>
-                                    </Button>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Section Checklist Summary */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Profile Sections</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 gap-4">
-                                <SectionStatus label="Skills" count={student.skills?.length || 0} min={5} />
-                                <SectionStatus label="Projects" count={student.projects?.length || 0} min={2} />
-                                <SectionStatus label="Work Exp" count={student.workExperience?.length || 0} min={0} optional />
-                                <SectionStatus label="Certifications" count={student.certifications?.length || 0} min={0} optional />
-                            </div>
-
-                            <div className="mt-6 flex justify-end">
-                                <Button asChild>
-                                    <Link href="/student/profile">
-                                        Manage Full Profile <ArrowRight className="ml-2 h-4 w-4" />
+                                <div className="flex space-x-3">
+                                    <a href={student.resumeUrl} target="_blank" rel="noreferrer"
+                                       className="px-6 py-2.5 border border-white/10 bg-white/5 rounded-xl text-sm font-bold text-white hover:bg-white/10 transition-all">
+                                        View
+                                    </a>
+                                    <Link href="/student/profile"
+                                          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all shadow-[0_0_20px_rgba(79,70,229,0.2)]">
+                                        Update
                                     </Link>
-                                </Button>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-5 w-full">
+                                <div className="p-3 bg-amber-500/10 rounded-full shrink-0">
+                                    <AlertCircle className="h-6 w-6 text-amber-500" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-bold text-white text-base">No Resume Uploaded</p>
+                                    <p className="text-sm text-slate-400 mt-1 font-medium">AI match rates are significantly lower without a resume.</p>
+                                </div>
+                                <Link href="/student/onboarding/resume"
+                                      className="px-6 py-3 bg-slate-200 text-slate-900 rounded-xl text-sm font-bold hover:bg-white transition-all whitespace-nowrap">
+                                    Upload Now
+                                </Link>
                             </div>
-                        </CardContent>
-                    </Card>
+                        )}
+                    </div>
                 </div>
 
-                {/* Sidebar */}
-                <div className="md:col-span-3 space-y-6">
-                    <Card className="border-primary/20 bg-primary/5">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-primary">
-                                <Sparkles className="h-5 w-5" /> Completeness Score
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-sm font-medium">
-                                    <span>{score}% Completed</span>
-                                </div>
-                                <Progress value={score} className="h-3" />
-                            </div>
+                {/* Profile Completeness Score */}
+                <div className="bg-slate-900/60 rounded-[2rem] border border-white/5 p-8 space-y-8 relative overflow-hidden">
+                    <h3 className="font-bold text-white flex items-center space-x-3 text-xl tracking-tight">
+                        <Sparkles className="w-6 h-6 text-emerald-400" />
+                        <span>Completeness</span>
+                    </h3>
+                    
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-end">
+                            <p className="text-3xl font-black text-white tracking-tighter">{score}%</p>
+                            <p className="text-sm font-bold text-emerald-400 mb-1">Score</p>
+                        </div>
+                        <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5">
+                           <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(16,185,129,0.4)]" style={{ width: `${score}%` }} />
+                        </div>
+                    </div>
 
-                            {missing.length > 0 ? (
-                                <div className="space-y-2">
-                                    <p className="text-sm font-medium">Action Items:</p>
-                                    <ul className="text-xs space-y-1 text-muted-foreground list-disc pl-4">
-                                        {missing.slice(0, 5).map((msg, i) => (
-                                            <li key={i}>{msg}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            ) : (
-                                <p className="text-sm text-green-600 font-medium">
-                                    Your profile is robust!
-                                </p>
-                            )}
-                        </CardContent>
-                    </Card>
+                    <div className="pt-6 border-t border-white/5">
+                        {missing.length > 0 ? (
+                            <>
+                                <p className="text-sm font-bold text-slate-300 mb-3 tracking-tight">Action Items:</p>
+                                <ul className="text-sm text-slate-400 space-y-3 list-none font-medium">
+                                    {missing.slice(0, 3).map((msg, i) => (
+                                        <li key={i} className="flex items-start">
+                                            <span className="mr-3 text-indigo-500 font-bold">•</span>
+                                            {msg}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </>
+                        ) : (
+                            <p className="text-sm font-bold text-emerald-400 flex items-center bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+                                <CheckCircle2 className="w-5 h-5 mr-2 shrink-0" />
+                                Your profile is perfectly optimized for AI matching.
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Profile Sections Grid */}
+            <div className="bg-slate-900/60 rounded-[2rem] border border-white/5 p-8 md:p-10">
+                <h3 className="font-bold text-white mb-8 text-xl tracking-tight">Data Parameters</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                   <ProfileSectionItem label="Core Skills" count={student.skills?.length || 0} min={5} />
+                   <ProfileSectionItem label="Projects" count={student.projects?.length || 0} min={2} />
+                   <ProfileSectionItem label="Work Experience" count={student.workExperience?.length || 0} min={0} isOptional />
+                   <ProfileSectionItem label="Certifications" count={student.certifications?.length || 0} min={0} isOptional />
+                </div>
+                <div className="mt-10 flex justify-end">
+                   <Link href="/student/profile"
+                         className="group flex items-center bg-slate-950 border border-slate-800 text-slate-200 rounded-xl px-8 py-4 font-bold text-sm hover:bg-slate-800 hover:text-white hover:border-slate-700 transition-all shadow-sm">
+                         Manage Full Profile 
+                         <ArrowRight className="ml-3 w-4 h-4 text-slate-500 group-hover:translate-x-1 group-hover:text-white transition-all" />
+                   </Link>
                 </div>
             </div>
         </div>
     );
 }
 
-// Simple Helper Components for Stats
-function BriefcaseIcon(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <rect width="20" height="14" x="2" y="7" rx="2" ry="2" />
-            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-        </svg>
-    )
-}
+// ----------------------------------------------------------------------
+// High-Contrast Dark Mode Components
+// ----------------------------------------------------------------------
 
-function SendIcon(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="m22 2-7 20-4-9-9-4Z" />
-            <path d="M22 2 11 13" />
-        </svg>
-    )
-}
-
-function CalendarIcon(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M8 2v4" />
-            <path d="M16 2v4" />
-            <rect width="18" height="18" x="3" y="4" rx="2" />
-            <path d="M3 10h18" />
-        </svg>
-    )
-}
-
-function EyeIcon(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-            <circle cx="12" cy="12" r="3" />
-        </svg>
-    )
-}
-
-function SectionStatus({ label, count, min, optional }: { label: string, count: number, min: number, optional?: boolean }) {
-    const isGood = count >= min;
-    return (
-        <div className="flex items-center justify-between p-3 border rounded bg-background">
-            <div className="flex flex-col">
-                <span className="text-sm font-medium">{label}</span>
-                <span className="text-xs text-muted-foreground">{optional ? "Optional" : `Min: ${min}`}</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <span className="text-lg font-bold">{count}</span>
-                <Badge variant={isGood ? (optional && count === 0 ? "secondary" : "default") : "destructive"} className="h-5 px-1.5 pointer-events-none">
-                    {isGood ? <CheckIcon className="h-3 w-3" /> : "!"}
-                </Badge>
-            </div>
+function StatCard({ title, value, subtitle, icon: Icon }: any) {
+  return (
+    <div className="bg-slate-900/60 p-7 rounded-[2rem] border border-white/5 relative group hover:border-indigo-500/40 hover:bg-slate-800/80 transition-all duration-300 overflow-hidden">
+      <div className="flex flex-col justify-between h-full space-y-6 relative z-10">
+        {/* Changed from text-slate-500 to text-slate-300 for massive visibility boost */}
+        <h4 className="text-sm font-bold text-slate-300 tracking-tight">{title}</h4>
+        <div>
+            <p className="text-4xl font-black text-white tracking-tighter leading-none">{value}</p>
+            {/* Changed from text-slate-600 to text-slate-400 */}
+            <p className="text-[11px] font-bold text-slate-400 mt-2.5 tracking-[0.1em] uppercase">{subtitle}</p>
         </div>
-    )
+      </div>
+      <div className="absolute top-6 right-6 p-3 bg-white/5 rounded-2xl group-hover:bg-indigo-500/20 transition-colors duration-300 relative z-10">
+        <Icon className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 transition-colors duration-300" />
+      </div>
+    </div>
+  );
 }
 
-function CheckIcon(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M20 6 9 17l-5-5" />
-        </svg>
-    )
+function ProfileSectionItem({ label, count, min, isOptional }: any) {
+  const isGood = count >= min;
+  return (
+    // Changed bg-slate-900 to bg-slate-950/50 to match the Profile page's inner "bento" depth
+    <div className="flex items-center justify-between p-6 rounded-2xl border border-white/5 bg-slate-950/50 hover:bg-slate-900 hover:border-white/10 transition-all duration-300">
+      <div>
+        {/* Label made brighter */}
+        <p className="font-bold text-slate-200 text-base tracking-tight">{label}</p>
+        <p className="text-[10px] text-slate-400 font-bold mt-1.5 uppercase tracking-[0.15em]">
+          {isOptional ? "Optional Data" : `Min Req: ${min}`}
+        </p>
+      </div>
+      <div className="flex items-center space-x-4">
+        <span className="text-2xl font-black text-white tracking-tighter">{count}</span>
+        <div className={isGood ? "bg-white/10 rounded-xl p-2" : "bg-rose-500/10 border border-rose-500/20 rounded-xl p-2"}>
+           {isGood ? (
+               <CheckCircle2 className="w-5 h-5 text-emerald-400" strokeWidth={2.5} />
+           ) : (
+               <AlertCircle className="w-5 h-5 text-rose-400" strokeWidth={2.5} />
+           )}
+        </div>
+      </div>
+    </div>
+  );
 }
-
-
