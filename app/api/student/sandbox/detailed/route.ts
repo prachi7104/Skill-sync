@@ -67,6 +67,22 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: error.message }, { status: 403 });
         }
 
+
+
+
+//         // 2. Limit Check
+// try {
+//     // await enforceDetailedAnalysisLimits(student.id); // <--- COMMENT THIS OUT
+//     console.log("Local testing: Bypassing detailed limits");
+// } catch (error: any) {
+//     if (error instanceof GuardrailViolation) {
+//         return NextResponse.json(error.toJSON(), { status: error.status });
+//     }
+//     return NextResponse.json({ error: error.message }, { status: 403 });
+// }
+
+
+
         // 3. Parse JSON body (text extracted client-side)
         const body = await req.json();
         const { resumeText, jdText } = body as { resumeText?: string; jdText?: string };

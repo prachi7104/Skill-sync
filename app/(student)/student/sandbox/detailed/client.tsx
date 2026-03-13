@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import {
     Upload, FileText, CheckCircle, AlertTriangle, ArrowRight,
     Target, Zap, BookOpen, Shield, ChevronDown, ChevronUp,
-    TrendingUp, XCircle, AlertCircle, Lightbulb, CheckCircle2
+    TrendingUp, XCircle, AlertCircle, Lightbulb, CheckCircle2,
+    Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import {
