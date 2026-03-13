@@ -10,9 +10,8 @@
  *   match_score = 0.7 * semantic_score + 0.3 * structured_score
  *
  * Structured Score Breakdown (0–100):
- *   - Required skills overlap:  50 pts  (50 × overlapRatio)
- *   - Preferred skills overlap: 20 pts  (20 × preferredOverlapRatio)
- *   - CGPA buffer:              15 pts  (15 × min(cgpaAboveMin / 2, 1))
+ *   - Required skills overlap:  60 pts  (60 × overlapRatio)
+ *   - Preferred skills overlap: 25 pts  (25 × preferredOverlapRatio)
  *   - Project/work keywords:    15 pts  (15 × keywordHitRatio, max 5 keywords)
  *
  * Rules:
@@ -32,9 +31,8 @@ const SEMANTIC_WEIGHT = 0.7;
 const STRUCTURED_WEIGHT = 0.3;
 
 // ── Structured sub-weights (out of 100) ─────────────────────────────────────
-const REQUIRED_SKILLS_PTS = 50;
-const PREFERRED_SKILLS_PTS = 20;
-const CGPA_BUFFER_PTS = 15;
+const REQUIRED_SKILLS_PTS = 60;
+const PREFERRED_SKILLS_PTS = 25;
 const PROJECT_KEYWORD_PTS = 15;
 
 /**
@@ -233,35 +231,28 @@ export function computeSemanticScore(
  * Computes the structured score (0–100).
  *
  * Sub-components:
- *   required skills  (50 pts)
- *   preferred skills (20 pts)
- *   CGPA buffer      (15 pts)
+ *   required skills  (60 pts)
+ *   preferred skills (25 pts)
  *   project keywords (15 pts)
  */
 export function computeStructuredScore(opts: {
   requiredOverlapRatio: number;
   preferredOverlapRatio: number;
   projectKeywordHitRatio: number;
-  cgpaBuffer?: number;
   isEligible: boolean;
 }): number {
   if (!opts.isEligible) return 0;
 
   let score = 0;
 
-  // Required skills: 50 pts
+  // Required skills: 60 pts
   score += REQUIRED_SKILLS_PTS * opts.requiredOverlapRatio;
 
-  // Preferred skills: 20 pts
+  // Preferred skills: 25 pts
   score += PREFERRED_SKILLS_PTS * opts.preferredOverlapRatio;
 
   // Project/work keyword hits: 15 pts
   score += PROJECT_KEYWORD_PTS * opts.projectKeywordHitRatio;
-
-  // CGPA buffer: min(cgpaAboveMin / 2, 1) × 15
-  if (opts.cgpaBuffer !== undefined && opts.cgpaBuffer !== null) {
-    score += CGPA_BUFFER_PTS * Math.min(opts.cgpaBuffer / 2, 1);
-  }
 
   return round2(Math.min(score, 100));
 }
@@ -480,15 +471,11 @@ export function computeAllScores(
   );
 
   // Scores
-  const cgpaBuffer = studentProfile.cgpa != null && eligibility.minCgpa != null
-    ? studentProfile.cgpa - eligibility.minCgpa
-    : 0;
   const semanticScore = computeSemanticScore(studentEmbedding, jdEmbedding);
   const structuredScore = computeStructuredScore({
     requiredOverlapRatio,
     preferredOverlapRatio,
     projectKeywordHitRatio,
-    cgpaBuffer,
     isEligible,
   });
   const matchScore = computeMatchScore(semanticScore, structuredScore);
