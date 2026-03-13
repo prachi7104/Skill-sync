@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { enforceProfileGate, enforceRankingsExist, GuardrailViolation } from "@/lib/guardrails";
+import Link from "next/link";
 
 interface PageProps {
   params: { driveId: string };
@@ -97,13 +98,21 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
   // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6 max-w-2xl">
-      <div>
+      <div className="space-y-2">
+        <Link
+          href="/student/drives"
+          className="text-sm text-indigo-600 hover:underline inline-flex items-center gap-1"
+        >
+          ← Back to Drives
+        </Link>
+        <div>
         <h1 className="text-2xl font-bold tracking-tight">
           My Ranking — {drive.company}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           {drive.roleTitle}
         </p>
+        </div>
       </div>
 
       {!myRanking ? (
@@ -134,7 +143,7 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
                 />
                 <ScoreTile
                   label="Semantic"
-                  value={myRanking.semanticScore.toFixed(3)}
+                  value={myRanking.semanticScore.toFixed(1)}
                 />
                 <ScoreTile
                   label="Structured"
@@ -191,7 +200,7 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
             <CardHeader>
               <CardTitle>Detailed Explanation</CardTitle>
               <CardDescription>
-                AI-generated reasoning for your ranking.
+                Detailed scoring breakdown for your ranking.
               </CardDescription>
             </CardHeader>
             <CardContent>

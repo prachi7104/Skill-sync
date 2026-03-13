@@ -28,13 +28,17 @@ export async function GET(req: NextRequest) {
     }
 
     // Recover stuck jobs (processing for >5 minutes and still have retries left)
-    await db.update(jobs)
-      .set({ status: 'pending', updatedAt: new Date() })
-      .where(and(
-        eq(jobs.status, 'processing'),
-        lt(jobs.updatedAt, new Date(Date.now() - 5 * 60 * 1000)),
-        lt(jobs.retryCount, jobs.maxRetries)
-      ));
+    await db
+      .update(jobs)
+      .set({ status: "pending", updatedAt: new Date() })
+      .where(
+        and(
+          eq(jobs.type, "rank_students"),
+          eq(jobs.status, "processing"),
+          lt(jobs.updatedAt, new Date(Date.now() - 5 * 60 * 1000)),
+          lt(jobs.retryCount, jobs.maxRetries),
+        ),
+      );
 
     logger.info("Checking for pending rank_students jobs");
 

@@ -191,7 +191,7 @@ export function computeSkillOverlap(
   overlapRatio: number;
 } {
   if (requiredSkills.length === 0) {
-    return { matchedSkills: [], missingSkills: [], overlapRatio: 1 };
+    return { matchedSkills: [], missingSkills: [], overlapRatio: 0 };
   }
 
   const normalizedStudentSkills = studentSkills.map((s) => s.toLowerCase().trim());
@@ -291,17 +291,18 @@ export function computeProjectKeywordHitRatio(
 
   let hits = 0;
   const cap = 5;
+  const effectiveCap = Math.min(cap, requiredSkills.length);
 
   for (const skill of requiredSkills) {
     const lower = skill.toLowerCase().trim();
     const matched = projectKeywords.some((kw) => skillMatches(kw, lower));
     if (matched) {
       hits++;
-      if (hits >= cap) break;
+      if (hits >= effectiveCap) break;
     }
   }
 
-  return Math.min(hits / cap, 1);
+  return Math.min(hits / effectiveCap, 1);
 }
 
 // ── Explanation ─────────────────────────────────────────────────────────────

@@ -15,6 +15,7 @@ import { ParsedResumeData } from "@/lib/resume/ai-parser";
 import { z } from "zod";
 import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
 import { generateEmbedding, composeStudentEmbeddingText } from "@/lib/embeddings";
+import { isValidEmbedding } from "@/lib/embeddings/generate";
 import { logger } from "@/lib/logger";
 
 const sandboxSchema = z.object({
@@ -26,75 +27,138 @@ const sandboxSchema = z.object({
 
 function formatDetailedExplanation(result: ATSScore): string {
   const lines: string[] = [];
-  lines.push(`**Match Verdict**: ${result.match_score.interpretation} (${result.match_score.overall}/100)`);
-  lines.push(`**Recommendation**: ${result.match_score.hire_recommendation}`);
+
+  // ── Headline ──
+  lines.push(`## ${result.match_score.interpretation} — ${result.match_score.overall}/100`);
   lines.push("");
 
-  lines.push("**Score Breakdown**:");
-  lines.push(`- Hard Skills: ${result.component_breakdown.hard_requirements.score.toFixed(1)}%`);
-  lines.push(`- Soft Skills: ${result.component_breakdown.soft_requirements.score.toFixed(1)}%`);
-  lines.push(`- Experience: ${result.component_breakdown.experience_level.score.toFixed(1)}%`);
-  lines.push(`- Domain/Stack: ${result.component_breakdown.domain_alignment.score.toFixed(1)}%`);
-
-  if (result.red_flags.length > 0) {
+  // ── What's Working ──
+  const matched = result.skill_analysis.matched.filter(m => m.matched_category === "Hard Requirement");
+  if (matched.length > 0) {
+    lines.push("### ✅ Strong Points");
+    for (const m of matched.slice(0, 5)) {
+      const evidence = m.evidence_description
+        ? m.evidence_description.split(";")[0].trim()
+        : "matched";
+      const confidenceLabel = m.confidence >= 80 ? "Strong match" : m.confidence >= 60 ? "Moderate match" : "Weak match";
+      lines.push(`- **${m.skill}** — ${confidenceLabel}. Evidence: ${evidence}`);
+    }
     lines.push("");
-    lines.push("**Red Flags**:");
-    result.red_flags.forEach(f => lines.push(`- 🚩 ${f.flag} (${f.impact})`));
   }
 
-  if (result.positive_signals.length > 0) {
+  // ── Critical Gaps ──
+  const missing = result.skill_analysis.missing_critical;
+  if (missing.length > 0) {
+    lines.push("### 🚩 Critical Gaps (Required by JD)");
+    for (const m of missing) {
+      const nearMiss = m.semantic_near_miss
+        ? ` *(${m.semantic_near_miss.confidence}% weak evidence found — strengthen it)*`
+        : "";
+      lines.push(`- **${m.skill}** — Not found in resume or profile.${nearMiss}`);
+    }
     lines.push("");
-    lines.push("**Positive Signals**:");
-    result.positive_signals.forEach(s => lines.push(`- ✅ ${s.signal} (${s.value})`));
   }
 
+  // ── Domain / Stack Context ──
+  const domain = result.component_breakdown.domain_alignment;
+  lines.push("### 🎯 Domain Fit");
+  if (domain.jd_stack && domain.candidate_stack) {
+    if (domain.jd_stack === domain.candidate_stack) {
+      lines.push(`- Your **${domain.candidate_stack}** background is a direct match for this role's stack.`);
+    } else if (domain.percentage >= 50) {
+      lines.push(`- JD targets **${domain.jd_stack}** — your **${domain.candidate_stack}** background is related (${domain.percentage.toFixed(0)}% alignment).`);
+    } else {
+      lines.push(`- ⚠️ JD targets **${domain.jd_stack}** — your **${domain.candidate_stack}** background is a mismatch. Focus on roles in your domain first.`);
+    }
+  }
   lines.push("");
-  lines.push("**Analysis**:");
-  if (result.skill_analysis.missing_critical.length > 0) {
-    lines.push(`Missing critical skills: ${result.skill_analysis.missing_critical.map(m => m.skill).join(", ")}`);
-  } else {
-    lines.push("No critical skills missing.");
+
+  // ── Transferable Strengths ──
+  const transferable = result.skill_analysis.transferable_strengths;
+  if (transferable.length > 0) {
+    lines.push("### 💡 Transferable Strengths");
+    for (const t of transferable.slice(0, 3)) {
+      lines.push(`- **${t.skill}** — ${t.relevance}`);
+    }
+    lines.push("");
   }
+
+  // ── Top 3 Actions ──
+  lines.push("### 📋 Top Actions Before Applying");
+  const actions: string[] = [];
+
+  // Missing required skills
+  for (const m of missing.slice(0, 2)) {
+    actions.push(`Add "${m.skill}" to your resume — it is listed as required in the JD`);
+  }
+
+  // Low-evidence matched skills
+  const weakEvidence = matched.filter(m => m.evidence_level <= 1);
+  for (const w of weakEvidence.slice(0, 2)) {
+    actions.push(`Strengthen "${w.skill}" — it's listed but lacks project/work evidence`);
+  }
+
+  // Domain fix
+  if (domain.percentage < 50 && domain.jd_stack) {
+    actions.push(`Study the ${domain.jd_stack} ecosystem — it's the core domain for this role`);
+  }
+
+  if (actions.length === 0) {
+    actions.push("Your profile is well-aligned. Quantify your project impact before applying (use numbers: %, ms, requests/sec)");
+  }
+
+  actions.slice(0, 3).forEach((a, i) => lines.push(`${i + 1}. ${a}`));
 
   return lines.join("\n");
 }
 
 function mapProfileToResumeData(profile: any, skills: Skill[], projects: Project[], workExperience: WorkExperience[], userName?: string | null): ParsedResumeData {
+  // Priority: parsed_resume_json (AI-parsed, most complete) > profile JSONB fields > hardcoded defaults
+  const parsedJson = profile.parsedResumeJson as ParsedResumeData | null;
+
   return {
-    full_name: userName || "Candidate",
-    email: profile.email || null,
-    phone: profile.phone || null,
-    linkedin_url: profile.linkedin || null,
-    professional_summary: null,
-    coding_profiles: (profile.codingProfiles || []).map((cp: any) => ({ platform: cp.platform, profile_url: cp.url || "" })),
-    education_history: [
-      {
-        institution: "University",
-        degree: "Bachelor's",
-        branch: profile.branch || "Unknown",
-        current_cgpa: profile.cgpa,
-        expected_graduation: profile.batchYear ? String(profile.batchYear) : undefined
-      }
-    ],
-    experience: workExperience.map(w => ({
-      company: w.company,
-      role: w.role,
-      duration: w.startDate + (w.endDate ? " - " + w.endDate : " - Present"),
-      description: w.description,
-      is_internship: w.role.toLowerCase().includes("intern")
-    })),
-    projects: projects.map(p => ({
-      title: p.title,
-      description: p.description,
-      link: p.url,
-      tech_stack: p.techStack,
-      date: p.startDate
-    })),
-    skills: skills.map(s => ({ name: s.name, category: s.category || "other" })),
-    research_papers: (profile.researchPapers || []).map((r: any) => ({ title: r.title, paper_link: r.url })),
-    certifications: (profile.certifications || []).map((c: any) => ({ certification_name: c.title, issuer: c.issuer, verification_link: c.url })),
-    achievements: (profile.achievements || []).map((a: any) => ({ title: a.title, description: a.description })),
-    soft_skills: profile.softSkills || []
+    full_name: userName || parsedJson?.full_name || "Candidate",
+    email: parsedJson?.email || profile.email || null,
+    phone: parsedJson?.phone || profile.phone || null,
+    linkedin_url: parsedJson?.linkedin_url || profile.linkedin || null,
+    professional_summary: parsedJson?.professional_summary || null,
+    coding_profiles: parsedJson?.coding_profiles || (profile.codingProfiles || []).map((cp: any) => ({ platform: cp.platform, profile_url: cp.url || cp.profile_url || "" })),
+    education_history: (parsedJson?.education_history?.length ?? 0) > 0
+      ? parsedJson!.education_history
+      : [
+          {
+            institution: "University",
+            degree: "Bachelor's",
+            branch: profile.branch || "Unknown",
+            current_cgpa: profile.cgpa,
+            expected_graduation: profile.batchYear ? String(profile.batchYear) : undefined
+          }
+        ],
+    experience: (parsedJson?.experience?.length ?? 0) > 0
+      ? parsedJson!.experience
+      : workExperience.map(w => ({
+          company: w.company,
+          role: w.role,
+          duration: w.startDate + (w.endDate ? " - " + w.endDate : " - Present"),
+          description: w.description,
+          is_internship: w.role.toLowerCase().includes("intern")
+        })),
+    projects: (parsedJson?.projects?.length ?? 0) > 0
+      ? parsedJson!.projects
+      : projects.map(p => ({
+          title: p.title,
+          description: p.description,
+          link: p.url,
+          tech_stack: p.techStack,
+          date: p.startDate
+        })),
+    skills: (parsedJson?.skills?.length ?? 0) > 0
+      ? parsedJson!.skills
+      : skills.map(s => ({ name: s.name, category: s.category || "other" })),
+    research_papers: parsedJson?.research_papers || (profile.researchPapers || []).map((r: any) => ({ title: r.title, paper_link: r.url })),
+    certifications: parsedJson?.certifications || (profile.certifications || []).map((c: any) => ({ certification_name: c.title, issuer: c.issuer, verification_link: c.url })),
+    achievements: parsedJson?.achievements || (profile.achievements || []).map((a: any) => ({ title: a.title, description: a.description })),
+    soft_skills: parsedJson?.soft_skills || profile.softSkills || []
   };
 }
 
@@ -103,8 +167,8 @@ export async function POST(req: NextRequest) {
     // 1. Auth — require student with profile
     const { user, profile } = await requireStudentProfile();
 
-    // Fix: If embedding is missing (e.g. from legacy profile or failed job), generate it now
-    if (!profile.embedding) {
+    // Fix: If embedding is missing or all-zeros (e.g. from legacy profile or failed job), generate it now
+    if (!isValidEmbedding(profile.embedding as number[])) {
       logger.info("[Sandbox] Profile embedding missing. Generating on-the-fly...");
       try {
         const skills = (profile.skills as Skill[] | null) ?? [];

@@ -31,7 +31,7 @@ import pLimit from "p-limit";
 import { db } from "@/lib/db";
 import { students, drives, rankings } from "@/lib/db/schema";
 import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
-import { eq, and, gte, inArray, or, isNull, type SQL } from "drizzle-orm";
+import { eq, and, gte, inArray, type SQL, asc } from "drizzle-orm";
 import {
   generateEmbedding,
   composeStudentEmbeddingText,
@@ -111,36 +111,19 @@ async function fetchEligibleStudents(
   const conditions: (SQL | undefined)[] = [];
 
   if (criteria.minCgpa !== null && criteria.minCgpa !== undefined) {
-    conditions.push(
-      or(gte(students.cgpa, criteria.minCgpa), isNull(students.cgpa)),
-    );
+    conditions.push(gte(students.cgpa, criteria.minCgpa));
   }
 
   if (criteria.eligibleBranches && criteria.eligibleBranches.length > 0) {
-    conditions.push(
-      or(
-        inArray(students.branch, criteria.eligibleBranches),
-        isNull(students.branch),
-      ),
-    );
+    conditions.push(inArray(students.branch, criteria.eligibleBranches));
   }
 
   if (criteria.eligibleBatchYears && criteria.eligibleBatchYears.length > 0) {
-    conditions.push(
-      or(
-        inArray(students.batchYear, criteria.eligibleBatchYears),
-        isNull(students.batchYear),
-      ),
-    );
+    conditions.push(inArray(students.batchYear, criteria.eligibleBatchYears));
   }
 
   if (criteria.eligibleCategories && criteria.eligibleCategories.length > 0) {
-    conditions.push(
-      or(
-        inArray(students.category, criteria.eligibleCategories),
-        isNull(students.category),
-      ),
-    );
+    conditions.push(inArray(students.category, criteria.eligibleCategories));
   }
 
   const selectColumns = {
@@ -157,12 +140,17 @@ async function fetchEligibleStudents(
     resumeUrl: students.resumeUrl,
   };
 
-  const query =
+  const results =
     conditions.length > 0
-      ? db.select(selectColumns).from(students).where(and(...conditions))
-      : db.select(selectColumns).from(students);
-
-  const results = await query;
+      ? await db
+          .select(selectColumns)
+          .from(students)
+          .where(and(...conditions))
+          .orderBy(asc(students.createdAt))
+      : await db
+          .select(selectColumns)
+          .from(students)
+          .orderBy(asc(students.createdAt));
 
   return results.map((s) => ({
     id: s.id,
@@ -361,6 +349,7 @@ export async function computeRanking(
   // 3. Fetch candidate students (DB pre-filtered)
   let allStudents = await fetchEligibleStudents(eligibility);
   console.log(`[Ranking] Found ${allStudents.length} candidate students`);
+  const totalStudentsFetched = allStudents.length;
 
   const MAX_STUDENTS_PER_RANKING_RUN = 200;
   if (allStudents.length > MAX_STUDENTS_PER_RANKING_RUN) {
@@ -543,7 +532,7 @@ export async function computeRanking(
   // 11. Return summary
   return {
     driveId,
-    totalStudents: allStudents.length,
+    totalStudents: totalStudentsFetched,
     eligibleStudents: eligibleStudents.length,
     rankedStudents: rankedWithPositions.length,
     skippedNoEmbedding,

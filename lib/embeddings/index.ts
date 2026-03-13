@@ -19,6 +19,7 @@
 export {
   generateEmbedding,
   cosineSimilarity,
+  isValidEmbedding,
   EMBEDDING_DIMENSION,
 } from "./generate";
 

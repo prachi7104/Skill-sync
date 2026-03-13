@@ -27,14 +27,16 @@ function calculateSeniorityScore(jdSeniority: string, candidate: EnhancedResume)
 
 const RELATED_CLUSTERS: Record<string, string[]> = {
     "Java Enterprise": ["MERN Stack", "Python Web"],
-    "MERN Stack": ["Python Web", "Java Enterprise"],
-    "Python ML/AI": ["Research/Academic ML", "Data Engineering"],
-    "Python Web": ["MERN Stack", "Java Enterprise", "Data Engineering"],
-    "Research/Academic ML": ["Python ML/AI", "Data Engineering"],
+    "MERN Stack": ["Python Web", "Java Enterprise", "AI/LLM Engineering"],
+    "Python ML/AI": ["Research/Academic ML", "Data Engineering", "AI/LLM Engineering"],
+    "Python Web": ["MERN Stack", "Java Enterprise", "Data Engineering", "AI/LLM Engineering"],
+    "Research/Academic ML": ["Python ML/AI", "Data Engineering", "AI/LLM Engineering"],
     "Data Engineering": ["Python ML/AI", "DevOps/SRE", "Python Web"],
     "DevOps/SRE": ["Data Engineering", "Java Enterprise", "MERN Stack"],
     "Android Native": ["iOS Native", "MERN Stack"],
     "iOS Native": ["Android Native", "MERN Stack"],
+    "Automation/No-Code": ["Python Web", "MERN Stack", "DevOps/SRE"],
+    "AI/LLM Engineering": ["Python ML/AI", "Python Web", "MERN Stack", "Research/Academic ML"],
 };
 
 function calculateStackAlignment(jd: StructuredJD, resume: EnhancedResume): number {
@@ -55,15 +57,42 @@ function calculateStackAlignment(jd: StructuredJD, resume: EnhancedResume): numb
 
 function getWeights(roleType: string, seniority: string) {
     if (roleType === "Research") {
-        // Research: hard skills + research score matter most
-        return { hard: 0.45, research: 0.30, soft: 0.0, exp: 0.15, domain: 0.10 };
+        // Research roles: emphasize research background
+        return { hard: 0.20, research: 0.30, soft: 0.05, exp: 0.10, domain: 0.35 };
     }
     if (seniority === "Senior" || seniority === "Staff+") {
-        // Senior: hard skills + experience + domain; soft skills are a suggestion only
-        return { hard: 0.45, research: 0.0, soft: 0.0, exp: 0.35, domain: 0.10, leadership: 0.10 };
+        // Senior: hard skills + experience + domain
+        return { hard: 0.25, research: 0.0, soft: 0.05, exp: 0.30, domain: 0.40 };
     }
-    // Standard: hard skills dominate; soft skills are suggestions only
-    return { hard: 0.65, research: 0.0, soft: 0.0, exp: 0.20, domain: 0.10, context: 0.05 };
+    // Standard: matches UI labels (20/10/10/60)
+    return { hard: 0.20, research: 0.0, soft: 0.10, exp: 0.10, domain: 0.60 };
+}
+
+function computeSoftEvidenceScore(resume: EnhancedResume): number {
+    let evidenceCount = 0;
+    
+    // Certifications
+    if ((resume.certifications?.length || 0) > 0) evidenceCount++;
+    
+    // Coding profiles
+    if ((resume.coding_profiles?.length || 0) > 0) evidenceCount++;
+    
+    // Quantified achievements/experience
+    const quantifiedPattern = /\d+%|\d+x|improved|optimized|reduced|increased/i;
+    const allProjectText = resume.projects.map(p => `${p.description || ""}`).join(" ");
+    const allExpText = resume.experience.map(e => `${e.description || ""}`).join(" ");
+    const achText = (resume.achievements || []).map(a => `${a.title || ""} ${a.description || ""}`).join(" ");
+    if (quantifiedPattern.test(allProjectText) || quantifiedPattern.test(allExpText) || quantifiedPattern.test(achText)) {
+        evidenceCount++;
+    }
+    
+    // Collaboration keywords
+    const collabKeywords = ["team", "hackathon", "open-source", "club", "collaborative"];
+    const fullText = `${allProjectText} ${allExpText} ${achText}`.toLowerCase();
+    if (collabKeywords.some(k => fullText.includes(k))) evidenceCount++;
+    
+    const raw = Math.round((Math.min(evidenceCount, 4) / 4) * 100);
+    return evidenceCount > 0 ? Math.max(10, raw) : 0;
 }
 
 // ============================================================================
@@ -84,8 +113,13 @@ export function calculateATSScore(
 
     // 2. Soft Skills Score
     const totalSoft = jd.requirements.soft_requirements.technical_skills.length;
-    const matchedSoft = skillAnalysis.matched.filter(m => m.matched_category === "Soft Requirement").length;
-    const softScore = totalSoft > 0 ? (matchedSoft / totalSoft) * 100 : 100; // If no soft requirements in JD, candidate shouldn't be penalized
+    let softScore = 100;
+    if (totalSoft > 0) {
+        const matchedSoft = skillAnalysis.matched.filter(m => m.matched_category === "Soft Requirement").length;
+        softScore = (matchedSoft / totalSoft) * 100;
+    } else {
+        softScore = computeSoftEvidenceScore(resume);
+    }
 
     // 3. Experience Score
     const expScoreRaw = calculateSeniorityScore(jd.role_metadata.seniority_level, resume);
@@ -99,10 +133,10 @@ export function calculateATSScore(
     const researchScore = resume.research_score * 100;
 
     // Calculate Final Weighted Score
-    // NOTE: soft skills are intentionally excluded from scoring.
-    // They are computed separately and surfaced as suggestions for the student.
+    // NOTE: soft skills are now included in the score explicitly.
     let finalScore =
         (hardScore * weights.hard) +
+        (softScore * (weights.soft || 0)) +
         (expScore * (weights.exp || 0)) +
         (domainScore * weights.domain) +
         (researchScore * (weights.research || 0));

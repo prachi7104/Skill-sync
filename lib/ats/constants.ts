@@ -39,6 +39,20 @@ export const TECH_STACK_CLUSTERS: Record<string, string[]> = {
     "Research/Academic ML": [
         "PyTorch", "JAX", "Transformers", "HuggingFace",
         "LaTeX", "Research", "Publications", "arXiv"
+    ],
+    "Automation/No-Code": [
+        "Make.com", "Zapier", "n8n", "Integromat", "Airtable", "workflow automation",
+        "process automation", "no-code", "low-code", "RPA", "email automation",
+        "LinkedIn automation", "lead generation", "outreach automation",
+        "HubSpot", "Salesforce automation", "CRM automation", "API integrations",
+        "email marketing", "drip campaigns"
+    ],
+    "AI/LLM Engineering": [
+        "LLM", "GPT", "OpenAI", "ChatGPT API", "Claude", "Gemini API",
+        "LangChain", "RAG", "vector database", "prompt engineering",
+        "HuggingFace", "Whisper", "OCR", "LLM inference", "embeddings",
+        "fine-tuning", "RLHF", "AI pipeline", "document parsing", "LLM integration",
+        "Pinecone", "Chroma", "Weaviate", "FAISS"
     ]
 };
 
@@ -167,6 +181,31 @@ export const SKILL_ALIASES: Record<string, string[]> = {
     "C": ["c programming", "c language"],
     "PHP": ["php", "laravel", "wordpress", "codeigniter"],
     "R": ["r programming", "r language"],
+
+    // ── Automation & No-Code ──
+    "Make.com": ["make", "integromat", "Make (formerly Integromat)", "make.com", "make automation"],
+    "Zapier": ["zapier"],
+    "n8n": ["n8n", "n8n.io"],
+    "workflow automation": ["automation", "automated workflows", "process automation", "workflow", "automating tasks", "automate", "automation workflows", "business automation"],
+    "LinkedIn automation": ["linkedin outreach", "linkedin automation", "linkedin campaigns", "linkedin marketing", "linkedin api"],
+    "no-code tools": ["no-code", "low-code", "nocode", "lowcode", "no code", "low code", "no-code/low-code", "zero-code", "citizen developer"],
+    "email marketing": ["email campaigns", "email outreach", "drip campaigns", "email automation", "cold email", "email sequences", "email marketing campaigns", "email blast"],
+    "lead generation": ["lead gen", "lead generation", "outbound leads", "prospect automation", "lead nurturing", "pipeline generation"],
+    "API integrations": ["api integration", "third-party api", "webhook", "webhooks", "api connections", "external api", "integrate apis"],
+
+    // ── AI/LLM Engineering ──
+    "LLM": ["large language model", "language model", "llm inference", "llm integration", "foundation model", "generative ai", "genai", "gen ai"],
+    "prompt engineering": ["prompt design", "prompting", "system prompt", "prompt writing", "prompt optimization", "prompt tuning", "prompt crafting"],
+    "OCR": ["optical character recognition", "document parsing", "tesseract", "document extraction", "document ocr", "pdf extraction"],
+    "Whisper": ["whisper asr", "speech recognition", "audio transcription", "openai whisper", "whisper model", "asr model"],
+    "LangChain": ["langchain", "lang chain", "langchain.js"],
+    "RAG": ["retrieval augmented generation", "rag pipeline", "vector search", "knowledge retrieval"],
+    "OpenAI API": ["openai", "chatgpt api", "gpt api", "gpt-4", "gpt-3.5", "openai integration"],
+    "Gemini API": ["gemini", "google gemini", "bard api", "gemini pro"],
+    "vector database": ["pinecone", "weaviate", "qdrant", "chroma", "milvus", "faiss", "vector store", "embedding store"],
+    "HuggingFace": ["hugging face", "huggingface", "transformers library", "hf models"],
+    "XGBoost": ["xgboost", "xgb", "gradient boosting", "gbm"],
+    "self-learning": ["self-learn", "self-taught", "independent learning", "self-driven", "autodidact"],
 };
 
 export const IMPLICIT_SKILLS = {

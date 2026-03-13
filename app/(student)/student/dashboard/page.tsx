@@ -31,8 +31,10 @@ export default function StudentDashboard() {
             try {
                 const res = await fetch("/api/student/dashboard/stats");
                 if (res.ok) {
-                    const data = await res.json();
-                    setStats(data);
+                    const { data } = await res.json();
+                    if (data) {
+                        setStats(data);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch dashboard stats", error);
@@ -102,7 +104,7 @@ export default function StudentDashboard() {
                         <EyeIcon className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{sandboxUsageToday}/3</div>
+                    <div className="text-2xl font-bold">{sandboxUsageToday}/5</div>
                         <p className="text-xs text-muted-foreground">Today</p>
                     </CardContent>
                 </Card>

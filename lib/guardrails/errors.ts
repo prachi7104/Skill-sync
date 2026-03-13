@@ -52,7 +52,7 @@ export const ERRORS = {
   SANDBOX_DAILY_LIMIT: (): GuardrailViolation =>
     new GuardrailViolation({
       code: "SANDBOX_DAILY_LIMIT",
-      reason: "Daily sandbox limit exceeded (100/day).",
+      reason: "Daily sandbox limit exceeded (5/day).",
       nextStep: "Try again tomorrow. Limits reset at midnight UTC.",
       status: 429,
     }),
@@ -60,7 +60,7 @@ export const ERRORS = {
   SANDBOX_MONTHLY_LIMIT: (): GuardrailViolation =>
     new GuardrailViolation({
       code: "SANDBOX_MONTHLY_LIMIT",
-      reason: "Monthly sandbox limit exceeded (500/month).",
+      reason: "Monthly sandbox limit exceeded (30/month).",
       nextStep: "Limit resets at the start of next month.",
       status: 429,
     }),

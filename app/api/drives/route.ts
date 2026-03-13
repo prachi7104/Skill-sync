@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     // Queue enhance_jd job
     await db.insert(jobs).values({
       type: "enhance_jd",
-      payload: { driveId: drive.id },
+      payload: { driveId: drive.id, titleHint: data.roleTitle, companyHint: data.company },
       priority: 7,
     });
 
