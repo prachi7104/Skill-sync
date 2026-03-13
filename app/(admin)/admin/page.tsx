@@ -1,9 +1,7 @@
+import { redirect } from "next/navigation";
 
 export default function AdminPage() {
-    return (
-        <div className="p-8">
-            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-            <p>Welcome, Admin.</p>
-        </div>
-    );
+  // The real admin landing page is System Health — redirect to it.
+  // The sidebar provides navigation to All Drives and User Management.
+  redirect("/admin/health");
 }
