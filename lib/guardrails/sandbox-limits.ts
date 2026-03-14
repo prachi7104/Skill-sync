@@ -23,6 +23,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { GuardrailViolation } from "@/lib/guardrails/errors";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -50,11 +51,43 @@ function currentMonthUTC(): string {
  * TODO: Re-enable before production.
  */
 export async function enforceSandboxLimits(studentId: string): Promise<void> {
-  console.warn("[SANDBOX] Rate limits are DISABLED for testing — re-enable before production");
-  // Rate limits disabled — always allow
-  void studentId;
-  void DAILY_LIMIT;
-  void MONTHLY_LIMIT;
+  const today = todayUTC();
+  const month = currentMonthUTC();
+
+  const [student] = await db
+    .select({
+      sandboxUsageToday: students.sandboxUsageToday,
+      sandboxResetDate: students.sandboxResetDate,
+      sandboxUsageMonth: students.sandboxUsageMonth,
+      sandboxMonthResetDate: students.sandboxMonthResetDate,
+    })
+    .from(students)
+    .where(eq(students.id, studentId))
+    .limit(1);
+
+  if (!student) throw new GuardrailViolation({
+    code: "STUDENT_NOT_FOUND",
+    reason: "Student profile not found.",
+    nextStep: "Please sign out and sign back in.",
+    status: 404,
+  });
+
+  const dailyUsed = student.sandboxResetDate === today ? student.sandboxUsageToday : 0;
+  const monthlyUsed = student.sandboxMonthResetDate === month ? student.sandboxUsageMonth : 0;
+
+  if (dailyUsed >= DAILY_LIMIT) throw new GuardrailViolation({
+    code: "SANDBOX_DAILY_LIMIT",
+    reason: `Daily limit reached (${DAILY_LIMIT} analyses/day).`,
+    nextStep: "Your quota resets at midnight UTC.",
+    status: 429,
+  });
+
+  if (monthlyUsed >= MONTHLY_LIMIT) throw new GuardrailViolation({
+    code: "SANDBOX_MONTHLY_LIMIT",
+    reason: `Monthly limit reached (${MONTHLY_LIMIT} analyses/month).`,
+    nextStep: "Your quota resets at the start of next month.",
+    status: 429,
+  });
 }
 
 /**
@@ -102,11 +135,43 @@ const DETAILED_MONTHLY_LIMIT = 15;
  * TODO: Re-enable before production.
  */
 export async function enforceDetailedAnalysisLimits(studentId: string): Promise<void> {
-  console.warn("[DETAILED ANALYSIS] Rate limits are DISABLED for testing — re-enable before production");
-  // Rate limits disabled — always allow
-  void studentId;
-  void DETAILED_DAILY_LIMIT;
-  void DETAILED_MONTHLY_LIMIT;
+  const today = todayUTC();
+  const month = currentMonthUTC();
+
+  const [student] = await db
+    .select({
+      detailedAnalysisUsageToday: students.detailedAnalysisUsageToday,
+      detailedAnalysisResetDate: students.detailedAnalysisResetDate,
+      detailedAnalysisUsageMonth: students.detailedAnalysisUsageMonth,
+      detailedAnalysisMonthResetDate: students.detailedAnalysisMonthResetDate,
+    })
+    .from(students)
+    .where(eq(students.id, studentId))
+    .limit(1);
+
+  if (!student) throw new GuardrailViolation({
+    code: "STUDENT_NOT_FOUND",
+    reason: "Student profile not found.",
+    nextStep: "Please sign out and sign back in.",
+    status: 404,
+  });
+
+  const dailyUsed = student.detailedAnalysisResetDate === today ? student.detailedAnalysisUsageToday : 0;
+  const monthlyUsed = student.detailedAnalysisMonthResetDate === month ? student.detailedAnalysisUsageMonth : 0;
+
+  if (dailyUsed >= DETAILED_DAILY_LIMIT) throw new GuardrailViolation({
+    code: "SANDBOX_DAILY_LIMIT",
+    reason: `Daily limit reached (${DETAILED_DAILY_LIMIT} detailed analyses/day).`,
+    nextStep: "Your quota resets at midnight UTC.",
+    status: 429,
+  });
+
+  if (monthlyUsed >= DETAILED_MONTHLY_LIMIT) throw new GuardrailViolation({
+    code: "SANDBOX_MONTHLY_LIMIT",
+    reason: `Monthly limit reached (${DETAILED_MONTHLY_LIMIT} detailed analyses/month).`,
+    nextStep: "Your quota resets at the start of next month.",
+    status: 429,
+  });
 }
 
 /**

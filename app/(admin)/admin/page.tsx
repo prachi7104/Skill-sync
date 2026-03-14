@@ -52,12 +52,10 @@ export default async function AdminHealthPage() {
   const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
   // YOUR EXACT DB LOGIC
-  const [pendingByType, failedLast24h, , completedLast24h] = await Promise.all([
+  const [pendingByType, failedLast24h, completedLast24h] = await Promise.all([
     db.select({ type: jobs.type, count: sql<number>`count(*)::int` }).from(jobs).where(eq(jobs.status, "pending")).groupBy(jobs.type),
     db.select({ count: sql<number>`count(*)::int` }).from(jobs).where(and(eq(jobs.status, "failed"), gte(jobs.updatedAt, twentyFourHoursAgo))),
-    db.select({ type: jobs.type, error: jobs.error, updatedAt: jobs.updatedAt }).from(jobs).where(and(eq(jobs.status, "failed"), gte(jobs.updatedAt, twentyFourHoursAgo))).orderBy(desc(jobs.updatedAt)).limit(5),
     db.select({ count: sql<number>`count(*)::int` }).from(jobs).where(and(eq(jobs.status, "completed"), gte(jobs.updatedAt, twentyFourHoursAgo))),
-    db.select({ type: jobs.type, avgLatency: sql<number>`round(avg(${jobs.latencyMs}))::int` }).from(jobs).where(and(eq(jobs.status, "completed"), isNotNull(jobs.latencyMs))).groupBy(jobs.type),
   ]);
 
   const totalPending = pendingByType.reduce((sum, r) => sum + r.count, 0);

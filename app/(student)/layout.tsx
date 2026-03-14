@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { requireRole, getStudentProfile } from "@/lib/auth/helpers";
 import Link from "next/link";
+import SignOutButton from "@/components/shared/sign-out-button";
 import { StudentProvider } from "@/app/(student)/providers/student-provider";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
@@ -47,9 +48,7 @@ export default async function StudentLayout({
                         <div className="text-sm font-medium text-slate-300 hidden md:block">
                             {user.name} <span className="text-slate-500 font-normal ml-1">(student)</span>
                         </div>
-                        <button className="text-sm font-bold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-5 py-2 rounded-xl transition-all shadow-sm">
-                            Sign out
-                        </button>
+                        <SignOutButton />
                     </div>
                 </header>
 
