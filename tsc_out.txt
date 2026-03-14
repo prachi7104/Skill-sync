@@ -1,4 +1,0 @@
-﻿lib/supabase/client.ts(1,45): error TS2307: Cannot find module '@supabase/auth-helpers-nextjs' or its corresponding type declarations.
-lib/supabase/server.ts(1,45): error TS2307: Cannot find module '@supabase/auth-helpers-nextjs' or its corresponding type declarations.
-scripts/run-ranking.ts(55,39): error TS2307: Cannot find module '@xenova/transformers' or its corresponding type declarations.
-tests/semantic-skills.test.ts(24,6): error TS6196: 'EvidenceLevel' is declared but never used.
