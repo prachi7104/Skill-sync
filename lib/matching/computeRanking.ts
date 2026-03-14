@@ -31,7 +31,7 @@ import pLimit from "p-limit";
 import { db } from "@/lib/db";
 import { students, drives, rankings } from "@/lib/db/schema";
 import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
-import { eq, and, gte, inArray, or, isNull, type SQL } from "drizzle-orm";
+import { eq, and, gte, inArray, type SQL, asc } from "drizzle-orm";
 import {
   generateEmbedding,
   composeStudentEmbeddingText,
@@ -80,6 +80,7 @@ interface StudentForRanking {
   skills: Skill[] | null;
   projects: Project[] | null;
   workExperience: WorkExperience[] | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   certifications: any[] | null;
   embedding: number[] | null;
   resumeUrl: string | null;
@@ -111,36 +112,19 @@ async function fetchEligibleStudents(
   const conditions: (SQL | undefined)[] = [];
 
   if (criteria.minCgpa !== null && criteria.minCgpa !== undefined) {
-    conditions.push(
-      or(gte(students.cgpa, criteria.minCgpa), isNull(students.cgpa)),
-    );
+    conditions.push(gte(students.cgpa, criteria.minCgpa));
   }
 
   if (criteria.eligibleBranches && criteria.eligibleBranches.length > 0) {
-    conditions.push(
-      or(
-        inArray(students.branch, criteria.eligibleBranches),
-        isNull(students.branch),
-      ),
-    );
+    conditions.push(inArray(students.branch, criteria.eligibleBranches));
   }
 
   if (criteria.eligibleBatchYears && criteria.eligibleBatchYears.length > 0) {
-    conditions.push(
-      or(
-        inArray(students.batchYear, criteria.eligibleBatchYears),
-        isNull(students.batchYear),
-      ),
-    );
+    conditions.push(inArray(students.batchYear, criteria.eligibleBatchYears));
   }
 
   if (criteria.eligibleCategories && criteria.eligibleCategories.length > 0) {
-    conditions.push(
-      or(
-        inArray(students.category, criteria.eligibleCategories),
-        isNull(students.category),
-      ),
-    );
+    conditions.push(inArray(students.category, criteria.eligibleCategories));
   }
 
   const selectColumns = {
@@ -157,12 +141,17 @@ async function fetchEligibleStudents(
     resumeUrl: students.resumeUrl,
   };
 
-  const query =
+  const results =
     conditions.length > 0
-      ? db.select(selectColumns).from(students).where(and(...conditions))
-      : db.select(selectColumns).from(students);
-
-  const results = await query;
+      ? await db
+          .select(selectColumns)
+          .from(students)
+          .where(and(...conditions))
+          .orderBy(asc(students.createdAt))
+      : await db
+          .select(selectColumns)
+          .from(students)
+          .orderBy(asc(students.createdAt));
 
   return results.map((s) => ({
     id: s.id,
@@ -246,6 +235,7 @@ async function ensureStudentEmbedding(
   const isZeroStudent =
     embedding.length === 768 && embedding.every((v) => v === 0);
   if (isZeroStudent) {
+    // eslint-disable-next-line no-console
     console.warn(
       `[Ranking] Zero vector for student ${student.id} — skipping.`,
     );
@@ -340,6 +330,7 @@ export async function computeRanking(
   const computeStart = Date.now();
   let skippedNoEmbedding = 0;
 
+  // eslint-disable-next-line no-console
   console.log(`[Ranking] Starting computation for drive ${driveId}`);
 
   // 1. Fetch drive
@@ -348,6 +339,7 @@ export async function computeRanking(
     throw new Error(`Drive not found: ${driveId}`);
   }
 
+  // eslint-disable-next-line no-console
   console.log(`[Ranking] Drive: ${drive.company} - ${drive.roleTitle}`);
 
   // 2. Build eligibility criteria
@@ -360,10 +352,13 @@ export async function computeRanking(
 
   // 3. Fetch candidate students (DB pre-filtered)
   let allStudents = await fetchEligibleStudents(eligibility);
+  // eslint-disable-next-line no-console
   console.log(`[Ranking] Found ${allStudents.length} candidate students`);
+  const totalStudentsFetched = allStudents.length;
 
   const MAX_STUDENTS_PER_RANKING_RUN = 200;
   if (allStudents.length > MAX_STUDENTS_PER_RANKING_RUN) {
+    // eslint-disable-next-line no-console
     console.warn(
       `[Ranking] Student cap applied — processing ${MAX_STUDENTS_PER_RANKING_RUN}/${allStudents.length} students. Upgrade server for full ranking.`,
       { driveId },
@@ -375,6 +370,7 @@ export async function computeRanking(
   let jdEmbedding: number[];
   try {
     jdEmbedding = await ensureJDEmbedding(drive);
+    // eslint-disable-next-line no-console
     console.log(`[Ranking] JD embedding ready (${jdEmbedding.length} dims)`);
   } catch (err: unknown) {
     throw new Error(`Failed to generate JD embedding: ${err instanceof Error ? err.message : String(err)}`);
@@ -383,6 +379,7 @@ export async function computeRanking(
   // 5. Extract required + preferred skills from JD
   const requiredSkills = extractJDRequiredSkills(drive.parsedJd);
   const preferredSkills = extractJDPreferredSkills(drive.parsedJd);
+  // eslint-disable-next-line no-console
   console.log(
     `[Ranking] Required skills: ${requiredSkills.length}, Preferred: ${preferredSkills.length}`,
   );
@@ -409,12 +406,14 @@ export async function computeRanking(
 
   for (const result of embeddingResults) {
     if (Date.now() - computeStart > SAFE_DURATION_MS) {
+      // eslint-disable-next-line no-console
       console.warn(`[Ranking] Time limit reached — stopping early`, { driveId });
       break;
     }
 
     if (result.status === "rejected") {
       const errorMsg = `Failed to generate embedding: ${result.reason}`;
+      // eslint-disable-next-line no-console
       console.warn(`[Ranking] ${errorMsg}`);
       errors.push(errorMsg);
       continue;
@@ -468,6 +467,7 @@ export async function computeRanking(
     }
   }
 
+  // eslint-disable-next-line no-console
   console.log(
     `[Ranking] Computed scores for ${scoredStudents.length} students`,
   );
@@ -477,6 +477,7 @@ export async function computeRanking(
     (s) => s.scoring.isEligible,
   );
 
+  // eslint-disable-next-line no-console
   console.log(
     `[Ranking] Eligible: ${eligibleStudents.length} / ${scoredStudents.length}`,
   );
@@ -538,12 +539,13 @@ export async function computeRanking(
   });
 
   const durationMs = Date.now() - computeStart;
+  // eslint-disable-next-line no-console
   console.log(`[Ranking] Completed in ${durationMs}ms`);
 
   // 11. Return summary
   return {
     driveId,
-    totalStudents: allStudents.length,
+    totalStudents: totalStudentsFetched,
     eligibleStudents: eligibleStudents.length,
     rankedStudents: rankedWithPositions.length,
     skippedNoEmbedding,

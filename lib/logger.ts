@@ -49,15 +49,19 @@ function emit(level: LogLevel, msg: string, context?: Record<string, unknown>): 
 
   switch (level) {
     case "error":
+      // eslint-disable-next-line no-console
       console.error(line);
       break;
     case "warn":
+      // eslint-disable-next-line no-console
       console.warn(line);
       break;
     case "debug":
+      // eslint-disable-next-line no-console
       console.debug(line);
       break;
     default:
+      // eslint-disable-next-line no-console
       console.log(line);
   }
 }

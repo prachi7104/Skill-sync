@@ -44,6 +44,7 @@ export function StudentProvider({
     const [isLoading, setIsLoading] = useState(!initialStudent);
     const [error, setError] = useState<string | null>(null);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const applyProfileData = useCallback((data: any) => {
         // API returns { success, data: { user, profile } }
         const payload = data.data ?? data;

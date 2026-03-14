@@ -28,13 +28,17 @@ export async function GET(req: NextRequest) {
     }
 
     // Recover stuck jobs (processing for >5 minutes and still have retries left)
-    await db.update(jobs)
-      .set({ status: 'pending', updatedAt: new Date() })
-      .where(and(
-        eq(jobs.status, 'processing'),
-        lt(jobs.updatedAt, new Date(Date.now() - 5 * 60 * 1000)),
-        lt(jobs.retryCount, jobs.maxRetries)
-      ));
+    await db
+      .update(jobs)
+      .set({ status: "pending", updatedAt: new Date() })
+      .where(
+        and(
+          eq(jobs.type, "rank_students"),
+          eq(jobs.status, "processing"),
+          lt(jobs.updatedAt, new Date(Date.now() - 5 * 60 * 1000)),
+          lt(jobs.retryCount, jobs.maxRetries),
+        ),
+      );
 
     logger.info("Checking for pending rank_students jobs");
 
@@ -76,6 +80,7 @@ export async function GET(req: NextRequest) {
           .update(jobs)
           .set({
             status: "completed",
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             result: result as any,
             latencyMs: Date.now() - startTime,
             updatedAt: new Date(),
@@ -116,6 +121,7 @@ export async function GET(req: NextRequest) {
       { message: "Rankings worker executed", processed, failed },
       { status: 200 },
     );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("[Cron:Rankings] Worker failed:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

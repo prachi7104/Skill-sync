@@ -77,6 +77,7 @@ export async function GET() {
       },
       { status: 200 },
     );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     if (isRedirectError(err)) throw err;
     const message = err?.message ?? "Internal server error";

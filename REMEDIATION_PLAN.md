@@ -54,7 +54,7 @@ These issues will cause the application to crash or be fundamentally unusable. F
 | **Impact** | Every single user — student, faculty, admin — is stranded after login. |
 | **Remedy** | **Option A (Quick):** Change `callbackUrl` to `/student/dashboard` for now, and build a `/` redirect page that reads the session role and redirects accordingly. **Option B (Proper):** Create a server component at `app/page.tsx` that checks the session and redirects: `student → /student/dashboard`, `faculty → /faculty/dashboard`, `admin → /admin/health`. Unauthenticated users see the landing/login prompt. |
 | **Effort** | 30 minutes |
-
+abc 
 ---
 
 ## Phase 1 — Missing Core Features

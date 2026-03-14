@@ -37,5 +37,10 @@ export default function StudentProfilePage() {
         softSkills: student.softSkills || [],
     };
 
+    // We accept that some fields in serializedUser might be missing if the type definition 
+    // of UserInfo in provider is strict. We might need to cast or update provider type.
+    // For now, we cast to any to pass to View if types mismatch, but ideally we match types.
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return <ProfileView user={serializedUser as any} profile={serializedProfile} />;
 }

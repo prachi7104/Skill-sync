@@ -128,6 +128,37 @@ function getRecommendation(score: number): Recommendation {
 // ============================================================================
 
 /** Education alignment: compare resume education against JD education field */
+function computeKeywordProjectOverlap(resume: ParsedResumeData, jd: StructuredJD): number {
+    const jdKeywordsSet = new Set<string>();
+    
+    // Collect strings from critical, important, and hard requirements
+    (jd.matching_keywords?.critical || []).forEach(k => jdKeywordsSet.add(k.toLowerCase()));
+    (jd.matching_keywords?.important || []).forEach(k => jdKeywordsSet.add(k.toLowerCase()));
+    jd.requirements.hard_requirements.technical_skills.forEach(s => jdKeywordsSet.add(s.skill.toLowerCase()));
+    
+    const jdKeywords = Array.from(jdKeywordsSet);
+    
+    if (jdKeywords.length === 0) return 100;
+
+    const projectText = (resume.projects || [])
+        .map(p => `${p.title || ""} ${p.description || ""} ${(p.tech_stack || []).join(" ")}`)
+        .join(" ")
+        .toLowerCase();
+
+    let matchedCount = 0;
+    for (const keyword of jdKeywords) {
+        // Exact word boundary match
+        const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+        if (regex.test(projectText)) {
+            matchedCount++;
+        }
+    }
+
+    // Multiply by 2: 50% match counts as 100 points
+    return Math.min(100, Math.round((matchedCount / Math.max(jdKeywords.length, 1)) * 100 * 2));
+}
+
 function computeEducationAlignment(resume: ParsedResumeData, jd: StructuredJD): number {
     const jdEdu = jd.requirements.hard_requirements.education;
     if (!jdEdu || !jdEdu.field || jdEdu.field === "Unknown") return 80; // no education requirement → default good
@@ -463,7 +494,9 @@ export async function performDetailedAnalysis(
 
     // Domain Match (60%) — education(30%) + project semantic overlap(40%) + artifacts(30%)
     const educationAlignment = computeEducationAlignment(parsedResume, jd);
-    const projectSemanticOverlap = Math.round(resumeSemanticScore * 100);
+    const projectSemanticOverlap = resumeSemanticScore > 0.01
+        ? Math.round(resumeSemanticScore * 100)
+        : computeKeywordProjectOverlap(parsedResume, jd);
     const artifactScore = computeArtifactScore(parsedResume, jd);
     const resumeDomainMatch = Math.round(
         educationAlignment * 0.30 + projectSemanticOverlap * 0.40 + artifactScore * 0.30
@@ -491,9 +524,38 @@ export async function performDetailedAnalysis(
     const profileHardBase = Math.round((profileHardWeightedSum / totalRequiredWeight) * 100);
     const profileHardSkillScore = Math.max(0, Math.min(100, profileHardBase - profileMissingCount * 15));
 
-    const profileSoftSkillScore = (studentProfile.softSkills?.length || 0) > 0 ? 50 : 20;
-    const profileExperienceScore = (studentProfile.workExperience?.length ?? 0) > 0 ? 70 : 20;
-    const profileDomainMatch = Math.round(profileSemanticScore * 100); // profile has less data for sub-components
+    // Profile soft skills: use same evidence computation as resume, from profile data
+    let profileSoftScore = 20;
+    if ((studentProfile.softSkills?.length || 0) > 0) profileSoftScore = 50;
+    if ((studentProfile.certifications?.length || 0) > 0) profileSoftScore = Math.max(profileSoftScore, 60);
+    if ((studentProfile.codingProfiles?.length || 0) > 0) profileSoftScore = Math.max(profileSoftScore, 55);
+    const profileSoftSkillScore = Math.min(100, profileSoftScore);
+
+    // Profile experience: check if any internship is relevant to JD
+    const jdDomainKeywords = [
+        jd.role_metadata?.role_type || "",
+        ...(jd.normalized_skills?.domains || [])
+    ].map(d => d.toLowerCase()).filter(Boolean);
+    
+    const profileInternships = studentProfile.workExperience || [];
+    const hasRelevantInternship = profileInternships.some(e => {
+        const text = `${e.role || ""} ${e.company || ""} ${e.description || ""}`.toLowerCase();
+        return jdDomainKeywords.length === 0 || jdDomainKeywords.some(k => text.includes(k));
+    });
+    const profileExperienceScore = hasRelevantInternship ? 85 : (profileInternships.length > 0 ? 60 : 20);
+
+    // Profile domain: use keyword fallback when embedding missing
+    const profileKeywordOverlap = profileSemanticScore > 0.01
+        ? Math.round(profileSemanticScore * 100)
+        : computeKeywordProjectOverlap(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            { ...parsedResume, projects: (studentProfile.projects || []).map((p: any) => ({
+                title: p.title, description: p.description, tech_stack: p.techStack
+            }))
+            } as ParsedResumeData,
+            jd
+        );
+    const profileDomainMatch = Math.min(100, profileKeywordOverlap);
 
     const profileScoreBreakdown: ScoreBreakdown = {
         hardSkills: Math.min(100, profileHardSkillScore),
@@ -601,6 +663,67 @@ export async function performDetailedAnalysis(
             type: "highlight_project",
             priority: "Medium",
             message: `Highlight your projects more prominently — ${projectsWithSkills.length} project(s) already demonstrate relevant skills.`,
+        });
+    }
+
+    // 8e. Domain mismatch guidance
+    if (resumeDomainMatch < 50 && jd.tech_stack_cluster?.primary_cluster) {
+        const cluster = jd.tech_stack_cluster.primary_cluster;
+        actionableFeedback.push({
+            type: "tailor_resume",
+            priority: "High",
+            message: `This role targets the "${cluster}" domain. Reframe your experience to highlight any ${cluster}-relevant work. Even adjacent experience counts — surface it explicitly.`,
+        });
+    }
+
+    // 8f. Quantification nudge — if no quantified achievements found
+    const hasQuantified = /\d+%|\d+x|reduced|improved|increased|optimized|\d+K|\d+ users/i.test(
+        parsedResume.experience.map(e => e.description || "").join(" ") +
+        parsedResume.projects.map(p => p.description || "").join(" ")
+    );
+    if (!hasQuantified) {
+        actionableFeedback.push({
+            type: "strengthen_evidence",
+            priority: "Medium",
+            message: "None of your experience bullets contain measurable impact. Add numbers: latency reduced by X%, throughput of Y requests/sec, team of Z people, N% accuracy improvement. Numbers dramatically increase recruiter confidence.",
+        });
+    }
+
+    // 8g. Missing GitHub/LinkedIn if coding profiles empty
+    const hasGithub = parsedResume.coding_profiles?.some(p => p.platform?.toLowerCase().includes("github")) || false;
+    if (!hasGithub) {
+        actionableFeedback.push({
+            type: "add_skill",
+            priority: "Medium",
+            message: "No GitHub profile detected in your resume. Recruiters for technical roles almost always check GitHub. Add your GitHub URL to the resume header.",
+            skill: "GitHub",
+        });
+    }
+
+    // 8h. Certification relevance nudge
+    const certs = parsedResume.certifications || [];
+    const jdDomainWords = [
+        jd.role_metadata?.role_type || "",
+        ...(jd.normalized_skills?.domains || [])
+    ].map(d => d.toLowerCase());
+    const hasRelevantCert = certs.some(c => {
+        const certText = `${c.certification_name || ""} ${c.issuer || ""}`.toLowerCase();
+        return jdDomainWords.some(d => d && certText.includes(d));
+    });
+    if (certs.length > 0 && !hasRelevantCert && jdDomainWords.filter(Boolean).length > 0) {
+        actionableFeedback.push({
+            type: "tailor_resume",
+            priority: "Low",
+            message: `Your certifications don't directly reference this role's domain. If you have any relevant coursework or micro-credentials in ${jd.role_metadata?.role_type || "this domain"}, add them — even informal ones signal intent.`,
+        });
+    }
+
+    // Fallback if no feedback generated
+    if (missedOpportunities.length === 0 && actionableFeedback.length === 0) {
+        actionableFeedback.push({
+            type: "tailor_resume",
+            priority: "Medium",
+            message: "Tailor your resume summary to directly reference this role's key requirements. A targeted 2-sentence summary that mirrors JD language significantly increases ATS match rates.",
         });
     }
 

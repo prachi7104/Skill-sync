@@ -82,7 +82,7 @@ export default function AdminUsersPage() {
         // Fall back to faculty list if /api/admin/users doesn't exist
         setUsers(data.data ?? []);
       }
-    } catch (e: any) {
+    } catch {
       // Fallback: just show faculty list
       try {
         const res = await fetch("/api/admin/faculty");

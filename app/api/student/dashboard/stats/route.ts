@@ -31,6 +31,7 @@ export async function GET() {
                 rankingsCount,
             }
         });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         if (isRedirectError(error)) throw error;
         if (error instanceof Error && (error.message.includes("Unauthorized") || error.message.includes("Forbidden"))) {

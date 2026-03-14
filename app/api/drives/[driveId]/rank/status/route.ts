@@ -67,6 +67,7 @@ export async function GET(
         }
         : null,
     });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     if (isRedirectError(err)) throw err;
     console.error("[GET /api/drives/[driveId]/rank/status]", err);

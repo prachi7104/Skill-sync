@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
     await db.update(jobs)
       .set({ status: 'pending', updatedAt: new Date() })
       .where(and(
+        eq(jobs.type, "generate_embedding"),
         eq(jobs.status, 'processing'),
         lt(jobs.updatedAt, new Date(Date.now() - 5 * 60 * 1000)),
         lt(jobs.retryCount, jobs.maxRetries)

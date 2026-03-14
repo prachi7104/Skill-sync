@@ -33,6 +33,7 @@ export async function checkAndIncrementRateLimit(
     `);
 
         // 3. Check if we exceeded the limit
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const count = (result as any).request_count as number;
         return count <= limitPerMinute;
     } catch (error) {

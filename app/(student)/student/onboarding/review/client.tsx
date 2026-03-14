@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { computeCompleteness } from "@/lib/profile/completeness";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function OnboardingReviewClient({ profile }: { profile: any }) {
     const router = useRouter();
     const [isFinishing, setIsFinishing] = useState(false);

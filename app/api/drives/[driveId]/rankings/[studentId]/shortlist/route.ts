@@ -37,10 +37,18 @@ export async function PATCH(
         );
     }
 
-    await db
+    const updated = await db
         .update(rankings)
         .set({ shortlisted })
-        .where(and(eq(rankings.driveId, driveId), eq(rankings.studentId, studentId)));
+        .where(and(eq(rankings.driveId, driveId), eq(rankings.studentId, studentId)))
+        .returning({ id: rankings.studentId });
+
+    if (updated.length === 0) {
+        return NextResponse.json(
+            { error: "Ranking not found for this student/drive" },
+            { status: 404 }
+        );
+    }
 
     return NextResponse.json({ success: true, shortlisted });
 }

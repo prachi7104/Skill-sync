@@ -93,7 +93,7 @@ export const researchPaperSchema = z.object({
     title: z.string().min(1, "Title is required").max(200),
     abstract: z.string().max(1000).optional(),
     url: z.string().url().optional().or(z.literal("")),
-    publicationDate: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")),
+    datePublished: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")),
 });
 
 // ── Composite profile schema with array limits ──────────────────────────────

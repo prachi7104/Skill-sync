@@ -328,37 +328,46 @@ function validateAndBuild(raw: unknown): ParsedResumeData | null {
         professional_summary: typeof p.professional_summary === "string" ? p.professional_summary.trim() : null,
 
         coding_profiles: Array.isArray(p.coding_profiles)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ? p.coding_profiles.filter((c: any) => c?.platform && c?.profile_url)
             : [],
 
         education_history: Array.isArray(p.education_history)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ? p.education_history.filter((e: any) => e?.institution)
             : [],
 
         experience: Array.isArray(p.experience)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ? p.experience.filter((e: any) => e?.company && e?.role)
             : [],
 
         projects: Array.isArray(p.projects)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ? p.projects.filter((proj: any) => proj?.title)
             : [],
 
         skills: Array.isArray(p.skills)
             ? p.skills
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .filter((s: any) => s?.name && typeof s.name === "string")
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .map((s: any) => ({ name: s.name.trim(), category: typeof s.category === "string" ? s.category : "other" }))
             : [],
 
         research_papers: Array.isArray(p.research_papers)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ? p.research_papers.filter((r: any) => r?.title)
             : [],
 
         certifications: Array.isArray(p.certifications)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ? p.certifications.filter((c: any) => c?.certification_name)
             : [],
 
         achievements: Array.isArray(p.achievements)
             ? p.achievements
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .map((a: any) => {
                     if (typeof a === "string") return { title: a };
                     if (a?.title) return {
@@ -373,13 +382,17 @@ function validateAndBuild(raw: unknown): ParsedResumeData | null {
             : [],
 
         soft_skills: Array.isArray(p.soft_skills)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ? p.soft_skills.filter((s: any) => typeof s === "string")
             : [],
     };
 
     // Backwards compat: old-style general_technical_skills → skills
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (result.skills.length === 0 && Array.isArray((p as any).general_technical_skills)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         result.skills = (p as any).general_technical_skills
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .filter((s: any) => typeof s === "string" && s.trim().length > 0)
             .map((s: string) => ({ name: s.trim(), category: "other" }));
     }
@@ -492,7 +505,8 @@ export async function parseResumeWithAI(resumeText: string): Promise<ParsedResum
 
                 // Accept if score is good enough (≥30 = at least name + some data)
                 if (score >= 30) {
-                    console.log(`[AI Parser] ✅ ${model.label} succeeded (score ${score}, attempt ${attempts})`);
+                    // eslint-disable-next-line no-console
+                console.log(`[AI Parser] ✅ ${model.label} succeeded (score ${score}, attempt ${attempts})`);
                     return parsed;
                 }
 
@@ -510,6 +524,7 @@ export async function parseResumeWithAI(resumeText: string): Promise<ParsedResum
 
                 if (attempts < maxAttempts && isRetriable(error)) {
                     const delay = 300 + jitterMs();
+                    // eslint-disable-next-line no-console
                     console.log(`[AI Parser] ⏳ Retrying ${model.label} in ${delay}ms...`);
                     await new Promise(r => setTimeout(r, delay));
                     continue;

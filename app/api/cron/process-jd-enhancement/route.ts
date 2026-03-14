@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jobs, drives } from "@/lib/db/schema";
-import { eq, and, lt } from "drizzle-orm";
-import { enhanceJDWithAI } from "@/lib/jd/ai-enhancer";
+import { eq, and, lt, desc, asc } from "drizzle-orm";
+import { parseJD } from "@/lib/jd/parser";
+import { generateEmbedding, isValidEmbedding } from "@/lib/embeddings/generate";
 import { CRON_SECRET } from "@/lib/env";
 import { logger } from "@/lib/logger";
 
@@ -15,7 +16,7 @@ const MAX_JOBS_PER_TICK = 5;
  * GET /api/cron/process-jd-enhancement
  *
  * Cron worker that polls for pending enhance_jd jobs and processes them.
- * Uses the AI SDK to enhance raw JD text into structured parsed JD.
+ * Uses parseJD() to produce StructuredJD output for the ranking pipeline.
  * Authenticated via CRON_SECRET bearer token.
  */
 export async function GET(req: NextRequest) {
@@ -26,14 +27,18 @@ export async function GET(req: NextRequest) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    // Recover stuck jobs (processing for >5 minutes and still have retries left)
-    await db.update(jobs)
-      .set({ status: 'pending', updatedAt: new Date() })
-      .where(and(
-        eq(jobs.status, 'processing'),
-        lt(jobs.updatedAt, new Date(Date.now() - 5 * 60 * 1000)),
-        lt(jobs.retryCount, jobs.maxRetries)
-      ));
+    // Recover stuck enhance_jd jobs (processing for >5 minutes and still have retries left)
+    await db
+      .update(jobs)
+      .set({ status: "pending", updatedAt: new Date() })
+      .where(
+        and(
+          eq(jobs.type, "enhance_jd"),
+          eq(jobs.status, "processing"),
+          lt(jobs.updatedAt, new Date(Date.now() - 5 * 60 * 1000)),
+          lt(jobs.retryCount, jobs.maxRetries),
+        ),
+      );
 
     logger.info("[Cron:JDEnhance] Checking for pending enhance_jd jobs...");
 
@@ -48,6 +53,7 @@ export async function GET(req: NextRequest) {
         .where(
           and(eq(jobs.type, "enhance_jd"), eq(jobs.status, "pending")),
         )
+        .orderBy(desc(jobs.priority), asc(jobs.createdAt))
         .limit(1);
 
       if (!pendingJob) break; // queue drained
@@ -67,7 +73,11 @@ export async function GET(req: NextRequest) {
       const startTime = Date.now();
 
       try {
-        const { driveId } = job.payload as { driveId: string };
+        const { driveId, titleHint, companyHint } = job.payload as {
+          driveId: string;
+          titleHint?: string;
+          companyHint?: string;
+        };
 
         logger.info(`[Cron:JDEnhance] Processing job ${job.id} for drive ${driveId}`);
 
@@ -88,9 +98,10 @@ export async function GET(req: NextRequest) {
           throw new Error(`Drive not found: ${driveId}`);
         }
 
-        // Idempotency: skip if already enhanced
+        // Idempotency: skip if already enhanced with StructuredJD shape
         if (drive.parsedJd && typeof drive.parsedJd === "object" &&
-          Object.keys(drive.parsedJd).length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (drive.parsedJd as any).role_metadata) {
           await db.update(jobs).set({
             status: "completed",
             result: { driveId, skipped: true, reason: "already_enhanced" },
@@ -101,59 +112,75 @@ export async function GET(req: NextRequest) {
           continue;
         }
 
-        // MVP enhancement: Use Antigravity AI Enhancer
-        const enhancedData = await enhanceJDWithAI(drive.rawJd, drive.roleTitle, drive.company);
+        // Parse JD using the full StructuredJD parser
+        const structuredJd = await parseJD(
+          drive.rawJd,
+          titleHint || drive.roleTitle,
+          companyHint || drive.company,
+        );
 
-        const parsedJd = {
-          title: enhancedData.title,
-          company: enhancedData.company,
-          responsibilities: enhancedData.responsibilities,
-          requiredSkills: enhancedData.requiredSkills,
-          preferredSkills: enhancedData.preferredSkills,
-          qualifications: enhancedData.qualifications,
-          summary: enhancedData.summary,
-        };
-
+        // Build human-readable enhanced JD text from StructuredJD fields
         const enhancedJd = [
-          enhancedData.title,
-          enhancedData.company ? `Company: ${enhancedData.company}` : null,
-          enhancedData.summary,
-          enhancedData.responsibilities?.length > 0
-            ? `Key Responsibilities:\n${enhancedData.responsibilities.map((r: string) => `• ${r}`).join("\n")}`
+          structuredJd.role_metadata.job_title,
+          structuredJd.role_metadata.company_info?.name
+            ? `Company: ${structuredJd.role_metadata.company_info.name}`
             : null,
-          enhancedData.requiredSkills?.length > 0
-            ? `Required Skills: ${enhancedData.requiredSkills.join(", ")}`
+          structuredJd.responsibilities?.primary_tasks?.length > 0
+            ? `Key Responsibilities:\n${structuredJd.responsibilities.primary_tasks.map((t: string) => `• ${t}`).join("\n")}`
             : null,
-          enhancedData.preferredSkills?.length > 0
-            ? `Preferred Skills: ${enhancedData.preferredSkills.join(", ")}`
+          structuredJd.requirements?.hard_requirements?.technical_skills?.length > 0
+            ? `Required Skills: ${structuredJd.requirements.hard_requirements.technical_skills.map(s => s.skill).join(", ")}`
             : null,
-          enhancedData.qualifications?.length > 0
-            ? `Qualifications:\n${enhancedData.qualifications.map((q: string) => `• ${q}`).join("\n")}`
+          structuredJd.requirements?.soft_requirements?.technical_skills?.length > 0
+            ? `Preferred Skills: ${structuredJd.requirements.soft_requirements.technical_skills.map(s => s.skill).join(", ")}`
             : null,
         ].filter(Boolean).join("\n\n");
 
-        // Update drive with enhanced/parsed data
+        // Generate JD embedding
+        let jdEmbedding: number[] | null = null;
+        try {
+          const embedding = await generateEmbedding(drive.rawJd, "jd");
+          if (isValidEmbedding(embedding)) {
+            jdEmbedding = embedding;
+          } else {
+            logger.warn(`[Cron:JDEnhance] JD embedding for drive ${driveId} is all-zeros — skipping write`);
+          }
+        } catch (embErr: unknown) {
+          const embErrMsj = embErr instanceof Error ? embErr.message : String(embErr);
+          logger.warn(`[Cron:JDEnhance] JD embedding generation failed for drive ${driveId}: ${embErrMsj}`);
+          // Don't fail the job — still save parsedJd
+        }
+
+        // Update drive with parsed JD data (StructuredJD shape) and embedding
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const updatePayload: any = {
+          enhancedJd,
+          parsedJd: structuredJd as unknown as Record<string, unknown>,
+          updatedAt: new Date(),
+        };
+        if (jdEmbedding) {
+          updatePayload.jdEmbedding = jdEmbedding;
+        }
+
         await db
           .update(drives)
-          .set({
-            enhancedJd,
-            parsedJd,
-            updatedAt: new Date(),
-          })
+          .set(updatePayload)
           .where(eq(drives.id, driveId));
+
+        const hardSkillCount = structuredJd.requirements?.hard_requirements?.technical_skills?.length ?? 0;
 
         // Mark complete
         await db
           .update(jobs)
           .set({
             status: "completed",
-            result: { driveId, skillsFound: parsedJd.requiredSkills.length },
+            result: { driveId, skillsFound: hardSkillCount },
             latencyMs: Date.now() - startTime,
             updatedAt: new Date(),
           })
           .where(eq(jobs.id, job.id));
 
-        logger.info(`[Cron:JDEnhance] Job ${job.id} completed — ${parsedJd.requiredSkills.length} skills extracted`);
+        logger.info(`[Cron:JDEnhance] Job ${job.id} completed — ${hardSkillCount} skills extracted`);
         processed++;
       } catch (error: unknown) {
         const message =

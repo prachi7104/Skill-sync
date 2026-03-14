@@ -7,7 +7,7 @@
  * from structured student profiles and job descriptions.
  *
  * These functions produce consistent text representations that can be
- * embedded using all-MiniLM-L6-v2 for semantic similarity matching.
+ * embedded using the current semantic embedding model for similarity matching.
  *
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
@@ -24,7 +24,7 @@ import type {
 
 /**
  * Maximum character length for embedding text input.
- * all-MiniLM-L6-v2 has a 256 word-piece token limit (~1500 chars).
+ * Tuned to keep inputs within typical embedding model limits.
  * Prioritizes skills and project titles over long descriptions.
  */
 const MAX_EMBEDDING_TEXT_LENGTH = 1500;
@@ -186,9 +186,46 @@ export function extractStudentSkillNames(skills: Skill[] | null | undefined): st
  * @param parsedJd - Parsed job description
  * @returns Array of required skill name strings (lowercase, trimmed)
  */
-export function extractJDRequiredSkills(parsedJd: ParsedJD | null | undefined): string[] {
-  if (!parsedJd || !parsedJd.requiredSkills || parsedJd.requiredSkills.length === 0) {
-    return [];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function extractJDRequiredSkills(parsedJd: any | null | undefined): string[] {
+  if (!parsedJd) return [];
+
+  // New StructuredJD shape (v2 parser output)
+  if (parsedJd.requirements?.hard_requirements?.technical_skills) {
+    return parsedJd.requirements.hard_requirements.technical_skills
+      .map((s: { skill: string }) => s.skill.toLowerCase().trim())
+      .filter(Boolean);
   }
-  return parsedJd.requiredSkills.map((s) => s.toLowerCase().trim());
+
+  // Legacy EnhancedJD shape (old cron output) — backward compat
+  if (Array.isArray(parsedJd.requiredSkills)) {
+    return parsedJd.requiredSkills.map((s: string) => s.toLowerCase().trim());
+  }
+
+  return [];
+}
+
+/**
+ * Extracts preferred skill names from a parsed JD.
+ *
+ * @param parsedJd - Parsed job description
+ * @returns Array of preferred skill name strings (lowercase, trimmed)
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function extractJDPreferredSkills(parsedJd: any | null | undefined): string[] {
+  if (!parsedJd) return [];
+
+  // New StructuredJD shape
+  if (parsedJd.requirements?.soft_requirements?.technical_skills) {
+    return parsedJd.requirements.soft_requirements.technical_skills
+      .map((s: { skill: string }) => s.skill.toLowerCase().trim())
+      .filter(Boolean);
+  }
+
+  // Legacy shape
+  if (Array.isArray(parsedJd.preferredSkills)) {
+    return parsedJd.preferredSkills.map((s: string) => s.toLowerCase().trim());
+  }
+
+  return [];
 }

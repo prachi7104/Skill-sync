@@ -647,6 +647,63 @@ const TECHNOLOGY_CAPABILITY_MAP: Record<string, CapabilityMapping[]> = {
         { skill: "Large Language Models", confidence: 85, inference: "Autonomous agents often use LLMs" },
         { skill: "Generative AI", confidence: 85, inference: "Autonomous agents leverage generative AI" },
     ],
+
+    // ── Automation / No-Code ──
+    "make.com": [
+        { skill: "workflow automation", confidence: 95, inference: "Make.com is a visual workflow automation platform" },
+        { skill: "no-code tools", confidence: 95, inference: "Make.com is a no-code integration tool" },
+        { skill: "API integrations", confidence: 85, inference: "Make.com connects apps via APIs" },
+        { skill: "process automation", confidence: 90, inference: "Make.com automates business processes" },
+    ],
+    "make": [
+        { skill: "workflow automation", confidence: 90, inference: "Make (formerly Integromat) is an automation platform" },
+        { skill: "no-code tools", confidence: 90, inference: "Make is a no-code tool" },
+        { skill: "API integrations", confidence: 80, inference: "Make connects apps via APIs" },
+    ],
+    "zapier": [
+        { skill: "workflow automation", confidence: 95, inference: "Zapier automates workflows between apps" },
+        { skill: "no-code tools", confidence: 95, inference: "Zapier is a leading no-code automation tool" },
+        { skill: "API integrations", confidence: 80, inference: "Zapier connects apps via APIs" },
+    ],
+    "n8n": [
+        { skill: "workflow automation", confidence: 90, inference: "n8n is an open-source workflow automation tool" },
+        { skill: "no-code tools", confidence: 85, inference: "n8n is a low-code automation platform" },
+        { skill: "API integrations", confidence: 85, inference: "n8n integrates APIs" },
+    ],
+
+    // ── LLM / AI Engineering (additional capability mappings) ──
+    "llm inference": [
+        { skill: "LLM Engineering", confidence: 95, inference: "LLM inference is core LLM engineering work" },
+        { skill: "AI pipeline", confidence: 90, inference: "LLM inference is a production AI pipeline component" },
+    ],
+    "whisper": [
+        { skill: "Speech Recognition", confidence: 95, inference: "Whisper is OpenAI's ASR (speech-to-text) model" },
+        { skill: "AI pipeline", confidence: 85, inference: "Using Whisper implies building AI processing pipelines" },
+        { skill: "Python", confidence: 80, inference: "Whisper is primarily a Python library" },
+    ],
+    "ocr": [
+        { skill: "document parsing", confidence: 95, inference: "OCR is used for extracting text from documents/images" },
+        { skill: "AI pipeline", confidence: 75, inference: "OCR is a core component of AI document pipelines" },
+        { skill: "data extraction", confidence: 85, inference: "OCR extracts structured data from unstructured sources" },
+    ],
+    "gemini api": [
+        { skill: "LLM Engineering", confidence: 90, inference: "Gemini API is a large language model API" },
+        { skill: "prompt engineering", confidence: 80, inference: "Using Gemini requires prompt design" },
+        { skill: "API integrations", confidence: 80, inference: "Gemini is accessed via API" },
+    ],
+
+    // ── LinkedIn / Marketing Automation ──
+    "linkedin": [
+        { skill: "LinkedIn automation", confidence: 80, inference: "LinkedIn mentions in automation context imply LinkedIn tooling" },
+    ],
+    "email campaign": [
+        { skill: "email marketing", confidence: 90, inference: "Email campaigns are email marketing work" },
+        { skill: "lead generation", confidence: 70, inference: "Email campaigns are commonly used for lead generation" },
+    ],
+    "email outreach": [
+        { skill: "email marketing", confidence: 85, inference: "Email outreach is email marketing" },
+        { skill: "lead generation", confidence: 75, inference: "Outreach implies prospecting/lead gen" },
+    ],
 };
 
 // ============================================================================

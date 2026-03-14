@@ -133,7 +133,7 @@ function computeSkillOverlap(
   requiredSkills: string[],
 ): { matchedSkills: string[]; missingSkills: string[]; overlapRatio: number } {
   if (requiredSkills.length === 0) {
-    return { matchedSkills: [], missingSkills: [], overlapRatio: 1 };
+    return { matchedSkills: [], missingSkills: [], overlapRatio: 0 };
   }
 
   const normalizedStudentSkills = studentSkills.map((s) => s.toLowerCase().trim());
@@ -213,16 +213,17 @@ function computeProjectKeywordHitRatio(
 
   let hits = 0;
   const cap = 5;
+   const effectiveCap = Math.min(cap, requiredSkills.length);
 
   for (const skill of requiredSkills) {
     const lower = skill.toLowerCase().trim();
     const matched = projectKeywords.some((kw) => skillMatches(kw, lower));
     if (matched) {
       hits++;
-      if (hits >= cap) break;
+      if (hits >= effectiveCap) break;
     }
   }
-  return Math.min(hits / cap, 1);
+  return Math.min(hits / effectiveCap, 1);
 }
 
 
@@ -404,9 +405,9 @@ describe("Scoring Algorithm", () => {
   // ── Skill Overlap ────────────────────────────────────────────────────────
 
   describe("computeSkillOverlap", () => {
-    it("should return overlapRatio 1 when no skills required", () => {
+    it("should return overlapRatio 0 when no skills required", () => {
       const result = computeSkillOverlap(["python", "javascript"], []);
-      expect(result.overlapRatio).toBe(1);
+      expect(result.overlapRatio).toBe(0);
       expect(result.matchedSkills).toEqual([]);
       expect(result.missingSkills).toEqual([]);
     });
@@ -671,13 +672,13 @@ describe("Scoring Algorithm", () => {
       expect(computeProjectKeywordHitRatio(["python"], [])).toBe(0);
     });
 
-    it("should return 0.2 for 1 out of 5 cap hits", () => {
+    it("should return 0.5 when 1 of 2 required skills hit", () => {
       expect(
         computeProjectKeywordHitRatio(["python"], ["python", "java"]),
-      ).toBeCloseTo(0.2);
+      ).toBeCloseTo(0.5);
     });
 
-    it("should cap at 1.0 even if more than 5 hits possible", () => {
+    it("should cap at 1.0 even if more than the cap hits possible", () => {
       const keywords = [
         "python",
         "java",
@@ -698,11 +699,10 @@ describe("Scoring Algorithm", () => {
     });
 
     it("should match case-insensitively via required skills toLowerCase", () => {
-      // Required skills are lowercased before matching against keyword set
       const keywords = ["python", "react"];
-      const required = ["Python", "React"]; // these get lowercased in the function
+      const required = ["Python", "React"];
       expect(computeProjectKeywordHitRatio(keywords, required)).toBeCloseTo(
-        0.4,
+        1,
       );
     });
   });
@@ -898,6 +898,84 @@ describe("Scoring Algorithm", () => {
     it("should include semantic score explanation", () => {
       const explanation = generateDetailedExplanation(baseResult);
       expect(explanation).toContain("High semantic alignment indicating strong domain match");
+    });
+  });
+});
+
+describe("ATS Scoring — getWeights and Soft Scores", () => {
+  // Inline getWeights
+  function getWeights(roleType: string, seniority: string) {
+    if (roleType === "Research") {
+      return { hard: 0.20, research: 0.30, soft: 0.05, exp: 0.10, domain: 0.35 };
+    }
+    if (seniority === "Senior" || seniority === "Staff+") {
+      return { hard: 0.25, research: 0.0, soft: 0.05, exp: 0.30, domain: 0.40 };
+    }
+    return { hard: 0.20, research: 0.0, soft: 0.10, exp: 0.10, domain: 0.60 };
+  }
+
+  // Inline computeSoftEvidenceScore
+  function computeSoftEvidenceScore(resume: any): number {
+    let evidenceCount = 0;
+    if ((resume.certifications?.length || 0) > 0) evidenceCount++;
+    if ((resume.coding_profiles?.length || 0) > 0) evidenceCount++;
+    const quantifiedPattern = /\d+%|\d+x|improved|optimized|reduced|increased/i;
+    const allProjectText = (resume.projects || []).map((p: any) => `${p.description || ""}`).join(" ");
+    const allExpText = (resume.experience || []).map((e: any) => `${e.description || ""}`).join(" ");
+    const achText = (resume.achievements || []).map((a: any) => `${a.title || ""} ${a.description || ""}`).join(" ");
+    if (quantifiedPattern.test(allProjectText) || quantifiedPattern.test(allExpText) || quantifiedPattern.test(achText)) {
+      evidenceCount++;
+    }
+    const collabKeywords = ["team", "hackathon", "open-source", "club", "collaborative"];
+    const fullText = `${allProjectText} ${allExpText} ${achText}`.toLowerCase();
+    if (collabKeywords.some(k => fullText.includes(k))) evidenceCount++;
+    const raw = Math.round((Math.min(evidenceCount, 4) / 4) * 100);
+    return evidenceCount > 0 ? Math.max(10, raw) : 0;
+  }
+
+  describe("getWeights", () => {
+    it("should return Research weights for Research roles", () => {
+      const w = getWeights("Research", "Entry");
+      expect(w.hard).toBe(0.20);
+      expect(w.research).toBe(0.30);
+      expect(w.domain).toBe(0.35);
+    });
+
+    it("should return Senior weights for Senior roles", () => {
+      const w = getWeights("Software Engineering", "Senior");
+      expect(w.hard).toBe(0.25);
+      expect(w.exp).toBe(0.30);
+      expect(w.domain).toBe(0.40);
+    });
+
+    it("should return Standard weights (20/10/10/60) for standard roles", () => {
+      const w = getWeights("Software Engineering", "Entry");
+      expect(w.hard).toBe(0.20);
+      expect(w.soft).toBe(0.10);
+      expect(w.exp).toBe(0.10);
+      expect(w.domain).toBe(0.60);
+      expect(w.hard + w.soft + w.exp + w.domain).toBe(1.0);
+    });
+  });
+
+  describe("computeSoftEvidenceScore", () => {
+    it("should score 0 with no evidence", () => {
+      expect(computeSoftEvidenceScore({})).toBe(0);
+    });
+
+    it("should give minimum 10 for a single piece of evidence", () => {
+      const score = computeSoftEvidenceScore({ coding_profiles: [{ platform: "GitHub" }] });
+      expect(score).toBeGreaterThanOrEqual(10);
+      expect(score).toBeLessThanOrEqual(25);
+    });
+
+    it("should score 100 for all 4 types of evidence", () => {
+      expect(computeSoftEvidenceScore({
+        certifications: [{ name: "AWS" }],
+        coding_profiles: [{ platform: "GitHub" }],
+        projects: [{ description: "Improved speed by 50%" }],
+        experience: [{ description: "Led a team of 4" }]
+      })).toBe(100);
     });
   });
 });

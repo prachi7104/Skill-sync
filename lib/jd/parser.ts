@@ -205,7 +205,12 @@ Based on skills, categorize the primary tech stack:
 - **DevOps**: Docker, Kubernetes, Jenkins, Terraform
 - **Full-Stack JavaScript**: React + Node.js
 - **Data Engineering**: Spark, Airflow, Kafka
+- **Automation/No-Code**: Make.com, Zapier, n8n, workflow automation, no-code tools, email campaigns, LinkedIn automation, lead generation, process automation, RPA, HubSpot, Integromat
+- **AI/LLM Engineering**: OpenAI, GPT, Gemini, LangChain, RAG, prompt engineering, LLM inference, OCR pipelines, Whisper, HuggingFace, vector databases, document parsing, AI pipelines
 - etc.
+
+NOTE: If a JD involves Python scripting + automation tools (Make.com, Zapier, email tools), classify as "Automation/No-Code" even if Python is present.
+The primary_cluster field MUST NEVER be an empty string. If you cannot determine a cluster, use "General Software Engineering" as the default.
 
 ## STEP 4: Experience & Seniority Detection
 
@@ -444,6 +449,7 @@ export async function parseJD(rawJd: string, titleHint?: string, companyHint?: s
   const router = getRouter();
 
 
+  // eslint-disable-next-line no-console
   console.log("[JD Parser] Starting advanced JD parsing via Antigravity Router...");
 
   let prompt = JD_PARSER_SYSTEM_PROMPT + "\n\nRAW JD TEXT:\n" + rawJd;
@@ -466,6 +472,7 @@ export async function parseJD(rawJd: string, titleHint?: string, companyHint?: s
       : result.data as StructuredJD;
 
     if (parsed) {
+      // eslint-disable-next-line no-console
       console.log(`[JD Parser] Success via ${result.modelUsed}`);
       return validateAndFillDefaults(parsed, titleHint, companyHint);
     }
@@ -483,6 +490,7 @@ function parseAIResponse(response: string): StructuredJD | null {
 
     return JSON.parse(cleaned.trim());
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("[JD Parser] JSON Parse Error:", e);
     return null;
   }
@@ -513,6 +521,14 @@ function validateAndFillDefaults(data: StructuredJD, titleHint?: string, company
       hard_requirements: { technical_skills: [], education: { degree_level: "Unknown", field: "Unknown", mandatory: false }, experience: { total_years: "0" } },
       soft_requirements: { technical_skills: [] }
     };
+  }
+
+  // Ensure primary_cluster is never an empty string
+  if (safeData.tech_stack_cluster) {
+    if (!safeData.tech_stack_cluster.primary_cluster ||
+        safeData.tech_stack_cluster.primary_cluster.trim() === "") {
+      safeData.tech_stack_cluster.primary_cluster = "General Software Engineering";
+    }
   }
 
   return safeData;

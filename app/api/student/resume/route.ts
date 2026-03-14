@@ -98,6 +98,7 @@ export async function POST(req: NextRequest) {
         const isPdf = file.type === "application/pdf";
         const format = isPdf ? "pdf" : "docx";
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const uploadResult = await new Promise<any>((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
                 {
@@ -215,6 +216,7 @@ export async function POST(req: NextRequest) {
             { status: 202 }
         );
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         if (isRedirectError(error)) throw error;
         console.error("Resume upload failed:", error);

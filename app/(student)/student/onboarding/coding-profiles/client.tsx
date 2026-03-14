@@ -76,8 +76,8 @@ export default function OnboardingCodingProfilesClient({
             await updateOnboardingStep(8);
             await refresh();
             router.push("/student/onboarding/soft-skills");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to save coding profiles");
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "Failed to save coding profiles");
             setIsLoading(false);
         }
     };
@@ -88,8 +88,8 @@ export default function OnboardingCodingProfilesClient({
             await updateOnboardingStep(8);
             await refresh();
             router.push("/student/onboarding/soft-skills");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to proceed");
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "Failed to proceed");
             setIsLoading(false);
         }
     };

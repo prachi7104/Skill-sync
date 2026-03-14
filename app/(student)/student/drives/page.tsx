@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { db } from "@/lib/db";
 import { drives, rankings } from "@/lib/db/schema";
 import { requireStudentProfile } from "@/lib/auth/helpers";
+import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { format } from "date-fns";
 
@@ -71,9 +72,9 @@ export default async function StudentDrivesPage() {
           {eligible.map((drive) => {
             const ranking = rankingMap.get(drive.id);
             return (
-              <div
-                key={drive.id}
-                className="rounded-lg border bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
+                <div
+              key={drive.id}
+              className="rounded-lg border bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -81,14 +82,17 @@ export default async function StudentDrivesPage() {
                     <p className="text-sm text-gray-600">{drive.roleTitle}</p>
                   </div>
                   {ranking && (
-                    <div className="flex flex-col items-end">
+                    <Link
+                      href={`/student/drives/${drive.id}/ranking`}
+                      className="flex flex-col items-end hover:opacity-90 transition-opacity"
+                    >
                       <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
                         Score: {ranking.matchScore.toFixed(1)}
                       </span>
                       <span className="text-xs text-gray-400 mt-0.5">
                         Rank #{ranking.rankPosition}
                       </span>
-                    </div>
+                    </Link>
                   )}
                 </div>
 

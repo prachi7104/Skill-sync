@@ -136,6 +136,7 @@ export async function getDbStats() {
     }
 
     return stats;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     logger.error("Failed to query pool stats", { error: err.message });
     return null;
