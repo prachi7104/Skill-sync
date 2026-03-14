@@ -2329,7 +2329,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                     <div className="p-2.5 bg-sky-500/10 rounded-xl"><FileText className="w-5 h-5 text-sky-400" /></div>
                                     <h2 className="font-bold text-white text-xl">Research Papers</h2>
                                 </div>
-                                {isEditing && <button type="button" onClick={() => appendResearch({ title: "", abstract: "", url: "", publicationDate: "" })} className="text-xs font-bold text-sky-400 bg-sky-400/10 px-4 py-2 rounded-xl">+ Add Paper</button>}
+                                {isEditing && <button type="button" onClick={() => appendResearch({ title: "", abstract: "", url: "", datePublished: "" })} className="text-xs font-bold text-sky-400 bg-sky-400/10 px-4 py-2 rounded-xl">+ Add Paper</button>}
                             </div>
 
                             {isEditing ? (
@@ -2339,7 +2339,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                             <button type="button" onClick={() => removeResearch(idx)} className="absolute top-4 right-4 text-rose-500"><Trash2 className="w-4 h-4" /></button>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mr-8">
                                                 <FormField control={form.control} name={`researchPapers.${idx}.title`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="Paper Title" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
-                                                <FormField control={form.control} name={`researchPapers.${idx}.publicationDate`} render={({field}) => <FormItem><FormControl><Input type="month" className={inputClass} {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                <FormField control={form.control} name={`researchPapers.${idx}.datePublished`} render={({field}) => <FormItem><FormControl><Input type="month" className={inputClass} {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
                                                 <div className="md:col-span-2">
                                                     <FormField control={form.control} name={`researchPapers.${idx}.url`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="URL" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
                                                 </div>
@@ -2356,7 +2356,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                 <h3 className="font-bold text-white text-lg">{paper.title}</h3>
                                                 {paper.url && <a href={paper.url} target="_blank" rel="noreferrer" className="p-2 bg-slate-800 rounded-xl hover:bg-slate-700 transition"><ExternalLink className="w-4 h-4 text-white" /></a>}
                                             </div>
-                                            <p className="text-xs text-sky-400 font-bold uppercase tracking-widest mb-4">Published: {paper.publicationDate}</p>
+                                            <p className="text-xs text-sky-400 font-bold uppercase tracking-widest mb-4">Published: {paper.datePublished}</p>
                                             <p className="text-sm text-slate-400 leading-relaxed">{paper.abstract}</p>
                                         </div>
                                     )) : <EmptyState message="No research papers added." />}
