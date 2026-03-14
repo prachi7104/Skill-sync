@@ -101,11 +101,13 @@ export function enhanceResumeData(resume: ParsedResumeData): EnhancedResume {
             }
         });
         if (hits > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             techCounts[cluster] = { hits, evidence } as any;
         }
     });
 
     const sortedStacks = Object.entries(techCounts)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map(([cluster, data]: any) => ({
             cluster,
             hits: data.hits,

@@ -204,7 +204,7 @@ export default function StudentDashboard() {
 }
 
 // Simple Helper Components for Stats
-function BriefcaseIcon(props: any) {
+function BriefcaseIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -224,7 +224,7 @@ function BriefcaseIcon(props: any) {
     )
 }
 
-function SendIcon(props: any) {
+function SendIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -244,7 +244,7 @@ function SendIcon(props: any) {
     )
 }
 
-function CalendarIcon(props: any) {
+function CalendarIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -284,7 +284,7 @@ function SectionStatus({ label, count, min, optional }: { label: string, count: 
     )
 }
 
-function CheckIcon(props: any) {
+function CheckIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}

@@ -85,6 +85,7 @@ export async function incrementSandboxUsage(studentId: string): Promise<void> {
       END`,
       sandboxMonthResetDate: month,
       updatedAt: new Date(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any)
     .where(eq(students.id, studentId));
 }
@@ -131,6 +132,7 @@ export async function incrementDetailedAnalysisUsage(studentId: string): Promise
       END`,
       detailedAnalysisMonthResetDate: month,
       updatedAt: new Date(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any)
     .where(eq(students.id, studentId));
 }

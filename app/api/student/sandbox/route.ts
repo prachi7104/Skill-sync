@@ -112,6 +112,7 @@ function formatDetailedExplanation(result: ATSScore): string {
   return lines.join("\n");
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapProfileToResumeData(profile: any, skills: Skill[], projects: Project[], workExperience: WorkExperience[], userName?: string | null): ParsedResumeData {
   // Priority: parsed_resume_json (AI-parsed, most complete) > profile JSONB fields > hardcoded defaults
   const parsedJson = profile.parsedResumeJson as ParsedResumeData | null;
@@ -122,6 +123,7 @@ function mapProfileToResumeData(profile: any, skills: Skill[], projects: Project
     phone: parsedJson?.phone || profile.phone || null,
     linkedin_url: parsedJson?.linkedin_url || profile.linkedin || null,
     professional_summary: parsedJson?.professional_summary || null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     coding_profiles: parsedJson?.coding_profiles || (profile.codingProfiles || []).map((cp: any) => ({ platform: cp.platform, profile_url: cp.url || cp.profile_url || "" })),
     education_history: (parsedJson?.education_history?.length ?? 0) > 0
       ? parsedJson!.education_history
@@ -155,8 +157,11 @@ function mapProfileToResumeData(profile: any, skills: Skill[], projects: Project
     skills: (parsedJson?.skills?.length ?? 0) > 0
       ? parsedJson!.skills
       : skills.map(s => ({ name: s.name, category: s.category || "other" })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     research_papers: parsedJson?.research_papers || (profile.researchPapers || []).map((r: any) => ({ title: r.title, paper_link: r.url })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     certifications: parsedJson?.certifications || (profile.certifications || []).map((c: any) => ({ certification_name: c.title, issuer: c.issuer, verification_link: c.url })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     achievements: parsedJson?.achievements || (profile.achievements || []).map((a: any) => ({ title: a.title, description: a.description })),
     soft_skills: parsedJson?.soft_skills || profile.softSkills || []
   };
@@ -174,6 +179,7 @@ export async function POST(req: NextRequest) {
         const skills = (profile.skills as Skill[] | null) ?? [];
         const projects = (profile.projects as Project[] | null) ?? [];
         const workExperience = (profile.workExperience as WorkExperience[] | null) ?? [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const certifications = (profile.certifications as any[] | null) ?? [];
 
         const embeddingText = composeStudentEmbeddingText({
@@ -299,6 +305,7 @@ export async function POST(req: NextRequest) {
       },
       analysis: atsResult // Full new ATS result
     });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (isRedirectError(error)) throw error;
     // Handle guardrail violations with proper status codes

@@ -90,8 +90,8 @@ export default function OnboardingAcademicsClient({
             await updateOnboardingStep(4);
             await refresh();
             router.push("/student/onboarding/skills");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to save academic details");
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "Failed to save academic details");
             setIsLoading(false);
         }
     };
@@ -102,8 +102,8 @@ export default function OnboardingAcademicsClient({
             await updateOnboardingStep(4);
             await refresh();
             router.push("/student/onboarding/skills");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to proceed");
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "Failed to proceed");
             setIsLoading(false);
         }
     };

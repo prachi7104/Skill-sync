@@ -548,6 +548,7 @@ export async function performDetailedAnalysis(
     const profileKeywordOverlap = profileSemanticScore > 0.01
         ? Math.round(profileSemanticScore * 100)
         : computeKeywordProjectOverlap(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             { ...parsedResume, projects: (studentProfile.projects || []).map((p: any) => ({
                 title: p.title, description: p.description, tech_stack: p.techStack
             }))

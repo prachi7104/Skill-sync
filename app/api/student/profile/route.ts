@@ -51,6 +51,7 @@ export async function GET() {
         logger.info("[API] Success");
         return NextResponse.json({ success: true, data: { user, profile } });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         if (isRedirectError(error)) throw error;
         console.error("[API] Error in /api/student/profile:", error);
@@ -188,6 +189,7 @@ export async function PATCH(req: NextRequest) {
             { success: true, message: "Profile updated successfully", data: { completeness } },
             { status: 200 }
         );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         if (isRedirectError(error)) throw error;
         if (error instanceof z.ZodError) {

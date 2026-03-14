@@ -20,7 +20,7 @@
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, TaskType } from "@google/generative-ai";
 import Groq from "groq-sdk";
 import { logger } from "@/lib/logger";
 
@@ -820,6 +820,7 @@ export class AntigravityRouter {
           }
           return { success: false, error: "Blocked by Safety Guard", blocked: true };
         }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (e: any) {
         console.warn(`[antigravity] ⚠️ Prompt Guard check failed: ${e.message}`);
         // Strict enforcement: Fail safe if guard cannot verify
@@ -922,6 +923,7 @@ export class AntigravityRouter {
       }
 
       return text;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       throw new Error(`Google Generation Error: ${e.message}`);
     }
@@ -978,11 +980,17 @@ export class AntigravityRouter {
     }
     try {
       const model = this.googleAI.getGenerativeModel({ model: modelId });
-      const result = await model.embedContent(text);
+      const result = await model.embedContent({
+        content: { role: "user", parts: [{ text: text }] },
+        taskType: TaskType.RETRIEVAL_DOCUMENT,
+        // @ts-expect-error — outputDimensionality is supported but may not be in type defs yet
+        outputDimensionality: 768,
+      });
       if (!result.embedding || !result.embedding.values) {
         throw new Error("No embedding returned");
       }
       return result.embedding.values;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       throw new Error(`Google Embedding Error: ${e.message}`);
     }
@@ -1016,6 +1024,7 @@ export class AntigravityRouter {
       });
 
       return completion.choices[0]?.message?.content || "";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       throw new Error(`Groq Error: ${e.message}`);
     }

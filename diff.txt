@@ -1,0 +1,17 @@
+﻿.env.example
+app/(admin)/admin/health/page.tsx
+app/(admin)/admin/page.tsx
+app/(faculty)/faculty/page.tsx
+app/(student)/layout.tsx
+app/(student)/student/dashboard/page.tsx
+app/(student)/student/onboarding/layout.tsx
+app/(student)/student/profile/page.tsx
+app/(student)/student/profile/profile-view.tsx
+app/(student)/student/sandbox/detailed/client.tsx
+app/(student)/student/sandbox/detailed/page.tsx
+app/(student)/student/sandbox/page.tsx
+app/(student)/student/sandbox/quick-sandbox.tsx
+app/api/auth/[...nextauth]/route.ts
+app/api/student/sandbox/detailed/route.ts
+app/login/page.tsx
+public/campus.jpg

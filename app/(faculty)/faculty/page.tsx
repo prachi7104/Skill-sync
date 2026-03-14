@@ -151,7 +151,7 @@ export default async function FacultyDashboardPage() {
     }
 
     // STEP 5 — Activity feed
-    let activityFeed: any[] = [];
+    let activityFeed: { id: string; type: string; status: string; updatedAt: Date; payload: unknown }[] = [];
     if (driveIds.length > 0) {
         activityFeed = await db
             .select({

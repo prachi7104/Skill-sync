@@ -186,6 +186,7 @@ export function extractStudentSkillNames(skills: Skill[] | null | undefined): st
  * @param parsedJd - Parsed job description
  * @returns Array of required skill name strings (lowercase, trimmed)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function extractJDRequiredSkills(parsedJd: any | null | undefined): string[] {
   if (!parsedJd) return [];
 
@@ -210,6 +211,7 @@ export function extractJDRequiredSkills(parsedJd: any | null | undefined): strin
  * @param parsedJd - Parsed job description
  * @returns Array of preferred skill name strings (lowercase, trimmed)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function extractJDPreferredSkills(parsedJd: any | null | undefined): string[] {
   if (!parsedJd) return [];
 

@@ -31,13 +31,16 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const parsedData = profile.parsedResumeJson as any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updates: any = {};
 
         // 3. Merge Logic
 
         // --- SKILLS ---
         if (sections.skills && Array.isArray(parsedData.skills)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const existingSkills = (profile.skills || []) as any[];
             const newSkills = parsedData.skills as string[];
 
@@ -59,6 +62,7 @@ export async function POST(req: NextRequest) {
 
         // --- PROJECTS ---
         if (sections.projects && Array.isArray(parsedData.projects)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const existingProjects = (profile.projects || []) as any[];
             const newProjectLines = parsedData.projects as string[];
 
@@ -85,6 +89,7 @@ export async function POST(req: NextRequest) {
 
         // --- WORK EXPERIENCE ---
         if (sections.workExperience && Array.isArray(parsedData.workExperience)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const existingWork = (profile.workExperience || []) as any[];
             const newWorkLines = parsedData.workExperience as string[];
 

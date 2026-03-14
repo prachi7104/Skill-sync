@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
         } else {
             tokenStatus = "Null (Invalid Signature or Cookie Name?)";
         }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
         tokenStatus = "Error";
         tokenError = err.message;

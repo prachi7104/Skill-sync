@@ -130,9 +130,9 @@ export default function OnboardingResumeClient() {
                 // No job created (text too short or onboarding complete) — allow proceed anyway
                 setParseStatus("completed");
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
-            toast.error(error.message || "Failed to process resume");
+            toast.error(error instanceof Error ? error.message : "Failed to process resume");
             setParseStatus("failed");
         }
     };

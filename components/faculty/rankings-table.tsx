@@ -203,6 +203,7 @@ export default function RankingsTable({ rankings, distribution, driveId }: Ranki
                     Shortlisted Only
                 </Button>
 
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Select value={sortOrder} onValueChange={(v: any) => setSortOrder(v)}>
                     <SelectTrigger className="w-[160px] h-9 bg-muted/50 border-none text-sm">
                         <ArrowUpDown className="h-3.5 w-3.5 mr-2 text-muted-foreground" />

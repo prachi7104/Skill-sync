@@ -55,6 +55,7 @@ export function TriggerRankingButton({ driveId, initialStatus }: TriggerRankingB
                     setState("already_processing");
                 }, 3000);
             }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setState("error");
             setErrorMessage(err.message || "Something went wrong");

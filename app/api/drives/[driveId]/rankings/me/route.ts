@@ -125,6 +125,7 @@ export async function GET(
       },
       { status: 200 },
     );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     if (isRedirectError(err)) throw err;
     console.error("[GET /api/drives/[driveId]/rankings/me]", err);

@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, TaskType } from "@google/generative-ai";
 
 export const EMBEDDING_DIMENSION = 768;
 
@@ -24,7 +24,12 @@ export async function generateEmbedding(
     try {
       const genAI = new GoogleGenerativeAI(googleKey);
       const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
-      const result = await model.embedContent(cleaned);
+      const result = await model.embedContent({
+        content: { role: "user", parts: [{ text: cleaned }] },
+        taskType: TaskType.RETRIEVAL_DOCUMENT,
+        // @ts-expect-error — outputDimensionality is supported but may not be in type defs yet
+        outputDimensionality: 768,
+      });
       const vec = result.embedding.values;
       if (vec.length !== EMBEDDING_DIMENSION) {
         throw new Error(`Unexpected dimension: ${vec.length}`);

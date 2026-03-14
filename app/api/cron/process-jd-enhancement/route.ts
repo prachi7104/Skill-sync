@@ -100,6 +100,7 @@ export async function GET(req: NextRequest) {
 
         // Idempotency: skip if already enhanced with StructuredJD shape
         if (drive.parsedJd && typeof drive.parsedJd === "object" &&
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (drive.parsedJd as any).role_metadata) {
           await db.update(jobs).set({
             status: "completed",
@@ -151,6 +152,7 @@ export async function GET(req: NextRequest) {
         }
 
         // Update drive with parsed JD data (StructuredJD shape) and embedding
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updatePayload: any = {
           enhancedJd,
           parsedJd: structuredJd as unknown as Record<string, unknown>,

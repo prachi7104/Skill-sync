@@ -97,6 +97,7 @@ export async function POST(
       { message: "Ranking job queued", jobId: job.id },
       { status: 202 },
     );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     if (isRedirectError(err)) throw err;
     console.error("[POST /api/drives/[driveId]/rank]", err);

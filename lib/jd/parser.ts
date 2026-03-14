@@ -449,6 +449,7 @@ export async function parseJD(rawJd: string, titleHint?: string, companyHint?: s
   const router = getRouter();
 
 
+  // eslint-disable-next-line no-console
   console.log("[JD Parser] Starting advanced JD parsing via Antigravity Router...");
 
   let prompt = JD_PARSER_SYSTEM_PROMPT + "\n\nRAW JD TEXT:\n" + rawJd;
@@ -471,6 +472,7 @@ export async function parseJD(rawJd: string, titleHint?: string, companyHint?: s
       : result.data as StructuredJD;
 
     if (parsed) {
+      // eslint-disable-next-line no-console
       console.log(`[JD Parser] Success via ${result.modelUsed}`);
       return validateAndFillDefaults(parsed, titleHint, companyHint);
     }
@@ -488,6 +490,7 @@ function parseAIResponse(response: string): StructuredJD | null {
 
     return JSON.parse(cleaned.trim());
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("[JD Parser] JSON Parse Error:", e);
     return null;
   }

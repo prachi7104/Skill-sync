@@ -102,8 +102,8 @@ export default function OnboardingSoftSkillsClient({
             await updateOnboardingStep(9);
             await refresh();
             router.push("/student/onboarding/review");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to save");
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "Failed to save");
             setIsLoading(false);
         }
     };
@@ -114,8 +114,8 @@ export default function OnboardingSoftSkillsClient({
             await updateOnboardingStep(9);
             await refresh();
             router.push("/student/onboarding/review");
-        } catch (error: any) {
-            toast.error(error.message || "Failed to proceed");
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "Failed to proceed");
             setIsLoading(false);
         }
     };

@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
         // 3. Limit Check
         try {
             await enforceDetailedAnalysisLimits(student.id);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             // GuardrailViolation carries the correct status (429) and structured JSON
             if (error instanceof GuardrailViolation) {
@@ -73,8 +74,11 @@ export async function POST(req: NextRequest) {
             try {
                 const profileString = [
                     student.softSkills?.join(", "),
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     student.skills?.map((s: any) => s.name).join(" "),
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     student.projects?.map((p: any) => p.title + " " + p.description).join(" "),
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     student.workExperience?.map((e: any) => e.role + " " + e.description).join(" "),
                 ].filter(Boolean).join(" ");
                 studentProfileEmbedding = await generateEmbedding(profileString);
@@ -106,6 +110,7 @@ export async function POST(req: NextRequest) {
             ...(embeddingWarning && { warning: "Semantic matching unavailable — keyword analysis used instead" }),
         });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error("Detailed Analysis Error:", error);
         return NextResponse.json({ error: "Analysis failed. Please try again." }, { status: 500 });

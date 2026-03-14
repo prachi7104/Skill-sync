@@ -15,6 +15,7 @@ export async function processEmbeddingJobs() {
         return { processed: 0, failed: 0 };
     }
 
+    // eslint-disable-next-line no-console
     console.log("[Worker:Embeddings] Checking for pending generate_embedding jobs...");
 
     let processed = 0;
@@ -55,6 +56,7 @@ export async function processEmbeddingJobs() {
                 targetId: string;
             };
 
+            // eslint-disable-next-line no-console
             console.log(
                 `[Worker:Embeddings] Processing job ${job.id} for ${targetType} ${targetId}`,
             );
@@ -115,6 +117,7 @@ export async function processEmbeddingJobs() {
                 })
                 .where(eq(jobs.id, job.id));
 
+            // eslint-disable-next-line no-console
             console.log(`[Worker:Embeddings] Job ${job.id} completed successfully.`);
             processed++;
             await new Promise(resolve => setTimeout(resolve, 500));

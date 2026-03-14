@@ -256,8 +256,8 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
             toast.success("Your resume is being processed. Refresh shortly to see extracted data.");
 
             router.refresh();
-        } catch (error: any) {
-            toast.error(error.message || "Upload failed");
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "Upload failed");
         } finally {
             setIsUploading(false);
         }
@@ -666,7 +666,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                 ) : (
                                     profile.skills && profile.skills.length > 0 ? (
                                         <div className="flex flex-wrap gap-2">
-                                            {profile.skills.map((skill: any, i: number) => (
+                                            {profile.skills.map((skill: Skill, i: number) => (
                                                 <Badge key={i} variant="outline" className="px-3 py-1">
                                                     {skill.name}
                                                 </Badge>
@@ -759,7 +759,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                     </div>
                                 ) : (
                                     profile.codingProfiles && profile.codingProfiles.length > 0 ? (
-                                        profile.codingProfiles.map((cp: any, i: number) => (
+                                        profile.codingProfiles.map((cp: CodingProfile, i: number) => (
                                             <div key={i} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
                                                 <div>
                                                     <p className="font-medium">{cp.platform}</p>
@@ -947,7 +947,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                     </div>
                                 ) : (
                                     profile.workExperience && profile.workExperience.length > 0 ? (
-                                        profile.workExperience.map((work: any, i: number) => (
+                                        profile.workExperience.map((work: WorkExperience, i: number) => (
                                             <div key={i} className="relative border-l-2 border-primary/20 pl-4 pb-4 last:pb-0">
                                                 <h3 className="font-semibold">{work.role}</h3>
                                                 <div className="text-primary font-medium">{work.company}</div>
@@ -1025,7 +1025,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                 ) : (
                                     profile.certifications && profile.certifications.length > 0 ? (
                                         <div className="space-y-4">
-                                            {profile.certifications.map((cert: any, i: number) => (
+                                            {profile.certifications.map((cert: Certification, i: number) => (
                                                 <div key={i} className="flex justify-between items-start border-b pb-4 last:border-0 last:pb-0">
                                                     <div>
                                                         <div className="font-medium">{cert.title}</div>
@@ -1058,7 +1058,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                         type="button"
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => appendResearchPaper({ title: "", abstract: "", url: "", publicationDate: "" })}
+                                        onClick={() => appendResearchPaper({ title: "", abstract: "", url: "", datePublished: "" })}
                                     >
                                         <Plus className="h-4 w-4 mr-2" /> Add
                                     </Button>
@@ -1085,7 +1085,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label>Date</Label>
-                                                        <Input type="month" {...form.register(`researchPapers.${index}.publicationDate`)} />
+                                                        <Input type="month" {...form.register(`researchPapers.${index}.datePublished`)} />
                                                     </div>
                                                     <div className="space-y-2 md:col-span-2">
                                                         <Label>URL</Label>
@@ -1106,7 +1106,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                 ) : (
                                     profile.researchPapers && profile.researchPapers.length > 0 ? (
                                         <div className="space-y-6">
-                                            {profile.researchPapers.map((paper: any, i: number) => (
+                                            {profile.researchPapers.map((paper: ResearchPaper, i: number) => (
                                                 <div key={i}>
                                                     <div className="font-medium flex items-center justify-between">
                                                         <span>{paper.title}</span>
@@ -1116,7 +1116,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                             </a>
                                                         )}
                                                     </div>
-                                                    <div className="text-xs text-muted-foreground mb-1">{paper.publicationDate}</div>
+                                                    <div className="text-xs text-muted-foreground mb-1">{paper.datePublished}</div>
                                                     <p className="text-sm text-gray-600 line-clamp-3">{paper.abstract}</p>
                                                 </div>
                                             ))}
@@ -1188,7 +1188,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                 ) : (
                                     profile.achievements && profile.achievements.length > 0 ? (
                                         <div className="space-y-4">
-                                            {profile.achievements.map((ach: any, i: number) => (
+                                            {profile.achievements.map((ach: Achievement, i: number) => (
                                                 <div key={i} className="border-b pb-4 last:border-0 last:pb-0">
                                                     <div className="font-medium">{ach.title}</div>
                                                     <div className="text-sm text-muted-foreground">{ach.issuer} • {ach.date}</div>
@@ -1221,7 +1221,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                     className="h-4 w-4 ml-2 hover:text-destructive p-0"
                                                     onClick={() => {
                                                         const current = form.getValues("softSkills") || [];
-                                                        form.setValue("softSkills", current.filter((_: any, i: number) => i !== index));
+                                                        form.setValue("softSkills", current.filter((_: string, i: number) => i !== index));
                                                     }}
                                                 >
                                                     <X className="h-3 w-3" />
@@ -1377,7 +1377,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                     </div>
                                 ) : (
                                     profile.projects && profile.projects.length > 0 ? (
-                                        profile.projects.map((project: any, i: number) => (
+                                        profile.projects.map((project: Project, i: number) => (
                                             <div key={i}>
                                                 <div className="flex items-center justify-between">
                                                     <h3 className="font-semibold">{project.title}</h3>
