@@ -1,7 +1,6 @@
 export const dynamic = "force-dynamic";
 
 import { requireRole, getStudentProfile } from "@/lib/auth/helpers";
-import Header from "@/components/shared/header";
 import Link from "next/link";
 import { StudentProvider } from "@/app/(student)/providers/student-provider";
 import { db } from "@/lib/db";

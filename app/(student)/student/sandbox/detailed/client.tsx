@@ -3,10 +3,9 @@
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
-    Upload, FileText, CheckCircle, AlertTriangle, ArrowRight,
-    Target, Zap, BookOpen, Shield, ChevronDown, ChevronUp,
+    Upload, FileText, AlertTriangle, ArrowRight,
+    Target, Zap, BookOpen, Shield,
     TrendingUp, XCircle, AlertCircle, Lightbulb, CheckCircle2,
     Loader2
 } from "lucide-react";

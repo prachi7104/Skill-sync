@@ -25,7 +25,7 @@ function LoginForm() {
         errorType ? (AUTH_ERRORS[errorType] ?? AUTH_ERRORS.Default) : null
     );
     
-    const [isAutoSigningIn, setIsAutoSigningIn] = useState(false);
+    const [isAutoSigningIn] = useState(false);
     const [isManualSigningIn, setIsManualSigningIn] = useState(false);
 
     useEffect(() => {

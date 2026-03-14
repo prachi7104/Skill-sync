@@ -27,7 +27,8 @@ export const dynamic = "force-dynamic";
 
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
-import { students, drives, rankings, jobs } from "@/lib/db/schema";
+import { students, drives, jobs } from "@/lib/db/schema";
+import { formatDistanceToNow } from "date-fns";
 import { eq, and, gte, isNotNull, isNull, sql, desc } from "drizzle-orm";
 
 const Metric = ({ label, value, sub, status }: any) => {
@@ -51,7 +52,7 @@ export default async function AdminHealthPage() {
   const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
   // YOUR EXACT DB LOGIC
-  const [pendingByType, failedLast24h, failedRecentErrors, completedLast24h, avgLatencyByType] = await Promise.all([
+  const [pendingByType, failedLast24h, , completedLast24h] = await Promise.all([
     db.select({ type: jobs.type, count: sql<number>`count(*)::int` }).from(jobs).where(eq(jobs.status, "pending")).groupBy(jobs.type),
     db.select({ count: sql<number>`count(*)::int` }).from(jobs).where(and(eq(jobs.status, "failed"), gte(jobs.updatedAt, twentyFourHoursAgo))),
     db.select({ type: jobs.type, error: jobs.error, updatedAt: jobs.updatedAt }).from(jobs).where(and(eq(jobs.status, "failed"), gte(jobs.updatedAt, twentyFourHoursAgo))).orderBy(desc(jobs.updatedAt)).limit(5),
