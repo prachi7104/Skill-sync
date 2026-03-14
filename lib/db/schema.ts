@@ -122,6 +122,10 @@ export const users = pgTable("users", {
    */
   microsoftId: varchar("microsoft_id", { length: 255 }).unique(),
 
+  // NEW: for staff email+password login
+  passwordHash: varchar("password_hash", { length: 255 }),
+  lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

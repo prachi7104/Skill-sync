@@ -1,210 +1,194 @@
-
 import { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/lib/db";
-import { users, students, magicLinkTokens } from "@/lib/db/schema";
-import { eq, and, gt } from "drizzle-orm";
+import { users, students } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 import {
-    MICROSOFT_CLIENT_ID,
-    MICROSOFT_CLIENT_SECRET,
-    MICROSOFT_TENANT_ID,
-    STUDENT_EMAIL_DOMAIN,
+  MICROSOFT_CLIENT_ID,
+  MICROSOFT_CLIENT_SECRET,
+  MICROSOFT_TENANT_ID,
+  STUDENT_EMAIL_DOMAIN,
 } from "@/lib/env";
 
-/**
- * Check if the email belongs to the student domain.
- * Students are auto-created; faculty/admin must be pre-added in DB.
- */
 export function isStudentEmail(email: string): boolean {
-    const domain = email.toLowerCase().split("@")[1];
-    return domain === STUDENT_EMAIL_DOMAIN;
+  return email.toLowerCase().split("@")[1] === STUDENT_EMAIL_DOMAIN;
 }
 
 export const authOptions: NextAuthOptions = {
-    providers: [
-        AzureADProvider({
-            clientId: MICROSOFT_CLIENT_ID,
-            clientSecret: MICROSOFT_CLIENT_SECRET,
-            tenantId: MICROSOFT_TENANT_ID,
-            authorization: {
-                params: {
-                    scope: "openid profile email",
-                    prompt: "select_account",
-                },
-            },
-        }),
-        CredentialsProvider({
-            id: "magic-link",
-            name: "Magic Link",
-            credentials: {
-                token: { label: "Token", type: "text" },
-            },
-            async authorize(credentials) {
-                const token = credentials?.token;
-                if (!token) return null;
+  providers: [
+    // ── Provider 1: Microsoft OAuth (students only) ─────────────────────
+    AzureADProvider({
+      clientId: MICROSOFT_CLIENT_ID,
+      clientSecret: MICROSOFT_CLIENT_SECRET,
+      tenantId: MICROSOFT_TENANT_ID,
+      authorization: {
+        params: { scope: "openid profile email", prompt: "select_account" },
+      },
+    }),
 
-                // Find valid, unused, non-expired token joined with user
-                const [row] = await db
-                    .select({
-                        tokenId: magicLinkTokens.id,
-                        userId: users.id,
-                        email: users.email,
-                        name: users.name,
-                        role: users.role,
-                    })
-                    .from(magicLinkTokens)
-                    .innerJoin(users, eq(magicLinkTokens.userId, users.id))
-                    .where(
-                        and(
-                            eq(magicLinkTokens.token, token),
-                            eq(magicLinkTokens.used, false),
-                            gt(magicLinkTokens.expiresAt, new Date()),
-                        )
-                    )
-                    .limit(1);
+    // ── Provider 2: Email + Password (faculty and admin only) ───────────
+    CredentialsProvider({
+      id: "staff-credentials",
+      name: "Staff Login",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null;
 
-                if (!row) return null;
+        const email = credentials.email.toLowerCase().trim();
+        const password = credentials.password;
 
-                // Only allow faculty or admin
-                if (row.role !== "faculty" && row.role !== "admin") return null;
+        const user = await db.query.users.findFirst({
+          where: eq(users.email, email),
+          columns: {
+            id: true, email: true, name: true,
+            role: true, passwordHash: true,
+          },
+        });
 
-                // Mark token as used
-                await db
-                    .update(magicLinkTokens)
-                    .set({ used: true })
-                    .where(eq(magicLinkTokens.id, row.tokenId));
+        if (!user) return null;
 
-                return {
-                    id: row.userId,
-                    email: row.email,
-                    name: row.name,
-                    role: row.role,
-                };
-            },
-        }),
-    ],
-    session: {
-        strategy: "jwt",
-        maxAge: 30 * 24 * 60 * 60, // 30 days
+        // Only allow faculty and admin via this provider
+        if (user.role !== "faculty" && user.role !== "admin") {
+          return null;
+        }
+
+        // Must have a password set
+        // Note: property in Drizzle query is password_hash instead of passwordHash mapping if not using alias,
+        // Wait, schema defines `passwordHash: varchar("password_hash")`. 
+        // In Drizzle, the typescript property is `passwordHash`, NOT `password_hash` unless raw is used.
+        // Let's use user.passwordHash.
+        if (!user.passwordHash) return null;
+
+        const isValid = await bcrypt.compare(password, user.passwordHash);
+        if (!isValid) return null;
+
+        // Update last login timestamp
+        await db
+          .update(users)
+          .set({ lastLoginAt: new Date() })
+          .where(eq(users.id, user.id))
+          .catch(() => {}); // non-fatal
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
+      },
+    }),
+  ],
+
+  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
+  debug: false,
+
+  callbacks: {
+    async signIn({ user, account }) {
+      // Staff Credentials provider — user already validated in authorize()
+      if (account?.provider === "staff-credentials") return true;
+
+      // Microsoft OAuth — student path only
+      if (!user.email) return false;
+      const email = user.email.toLowerCase();
+
+      // Block non-student emails from Microsoft OAuth
+      if (!isStudentEmail(email)) {
+        return "/login?error=NotAuthorized";
+      }
+
+      try {
+        const existing = await db.query.users.findFirst({
+          where: eq(users.email, email),
+        });
+
+        if (existing) {
+          // Link Microsoft ID if not already linked
+          if (!existing.microsoftId && account?.providerAccountId) {
+            await db
+              .update(users)
+              .set({ microsoftId: account.providerAccountId, updatedAt: new Date() })
+              .where(eq(users.id, existing.id))
+              .catch(() => {});
+          }
+          return true;
+        }
+
+        // Auto-create student account
+        const [newUser] = await db
+          .insert(users)
+          .values({
+            email,
+            name: user.name || "Student",
+            role: "student",
+            microsoftId: account?.providerAccountId,
+          })
+          .returning();
+
+        await db.insert(students).values({ id: newUser.id });
+        return true;
+      } catch (error) {
+        console.error("[auth] signIn error:", error);
+        return "/login?error=DatabaseError";
+      }
     },
-    // Disable debug to prevent [next-auth][warn][DEBUG_ENABLED] spam
-    debug: false,
-    callbacks: {
-        async signIn({ user, account }) {
-            if (!user.email) return false;
-            const email = user.email.toLowerCase();
-            try {
-                const existingUser = await db.query.users.findFirst({ where: eq(users.email, email) });
-                if (existingUser) {
-                    if (!existingUser.microsoftId && account?.providerAccountId) {
-                        await db.update(users).set({ microsoftId: account.providerAccountId, updatedAt: new Date() })
-                            .where(eq(users.id, existingUser.id))
-                            .catch((err: unknown) => console.warn("[auth] MS ID link failed:", err));
-                    }
-                    return true;
-                }
-                if (isStudentEmail(email)) {
-                    const [newUser] = await db.insert(users).values({
-                        email, name: user.name || "Student", role: "student",
-                        microsoftId: account?.providerAccountId,
-                    }).returning();
-                    await db.insert(students).values({ id: newUser.id });
-                    return true;
-                }
-                return "/login?error=NotAuthorized";
-            } catch (error: unknown) {
-                const msg = error instanceof Error ? error.message : String(error);
-                console.error("[auth] Sign-in error:", msg);
-                return "/login?error=DatabaseError";
-            }
-        },
-        async jwt({ token, user }) {
-            if (user) {
-                // First sign-in: fetch from DB and embed in token
-                const dbUser = await db.query.users.findFirst({
-                    where: eq(users.email, user.email!),
-                    columns: { id: true, role: true, name: true, email: true },
-                });
-                if (dbUser) {
-                    token.id = dbUser.id;
-                    token.role = dbUser.role;
-                    token.name = dbUser.name;
-                    token.email = dbUser.email;
-                    token.roleCheckedAt = Date.now();
-                }
-            }
 
-            // Re-fetch role from DB once per hour.
-            // Guards against: admin changes a user's role without them signing out.
-            const ROLE_REFRESH_MS = 60 * 60 * 1000; // 60 minutes
-            const lastChecked = (token.roleCheckedAt as number | undefined) ?? 0;
-            if (token.id && Date.now() - lastChecked > ROLE_REFRESH_MS) {
-                try {
-                    const freshUser = await db.query.users.findFirst({
-                        where: eq(users.id, token.id as string),
-                        columns: { role: true },
-                    });
-                    if (freshUser) {
-                        token.role = freshUser.role;
-                        token.roleCheckedAt = Date.now();
-                    }
-                } catch {
-                    // Non-fatal: keep the existing role if the DB check fails
-                }
-            }
+    async jwt({ token, user }) {
+      if (user) {
+        const dbUser = await db.query.users.findFirst({
+          where: eq(users.email, user.email!),
+          columns: { id: true, role: true, name: true, email: true },
+        });
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+          token.name = dbUser.name;
+          token.email = dbUser.email;
+          token.roleCheckedAt = Date.now();
+        }
+      }
 
-            return token;
-        },
-        async session({ session, token }) {
-            if (token) {
-                session.user.id = token.id as string;
-                session.user.role = token.role as "student" | "faculty" | "admin";
-                session.user.name = token.name as string;
-            }
-            return session;
-        },
-        async redirect({ url, baseUrl }) {
-            // ── Role-based post-login redirect ──────────────────────────
-            // After sign-in, NextAuth calls this with the callbackUrl.
-            // Problem: if callbackUrl was "/faculty/dashboard" but user is a
-            // student, they get stuck. So we override based on role.
-
-            // If this is a sign-out redirect, just go to the target
-            if (url.startsWith(baseUrl + "/login") || url === baseUrl + "/") {
-                return url;
-            }
-
-            // For any other URL, check if it's an internal URL and if the
-            // role matches. We need to fetch the session/token to know.
-            // However, redirect callback doesn't have token access directly,
-            // so we just ensure the URL goes to "/" which does role routing.
-
-            // If the callbackUrl points to a role-specific path, redirect to
-            // root "/" instead — the root page.tsx will route correctly.
-            const path = url.startsWith(baseUrl) ? url.slice(baseUrl.length) : url;
-
-            // If it's going to a role-specific area, let the root page handle routing
-            if (path.startsWith("/faculty") || path.startsWith("/admin") || path.startsWith("/student")) {
-                return baseUrl + "/";
-            }
-
-            // For relative URLs, ensure they stay on the same origin
-            if (url.startsWith("/")) {
-                return baseUrl + url;
-            }
-
-            // For same-origin URLs, allow
-            if (url.startsWith(baseUrl)) {
-                return url;
-            }
-
-            // Default: go to base URL (root page handles role routing)
-            return baseUrl;
-        },
+      // Re-fetch role once per hour
+      const ROLE_REFRESH_MS = 60 * 60 * 1000;
+      const lastChecked = (token.roleCheckedAt as number | undefined) ?? 0;
+      if (token.id && Date.now() - lastChecked > ROLE_REFRESH_MS) {
+        try {
+          const fresh = await db.query.users.findFirst({
+            where: eq(users.id, token.id as string),
+            columns: { role: true },
+          });
+          if (fresh) {
+            token.role = fresh.role;
+            token.roleCheckedAt = Date.now();
+          }
+        } catch {}
+      }
+      return token;
     },
-    pages: {
-        signIn: "/login",
-        error: "/login",
+
+    async session({ session, token }) {
+      if (token) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as "student" | "faculty" | "admin";
+        session.user.name = token.name as string;
+      }
+      return session;
     },
+
+    async redirect({ url, baseUrl }) {
+      const path = url.startsWith(baseUrl) ? url.slice(baseUrl.length) : url;
+      if (path.startsWith("/faculty") || path.startsWith("/admin") || path.startsWith("/student")) {
+        return baseUrl + "/";
+      }
+      if (url.startsWith("/")) return baseUrl + url;
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
+    },
+  },
+
+  pages: { signIn: "/login", error: "/login" },
 };
