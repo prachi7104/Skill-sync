@@ -1,65 +1,46 @@
 "use client";
-
-import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Briefcase, PlusCircle } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { LayoutDashboard, FolderOpen, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const links = [
-    { href: "/faculty", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/faculty/drives", label: "My Drives", icon: Briefcase },
-    { href: "/faculty/drives/new", label: "Create Drive", icon: PlusCircle },
+  { href: "/faculty", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/faculty/drives", label: "My Drives", icon: FolderOpen },
+  { href: "/faculty/drives/new", label: "New Drive", icon: Plus },
 ];
 
-interface SidebarNavProps { name: string; }
-
-export default function SidebarNav({ name }: SidebarNavProps) {
-    const pathname = usePathname();
-
-    function isActive(href: string): boolean {
-        if (href === "/faculty") return pathname === "/faculty";
-        return pathname.startsWith(href);
-    }
-
-    const initials = name.split(" ").map(n => n[0] ?? "").join("").slice(0, 2).toUpperCase();
-
-    return (
-        <>
-            <nav className="flex-1 space-y-1 px-3 mt-4">
-                <p className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                    Faculty Console
-                </p>
-                {links.map(link => {
-                    const Icon = link.icon;
-                    const active = isActive(link.href);
-                    return (
-                        <Link key={link.href} href={link.href}
-                            className={cn(
-                                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200",
-                                active
-                                    ? "bg-indigo-50 text-indigo-700 border-l-4 border-indigo-600 shadow-sm"
-                                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                            )}>
-                            <Icon className={cn("h-4 w-4 flex-shrink-0 transition-colors", active ? "text-indigo-600" : "text-slate-400")} />
-                            {link.label}
-                        </Link>
-                    );
-                })}
-            </nav>
-            <div className="border-t bg-slate-50/50 px-4 py-4">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-xs font-black text-white shadow-indigo-200 shadow-lg ring-2 ring-white">
-                        {initials}
-                    </div>
-                    <div className="min-w-0">
-                        <p className="truncate text-sm font-black text-slate-800 tracking-tight">{name}</p>
-                        <div className="flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Faculty Access</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </>
-    );
+export default function SidebarNav({ name }: { name: string }) {
+  const pathname = usePathname();
+  return (
+    <nav className="space-y-2">
+      {links.map((link) => {
+        const isActive = link.exact
+          ? pathname === link.href
+          : pathname.startsWith(link.href) && link.href !== "/faculty";
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={cn(
+              "group flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-sm",
+              isActive
+                ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/20"
+                : "text-slate-400 hover:bg-slate-800 hover:text-white"
+            )}
+          >
+            <link.icon className={cn(
+              "w-5 h-5 transition-all",
+              isActive ? "text-indigo-400" : "opacity-60 group-hover:opacity-100"
+            )} />
+            {link.label}
+          </Link>
+        );
+      })}
+      <div className="mt-8 px-4 pt-6 border-t border-slate-800">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Signed in as</p>
+        <p className="text-xs text-slate-400 mt-1 font-medium truncate">{name}</p>
+      </div>
+    </nav>
+  );
 }

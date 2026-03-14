@@ -4,10 +4,10 @@ import React from 'react';
 // Reusable Metric Component just for this dashboard
 const Metric = ({ label, value, sub, status }: { label: string, value: string | number, sub?: string, status?: 'ok' | 'warning' | 'error' | 'neutral' }) => {
   const statusColors = {
-    ok: "bg-emerald-100 text-emerald-700",
-    warning: "bg-amber-100 text-amber-700",
-    error: "bg-rose-100 text-rose-700",
-    neutral: "bg-slate-100 text-slate-700"
+    ok: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20",
+    warning: "bg-amber-500/15 text-amber-400 border border-amber-500/20",
+    error: "bg-rose-500/15 text-rose-400 border border-rose-500/20",
+    neutral: "bg-slate-500/15 text-slate-400 border border-slate-500/20"
   };
 
   return (
@@ -30,15 +30,15 @@ export default function SystemHealthPage() {
   return (
     <div className="p-8 max-w-6xl w-full animate-in fade-in duration-500">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-slate-900 mb-1">System Health</h2>
-        <p className="text-sm text-slate-500">Operational dashboard — live snapshot</p>
+        <h2 className="text-3xl font-bold text-white mb-1">System Health</h2>
+        <p className="text-sm text-slate-400">Operational dashboard — live snapshot</p>
       </div>
 
       <div className="space-y-6">
         {/* Job Queue Health */}
-        <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-1">Job Queue Health</h3>
-          <p className="text-sm text-slate-500 mb-6">Last 24 hours</p>
+        <section className="bg-slate-900/50 rounded-xl border border-slate-800 p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-white mb-1">Job Queue Health</h3>
+          <p className="text-sm text-slate-400 mb-6">Last 24 hours</p>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <Metric label="Total Pending" value="17" status="warning" />
@@ -50,25 +50,25 @@ export default function SystemHealthPage() {
           <div className="mb-6">
             <p className="text-xs font-bold text-slate-700 mb-2">Pending by Type</p>
             <div className="flex flex-wrap gap-2">
-              <span className="bg-slate-100 text-slate-600 text-xs px-3 py-1 rounded-md">parse_resume: 1</span>
-              <span className="bg-slate-100 text-slate-600 text-xs px-3 py-1 rounded-md">generate_embedding: 2</span>
-              <span className="bg-slate-100 text-slate-600 text-xs px-3 py-1 rounded-md">enhance_jd: 7</span>
-              <span className="bg-slate-100 text-slate-600 text-xs px-3 py-1 rounded-md">rank_students: 7</span>
+              <span className="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-md">parse_resume: 1</span>
+              <span className="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-md">generate_embedding: 2</span>
+              <span className="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-md">enhance_jd: 7</span>
+              <span className="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-md">rank_students: 7</span>
             </div>
           </div>
 
           <div>
             <p className="text-xs font-bold text-slate-700 mb-2">Avg Latency (completed jobs)</p>
-            <div className="inline-block bg-slate-100 text-slate-600 text-xs px-3 py-1 rounded-md">
+            <div className="inline-block bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-md">
               parse_resume: 5542ms
             </div>
           </div>
         </section>
 
         {/* Embedding Status */}
-        <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-1">Embedding Status</h3>
-          <p className="text-sm text-slate-500 mb-6">Student profile vectorization</p>
+        <section className="bg-slate-900/50 rounded-xl border border-slate-800 p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-white mb-1">Embedding Status</h3>
+          <p className="text-sm text-slate-400 mb-6">Student profile vectorization</p>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <Metric label="Total Students" value="3" />
@@ -79,9 +79,9 @@ export default function SystemHealthPage() {
         </section>
         
         {/* System Status */}
-        <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-1">System Status</h3>
-          <p className="text-sm text-slate-500 mb-6">Infrastructure health checks</p>
+        <section className="bg-slate-900/50 rounded-xl border border-slate-800 p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-white mb-1">System Status</h3>
+          <p className="text-sm text-slate-400 mb-6">Infrastructure health checks</p>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <Metric label="Database Connection" value="3ms" status="ok" sub="SELECT 1 latency" />
