@@ -520,5 +520,13 @@ function validateAndFillDefaults(data: StructuredJD, titleHint?: string, company
     };
   }
 
+  // Ensure primary_cluster is never an empty string
+  if (safeData.tech_stack_cluster) {
+    if (!safeData.tech_stack_cluster.primary_cluster ||
+        safeData.tech_stack_cluster.primary_cluster.trim() === "") {
+      safeData.tech_stack_cluster.primary_cluster = "General Software Engineering";
+    }
+  }
+
   return safeData;
 }

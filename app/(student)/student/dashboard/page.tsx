@@ -54,7 +54,6 @@ export default function StudentDashboard() {
         name: user.name,
         email: user.email,
     });
-    const sandboxUsageToday = student.sandboxUsageToday ?? 0;
     const profileCompleteness = score;
 
     return (
@@ -96,16 +95,6 @@ export default function StudentDashboard() {
                     <CardContent>
                         <div className="text-2xl font-bold">{profileCompleteness}%</div>
                         <p className="text-xs text-muted-foreground">Completeness</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Sandbox Usage</CardTitle>
-                        <EyeIcon className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                    <div className="text-2xl font-bold">{sandboxUsageToday}/5</div>
-                        <p className="text-xs text-muted-foreground">Today</p>
                     </CardContent>
                 </Card>
             </div>
@@ -273,26 +262,6 @@ function CalendarIcon(props: any) {
             <path d="M16 2v4" />
             <rect width="18" height="18" x="3" y="4" rx="2" />
             <path d="M3 10h18" />
-        </svg>
-    )
-}
-
-function EyeIcon(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-            <circle cx="12" cy="12" r="3" />
         </svg>
     )
 }

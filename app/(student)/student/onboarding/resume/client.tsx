@@ -33,8 +33,18 @@ export default function OnboardingResumeClient() {
         if (pollRef.current) clearInterval(pollRef.current);
 
         setParseStatus("processing");
+        let pollCount = 0;
+        const MAX_POLLS = 40; // 2 minutes max
 
         pollRef.current = setInterval(async () => {
+            pollCount++;
+            if (pollCount >= MAX_POLLS) {
+                clearInterval(pollRef.current!);
+                setParseStatus("failed");
+                toast.error("Resume parsing timed out. You can continue and fill details manually.");
+                return;
+            }
+
             try {
                 const res = await fetch(`/api/jobs/${id}`);
                 if (!res.ok) return;

@@ -109,7 +109,9 @@ export function calculateATSScore(
     // 1. Hard Skills Score
     const totalHard = jd.requirements.hard_requirements.technical_skills.length;
     const matchedHard = skillAnalysis.matched.filter(m => m.matched_category === "Hard Requirement").length;
-    const hardScore = totalHard > 0 ? (matchedHard / totalHard) * 100 : 100;
+    // If JD has no extractable hard requirements, score conservatively at 50
+    // (not 100 — we genuinely don't know if the candidate matches)
+    const hardScore = totalHard > 0 ? (matchedHard / totalHard) * 100 : 50;
 
     // 2. Soft Skills Score
     const totalSoft = jd.requirements.soft_requirements.technical_skills.length;
@@ -172,8 +174,10 @@ export function calculateATSScore(
     // Stack mismatch penalty
     if (domainScore < 50) {
         penalties += 10;
+        const jdStack = jd.tech_stack_cluster?.primary_cluster?.trim() || "Unknown";
+        const candidateStack = resume.computed_stack.primary.cluster || "Unknown";
         redFlags.push({
-            flag: `Stack mismatch: JD requires ${jd.tech_stack_cluster.primary_cluster}, candidate has ${resume.computed_stack.primary.cluster}`,
+            flag: `Domain mismatch: JD targets ${jdStack} stack — candidate's primary stack is ${candidateStack}`,
             severity: "High",
             impact: -10
         });

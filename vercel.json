@@ -51,5 +51,11 @@
                 }
             ]
         }
+    ],
+    "crons": [
+        { "path": "/api/cron/process-jd-enhancement", "schedule": "*/2 * * * *" },
+        { "path": "/api/cron/process-resumes",        "schedule": "*/2 * * * *" },
+        { "path": "/api/cron/process-embeddings",     "schedule": "*/3 * * * *" },
+        { "path": "/api/cron/process-rankings",       "schedule": "*/1 * * * *" }
     ]
 }
