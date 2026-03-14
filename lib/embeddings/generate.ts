@@ -37,13 +37,15 @@ export async function generateEmbedding(
       }
       return truncated;
     } catch (err) {
-      console.warn("[embeddings] Gemini failed:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn("[embeddings] Gemini failed:", msg);
+      // Re-throw so the worker captures the real error instead of seeing zeros
+      throw new Error(`Gemini embedding failed: ${msg}`);
     }
   }
 
-  // ── 2. Zero vector fallback — never crashes the app ─────────────────────
-  console.error("[embeddings] All providers failed. Returning zero vector. Semantic scoring will be skipped.");
-  return new Array(EMBEDDING_DIMENSION).fill(0);
+  // ── 2. If we get here, key was missing entirely ──
+  throw new Error("GOOGLE_GENERATIVE_AI_API_KEY not set in environment");
 }
 
 /**
