@@ -21,7 +21,9 @@ const createDriveSchema = z.object({
     roleTitle: z.string().min(1, "Role title is required").max(255),
     location: z.string().max(255).optional().nullable(),
     packageOffered: z.string().max(100).optional().nullable(),
-    rawJd: z.string().min(10, "Job description must be at least 10 characters"),
+    rawJd: z.string()
+        .min(10, "Job description must be at least 10 characters")
+        .max(50000, "Job description cannot exceed 50,000 characters"),
     minCgpa: z.number().min(0).max(10).optional().nullable(),
     eligibleBranches: z.array(z.string()).optional().nullable(),
     eligibleBatchYears: z.array(z.number().int()).optional().nullable(),
@@ -82,6 +84,20 @@ describe("Drives API", () => {
 
         it("should reject rawJd under 10 characters", () => {
             const data = { company: "Test", roleTitle: "SE", rawJd: "too short" };
+            const result = createDriveSchema.safeParse(data);
+            expect(result.success).toBe(false);
+            if (!result.success) {
+                const rawJdError = result.error.issues.find(i => i.path[0] === "rawJd");
+                expect(rawJdError).toBeDefined();
+            }
+        });
+
+        it("should reject rawJd over 50,000 characters", () => {
+            const data = { 
+                company: "Test", 
+                roleTitle: "SE", 
+                rawJd: "A".repeat(50001) 
+            };
             const result = createDriveSchema.safeParse(data);
             expect(result.success).toBe(false);
             if (!result.success) {

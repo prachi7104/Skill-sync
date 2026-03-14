@@ -30,6 +30,13 @@ export async function GET() {
         // 2. Check User in DB
         const user = await db.query.users.findFirst({
             where: eq(users.email, session.user.email),
+            columns: {
+                id: true,
+                role: true,
+                name: true,
+                email: true,
+                // passwordHash explicitly excluded
+            }
         });
 
         if (!user) {
@@ -153,7 +160,10 @@ export async function PATCH(req: NextRequest) {
             .where(eq(students.id, user.id));
 
         // Queue embedding generation when profile is sufficiently complete (>= 50%)
-        if (completeness >= 50) {
+        // or if completeness has meaningfully increased
+        const hasSignificantChange = Math.abs(completeness - (profile.profileCompleteness ?? 0)) >= 10;
+        
+        if (completeness >= 50 || hasSignificantChange) {
             // Check if there's already a pending embedding job for THIS student
             const existingJob = await db.query.jobs.findFirst({
                 where: and(

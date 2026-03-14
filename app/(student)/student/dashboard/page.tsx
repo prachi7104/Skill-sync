@@ -182,8 +182,8 @@ export default function StudentDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                    <ProfileSectionItem label="Core Skills" count={student.skills?.length || 0} min={5} />
                    <ProfileSectionItem label="Projects" count={student.projects?.length || 0} min={2} />
-                   <ProfileSectionItem label="Work Experience" count={student.workExperience?.length || 0} min={0} isOptional />
-                   <ProfileSectionItem label="Certifications" count={student.certifications?.length || 0} min={0} isOptional />
+                   <ProfileSectionItem label="Work Experience" count={student.workExperience?.length || 0} min={1} />
+                   <ProfileSectionItem label="Certifications" count={student.certifications?.length || 0} min={1} />
                 </div>
                 <div className="mt-10 flex justify-end">
                    <Link href="/student/profile"

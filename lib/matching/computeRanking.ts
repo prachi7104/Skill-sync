@@ -326,7 +326,6 @@ export async function computeRanking(
   driveId: string,
 ): Promise<RankingComputationResult> {
   const errors: string[] = [];
-  const SAFE_DURATION_MS = 50000; // Stay under Vercel's 60s cron limit (10s buffer)
   const computeStart = Date.now();
   let skippedNoEmbedding = 0;
 
@@ -393,6 +392,8 @@ export async function computeRanking(
 
   const scoredStudents: ScoredStudent[] = [];
   const limit = pLimit(5);
+  const RANKING_TIMEOUT_MS = 50000; // 50s hard limit
+  const startTime = Date.now();
 
   // Parallelize embedding generation with concurrency of 5
   const embeddingResults = await Promise.allSettled(
@@ -405,9 +406,9 @@ export async function computeRanking(
   );
 
   for (const result of embeddingResults) {
-    if (Date.now() - computeStart > SAFE_DURATION_MS) {
+    if (Date.now() - startTime > RANKING_TIMEOUT_MS) {
       // eslint-disable-next-line no-console
-      console.warn(`[Ranking] Time limit reached — stopping early`, { driveId });
+      console.warn(`[Ranking] Timeout approaching — stopping at ${scoredStudents.length} students`, { driveId });
       break;
     }
 

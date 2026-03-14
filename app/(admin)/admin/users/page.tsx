@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
   GraduationCap,
   AlertCircle,
 } from "lucide-react";
+import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
 
 type User = {
@@ -44,6 +46,11 @@ const ROLE_CONFIG = {
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const searchParams = useSearchParams();
+  const page = Number(searchParams.get("page") ?? 1);
+  const pageSize = 20;
+
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
@@ -64,27 +71,19 @@ export default function AdminUsersPage() {
     setLoading(true);
     setFetchError(null);
     try {
-      const res = await fetch("/api/admin/faculty");
-      if (!res.ok) throw new Error("Failed to fetch users");
-      const data = await res.json();
-      // GET /api/admin/faculty returns only faculty — also fetch all users
-      const allRes = await fetch("/api/admin/users");
+      const allRes = await fetch(`/api/admin/users?page=${page}&pageSize=${pageSize}`);
       if (allRes.ok) {
         const allData = await allRes.json();
         setUsers(allData.data ?? []);
+        setTotalCount(allData.total ?? 0);
       } else {
-        // Fall back to faculty list if /api/admin/users doesn't exist
-        setUsers(data.data ?? []);
-      }
-    } catch {
-      // Fallback: just show faculty list
-      try {
+        // Fallback for API failure
         const res = await fetch("/api/admin/faculty");
         const data = await res.json();
         setUsers(data.data ?? []);
-      } catch {
-        setFetchError("Failed to load users");
       }
+    } catch {
+      setFetchError("Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -92,7 +91,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page]);
 
   async function handleCreateFaculty(e: React.FormEvent) {
     e.preventDefault();
@@ -184,8 +183,7 @@ export default function AdminUsersPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {users.length} total users · {grouped.faculty.length} faculty · {grouped.admin.length}{" "}
-            admins · {grouped.student.length} students
+            {totalCount} total users
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchUsers} className="gap-2">
@@ -367,6 +365,10 @@ export default function AdminUsersPage() {
               </Card>
             );
           })}
+
+          {totalCount > pageSize && (
+            <Pagination page={page} total={totalCount} pageSize={pageSize} />
+          )}
         </div>
       )}
     </div>

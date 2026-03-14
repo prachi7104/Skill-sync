@@ -14,6 +14,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
+import Pagination from "@/components/shared/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, MapPin, IndianRupee, Calendar, ExternalLink, Users } from "lucide-react";
@@ -21,8 +22,12 @@ import { getCompanyColor } from "@/lib/utils/company-color";
 import { TriggerRankingButton } from "@/components/faculty/trigger-ranking-button";
 import { cn } from "@/lib/utils";
 
-export default async function AdminDrivesPage() {
+export default async function AdminDrivesPage({ searchParams }: { searchParams: { page?: string } }) {
   await requireRole(["admin"]);
+
+  const page = Number(searchParams?.page ?? 1);
+  const pageSize = 20;
+  const offset = (page - 1) * pageSize;
 
   // ── STEP 1: All drives + creator name ──────────────────────────────────────
   const allDrives = await db
@@ -41,7 +46,12 @@ export default async function AdminDrivesPage() {
     })
     .from(drives)
     .leftJoin(users, eq(drives.createdBy, users.id))
-    .orderBy(desc(drives.createdAt));
+    .orderBy(desc(drives.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const [{ total: totalDrives }] = await db.select({ total: sql<number>`count(*)::int` }).from(drives);
+  const [{ active: activeDrivesCount }] = await db.select({ active: sql<number>`count(*)::int` }).from(drives).where(eq(drives.isActive, true));
 
   const driveIds = allDrives.map((d) => d.id);
 
@@ -95,9 +105,8 @@ export default async function AdminDrivesPage() {
   );
 
   // ── STEP 4: Summary counts ─────────────────────────────────────────────────
-  const totalDrives = allDrives.length;
-  const activeDrives = allDrives.filter((d) => d.isActive).length;
-  const rankedDrives = allDrives.filter((d) => (statsMap.get(d.id)?.count ?? 0) > 0).length;
+  const activeDrives = activeDrivesCount;
+  const rankedDrives = allDrives.filter((d) => (statsMap.get(d.id)?.count ?? 0) > 0).length; // Just approximate from this page
   const totalRanked = Array.from(statsMap.values()).reduce((s, v) => s + v.count, 0);
 
   return (
@@ -279,6 +288,10 @@ export default async function AdminDrivesPage() {
             );
           })}
         </div>
+      )}
+
+      {totalDrives > pageSize && (
+        <Pagination page={page} total={totalDrives} pageSize={pageSize} />
       )}
     </div>
   );

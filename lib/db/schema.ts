@@ -32,8 +32,9 @@ import {
   jsonb,
   customType,
   unique,
+  index,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // pgvector custom type
@@ -339,7 +340,9 @@ export const students = pgTable("students", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => ({
+  embeddingHnsw: index("idx_students_embedding_hnsw").on(table.embedding),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Table: drives
@@ -435,7 +438,9 @@ export const drives = pgTable("drives", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => ({
+  jdEmbeddingHnsw: index("idx_drives_jd_embedding_hnsw").on(table.jdEmbedding),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Table: rankings
@@ -527,7 +532,9 @@ export const rankings = pgTable("rankings", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => ({
+  driveStudentUnq: unique("idx_rankings_drive_student_unique").on(table.driveId, table.studentId),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Table: jobs
@@ -606,7 +613,11 @@ export const jobs = pgTable("jobs", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => ({
+  jobsRankDedupIdx: index("idx_jobs_rank_dedup")
+    .on(sql`(${table.payload}->>'driveId')`)
+    .where(sql`${table.type} = 'rank_students' AND ${table.status} IN ('pending', 'processing')`),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Table: sample_jds

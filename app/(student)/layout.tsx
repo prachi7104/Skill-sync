@@ -1,12 +1,13 @@
 export const dynamic = "force-dynamic";
 
 import { requireRole, getStudentProfile } from "@/lib/auth/helpers";
-import Link from "next/link";
 import SignOutButton from "@/components/shared/sign-out-button";
+import MobileNav from "@/components/shared/mobile-nav";
 import { StudentProvider } from "@/app/(student)/providers/student-provider";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
 import { LayoutDashboard, UserCircle, Briefcase, Box } from "lucide-react";
+import StudentSidebarNav from "@/components/student/student-sidebar-nav";
 
 const studentLinks = [
     { href: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -44,7 +45,8 @@ export default async function StudentLayout({
                             Skill<span className="text-indigo-500">Sync.</span>
                         </h1>
                     </div>
-                    <div className="flex items-center space-x-6">
+                    <div className="flex items-center space-x-4">
+                        <MobileNav userName={user.name!} links={studentLinks} />
                         <div className="text-sm font-medium text-slate-300 hidden md:block">
                             {user.name} <span className="text-slate-500 font-normal ml-1">(student)</span>
                         </div>
@@ -64,18 +66,7 @@ export default async function StudentLayout({
                                 Student Menu
                             </h2>
                         </div>
-                        <nav className="space-y-2">
-                            {studentLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className="group flex items-center space-x-3 px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-slate-400 hover:bg-slate-800 hover:text-white focus:bg-indigo-500/10 focus:text-indigo-400 focus:border focus:border-indigo-500/20"
-                                >
-                                    <link.icon className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" />
-                                    <span>{link.label}</span>
-                                </Link>
-                            ))}
-                        </nav>
+                        <StudentSidebarNav />
                     </aside>
 
                     {/* Main Scrollable Content Area */}

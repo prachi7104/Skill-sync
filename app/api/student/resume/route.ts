@@ -91,29 +91,40 @@ export async function POST(req: NextRequest) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // Generate a unique public_id to prevent caching issues or collisions
-        const timestamp = Date.now();
-        const publicId = `${user.id}_resume_${timestamp}`;
         // Determine format explicitly
+        const timestamp = Date.now();
         const isPdf = file.type === "application/pdf";
-        const format = isPdf ? "pdf" : "docx";
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const uploadResult = await new Promise<any>((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
                 {
-                    folder: "resumes",
-                    resource_type: "raw", // Use 'raw' for all binary files (PDF, DOCX) to ensure public access
-                    public_id: `${publicId}.${format}`,
-                    access_mode: "public", // Explicitly set public access
+                    folder: "skillsync-resumes",
+                    resource_type: "raw",
+                    // Remove the format from public_id — let Cloudinary handle the extension
+                    public_id: `${user.id}_${timestamp}`,
+                    // Remove access_mode: "public" — raw files use the secure_url directly
+                    // which is always accessible with your Cloudinary credentials
+                    overwrite: true,
+                    // Add format explicitly based on file type
+                    format: isPdf ? "pdf" : "docx",
                 },
                 (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
+                    if (error) {
+                        console.error("[Cloudinary] Upload error:", error);
+                        reject(new Error(`Cloudinary upload failed: ${error.message}`));
+                    } else {
+                        resolve(result);
+                    }
                 }
             );
             uploadStream.end(buffer);
         });
+
+        // Verify we got a URL back
+        if (!uploadResult?.secure_url) {
+            throw new Error("Cloudinary upload succeeded but returned no URL");
+        }
 
         const resumeUrl = uploadResult.secure_url;
 

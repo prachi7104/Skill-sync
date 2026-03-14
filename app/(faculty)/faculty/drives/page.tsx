@@ -12,10 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Plus, MapPin, IndianRupee, Calendar, ExternalLink } from "lucide-react";
 import { getCompanyColor } from "@/lib/utils/company-color";
 import { TriggerRankingButton } from "@/components/faculty/trigger-ranking-button";
+import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
 
-export default async function FacultyDrivesPage() {
+export default async function FacultyDrivesPage({ searchParams }: { searchParams: { page?: string } }) {
   const user = await requireRole(["faculty", "admin"]);
+
+  const page = Number(searchParams?.page ?? 1);
+  const pageSize = 20;
+  const offset = (page - 1) * pageSize;
 
   // Fetch all drives for this faculty
   const facultyDrives = await db
@@ -31,7 +36,11 @@ export default async function FacultyDrivesPage() {
     })
     .from(drives)
     .where(eq(drives.createdBy, user.id))
-    .orderBy(desc(drives.createdAt));
+    .orderBy(desc(drives.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const [{ total: totalDrives }] = await db.select({ total: sql<number>`count(*)::int` }).from(drives).where(eq(drives.createdBy, user.id));
 
   const driveIds = facultyDrives.map((d) => d.id);
 
@@ -74,7 +83,7 @@ export default async function FacultyDrivesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">My Drives</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Managing {facultyDrives.length} total placement drives
+            Managing {totalDrives} total placement drives
           </p>
         </div>
         <Button asChild className="gap-2 bg-indigo-600 hover:bg-indigo-700">
@@ -191,6 +200,10 @@ export default async function FacultyDrivesPage() {
             );
           })}
         </div>
+      )}
+
+      {totalDrives > pageSize && (
+        <Pagination page={page} total={totalDrives} pageSize={pageSize} />
       )}
     </div>
   );
