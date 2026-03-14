@@ -424,6 +424,9 @@ export const drives = pgTable("drives", {
   /** Application/ranking deadline. Null = no deadline. */
   deadline: timestamp("deadline", { withTimezone: true }),
 
+  /** Status of the ranking pipeline for this drive. */
+  ranking_status: jobStatusEnum("ranking_status").notNull().default("pending"),
+
   // ── Timestamps ────────────────────────────────────────────────────────────
 
   createdAt: timestamp("created_at", { withTimezone: true })

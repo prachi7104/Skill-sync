@@ -1,149 +1,208 @@
-// import { redirect } from "next/navigation";
-
-// export default function AdminPage() {
-//   // The real admin landing page is System Health — redirect to it.
-//   // The sidebar provides navigation to All Drives and User Management.
-//   redirect("/admin/health");
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export const dynamic = "force-dynamic";
-
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
-import { students, drives, jobs } from "@/lib/db/schema";
-import { formatDistanceToNow } from "date-fns";
+import { students, drives, rankings, jobs, users } from "@/lib/db/schema";
 import { eq, and, gte, isNotNull, isNull, sql, desc } from "drizzle-orm";
+import { format, formatDistanceToNow } from "date-fns";
+import Link from "next/link";
 
-const Metric = ({ label, value, sub, status }: any) => {
-  const statusColors: any = { ok: "bg-emerald-100 text-emerald-700", warning: "bg-amber-100 text-amber-700", error: "bg-rose-100 text-rose-700", neutral: "bg-slate-100 text-slate-700" };
-  return (
-    <div className="flex flex-col">
-      <p className="text-xs font-medium text-slate-500 mb-1">{label}</p>
-      <div className="flex items-baseline space-x-2">
-        <h4 className="text-2xl font-bold text-slate-900">{value}</h4>
-        {status && <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${statusColors[status]}`}>{status === 'ok' ? 'OK' : status === 'warning' ? 'Processing' : status}</span>}
-      </div>
-      {sub && <p className="text-[10px] text-slate-400 mt-1">{sub}</p>}
-    </div>
-  );
-};
-
-export default async function AdminHealthPage() {
+export default async function AdminMasterDashboard() {
   await requireRole(["admin"]);
-
   const now = new Date();
   const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-  // YOUR EXACT DB LOGIC
-  const [pendingByType, failedLast24h, completedLast24h] = await Promise.all([
-    db.select({ type: jobs.type, count: sql<number>`count(*)::int` }).from(jobs).where(eq(jobs.status, "pending")).groupBy(jobs.type),
-    db.select({ count: sql<number>`count(*)::int` }).from(jobs).where(and(eq(jobs.status, "failed"), gte(jobs.updatedAt, twentyFourHoursAgo))),
-    db.select({ count: sql<number>`count(*)::int` }).from(jobs).where(and(eq(jobs.status, "completed"), gte(jobs.updatedAt, twentyFourHoursAgo))),
+  // ── Student Stats ──────────────────────────────────────────────────────
+  const [
+    totalStudents,
+    embeddedStudents,
+    noResumeStudents,
+    avgCompleteness,
+    lowCompletenessStudents,
+  ] = await Promise.all([
+    db.select({ c: sql<number>`count(*)::int` }).from(students),
+    db.select({ c: sql<number>`count(*)::int` }).from(students).where(isNotNull(students.embedding)),
+    db.select({ c: sql<number>`count(*)::int` }).from(students).where(isNull(students.resumeUrl)),
+    db.select({ avg: sql<number>`round(avg(profile_completeness))::int` }).from(students),
+    db.select({ c: sql<number>`count(*)::int` }).from(students).where(sql`profile_completeness < 40`),
   ]);
 
-  const totalPending = pendingByType.reduce((sum, r) => sum + r.count, 0);
-  const failedCount = failedLast24h[0]?.count ?? 0;
-  const completedCount = completedLast24h[0]?.count ?? 0;
-  const successRate = completedCount + failedCount > 0 ? `${Math.round((completedCount / (completedCount + failedCount)) * 100)}%` : "100%";
-
-  const [totalStudentsResult, withEmbeddingResult, withoutEmbeddingResult, noResumeResult] = await Promise.all([
-    db.select({ count: sql<number>`count(*)::int` }).from(students),
-    db.select({ count: sql<number>`count(*)::int` }).from(students).where(isNotNull(students.embedding)),
-    db.select({ count: sql<number>`count(*)::int` }).from(students).where(isNull(students.embedding)),
-    db.select({ count: sql<number>`count(*)::int` }).from(students).where(isNull(students.resumeUrl)),
+  // ── Drive Stats ────────────────────────────────────────────────────────
+  const [totalDrives, activeDrives, rankedDrives] = await Promise.all([
+    db.select({ c: sql<number>`count(*)::int` }).from(drives),
+    db.select({ c: sql<number>`count(*)::int` }).from(drives).where(eq(drives.isActive, true)),
+    db.select({ c: sql<number>`count(*)::int` }).from(drives).where(sql`ranking_status = 'completed'`),
   ]);
 
-  const totalStudents = totalStudentsResult[0]?.count ?? 0;
-  const withEmbedding = withEmbeddingResult[0]?.count ?? 0;
-  const withoutEmbedding = withoutEmbeddingResult[0]?.count ?? 0;
-  const noResume = noResumeResult[0]?.count ?? 0;
+  // ── Ranking Stats ─────────────────────────────────────────────────────
+  const [totalRankings, avgMatchScore] = await Promise.all([
+    db.select({ c: sql<number>`count(*)::int` }).from(rankings),
+    db.select({ avg: sql<number>`round(avg(match_score))::int` }).from(rankings),
+  ]);
 
-  const [quotaResult] = await db.select({ sandboxToday: sql<number>`coalesce(sum(${students.sandboxUsageToday}), 0)::int`, detailedToday: sql<number>`coalesce(sum(${students.detailedAnalysisUsageToday}), 0)::int` }).from(students);
-  const estimatedCalls = (quotaResult?.sandboxToday ?? 0) * 2 + (quotaResult?.detailedToday ?? 0) * 3;
-  const dailyBudget = 1000;
-  const quotaPercent = Math.round((estimatedCalls / dailyBudget) * 100);
+  // ── Job Queue Health ──────────────────────────────────────────────────
+  const [pendingJobs, failedJobs, completedToday] = await Promise.all([
+    db.select({ c: sql<number>`count(*)::int` }).from(jobs).where(eq(jobs.status, "pending")),
+    db.select({ c: sql<number>`count(*)::int` }).from(jobs).where(and(eq(jobs.status, "failed"), gte(jobs.updatedAt, twentyFourHoursAgo))),
+    db.select({ c: sql<number>`count(*)::int` }).from(jobs).where(and(eq(jobs.status, "completed"), gte(jobs.updatedAt, twentyFourHoursAgo))),
+  ]);
 
-  let dbLatencyMs = -1; let dbHealthy = false;
-  try { const dbStart = Date.now(); await db.execute(sql`SELECT 1`); dbLatencyMs = Date.now() - dbStart; dbHealthy = true; } catch {}
-  
-  const [lastCompletedJob] = await db.select({ type: jobs.type, updatedAt: jobs.updatedAt }).from(jobs).where(eq(jobs.status, "completed")).orderBy(desc(jobs.updatedAt)).limit(1);
-  const [drivesResult] = await Promise.all([ db.select({ count: sql<number>`count(*)::int` }).from(drives) ]);
+  // ── Recent Faculty Activity ────────────────────────────────────────────
+  const recentDrives = await db
+    .select({
+      id: drives.id,
+      company: drives.company,
+      roleTitle: drives.roleTitle,
+      createdAt: drives.createdAt,
+      ranking_status: sql<string>`${drives}.ranking_status`,
+      creatorName: users.name,
+    })
+    .from(drives)
+    .leftJoin(users, eq(drives.createdBy, users.id))
+    .orderBy(desc(drives.createdAt))
+    .limit(5);
+
+  // ── Faculty Count ─────────────────────────────────────────────────────
+  const [facultyCount] = await db
+    .select({ c: sql<number>`count(*)::int` })
+    .from(users)
+    .where(eq(users.role, "faculty"));
 
   return (
-    <div className="p-8 max-w-6xl w-full animate-in fade-in duration-500 bg-[#f8fafc] min-h-screen">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-slate-900 mb-1">System Health</h2>
-        <p className="text-sm text-slate-500">Operational dashboard — {now.toISOString().slice(0, 19).replace("T", " ")} UTC</p>
+    <div className="max-w-7xl mx-auto p-8 md:p-10 pb-32 space-y-10">
+      
+      {/* Header */}
+      <div>
+        <h1 className="text-4xl font-black text-white tracking-tight">Master Dashboard</h1>
+        <p className="text-slate-400 mt-2">
+          Complete placement platform overview · Last updated {format(now, "MMM d, h:mm a")}
+        </p>
       </div>
 
-      <div className="space-y-6">
-        <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-1">Job Queue Health</h3>
-          <p className="text-sm text-slate-500 mb-6">Last 24 hours</p>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <Metric label="Total Pending" value={totalPending} status={totalPending > 0 ? "warning" : "ok"} />
-            <Metric label="Completed (24h)" value={completedCount} status="ok" />
-            <Metric label="Failed (24h)" value={failedCount} status={failedCount > 0 ? "error" : "neutral"} />
-            <Metric label="Success Rate" value={successRate} />
+      {/* Top Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Total Students", value: totalStudents[0]?.c ?? 0, sub: `${noResumeStudents[0]?.c ?? 0} without resume`, color: "indigo" },
+          { label: "Active Drives", value: activeDrives[0]?.c ?? 0, sub: `${totalDrives[0]?.c ?? 0} total`, color: "emerald" },
+          { label: "Rankings Generated", value: totalRankings[0]?.c ?? 0, sub: `Avg score: ${avgMatchScore[0]?.avg ?? 0}%`, color: "blue" },
+          { label: "Faculty Members", value: facultyCount?.c ?? 0, sub: "Active staff", color: "amber" },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-slate-900/60 rounded-2xl border border-white/5 p-6">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">{stat.label}</p>
+            <p className="text-4xl font-black text-white tracking-tighter">{stat.value}</p>
+            <p className="text-xs text-slate-500 mt-2">{stat.sub}</p>
           </div>
-          <div className="mb-6">
-            <p className="text-xs font-bold text-slate-700 mb-2">Pending by Type</p>
-            <div className="flex flex-wrap gap-2">
-              {pendingByType.map(r => <span key={r.type} className="bg-slate-100 text-slate-600 text-xs px-3 py-1 rounded-md">{r.type}: {r.count}</span>)}
-              {pendingByType.length === 0 && <span className="text-xs text-slate-400">Queue is clear</span>}
-            </div>
-          </div>
-        </section>
+        ))}
+      </div>
 
-        <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-1">Embedding Status</h3>
-          <p className="text-sm text-slate-500 mb-6">Student profile vectorization</p>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <Metric label="Total Students" value={totalStudents} />
-            <Metric label="With Embedding" value={withEmbedding} status="ok" sub={`${totalStudents > 0 ? Math.round((withEmbedding/totalStudents)*100) : 0}% coverage`} />
-            <Metric label="Missing Embedding" value={withoutEmbedding} status={withoutEmbedding > 0 ? "warning" : "neutral"} sub="Needs generate_embedding" />
-            <Metric label="No Resume" value={noResume} status={noResume > 0 ? "error" : "ok"} sub="Cannot generate embedding" />
-          </div>
-        </section>
-
-        <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-1">API Quota Estimate</h3>
-          <p className="text-sm text-slate-500 mb-6">Estimated Free Tier Usage</p>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-4">
-             <Metric label="Estimated Calls" value={estimatedCalls} status={quotaPercent > 80 ? "error" : "ok"} sub={`${quotaPercent}% of budget`} />
-             <Metric label="Remaining" value={Math.max(0, dailyBudget - estimatedCalls)} sub="of 1000 daily budget" />
-          </div>
-          <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-             <div className={`h-full ${quotaPercent > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min(quotaPercent, 100)}%` }}></div>
-          </div>
-        </section>
+      {/* Two-column: AI Pipeline + Student Readiness */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-1">System Status</h3>
-          <p className="text-sm text-slate-500 mb-6">Infrastructure health checks</p>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <Metric label="Database Connection" value={dbHealthy ? `${dbLatencyMs}ms` : "DOWN"} status={dbHealthy ? "ok" : "error"} />
-            <Metric label="Last Cron Activity" value={lastCompletedJob ? formatDistanceToNow(lastCompletedJob.updatedAt) + " ago" : "Never"} status="ok" sub={lastCompletedJob?.type} />
-            <Metric label="Drives Created" value={drivesResult[0]?.count ?? 0} />
-          </div>
-        </section>
+        {/* AI Pipeline Health */}
+        <div className="bg-slate-900/60 rounded-2xl border border-white/5 p-6 space-y-4">
+          <h2 className="font-bold text-white">AI Pipeline Health</h2>
+          {[
+            { label: "Pending jobs", value: pendingJobs[0]?.c ?? 0, status: (pendingJobs[0]?.c ?? 0) > 10 ? "warn" : "ok" },
+            { label: "Failed (24h)", value: failedJobs[0]?.c ?? 0, status: (failedJobs[0]?.c ?? 0) > 0 ? "error" : "ok" },
+            { label: "Completed (24h)", value: completedToday[0]?.c ?? 0, status: "ok" },
+            { label: "Drives ranked", value: rankedDrives[0]?.c ?? 0, status: "ok" },
+          ].map((row) => (
+            <div key={row.label} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+              <span className="text-sm text-slate-400">{row.label}</span>
+              <span className={`text-sm font-bold ${
+                row.status === "error" ? "text-rose-400" :
+                row.status === "warn" ? "text-amber-400" : "text-emerald-400"
+              }`}>{row.value}</span>
+            </div>
+          ))}
+          <Link href="/admin/health" className="text-xs text-indigo-400 hover:text-indigo-300 font-bold">
+            Full system health →
+          </Link>
+        </div>
+
+        {/* Student Readiness */}
+        <div className="bg-slate-900/60 rounded-2xl border border-white/5 p-6 space-y-4">
+          <h2 className="font-bold text-white">Student Readiness</h2>
+          {[
+            {
+              label: "Embedding coverage",
+              value: `${embeddedStudents[0]?.c ?? 0} / ${totalStudents[0]?.c ?? 0}`,
+              pct: totalStudents[0]?.c ? Math.round((embeddedStudents[0]?.c ?? 0) / totalStudents[0].c * 100) : 0,
+            },
+            {
+              label: "Avg profile completeness",
+              value: `${avgCompleteness[0]?.avg ?? 0}%`,
+              pct: avgCompleteness[0]?.avg ?? 0,
+            },
+            {
+              label: "Low completeness (<40%)",
+              value: `${lowCompletenessStudents[0]?.c ?? 0} students`,
+              pct: totalStudents[0]?.c ? Math.round((lowCompletenessStudents[0]?.c ?? 0) / totalStudents[0].c * 100) : 0,
+              inverted: true,
+            },
+          ].map((row) => (
+            <div key={row.label} className="space-y-1.5">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">{row.label}</span>
+                <span className="text-white font-bold">{row.value}</span>
+              </div>
+              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${row.inverted ? "bg-rose-500" : "bg-indigo-500"}`}
+                  style={{ width: `${row.pct}%` }}
+                />
+              </div>
+            </div>
+          ))}
+          <Link href="/admin/users" className="text-xs text-indigo-400 hover:text-indigo-300 font-bold">
+            View all students →
+          </Link>
+        </div>
+      </div>
+
+      {/* Recent Drives */}
+      <div className="bg-slate-900/60 rounded-2xl border border-white/5 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-bold text-white">Recent Drives</h2>
+          <Link href="/admin/drives" className="text-xs text-indigo-400 hover:text-indigo-300 font-bold">
+            View all →
+          </Link>
+        </div>
+        <div className="space-y-3">
+          {recentDrives.map((drive) => (
+            <div key={drive.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-950/50 border border-white/5">
+              <div>
+                <p className="font-bold text-white text-sm">{drive.company} — {drive.roleTitle}</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  by {drive.creatorName} · {formatDistanceToNow(drive.createdAt)} ago
+                </p>
+              </div>
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                drive.ranking_status === "completed" ? "bg-emerald-500/15 text-emerald-400" :
+                drive.ranking_status === "processing" ? "bg-indigo-500/15 text-indigo-400" :
+                "bg-slate-800 text-slate-500"
+              }`}>
+                {drive.ranking_status}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          { href: "/admin/users", label: "Manage Faculty", desc: "Add or update staff accounts", emoji: "👥" },
+          { href: "/admin/drives", label: "All Drives", desc: "Monitor every placement drive", emoji: "🎯" },
+          { href: "/admin/health", label: "System Health", desc: "Job queue and AI pipeline status", emoji: "⚡" },
+        ].map((action) => (
+          <Link key={action.href} href={action.href}
+            className="bg-slate-900/40 hover:bg-slate-900/80 border border-white/5 hover:border-indigo-500/30 rounded-2xl p-6 transition-all group"
+          >
+            <div className="text-2xl mb-3">{action.emoji}</div>
+            <p className="font-bold text-white group-hover:text-indigo-300 transition-colors">{action.label}</p>
+            <p className="text-xs text-slate-500 mt-1">{action.desc}</p>
+          </Link>
+        ))}
       </div>
     </div>
   );

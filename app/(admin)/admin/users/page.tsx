@@ -8,8 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   UserPlus,
-  Link as LinkIcon,
-  Copy,
   Check,
   RefreshCw,
   ShieldCheck,
@@ -24,11 +22,6 @@ type User = {
   name: string;
   role: "student" | "faculty" | "admin";
   createdAt: string;
-};
-
-type LoginLinkResult = {
-  loginUrl: string;
-  expiresAt: string;
 };
 
 const ROLE_CONFIG = {
@@ -57,13 +50,14 @@ export default function AdminUsersPage() {
   // Create faculty form state
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
 
-  // Login link state per user email
-  const [linkState, setLinkState] = useState<
-    Record<string, { loading: boolean; result: LoginLinkResult | null; error: string | null; copied: boolean }>
+  // Password reset state per user email
+  const [resetState, setResetState] = useState<
+    Record<string, { loading: boolean; resetPassword?: string; error: string | null; success: boolean }>
   >({});
 
   async function fetchUsers() {
@@ -110,15 +104,16 @@ export default function AdminUsersPage() {
       const res = await fetch("/api/admin/faculty", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: newEmail.trim(), name: newName.trim() }),
+        body: JSON.stringify({ email: newEmail.trim(), name: newName.trim(), password: newPassword }),
       });
       const data = await res.json();
       if (!res.ok) {
         setCreateError(data.error ?? "Failed to create faculty");
       } else {
-        setCreateSuccess(`Faculty account created for ${data.data.email}`);
+        setCreateSuccess(`Faculty account created for ${data.data?.email || newEmail.trim()}`);
         setNewName("");
         setNewEmail("");
+        setNewPassword("");
         fetchUsers();
       }
     } catch {
@@ -128,55 +123,58 @@ export default function AdminUsersPage() {
     }
   }
 
-  async function handleGetLoginLink(email: string) {
-    setLinkState((prev) => ({
+  async function handleResetPassword(userId: string, email: string) {
+    const password = resetState[email]?.resetPassword;
+    if (!password || password.length < 8) {
+      setResetState((prev: typeof resetState) => ({
+        ...prev,
+        [email]: { ...prev[email], loading: false, error: "Password must be at least 8 chars", success: false },
+      }));
+      return;
+    }
+
+    setResetState((prev: typeof resetState) => ({
       ...prev,
-      [email]: { loading: true, result: null, error: null, copied: false },
+      [email]: { ...prev[email], loading: true, error: null, success: false },
     }));
+
     try {
-      const res = await fetch("/api/admin/faculty/invite", {
-        method: "POST",
+      const res = await fetch(`/api/admin/faculty/${userId}/reset-password`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ password }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setLinkState((prev) => ({
+        setResetState((prev: typeof resetState) => ({
           ...prev,
-          [email]: { loading: false, result: null, error: data.error ?? "Failed", copied: false },
+          [email]: { loading: false, error: data.error ?? "Failed to reset", success: false, resetPassword: password },
         }));
       } else {
-        setLinkState((prev) => ({
+        setResetState((prev: typeof resetState) => ({
           ...prev,
-          [email]: { loading: false, result: data.data, error: null, copied: false },
+          [email]: { loading: false, error: null, success: true, resetPassword: "" },
         }));
+        // Reset success state after 3s
+        setTimeout(() => {
+          setResetState((prev: typeof resetState) => ({
+            ...prev,
+            [email]: { ...prev[email], success: false }
+          }));
+        }, 3000);
       }
     } catch {
-      setLinkState((prev) => ({
+      setResetState((prev: typeof resetState) => ({
         ...prev,
-        [email]: { loading: false, result: null, error: "Network error", copied: false },
+        [email]: { loading: false, error: "Network error", success: false, resetPassword: password },
       }));
     }
   }
 
-  async function handleCopy(email: string, url: string) {
-    await navigator.clipboard.writeText(url);
-    setLinkState((prev) => ({
-      ...prev,
-      [email]: { ...prev[email], copied: true },
-    }));
-    setTimeout(() => {
-      setLinkState((prev) => ({
-        ...prev,
-        [email]: { ...prev[email], copied: false },
-      }));
-    }, 2500);
-  }
-
   const grouped = {
-    admin: users.filter((u) => u.role === "admin"),
-    faculty: users.filter((u) => u.role === "faculty"),
-    student: users.filter((u) => u.role === "student"),
+    admin: users.filter((u: User) => u.role === "admin"),
+    faculty: users.filter((u: User) => u.role === "faculty"),
+    student: users.filter((u: User) => u.role === "student"),
   };
 
   return (
@@ -230,10 +228,22 @@ export default function AdminUsersPage() {
                 required
               />
             </div>
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor="fac-password">Password</Label>
+              <Input
+                id="fac-password"
+                type="password"
+                placeholder="Min 8 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                className="bg-slate-900 border-slate-700"
+              />
+            </div>
             <div className="flex items-end">
               <Button
                 type="submit"
-                disabled={creating || !newName.trim() || !newEmail.trim()}
+                disabled={creating || !newName.trim() || !newEmail.trim() || newPassword.length < 8}
                 className="gap-2 bg-indigo-600 hover:bg-indigo-700 w-full sm:w-auto"
               >
                 {creating ? (
@@ -287,8 +297,8 @@ export default function AdminUsersPage() {
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="divide-y">
-                    {group.map((user) => {
-                      const ls = linkState[user.email];
+                    {group.map((user: User) => {
+                      const rs = resetState[user.email];
                       return (
                         <div
                           key={user.id}
@@ -312,57 +322,39 @@ export default function AdminUsersPage() {
                               {cfg.label.toUpperCase()}
                             </Badge>
 
-                            {/* Login link — only for faculty/admin */}
+                            {/* Password Reset — only for faculty/admin */}
                             {(role === "faculty" || role === "admin") && (
-                              <div className="space-y-1.5 w-full sm:w-auto">
-                                {!ls?.result ? (
+                              <div className="space-y-1.5 w-full sm:w-auto flex flex-col items-end">
+                                <div className="flex gap-2">
+                                  <Input 
+                                    type="password"
+                                    placeholder="New Password"
+                                    className="h-7 text-xs w-[120px]"
+                                    value={rs?.resetPassword || ""}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setResetState((prev: typeof resetState) => ({
+                                      ...prev,
+                                      [user.email]: { ...prev[user.email], resetPassword: e.target.value }
+                                    }))}
+                                  />
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    disabled={ls?.loading}
-                                    onClick={() => handleGetLoginLink(user.email)}
+                                    disabled={rs?.loading || !rs?.resetPassword || rs.resetPassword.length < 8}
+                                    onClick={() => handleResetPassword(user.id, user.email)}
                                     className="gap-1.5 text-xs h-7 px-3"
                                   >
-                                    {ls?.loading ? (
+                                    {rs?.loading ? (
                                       <RefreshCw className="h-3 w-3 animate-spin" />
+                                    ) : rs?.success ? (
+                                      <Check className="h-3 w-3 text-emerald-500" />
                                     ) : (
-                                      <LinkIcon className="h-3 w-3" />
+                                      <ShieldCheck className="h-3 w-3" />
                                     )}
-                                    {ls?.loading ? "Generating…" : "Generate Login Link"}
+                                    {rs?.loading ? "Resetting…" : rs?.success ? "Reset!" : "Reset"}
                                   </Button>
-                                ) : (
-                                  <div className="flex items-center gap-2">
-                                    <code className="text-[10px] bg-gray-100 rounded px-2 py-1 max-w-[200px] truncate block">
-                                      {ls.result.loginUrl}
-                                    </code>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-7 w-7 p-0 shrink-0"
-                                      onClick={() => handleCopy(user.email, ls.result!.loginUrl)}
-                                      title="Copy link"
-                                    >
-                                      {ls.copied ? (
-                                        <Check className="h-3.5 w-3.5 text-emerald-600" />
-                                      ) : (
-                                        <Copy className="h-3.5 w-3.5" />
-                                      )}
-                                    </Button>
-                                  </div>
-                                )}
-                                {ls?.error && (
-                                  <p className="text-[10px] text-rose-600">{ls.error}</p>
-                                )}
-                                {ls?.result && (
-                                  <p className="text-[10px] text-muted-foreground">
-                                    Expires{" "}
-                                    {new Date(ls.result.expiresAt).toLocaleString("en-IN", {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                      day: "numeric",
-                                      month: "short",
-                                    })}
-                                  </p>
+                                </div>
+                                {rs?.error && (
+                                  <p className="text-[10px] text-rose-600">{rs.error}</p>
                                 )}
                               </div>
                             )}

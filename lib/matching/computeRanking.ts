@@ -538,6 +538,12 @@ export async function computeRanking(
     }
   });
 
+  // After db.insert(rankings)...
+  await db.update(drives)
+    .set({ ranking_status: "completed", updatedAt: new Date() })
+    .where(eq(drives.id, driveId))
+    .catch(() => {}); // non-fatal
+
   const durationMs = Date.now() - computeStart;
   // eslint-disable-next-line no-console
   console.log(`[Ranking] Completed in ${durationMs}ms`);
