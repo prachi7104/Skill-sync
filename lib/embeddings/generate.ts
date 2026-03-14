@@ -27,14 +27,15 @@ export async function generateEmbedding(
       const result = await model.embedContent({
         content: { role: "user", parts: [{ text: cleaned }] },
         taskType: TaskType.RETRIEVAL_DOCUMENT,
-        // @ts-expect-error — outputDimensionality is supported but may not be in type defs yet
-        outputDimensionality: 768,
+        // No outputDimensionality — let the model return its native 3072 dims
       });
       const vec = result.embedding.values;
-      if (vec.length !== EMBEDDING_DIMENSION) {
-        throw new Error(`Unexpected dimension: ${vec.length}`);
+      // Truncate to 768: MRL technique makes prefix truncation safe (Google docs confirm this)
+      const truncated = vec.length > 768 ? vec.slice(0, 768) : vec;
+      if (truncated.length !== EMBEDDING_DIMENSION) {
+        throw new Error(`Unexpected dimension after truncation: ${truncated.length}`);
       }
-      return vec;
+      return truncated;
     } catch (err) {
       console.warn("[embeddings] Gemini failed:", err);
     }
