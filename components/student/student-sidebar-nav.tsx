@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, UserCircle, Briefcase, Box } from "lucide-react";
+import { LayoutDashboard, UserCircle, Briefcase, Box, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const studentLinks = [
@@ -9,6 +9,7 @@ const studentLinks = [
   { href: "/student/profile", label: "My Profile", icon: UserCircle },
   { href: "/student/drives", label: "Drives", icon: Briefcase },
   { href: "/student/sandbox", label: "AI Sandbox", icon: Box },
+  { href: "/student/settings", label: "Settings", icon: Settings },
 ];
 
 export default function StudentSidebarNav() {

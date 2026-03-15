@@ -35,7 +35,6 @@ function optionalEnv(key: string, fallback: string = ""): string {
 // ── Microsoft / Azure AD ────────────────────────────────────────────────────
 export const MICROSOFT_CLIENT_ID = requireEnv("MICROSOFT_CLIENT_ID");
 export const MICROSOFT_CLIENT_SECRET = requireEnv("MICROSOFT_CLIENT_SECRET");
-export const MICROSOFT_TENANT_ID = requireEnv("MICROSOFT_TENANT_ID");
 
 // ── Database ────────────────────────────────────────────────────────────────
 export const DATABASE_URL = requireEnv("DATABASE_URL");
@@ -75,7 +74,6 @@ export const GOOGLE_GENERATIVE_AI_API_KEY = optionalEnv("GOOGLE_GENERATIVE_AI_AP
 export const env = {
   MICROSOFT_CLIENT_ID,
   MICROSOFT_CLIENT_SECRET,
-  MICROSOFT_TENANT_ID,
   DATABASE_URL,
   NEXTAUTH_SECRET,
   NEXTAUTH_URL,

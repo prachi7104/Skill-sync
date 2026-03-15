@@ -91,14 +91,9 @@ export const authOptions: NextAuthOptions = {
       // Staff Credentials provider — user already validated in authorize()
       if (account?.provider === "staff-credentials") return true;
 
-      // Microsoft OAuth — student path only
+      // Microsoft OAuth flow
       if (!user.email) return false;
       const email = user.email.toLowerCase();
-
-      // Block non-student emails from Microsoft OAuth
-      if (!isStudentEmail(email)) {
-        return "/login?error=NotAuthorized";
-      }
 
       try {
         const existing = await db.query.users.findFirst({
@@ -115,6 +110,11 @@ export const authOptions: NextAuthOptions = {
               .catch(() => {});
           }
           return true;
+        }
+
+        // Unknown non-student emails cannot be auto-created.
+        if (!isStudentEmail(email)) {
+          return "/login?error=NotAuthorized";
         }
 
         // Auto-create student account
@@ -179,12 +179,8 @@ export const authOptions: NextAuthOptions = {
     },
 
     async redirect({ url, baseUrl }) {
-      const path = url.startsWith(baseUrl) ? url.slice(baseUrl.length) : url;
-      if (path.startsWith("/faculty") || path.startsWith("/admin") || path.startsWith("/student")) {
-        return baseUrl + "/";
-      }
-      if (url.startsWith("/")) return baseUrl + url;
-      if (url.startsWith(baseUrl)) return url;
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },
   },

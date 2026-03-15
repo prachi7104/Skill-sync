@@ -5,6 +5,10 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import {
+    generateStrongPassword,
+    validatePasswordStrength,
+} from "@/lib/auth/password";
 
 // ── GET /api/admin/faculty ──────────────────────────────────────────────────
 // Returns all users with role = "faculty". Admin only.
@@ -30,7 +34,7 @@ export async function GET() {
 
 // ── POST /api/admin/faculty ─────────────────────────────────────────────────
 // Create a new user with role = "faculty". Admin only.
-// Body: { email: string, name: string }
+// Body: { email: string, name: string, password?: string }
 // Returns 409 if user already exists.
 
 export async function POST(req: NextRequest) {
@@ -40,18 +44,24 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { email, name, password } = body as { email?: string; name?: string; password?: string };
+    const {
+        email,
+        name,
+        password: providedPassword,
+    } = body as { email?: string; name?: string; password?: string };
 
-    if (!email || !name || !password) {
+    if (!email || !name) {
         return NextResponse.json(
-            { error: "Missing required fields: email, name, password" },
+            { error: "Missing required fields: email and name are required" },
             { status: 400 }
         );
     }
-    
-    if (password.length < 8) {
+
+    const plainPassword = providedPassword || generateStrongPassword();
+    const validation = validatePasswordStrength(plainPassword);
+    if (!validation.valid) {
         return NextResponse.json(
-            { error: "Password must be at least 8 characters" },
+            { error: validation.reason },
             { status: 400 }
         );
     }
@@ -77,7 +87,7 @@ export async function POST(req: NextRequest) {
         );
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await bcrypt.hash(plainPassword, 12);
 
     const [newUser] = await db
         .insert(users)
@@ -95,5 +105,13 @@ export async function POST(req: NextRequest) {
             createdAt: users.createdAt,
         });
 
-    return NextResponse.json({ success: true, data: newUser }, { status: 201 });
+    return NextResponse.json(
+        {
+            success: true,
+            data: newUser,
+            generatedPassword: plainPassword,
+            note: "Save this password now - it cannot be recovered. Send it securely to the faculty member.",
+        },
+        { status: 201 },
+    );
 }

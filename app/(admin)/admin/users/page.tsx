@@ -8,12 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   UserPlus,
   Check,
   RefreshCw,
   ShieldCheck,
   GraduationCap,
   AlertCircle,
+  Copy,
 } from "lucide-react";
 import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
@@ -58,9 +67,13 @@ export default function AdminUsersPage() {
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [autoGeneratePassword, setAutoGeneratePassword] = useState(true);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
+  const [showGeneratedPasswordModal, setShowGeneratedPasswordModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Password reset state per user email
   const [resetState, setResetState] = useState<
@@ -103,22 +116,43 @@ export default function AdminUsersPage() {
       const res = await fetch("/api/admin/faculty", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: newEmail.trim(), name: newName.trim(), password: newPassword }),
+        body: JSON.stringify({
+          email: newEmail.trim(),
+          name: newName.trim(),
+          password: autoGeneratePassword ? undefined : newPassword,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
         setCreateError(data.error ?? "Failed to create faculty");
       } else {
         setCreateSuccess(`Faculty account created for ${data.data?.email || newEmail.trim()}`);
+        if (typeof data.generatedPassword === "string" && data.generatedPassword.length > 0) {
+          setGeneratedPassword(data.generatedPassword);
+          setShowGeneratedPasswordModal(true);
+          setCopied(false);
+        }
         setNewName("");
         setNewEmail("");
         setNewPassword("");
+        setAutoGeneratePassword(true);
         fetchUsers();
       }
     } catch {
       setCreateError("An unexpected error occurred");
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handleCopyGeneratedPassword() {
+    if (!generatedPassword) return;
+    try {
+      await navigator.clipboard.writeText(generatedPassword);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
     }
   }
 
@@ -231,17 +265,29 @@ export default function AdminUsersPage() {
               <Input
                 id="fac-password"
                 type="password"
-                placeholder="Min 8 characters"
+                placeholder={autoGeneratePassword ? "Auto-generated strong password" : "Min 8 chars, 1 uppercase, 1 lowercase, 1 number"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                required
+                disabled={autoGeneratePassword}
                 className="bg-slate-900 border-slate-700"
               />
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  id="auto-generate-password"
+                  type="checkbox"
+                  checked={autoGeneratePassword}
+                  onChange={(e) => setAutoGeneratePassword(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-600 bg-slate-900"
+                />
+                <Label htmlFor="auto-generate-password" className="text-xs text-muted-foreground cursor-pointer">
+                  Auto-generate password
+                </Label>
+              </div>
             </div>
             <div className="flex items-end">
               <Button
                 type="submit"
-                disabled={creating || !newName.trim() || !newEmail.trim() || newPassword.length < 8}
+                disabled={creating || !newName.trim() || !newEmail.trim() || (!autoGeneratePassword && newPassword.length < 8)}
                 className="gap-2 bg-indigo-600 hover:bg-indigo-700 w-full sm:w-auto"
               >
                 {creating ? (
@@ -312,6 +358,31 @@ export default function AdminUsersPage() {
                                 month: "short",
                                 day: "numeric",
                               })}
+
+                              <Dialog open={showGeneratedPasswordModal} onOpenChange={setShowGeneratedPasswordModal}>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Generated Password</DialogTitle>
+                                    <DialogDescription>
+                                      This password is shown once. Send it to the faculty member securely.
+                                    </DialogDescription>
+                                  </DialogHeader>
+
+                                  <div className="rounded-md border bg-slate-950 text-slate-100 px-4 py-3">
+                                    <p className="font-mono text-sm break-all">{generatedPassword || "-"}</p>
+                                  </div>
+
+                                  <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => setShowGeneratedPasswordModal(false)}>
+                                      Close
+                                    </Button>
+                                    <Button type="button" onClick={handleCopyGeneratedPassword} className="gap-2">
+                                      <Copy className="h-4 w-4" />
+                                      {copied ? "Copied" : "Copy to clipboard"}
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
                             </p>
                           </div>
 

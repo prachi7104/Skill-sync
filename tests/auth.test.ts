@@ -11,6 +11,10 @@
  */
 
 import { describe, it, expect } from "vitest";
+import {
+  generateStrongPassword,
+  validatePasswordStrength,
+} from "@/lib/auth/password";
 
 // ── Inline isStudentEmail (mirrors lib/auth/config.ts) ──────────────────────
 
@@ -28,6 +32,16 @@ function isStudentEmail(email: string): boolean {
 function resolveSignInDecision(
   email: string,
   existsInDb: boolean,
+): "student-auto" | "existing-user" | "denied" {
+  if (existsInDb) return "existing-user";
+  if (isStudentEmail(email)) return "student-auto";
+  return "denied";
+}
+
+function resolveSignInDecisionV2(
+  email: string,
+  existsInDb: boolean,
+  _role: "student" | "faculty" | "admin" | null,
 ): "student-auto" | "existing-user" | "denied" {
   if (existsInDb) return "existing-user";
   if (isStudentEmail(email)) return "student-auto";
@@ -83,6 +97,36 @@ describe("Auth — isStudentEmail", () => {
 
   it("should return false for empty string", () => {
     expect(isStudentEmail("")).toBe(false);
+  });
+});
+
+describe("Password generation", () => {
+  it("should generate 16-character passwords", () => {
+    const pw = generateStrongPassword();
+    expect(pw.length).toBe(16);
+  });
+
+  it("should generate unique passwords", () => {
+    const passwords = new Set(Array.from({ length: 100 }, generateStrongPassword));
+    expect(passwords.size).toBe(100);
+  });
+});
+
+describe("Password validation", () => {
+  it("should reject passwords under 8 chars", () => {
+    expect(validatePasswordStrength("Abc1").valid).toBe(false);
+  });
+
+  it("should require uppercase", () => {
+    expect(validatePasswordStrength("abcdefg1").valid).toBe(false);
+  });
+
+  it("should require a number", () => {
+    expect(validatePasswordStrength("Abcdefgh").valid).toBe(false);
+  });
+
+  it("should accept strong passwords", () => {
+    expect(validatePasswordStrength("Aniruddh@2017").valid).toBe(true);
   });
 });
 
@@ -174,5 +218,15 @@ describe("JWT role refresh — roleCheckedAt logic", () => {
     const justOver = now - ROLE_REFRESH_MS - 1;
     const shouldRefresh = now - justOver > ROLE_REFRESH_MS;
     expect(shouldRefresh).toBe(true);
+  });
+});
+
+describe("Microsoft OAuth - any domain admin login", () => {
+  it("should allow existing hotmail admin via OAuth", () => {
+    expect(resolveSignInDecisionV2("admin@hotmail.com", true, "admin")).toBe("existing-user");
+  });
+
+  it("should deny unknown hotmail email (not in DB)", () => {
+    expect(resolveSignInDecisionV2("stranger@hotmail.com", false, null)).toBe("denied");
   });
 });
