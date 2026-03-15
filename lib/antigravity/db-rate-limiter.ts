@@ -1,10 +1,11 @@
 import { db as defaultDb } from "@/lib/db";
 import { aiRateLimits } from "../db/schema";
 import { sql } from "drizzle-orm";
+import { getRedis, redisRateLimit } from "@/lib/redis";
 
 /**
- * Atomic DB-based rate limiter for AI model requests.
- * Tracks usage in 1-minute windows using PostgreSQL ON CONFLICT UPDATE.
+ * Atomic rate limiter for AI model requests.
+ * Uses Redis as primary (fast, sub-ms) with PostgreSQL as fallback.
  *
  * @param modelKey - Lowercase model identifier (e.g., 'gemini-1.5-flash')
  * @param limitPerMinute - Maximum allowed requests in a rolling 1-minute window
@@ -16,13 +17,21 @@ export async function checkAndIncrementRateLimit(
     limitPerMinute: number,
     db = defaultDb
 ): Promise<boolean> {
-    // 1. Truncate current time to the start of the minute
+    const redis = getRedis();
+
+    // Try Redis first (faster, no DB round-trip)
+    if (redis) {
+        const { allowed } = await redisRateLimit(`model:${modelKey}`, limitPerMinute, 60);
+        return allowed;
+    }
+
+    // Fall back to DB-based rate limiting
     const now = new Date();
     const windowStart = new Date(now);
     windowStart.setSeconds(0, 0);
 
     try {
-        // 2. Upsert the rate limit row for this model + window
+        // Upsert the rate limit row for this model + window
         // We use raw SQL for ON CONFLICT because Drizzle's upsert API varies by version
         const [result] = await db.execute(sql`
       INSERT INTO ${aiRateLimits} (model_key, window_start, request_count)
@@ -32,13 +41,12 @@ export async function checkAndIncrementRateLimit(
       RETURNING request_count
     `);
 
-        // 3. Check if we exceeded the limit
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const count = (result as any).request_count as number;
         return count <= limitPerMinute;
     } catch (error) {
         console.error("[RateLimiter] DB error during rate limit check:", error);
-        // Fallback: allow request if DB is down to avoid blocking users
+        // Fail open: allow request if DB is down to avoid blocking users
         return true;
     }
 }

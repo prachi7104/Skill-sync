@@ -70,6 +70,10 @@ export const GROQ_API_KEY = optionalEnv("GROQ_API_KEY");
 export const MISTRAL_API_KEY = optionalEnv("MISTRAL_API_KEY");
 export const GOOGLE_GENERATIVE_AI_API_KEY = optionalEnv("GOOGLE_GENERATIVE_AI_API_KEY");
 
+// ── Redis (Upstash) ──────────────────────────────────────────────────────────
+export const UPSTASH_REDIS_REST_URL = optionalEnv("UPSTASH_REDIS_REST_URL");
+export const UPSTASH_REDIS_REST_TOKEN = optionalEnv("UPSTASH_REDIS_REST_TOKEN");
+
 // ── Convenience export for all env vars ─────────────────────────────────────
 export const env = {
   MICROSOFT_CLIENT_ID,
@@ -86,4 +90,6 @@ export const env = {
   GROQ_API_KEY,
   MISTRAL_API_KEY,
   GOOGLE_GENERATIVE_AI_API_KEY,
+  UPSTASH_REDIS_REST_URL,
+  UPSTASH_REDIS_REST_TOKEN,
 };
