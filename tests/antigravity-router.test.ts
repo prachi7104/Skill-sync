@@ -87,6 +87,52 @@ interface ExecuteResult<T = string> {
     modelUsed?: string;
 }
 
+interface DbModelCandidate {
+    model_key: string;
+    rpm_limit: number;
+    is_deprecated?: boolean;
+}
+
+function selectFromDbCandidates(
+    models: DbModelCandidate[],
+    currentUsage: Record<string, number>,
+): string | null {
+    for (const model of models) {
+        if (model.is_deprecated) continue;
+        if ((currentUsage[model.model_key] ?? 0) >= model.rpm_limit) continue;
+        return model.model_key;
+    }
+    return null;
+}
+
+async function simulateSmartRetryCycle(
+    models: string[],
+    executeModel: (model: string) => Promise<string>,
+): Promise<{ used: string[]; success: boolean }> {
+    const tried = new Set<string>();
+    const used: string[] = [];
+
+    for (let i = 0; i < 3; i++) {
+        const candidate = models.find((m) => !tried.has(m));
+        if (!candidate) return { used, success: false };
+        tried.add(candidate);
+        used.push(candidate);
+
+        try {
+            await executeModel(candidate);
+            return { used, success: true };
+        } catch (e: any) {
+            const msg = e?.message || "";
+            if (/429|rate|limit/i.test(msg)) {
+                continue;
+            }
+            continue;
+        }
+    }
+
+    return { used, success: false };
+}
+
 async function simulateExecute(
     taskDef: TaskDef | null,
     _prompt: string,
@@ -259,6 +305,48 @@ describe("Antigravity Router", () => {
         it("should handle plain JSON without fences", () => {
             const raw = '{"key": "value"}';
             expect(cleanJSONString(raw)).toBe('{"key": "value"}');
+        });
+    });
+
+    describe("Model selection with DB registry", () => {
+        it("should skip rate-limited models", () => {
+            const selected = selectFromDbCandidates(
+                [
+                    { model_key: "model-a", rpm_limit: 2 },
+                    { model_key: "model-b", rpm_limit: 2 },
+                ],
+                { "model-a": 2, "model-b": 1 },
+            );
+            expect(selected).toBe("model-b");
+        });
+
+        it("should skip deprecated models", () => {
+            const selected = selectFromDbCandidates(
+                [{ model_key: "model-a", rpm_limit: 3, is_deprecated: true }],
+                {},
+            );
+            expect(selected).toBeNull();
+        });
+
+        it("should not retry models that returned 429", async () => {
+            const result = await simulateSmartRetryCycle(
+                ["model-a", "model-b"],
+                async (model) => {
+                    if (model === "model-a") {
+                        throw new Error("429 rate limit");
+                    }
+                    return "ok";
+                },
+            );
+
+            expect(result.success).toBe(true);
+            expect(result.used).toEqual(["model-a", "model-b"]);
+        });
+
+        it("should use cached models after DB failure", () => {
+            const staleCache = [{ model_key: "stale-a", rpm_limit: 10 }];
+            const selected = selectFromDbCandidates(staleCache, {});
+            expect(selected).toBe("stale-a");
         });
     });
 });

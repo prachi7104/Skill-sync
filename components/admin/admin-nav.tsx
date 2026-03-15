@@ -7,6 +7,8 @@ const links = [
   { href: "/admin/health", label: "System Health", emoji: "⚡" },
   { href: "/admin/drives", label: "All Drives", emoji: "🎯" },
   { href: "/admin/users", label: "User Management", emoji: "👥" },
+  { href: "/admin/ai-models", label: "AI Models", emoji: "🤖" },
+  { href: "/admin/settings", label: "Settings", emoji: "⚙️" },
 ];
 
 export default function AdminNav() {
