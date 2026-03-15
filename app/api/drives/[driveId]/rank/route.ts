@@ -109,7 +109,14 @@ export async function POST(
         .where(eq(drives.id, driveId));
 
       return NextResponse.json(
-        { message: "Rankings generated successfully", rankedStudents: result.rankedStudents },
+        {
+          message: "Rankings generated successfully",
+          rankedStudents: result.rankedStudents,
+          wasTruncated: result.wasTruncated,
+          truncationNote: result.wasTruncated
+            ? `Only first ${result.truncatedAt} of ${result.totalStudents} students were ranked (ordered by registration date). Upgrade to process all students.`
+            : undefined,
+        },
         { status: 200 }
       );
     } catch (rankingError) {

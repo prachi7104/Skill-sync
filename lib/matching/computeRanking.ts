@@ -38,6 +38,7 @@ import {
   composeJDEmbeddingText,
   extractStudentSkillNames,
   extractJDRequiredSkills,
+  extractJDPreferredSkills,
 } from "@/lib/embeddings";
 import {
   computeAllScores,
@@ -58,6 +59,8 @@ export interface RankingComputationResult {
   totalStudents: number;
   eligibleStudents: number;
   rankedStudents: number;
+  wasTruncated: boolean;
+  truncatedAt: number;
   skippedNoEmbedding: number;
   topScores: Array<{
     studentId: string;
@@ -305,22 +308,7 @@ function tokenize(text: string): string[] {
     .filter((w) => w.length > 2);
 }
 
-// ── Preferred skills extraction ─────────────────────────────────────────────
 
-function extractJDPreferredSkills(
-  parsedJd: { preferredSkills?: string[] } | null | undefined,
-): string[] {
-  if (
-    !parsedJd ||
-    !parsedJd.preferredSkills ||
-    parsedJd.preferredSkills.length === 0
-  ) {
-    return [];
-  }
-  return parsedJd.preferredSkills.map((s: string) =>
-    s.toLowerCase().trim(),
-  );
-}
 
 // ── Main ────────────────────────────────────────────────────────────────────
 
@@ -567,6 +555,8 @@ export async function computeRanking(
     totalStudents: totalStudentsFetched,
     eligibleStudents: eligibleStudents.length,
     rankedStudents: rankedWithPositions.length,
+    wasTruncated: totalStudentsFetched > MAX_STUDENTS_PER_RANKING_RUN,
+    truncatedAt: MAX_STUDENTS_PER_RANKING_RUN,
     skippedNoEmbedding,
     topScores: rankedWithPositions.slice(0, 5).map((r) => ({
       studentId: r.studentId,

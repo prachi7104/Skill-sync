@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import { requireRole } from "@/lib/auth/helpers";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -14,6 +15,7 @@ export async function GET() {
     const result = await cloudinary.api.ping();
     return NextResponse.json({ status: "ok", result });
   } catch (error: any) {
+    if (isRedirectError(error)) throw error;
     return NextResponse.json({ status: "error", error: error.message }, { status: 500 });
   }
 }

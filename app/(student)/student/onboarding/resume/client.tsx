@@ -180,7 +180,7 @@ export default function OnboardingResumeClient() {
                 {/* State: Processing */}
                 {isProcessing && (
                     <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-blue-600 justify-center">
+                        <div className="flex items-center gap-2 text-blue-400 justify-center">
                             <Loader2 className="h-5 w-5 animate-spin" />
                             <span className="font-medium">
                                 {parseStatus === "uploading" ? "Uploading to cloud..." : "AI is parsing your resume..."}
@@ -200,7 +200,7 @@ export default function OnboardingResumeClient() {
                 {/* State: Completed */}
                 {parseStatus === "completed" && uploadedUrl && (
                     <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-green-600 justify-center">
+                        <div className="flex items-center gap-2 text-emerald-400 justify-center">
                             <Sparkles className="h-5 w-5" />
                             <span className="font-medium">Resume Parsed & Profile Auto-Filled!</span>
                         </div>
@@ -230,7 +230,7 @@ export default function OnboardingResumeClient() {
                 {/* State: Failed */}
                 {parseStatus === "failed" && (
                     <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-amber-600 justify-center">
+                        <div className="flex items-center gap-2 text-amber-400 justify-center">
                             <XCircle className="h-5 w-5 text-red-500" />
                             <span className="font-medium">Resume uploaded, but AI parsing had an issue</span>
                         </div>

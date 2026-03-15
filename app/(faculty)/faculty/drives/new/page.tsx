@@ -234,7 +234,7 @@ export default function NewDrivePage() {
                 <div className="space-y-4 pt-4 border-t">
                   <div className="flex justify-between items-center">
                     <Label htmlFor="minCgpa" className="text-base font-semibold">Minimum CGPA</Label>
-                    <span className="text-xl font-mono font-bold text-indigo-600">
+                    <span className="text-xl font-mono font-bold text-indigo-400">
                       {minCgpa === 0 ? "No minimum" : minCgpa.toFixed(1)}
                     </span>
                   </div>
@@ -260,7 +260,7 @@ export default function NewDrivePage() {
                       <button
                         type="button"
                         onClick={() => setValue("eligibleBranches", UPES_BRANCHES.map(b => b.value))}
-                        className="text-xs text-indigo-600 hover:underline border-none bg-transparent p-0"
+                        className="text-xs text-indigo-400 hover:text-indigo-300 hover:underline border-none bg-transparent p-0"
                       >
                         Select All
                       </button>
@@ -362,7 +362,7 @@ export default function NewDrivePage() {
                     type="button"
                     variant="ghost"
                     onClick={() => setStep(1)}
-                    className="gap-2 text-muted-foreground hover:text-gray-900"
+                    className="gap-2 text-slate-500 hover:text-slate-200"
                   >
                     <ChevronLeft className="h-4 w-4" /> Back to details
                   </Button>

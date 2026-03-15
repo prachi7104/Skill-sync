@@ -97,7 +97,7 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
       {facultyDrives.length === 0 ? (
         <div className="py-20 text-center border-2 border-dashed rounded-xl">
           <p className="text-muted-foreground">No drives created yet.</p>
-          <Button asChild variant="link" className="text-indigo-600 mt-2">
+          <Button asChild variant="link" className="text-indigo-400 mt-2">
             <Link href="/faculty/drives/new">Create your first drive &rarr;</Link>
           </Button>
         </div>
@@ -190,7 +190,7 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
                 <CardFooter className="pt-0 flex items-center justify-between gap-4">
                   <Link
                     href={`/faculty/drives/${drive.id}/rankings`}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 transition-colors"
+                    className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
                   >
                     View Rankings <ExternalLink className="h-3 w-3" />
                   </Link>

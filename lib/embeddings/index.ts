@@ -12,6 +12,7 @@
  * - composeJDEmbeddingText: Compose JD for embedding
  * - extractStudentSkillNames: Extract skill names from profile
  * - extractJDRequiredSkills: Extract required skills from JD
+ * - extractJDPreferredSkills: Extract preferred skills from JD
  *
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
@@ -28,4 +29,5 @@ export {
   composeJDEmbeddingText,
   extractStudentSkillNames,
   extractJDRequiredSkills,
+  extractJDPreferredSkills,
 } from "./compose";

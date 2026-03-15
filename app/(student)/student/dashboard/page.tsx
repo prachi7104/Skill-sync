@@ -122,7 +122,7 @@ export default function StudentDashboard() {
                                     <p className="text-sm text-slate-400 mt-1 font-medium">AI match rates are significantly lower without a resume.</p>
                                 </div>
                                 <Link href="/student/onboarding/resume"
-                                      className="px-6 py-3 bg-white text-black rounded-xl text-sm font-bold hover:bg-slate-200 transition-all whitespace-nowrap shadow-lg">
+                                      className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all whitespace-nowrap shadow-[0_0_20px_rgba(79,70,229,0.3)]">
                                     Upload Now
                                 </Link>
                             </div>

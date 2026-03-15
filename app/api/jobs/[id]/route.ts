@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jobs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,7 @@ export async function GET(
             updatedAt: job.updatedAt,
         });
     } catch (error: unknown) {
+        if (isRedirectError(error)) throw error;
         console.error("[Jobs API] Failed to fetch job:", error);
         return NextResponse.json(
             { error: "Internal server error" },

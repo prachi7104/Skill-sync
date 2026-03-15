@@ -7,7 +7,7 @@
  * and JSON types in the SkillSync platform.
  *
  * Stack:            Drizzle ORM 0.30 + PostgreSQL + pgvector
- * Embedding model:  text-embedding-004 → 768-dimensional vectors
+ * Embedding model:  gemini-embedding-001 → 768-dimensional vectors (prefix-truncated from 3072)
  * Deployment:       Supabase PostgreSQL (free tier: 500 MB)
  *
  * Rules:
@@ -40,7 +40,9 @@ import { relations, sql } from "drizzle-orm";
 // pgvector custom type
 // ─────────────────────────────────────────────────────────────────────────────
 // Requires `CREATE EXTENSION IF NOT EXISTS vector;` in the target database.
-// Dimension 768 matches the output of `text-embedding-004` (Google Gemini).
+// Dimension 768 matches the output of `gemini-embedding-001` (Google Gemini, MRL-truncated from 3072).
+// WARNING: Do not change models without re-generating ALL embeddings.
+//          Mixed-model embeddings produce unreliable cosine similarity scores.
 // The vector is stored as a PostgreSQL `vector(768)` column.
 
 const vector = customType<{ data: number[]; driverParam: string }>({
