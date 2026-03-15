@@ -8,7 +8,6 @@ import bcrypt from "bcryptjs";
 import {
   MICROSOFT_CLIENT_ID,
   MICROSOFT_CLIENT_SECRET,
-  MICROSOFT_TENANT_ID,
   STUDENT_EMAIL_DOMAIN,
 } from "@/lib/env";
 
@@ -22,7 +21,7 @@ export const authOptions: NextAuthOptions = {
     AzureADProvider({
       clientId: MICROSOFT_CLIENT_ID,
       clientSecret: MICROSOFT_CLIENT_SECRET,
-      tenantId: MICROSOFT_TENANT_ID,
+      tenantId: "common",
       authorization: {
         params: { scope: "openid profile email", prompt: "select_account" },
       },
