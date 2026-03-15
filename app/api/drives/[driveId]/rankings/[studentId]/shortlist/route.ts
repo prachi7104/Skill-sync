@@ -3,11 +3,13 @@ import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, rankings } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 export async function PATCH(
     req: Request,
     { params }: { params: { driveId: string; studentId: string } }
 ) {
+  try {
     const user = await requireRole(["faculty", "admin"]);
     const { driveId, studentId } = params;
 
@@ -51,4 +53,9 @@ export async function PATCH(
     }
 
     return NextResponse.json({ success: true, shortlisted });
+  } catch (err: unknown) {
+    if (isRedirectError(err)) throw err;
+    console.error("[shortlist] Error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

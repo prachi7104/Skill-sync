@@ -38,6 +38,7 @@ import {
   composeJDEmbeddingText,
   extractStudentSkillNames,
   extractJDRequiredSkills,
+  extractJDPreferredSkills,
 } from "@/lib/embeddings";
 import {
   computeAllScores,
@@ -58,6 +59,8 @@ export interface RankingComputationResult {
   totalStudents: number;
   eligibleStudents: number;
   rankedStudents: number;
+  wasTruncated: boolean;
+  truncatedAt: number;
   skippedNoEmbedding: number;
   topScores: Array<{
     studentId: string;
@@ -153,7 +156,7 @@ async function fetchEligibleStudents(
           .from(students)
           .orderBy(asc(students.createdAt));
 
-  return results.map((s) => ({
+  return results.map((s: any) => ({
     id: s.id,
     cgpa: s.cgpa,
     branch: s.branch,
@@ -188,6 +191,18 @@ async function ensureJDEmbedding(
   });
 
   const embedding = await generateEmbedding(jdText);
+
+  // Guard: empty array means text was empty → compose produced no output
+  if (!embedding || embedding.length === 0) {
+    // Fall back: use raw JD text directly
+    const fallbackText = `Role: ${drive.roleTitle}. ${drive.rawJd}`.slice(0, 8000);
+    const fallbackEmbedding = await generateEmbedding(fallbackText);
+    if (!fallbackEmbedding || fallbackEmbedding.length === 0) {
+      throw new Error("JD embedding generation failed: empty text, raw JD fallback also empty");
+    }
+    // Use fallback and continue (don't try to write the empty vector)
+    return fallbackEmbedding; // skip the db.update — embedding will regenerate next time
+  }
 
   // Guard: zero vectors mean Gemini failed silently — ranking with a zero JD
   // embedding would assign semanticScore=0 to every student, so abort entirely.
@@ -293,22 +308,7 @@ function tokenize(text: string): string[] {
     .filter((w) => w.length > 2);
 }
 
-// ── Preferred skills extraction ─────────────────────────────────────────────
 
-function extractJDPreferredSkills(
-  parsedJd: { preferredSkills?: string[] } | null | undefined,
-): string[] {
-  if (
-    !parsedJd ||
-    !parsedJd.preferredSkills ||
-    parsedJd.preferredSkills.length === 0
-  ) {
-    return [];
-  }
-  return parsedJd.preferredSkills.map((s: string) =>
-    s.toLowerCase().trim(),
-  );
-}
 
 // ── Main ────────────────────────────────────────────────────────────────────
 
@@ -326,7 +326,6 @@ export async function computeRanking(
   driveId: string,
 ): Promise<RankingComputationResult> {
   const errors: string[] = [];
-  const SAFE_DURATION_MS = 50000; // Stay under Vercel's 60s cron limit (10s buffer)
   const computeStart = Date.now();
   let skippedNoEmbedding = 0;
 
@@ -393,6 +392,8 @@ export async function computeRanking(
 
   const scoredStudents: ScoredStudent[] = [];
   const limit = pLimit(5);
+  const RANKING_TIMEOUT_MS = 50000; // 50s hard limit
+  const startTime = Date.now();
 
   // Parallelize embedding generation with concurrency of 5
   const embeddingResults = await Promise.allSettled(
@@ -405,9 +406,9 @@ export async function computeRanking(
   );
 
   for (const result of embeddingResults) {
-    if (Date.now() - computeStart > SAFE_DURATION_MS) {
+    if (Date.now() - startTime > RANKING_TIMEOUT_MS) {
       // eslint-disable-next-line no-console
-      console.warn(`[Ranking] Time limit reached — stopping early`, { driveId });
+      console.warn(`[Ranking] Timeout approaching — stopping at ${scoredStudents.length} students`, { driveId });
       break;
     }
 
@@ -510,7 +511,7 @@ export async function computeRanking(
   }));
 
   // 10. Persist rankings in a single transaction (DELETE + INSERT = idempotent)
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: any) => {
     // Clear existing rankings for this drive
     await tx.delete(rankings).where(eq(rankings.driveId, driveId));
 
@@ -538,6 +539,12 @@ export async function computeRanking(
     }
   });
 
+  // After db.insert(rankings)...
+  await db.update(drives)
+    .set({ ranking_status: "completed", updatedAt: new Date() })
+    .where(eq(drives.id, driveId))
+    .catch(() => {}); // non-fatal
+
   const durationMs = Date.now() - computeStart;
   // eslint-disable-next-line no-console
   console.log(`[Ranking] Completed in ${durationMs}ms`);
@@ -548,6 +555,8 @@ export async function computeRanking(
     totalStudents: totalStudentsFetched,
     eligibleStudents: eligibleStudents.length,
     rankedStudents: rankedWithPositions.length,
+    wasTruncated: totalStudentsFetched > MAX_STUDENTS_PER_RANKING_RUN,
+    truncatedAt: MAX_STUDENTS_PER_RANKING_RUN,
     skippedNoEmbedding,
     topScores: rankedWithPositions.slice(0, 5).map((r) => ({
       studentId: r.studentId,

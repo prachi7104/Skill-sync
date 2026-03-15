@@ -7,6 +7,7 @@ import { performDetailedAnalysis } from "@/lib/ats/detailed-analysis";
 import { generateEmbedding } from "@/lib/embeddings/generate";
 import { parseJD } from "@/lib/jd/parser";
 import { type StudentProfileInput } from "@/lib/validations/student-profile";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 // Maximum execution time (Next.js default is often 10-60s, Vercel Pro is 60s)
 // This process is heavy (3 AI calls + 2 Embeddings), might take 30s+.
@@ -112,6 +113,7 @@ export async function POST(req: NextRequest) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
+        if (isRedirectError(error)) throw error;
         console.error("Detailed Analysis Error:", error);
         return NextResponse.json({ error: "Analysis failed. Please try again." }, { status: 500 });
     }

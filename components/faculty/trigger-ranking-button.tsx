@@ -33,27 +33,39 @@ export function TriggerRankingButton({ driveId, initialStatus }: TriggerRankingB
                 method: "POST",
             });
 
-            if (res.status === 202) {
+            if (res.status === 200) {
+                // Ranking completed synchronously
+                setState("ranked");
+                // Refresh the page to show rankings
+                setTimeout(() => window.location.reload(), 1000);
+            } else if (res.status === 202) {
                 setState("queued");
-                setTimeout(() => {
-                    setState("already_processing");
-                }, 3000);
-            } else if (res.status === 409) {
-                setState("already_processing");
-            } else if (!res.ok) {
-                const data = await res.json();
+                // Poll for completion every 5 seconds
+                const pollInterval = setInterval(async () => {
+                    const statusRes = await fetch(`/api/drives/${driveId}/rank/status`);
+                    if (statusRes.ok) {
+                        const { status } = await statusRes.json();
+                        if (status === "completed") {
+                            clearInterval(pollInterval);
+                            setState("ranked");
+                            setTimeout(() => window.location.reload(), 500);
+                        } else if (status === "failed") {
+                            clearInterval(pollInterval);
+                            setState("error");
+                            setErrorMessage("Ranking failed. Please try again.");
+                        }
+                    }
+                }, 5000);
+                // Stop polling after 3 minutes
+                setTimeout(() => clearInterval(pollInterval), 180000);
+            } else {
+                const data = await res.json().catch(() => ({}));
                 throw new Error(
                     data.error ||
                     data.reason ||
                     data.message ||
-                    "Failed to trigger ranking",
+                    "Failed to trigger ranking"
                 );
-            } else {
-                // Unexpected success (usually 202)
-                setState("queued");
-                setTimeout(() => {
-                    setState("already_processing");
-                }, 3000);
             }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
@@ -64,7 +76,7 @@ export function TriggerRankingButton({ driveId, initialStatus }: TriggerRankingB
 
     if (state === "ranked") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 bg-gray-50 text-gray-500 border-gray-200">
+            <Button variant="outline" size="sm" disabled className="gap-2 bg-slate-800 text-slate-500 border-slate-700">
                 Ranked <CheckCircle2 className="h-4 w-4" />
             </Button>
         );
@@ -72,7 +84,7 @@ export function TriggerRankingButton({ driveId, initialStatus }: TriggerRankingB
 
     if (state === "already_processing") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 text-indigo-400 bg-indigo-50/50 border-indigo-100">
+            <Button variant="outline" size="sm" disabled className="gap-2 text-indigo-400 bg-indigo-500/10 border-indigo-500/20">
                 <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
@@ -84,7 +96,7 @@ export function TriggerRankingButton({ driveId, initialStatus }: TriggerRankingB
 
     if (state === "queued") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 bg-emerald-50 text-emerald-600 border-emerald-200">
+            <Button variant="outline" size="sm" disabled className="gap-2 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
                 Queued <CheckCircle2 className="h-4 w-4" />
             </Button>
         );

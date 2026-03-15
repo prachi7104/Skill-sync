@@ -3,17 +3,24 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { desc } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 
 // ── GET /api/admin/users ───────────────────────────────────────────────────
 // Returns ALL users (all roles) for the admin user management page.
 // Admin only.
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.role || session.user.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const url = new URL(req.url);
+  const page = Number(url.searchParams.get("page") ?? 1);
+  const pageSize = 20;
+  const offset = (page - 1) * pageSize;
+
+  const [{ total }] = await db.select({ total: sql<number>`count(*)::int` }).from(users);
 
   const allUsers = await db
     .select({
@@ -24,7 +31,9 @@ export async function GET() {
       createdAt: users.createdAt,
     })
     .from(users)
-    .orderBy(desc(users.createdAt));
+    .orderBy(desc(users.createdAt))
+    .limit(pageSize)
+    .offset(offset);
 
-  return NextResponse.json({ success: true, data: allUsers });
+  return NextResponse.json({ success: true, data: allUsers, total });
 }

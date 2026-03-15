@@ -12,10 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Plus, MapPin, IndianRupee, Calendar, ExternalLink } from "lucide-react";
 import { getCompanyColor } from "@/lib/utils/company-color";
 import { TriggerRankingButton } from "@/components/faculty/trigger-ranking-button";
+import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
 
-export default async function FacultyDrivesPage() {
+export default async function FacultyDrivesPage({ searchParams }: { searchParams: { page?: string } }) {
   const user = await requireRole(["faculty", "admin"]);
+
+  const page = Number(searchParams?.page ?? 1);
+  const pageSize = 20;
+  const offset = (page - 1) * pageSize;
 
   // Fetch all drives for this faculty
   const facultyDrives = await db
@@ -31,7 +36,11 @@ export default async function FacultyDrivesPage() {
     })
     .from(drives)
     .where(eq(drives.createdBy, user.id))
-    .orderBy(desc(drives.createdAt));
+    .orderBy(desc(drives.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const [{ total: totalDrives }] = await db.select({ total: sql<number>`count(*)::int` }).from(drives).where(eq(drives.createdBy, user.id));
 
   const driveIds = facultyDrives.map((d) => d.id);
 
@@ -74,7 +83,7 @@ export default async function FacultyDrivesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">My Drives</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Managing {facultyDrives.length} total placement drives
+            Managing {totalDrives} total placement drives
           </p>
         </div>
         <Button asChild className="gap-2 bg-indigo-600 hover:bg-indigo-700">
@@ -88,7 +97,7 @@ export default async function FacultyDrivesPage() {
       {facultyDrives.length === 0 ? (
         <div className="py-20 text-center border-2 border-dashed rounded-xl">
           <p className="text-muted-foreground">No drives created yet.</p>
-          <Button asChild variant="link" className="text-indigo-600 mt-2">
+          <Button asChild variant="link" className="text-indigo-400 mt-2">
             <Link href="/faculty/drives/new">Create your first drive &rarr;</Link>
           </Button>
         </div>
@@ -105,10 +114,10 @@ export default async function FacultyDrivesPage() {
             else if (stats && Number(stats.count) > 0) status = "ranked";
 
             const statusConfig = {
-              ranked: { label: "RANKED", className: "text-emerald-600 bg-emerald-50 border-emerald-200" },
-              processing: { label: "PROCESSING", className: "text-indigo-600 bg-indigo-50 border-indigo-200" },
-              pending: { label: "PENDING", className: "text-amber-600 bg-amber-50 border-amber-200" },
-              closed: { label: "CLOSED", className: "text-gray-500 bg-gray-50 border-gray-200" },
+              ranked: { label: "RANKED", className: "text-emerald-400 bg-emerald-500/15 border-emerald-500/20" },
+              processing: { label: "PROCESSING", className: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" },
+              pending: { label: "PENDING", className: "text-amber-400 bg-amber-500/15 border-amber-500/20" },
+              closed: { label: "CLOSED", className: "text-slate-500 bg-slate-800/50 border-slate-700" },
             };
 
             const config = statusConfig[status];
@@ -145,17 +154,17 @@ export default async function FacultyDrivesPage() {
                   {/* Info Pills */}
                   <div className="flex flex-wrap gap-1.5">
                     {drive.location && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-50 border text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
                         <MapPin className="h-3 w-3" /> {drive.location}
                       </div>
                     )}
                     {drive.packageOffered && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-50 border text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
                         <IndianRupee className="h-3 w-3" /> {drive.packageOffered}
                       </div>
                     )}
                     {drive.deadline && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-50 border text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
                         <Calendar className="h-3 w-3" /> {format(new Date(drive.deadline), "MMM d")}
                       </div>
                     )}
@@ -181,7 +190,7 @@ export default async function FacultyDrivesPage() {
                 <CardFooter className="pt-0 flex items-center justify-between gap-4">
                   <Link
                     href={`/faculty/drives/${drive.id}/rankings`}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 transition-colors"
+                    className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
                   >
                     View Rankings <ExternalLink className="h-3 w-3" />
                   </Link>
@@ -191,6 +200,10 @@ export default async function FacultyDrivesPage() {
             );
           })}
         </div>
+      )}
+
+      {totalDrives > pageSize && (
+        <Pagination page={page} total={totalDrives} pageSize={pageSize} />
       )}
     </div>
   );

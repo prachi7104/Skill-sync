@@ -142,14 +142,16 @@ describe("JWT role refresh — roleCheckedAt logic", () => {
   const ROLE_REFRESH_MS = 60 * 60 * 1000; // 60 minutes, matches config.ts
 
   it("should trigger refresh when roleCheckedAt is older than 60 minutes", () => {
-    const sixtyOneMinutesAgo = Date.now() - 61 * 60 * 1000;
-    const shouldRefresh = Date.now() - sixtyOneMinutesAgo > ROLE_REFRESH_MS;
+    const now = Date.now();
+    const sixtyOneMinutesAgo = now - 61 * 60 * 1000;
+    const shouldRefresh = now - sixtyOneMinutesAgo > ROLE_REFRESH_MS;
     expect(shouldRefresh).toBe(true);
   });
 
   it("should NOT trigger refresh when roleCheckedAt is within 60 minutes", () => {
-    const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
-    const shouldRefresh = Date.now() - thirtyMinutesAgo > ROLE_REFRESH_MS;
+    const now = Date.now();
+    const thirtyMinutesAgo = now - 30 * 60 * 1000;
+    const shouldRefresh = now - thirtyMinutesAgo > ROLE_REFRESH_MS;
     expect(shouldRefresh).toBe(false);
   });
 
@@ -160,15 +162,17 @@ describe("JWT role refresh — roleCheckedAt logic", () => {
   });
 
   it("should NOT refresh at exactly 60 minutes (boundary — exclusive)", () => {
-    const exactlyMs = Date.now() - ROLE_REFRESH_MS;
-    const shouldRefresh = Date.now() - exactlyMs > ROLE_REFRESH_MS;
+    const now = Date.now();
+    const exactlyMs = now - ROLE_REFRESH_MS;
+    const shouldRefresh = now - exactlyMs > ROLE_REFRESH_MS;
     // Strictly greater than — exactly at boundary does not refresh
     expect(shouldRefresh).toBe(false);
   });
 
   it("should refresh at 60 minutes + 1ms (boundary + 1)", () => {
-    const justOver = Date.now() - ROLE_REFRESH_MS - 1;
-    const shouldRefresh = Date.now() - justOver > ROLE_REFRESH_MS;
+    const now = Date.now();
+    const justOver = now - ROLE_REFRESH_MS - 1;
+    const shouldRefresh = now - justOver > ROLE_REFRESH_MS;
     expect(shouldRefresh).toBe(true);
   });
 });

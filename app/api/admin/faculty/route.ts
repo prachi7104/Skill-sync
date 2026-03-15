@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 
 // ── GET /api/admin/faculty ──────────────────────────────────────────────────
 // Returns all users with role = "faculty". Admin only.
@@ -39,11 +40,18 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { email, name } = body as { email?: string; name?: string };
+    const { email, name, password } = body as { email?: string; name?: string; password?: string };
 
-    if (!email || !name) {
+    if (!email || !name || !password) {
         return NextResponse.json(
-            { error: "Missing required fields: email, name" },
+            { error: "Missing required fields: email, name, password" },
+            { status: 400 }
+        );
+    }
+    
+    if (password.length < 8) {
+        return NextResponse.json(
+            { error: "Password must be at least 8 characters" },
             { status: 400 }
         );
     }
@@ -69,12 +77,15 @@ export async function POST(req: NextRequest) {
         );
     }
 
+    const passwordHash = await bcrypt.hash(password, 12);
+
     const [newUser] = await db
         .insert(users)
         .values({
             email: email.toLowerCase(),
             name,
             role: "faculty",
+            passwordHash: passwordHash,
         })
         .returning({
             id: users.id,

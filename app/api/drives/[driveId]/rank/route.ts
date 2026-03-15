@@ -93,10 +93,40 @@ export async function POST(
       })
       .returning({ id: jobs.id });
 
-    return NextResponse.json(
-      { message: "Ranking job queued", jobId: job.id },
-      { status: 202 },
-    );
+    try {
+      // Import inline ranking
+      const { computeRanking } = await import("@/lib/matching");
+      const result = await computeRanking(driveId);
+      
+      // Mark job as completed immediately
+      await db.update(jobs)
+        .set({ status: "completed", result: result as any, latencyMs: result.durationMs, updatedAt: new Date() })
+        .where(eq(jobs.id, job.id));
+
+      // Update drive ranking_status
+      await db.update(drives)
+        .set({ ranking_status: "completed", updatedAt: new Date() })
+        .where(eq(drives.id, driveId));
+
+      return NextResponse.json(
+        {
+          message: "Rankings generated successfully",
+          rankedStudents: result.rankedStudents,
+          wasTruncated: result.wasTruncated,
+          truncationNote: result.wasTruncated
+            ? `Only first ${result.truncatedAt} of ${result.totalStudents} students were ranked (ordered by registration date). Upgrade to process all students.`
+            : undefined,
+        },
+        { status: 200 }
+      );
+    } catch (rankingError) {
+      // Fall back to async queue — cron will pick it up
+      console.error("[rank] Inline ranking failed, queued for async:", rankingError);
+      return NextResponse.json(
+        { message: "Ranking queued. Results will be available within 5 minutes.", jobId: job.id },
+        { status: 202 }
+      );
+    }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     if (isRedirectError(err)) throw err;

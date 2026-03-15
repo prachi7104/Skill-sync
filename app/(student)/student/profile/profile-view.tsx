@@ -1,114 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-import {
-    Briefcase,
-    Code2,
-    GraduationCap,
-    Link2,
-    Mail,
-    Trophy,
-    User,
-    Loader2,
-    Plus,
-    Trash2,
-    Save,
-    X,
-    FileText,
-    Upload,
-    Sparkles,
-    ExternalLink
+import { 
+    Briefcase, Code2, GraduationCap, Link2, Mail, Trophy, User, 
+    Loader2, Plus, Trash2, Save, X, FileText, Upload, Sparkles, 
+    ExternalLink, BookOpen, Award
 } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-
 import { studentProfileSchema, type StudentProfileInput } from "@/lib/validations/student-profile";
 import { computeCompleteness } from "@/lib/profile/completeness";
-import type { Skill, Project, WorkExperience, Certification, CodingProfile, ResearchPaper, Achievement } from "@/lib/db/schema";
+
+interface StudentUser {
+    name: string;
+    email: string;
+}
 
 interface ProfileViewProps {
-    user: {
-        id: string;
-        name: string;
-        email: string;
-        role: string;
-        createdAt: string;
-    };
-    profile: {
-        skills: Skill[] | null;
-        projects: Project[] | null;
-        workExperience: WorkExperience[] | null;
-        certifications: Certification[] | null;
-        codingProfiles: CodingProfile[] | null;
-        researchPapers: ResearchPaper[] | null;
-        achievements: Achievement[] | null;
-        softSkills: string[] | null;
-        // Academic fields - editable by students
-        rollNo: string | null;
-        sapId: string | null;
-        branch: string | null;
-        batchYear: number | null;
-        cgpa: number | null;
-        semester: number | null;
-        tenthPercentage: number | null;
-        twelfthPercentage: number | null;
-        // Resume
-        resumeUrl: string | null;
-        resumeFilename: string | null;
-        resumeUploadedAt: string | null;
-        parsedResumeJson: any;
-        profileCompleteness: number;
-    };
+    user: StudentUser;
+    profile: any;
+}
+
+interface MetaFieldProps {
+    label: string;
+    value: string | number | null | undefined;
+    highlight?: boolean;
 }
 
 export default function ProfileView({ user, profile }: ProfileViewProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-
+    const [isUploading, setIsUploading] = useState(false);
+    const [softSkillInput, setSoftSkillInput] = useState("");
     const router = useRouter();
 
-    // Compute profile completeness
-    const { score, missing } = computeCompleteness(profile);
+    const { score } = computeCompleteness({
+        ...profile,
+        name: user.name,
+        email: user.email,
+    });
 
-    // Helper to get initials
-    const initials = user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
+    const initials = user.name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "ST";
+    const currentYear = new Date().getFullYear();
+    const batchYears = Array.from({ length: 6 }, (_, i) => currentYear - 1 + i);
 
-    // Initialize form
     const form = useForm<StudentProfileInput>({
         resolver: zodResolver(studentProfileSchema),
         defaultValues: {
-            // Academic fields
             rollNo: profile.rollNo || "",
             sapId: profile.sapId || "",
             branch: profile.branch || "",
@@ -117,7 +61,6 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
             semester: profile.semester || undefined,
             tenthPercentage: profile.tenthPercentage || undefined,
             twelfthPercentage: profile.twelfthPercentage || undefined,
-            // Array fields - ALL must be present for useFieldArray to work
             skills: profile.skills || [],
             projects: profile.projects || [],
             codingProfiles: profile.codingProfiles || [],
@@ -129,1286 +72,550 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
         },
     });
 
-    const { fields: skillFields, append: appendSkill, remove: removeSkill } = useFieldArray({
-        control: form.control,
-        name: "skills",
-    });
-
-    const { fields: projectFields, append: appendProject, remove: removeProject } = useFieldArray({
-        control: form.control,
-        name: "projects",
-    });
-
-    const { fields: codingProfileFields, append: appendCodingProfile, remove: removeCodingProfile } = useFieldArray({
-        control: form.control,
-        name: "codingProfiles",
-    });
-
-    const { fields: workExperienceFields, append: appendWorkExperience, remove: removeWorkExperience } = useFieldArray({
-        control: form.control,
-        name: "workExperience",
-    });
-
-    const { fields: certificationFields, append: appendCertification, remove: removeCertification } = useFieldArray({
-        control: form.control,
-        name: "certifications",
-    });
-
-    const { fields: researchPaperFields, append: appendResearchPaper, remove: removeResearchPaper } = useFieldArray({
-        control: form.control,
-        name: "researchPapers",
-    });
-
-    const { fields: achievementFields, append: appendAchievement, remove: removeAchievement } = useFieldArray({
-        control: form.control,
-        name: "achievements",
-    });
-
-    const [softSkillInput, setSoftSkillInput] = useState("");
+    const { fields: skillFields, append: appendSkill, remove: removeSkill } = useFieldArray({ control: form.control, name: "skills" });
+    const { fields: projectFields, append: appendProject, remove: removeProject } = useFieldArray({ control: form.control, name: "projects" });
+    const { fields: expFields, append: appendExp, remove: removeExp } = useFieldArray({ control: form.control, name: "workExperience" });
+    const { fields: certFields, append: appendCert, remove: removeCert } = useFieldArray({ control: form.control, name: "certifications" });
+    const { fields: linkFields, append: appendLink, remove: removeLink } = useFieldArray({ control: form.control, name: "codingProfiles" });
+    const { fields: researchFields, append: appendResearch, remove: removeResearch } = useFieldArray({ control: form.control, name: "researchPapers" });
+    const { fields: achieveFields, append: appendAchieve, remove: removeAchieve } = useFieldArray({ control: form.control, name: "achievements" });
 
     const handleCancel = () => {
-        form.reset({
-            // Academic fields
-            rollNo: profile.rollNo || "",
-            sapId: profile.sapId || "",
-            branch: profile.branch || "",
-            batchYear: profile.batchYear || undefined,
-            cgpa: profile.cgpa || undefined,
-            semester: profile.semester || undefined,
-            tenthPercentage: profile.tenthPercentage || undefined,
-            twelfthPercentage: profile.twelfthPercentage || undefined,
-            // Array fields
-            skills: profile.skills || [],
-            projects: profile.projects || [],
-            codingProfiles: profile.codingProfiles || [],
-            workExperience: profile.workExperience || [],
-            certifications: profile.certifications || [],
-            researchPapers: profile.researchPapers || [],
-            achievements: profile.achievements || [],
-            softSkills: profile.softSkills || [],
-        });
+        form.reset(); 
         setIsEditing(false);
     };
 
     const onSubmit = async (data: StudentProfileInput) => {
         setIsLoading(true);
         try {
-            const response = await fetch("/api/student/profile", {
+            const res = await fetch("/api/student/profile", {
                 method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
             });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || "Failed to update profile");
-            }
-
-            toast.success("Your changes have been saved successfully.");
-
-            router.refresh();
+            if (!res.ok) throw new Error();
+            toast.success("Profile synced with master database.");
             setIsEditing(false);
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Something went wrong");
+            router.refresh();
+        } catch {
+            toast.error("Database sync failed.");
         } finally {
             setIsLoading(false);
         }
     };
 
-    const [isUploading, setIsUploading] = useState(false);
-
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
-        // Client-side validation
-        if (file.size > 100 * 1024) {
-            toast.error("Resume must be less than 100KB");
-            return;
-        }
-
-        const allowedTypes = [
-            "application/pdf",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        ];
-        if (!allowedTypes.includes(file.type)) {
-            toast.error("Only PDF and DOCX files are allowed");
-            return;
-        }
-
+        if (file.size > 2 * 1024 * 1024) return toast.error("Max file size is 2MB");
+        
         setIsUploading(true);
         const formData = new FormData();
         formData.append("file", file);
 
         try {
-            const response = await fetch("/api/student/resume", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || "Upload failed");
-            }
-
-            toast.success("Your resume is being processed. Refresh shortly to see extracted data.");
-
+            const response = await fetch("/api/student/resume", { method: "POST", body: formData });
+            if (!response.ok) throw new Error();
+            toast.success("AI has synchronized your profile.");
             router.refresh();
-        } catch (error: unknown) {
-            toast.error(error instanceof Error ? error.message : "Upload failed");
+        } catch {
+            toast.error("Upload failed");
         } finally {
             setIsUploading(false);
         }
     };
 
+    const inputClass = "bg-slate-950/50 border-slate-800 text-white rounded-xl focus:ring-indigo-500 w-full";
+
     return (
-        <div className="space-y-6">
-            {/* Header Section */}
-            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-center gap-4">
-                    <Avatar className="h-20 w-20 border-2 border-white shadow-sm">
-                        <AvatarImage src="" alt={user.name} />
-                        <AvatarFallback className="bg-blue-600 text-xl text-white">
+        <div className="max-w-7xl mx-auto space-y-8 p-6 md:p-10 pb-40 animate-in fade-in duration-700">
+            
+            {/* HERO HEADER */}
+            <div className="bg-slate-900 rounded-[2.5rem] border border-white/5 p-8 relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none" />
+                
+                <div className="flex flex-col lg:flex-row gap-8 items-start lg:items-center justify-between relative z-10">
+                    <div className="flex items-center gap-6">
+                        <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-indigo-500 to-violet-700 flex items-center justify-center text-4xl font-black text-white shadow-2xl border border-white/10 shrink-0">
                             {initials}
-                        </AvatarFallback>
-                    </Avatar>
-                    <div className="space-y-1">
-                        <h1 className="text-3xl font-bold tracking-tight">{user.name}</h1>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <Mail className="h-4 w-4" />
-                            <span>{user.email}</span>
-                            <Badge variant="secondary" className="ml-2 capitalize">
-                                {user.role}
-                            </Badge>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <User className="h-3 w-3" />
-                            <span>Joined {user.createdAt}</span>
+                        <div className="space-y-2">
+                            <h1 className="text-4xl font-black text-white tracking-tight">{user.name}</h1>
+                            <div className="flex flex-wrap items-center gap-3 text-slate-400 font-medium">
+                                <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" /> {user.email}</span>
+                                <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest text-indigo-400">Student Platform</span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="flex flex-col gap-4 items-end">
-                    <Card className="w-full md:w-64">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium">
-                                Profile Completeness
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
-                                <div className="space-y-1">
-                                    <div className="flex justify-between text-xs font-medium">
-                                        <span>Progress</span>
-                                        <span>{score}%</span>
-                                    </div>
-                                    <Progress value={score} className="h-2" />
-                                </div>
-
-                                {missing.length > 0 && !profile.resumeUrl ? (
-                                    <div className="space-y-1">
-                                        <p className="text-xs font-semibold text-muted-foreground">To improve:</p>
-                                        <ul className="text-xs space-y-1 text-muted-foreground list-disc pl-3">
-                                            {missing.slice(0, 3).map((msg, i) => (
-                                                <li key={i}>{msg}</li>
-                                            ))}
-                                            {missing.length > 3 && (
-                                                <li>+ {missing.length - 3} more...</li>
-                                            )}
-                                        </ul>
-                                    </div>
-                                ) : (
-                                    <p className="text-xs text-green-600 font-medium flex items-center gap-1">
-                                        <Trophy className="h-3 w-3" />
-                                        {profile.resumeUrl ? "Profile detailed via Resume" : "Excellent! Profile complete."}
-                                    </p>
-                                )}
+                    <div className="flex flex-col sm:flex-row items-center gap-6 w-full lg:w-auto">
+                        <div className="bg-slate-950/50 p-5 rounded-3xl border border-white/5 w-full sm:w-auto min-w-[240px]">
+                            <div className="flex justify-between items-end mb-3">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                                    <Sparkles className="w-3 h-3 text-indigo-400" /> Identity Score
+                                </span>
+                                <span className="text-sm font-black text-white">{score}%</span>
                             </div>
-                        </CardContent>
-                    </Card>
-
-                    {!isEditing ? (
-                        <Button onClick={() => setIsEditing(true)}>
-                            Edit Profile
-                        </Button>
-                    ) : (
-                        <div className="flex gap-2">
-                            <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
-                                <X className="mr-2 h-4 w-4" /> Cancel
-                            </Button>
-                            <Button onClick={form.handleSubmit(onSubmit)} disabled={isLoading}>
-                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                Save Changes
-                            </Button>
+                            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                <div className="h-full bg-indigo-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all duration-1000" style={{ width: `${score}%` }} />
+                            </div>
                         </div>
-                    )}
+                        
+                        {!isEditing ? (
+                            <button onClick={() => setIsEditing(true)} className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-2xl font-bold text-sm transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] flex items-center justify-center gap-2 w-full sm:w-auto">
+                                <User className="w-4 h-4" /> Edit Profile
+                            </button>
+                        ) : (
+                            <div className="flex gap-3 w-full sm:w-auto h-full">
+                                <button type="button" onClick={handleCancel} disabled={isLoading} className="flex-1 sm:flex-none bg-slate-800 text-white px-6 py-4 rounded-2xl font-bold text-sm hover:bg-slate-700 transition-all disabled:opacity-50">Cancel</button>
+                                <button type="button" onClick={form.handleSubmit(onSubmit)} disabled={isLoading} className="flex-1 sm:flex-none bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold text-sm hover:bg-indigo-500 shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 disabled:opacity-50">
+                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            <Separator />
-
             <Form {...form}>
-                <div className="grid gap-6 md:grid-cols-2">
-                    {/* Left Column: Academic & Skills */}
-                    <div className="space-y-6">
-
-                        {/* Academic Info - Editable by Students */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <GraduationCap className="h-5 w-5 text-blue-600" />
-                                    Academic Details
-                                </CardTitle>
-                                <CardDescription>
-                                    {isEditing ? "Update your academic information" : "Your academic information"}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {isEditing ? (
-                                    <div className="space-y-4">
-                                        {/* Roll Number and SAP ID */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <FormField
-                                                control={form.control}
-                                                name="rollNo"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <Label>Roll Number</Label>
-                                                        <FormControl>
-                                                            <Input
-                                                                placeholder="e.g., 21BCE1234"
-                                                                {...field}
-                                                                value={field.value || ""}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="sapId"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <Label>SAP ID</Label>
-                                                        <FormControl>
-                                                            <Input
-                                                                placeholder="e.g., 500012345"
-                                                                {...field}
-                                                                value={field.value || ""}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-
-                                        {/* Branch and Batch */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <FormField
-                                                control={form.control}
-                                                name="branch"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <Label>Branch</Label>
-                                                        <Select
-                                                            onValueChange={field.onChange}
-                                                            value={field.value || ""}
-                                                        >
-                                                            <FormControl>
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder="Select branch" />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent>
-                                                                <SelectItem value="Computer Science">Computer Science</SelectItem>
-                                                                <SelectItem value="Information Technology">Information Technology</SelectItem>
-                                                                <SelectItem value="Electronics & Communication">Electronics & Communication</SelectItem>
-                                                                <SelectItem value="Electrical Engineering">Electrical Engineering</SelectItem>
-                                                                <SelectItem value="Mechanical Engineering">Mechanical Engineering</SelectItem>
-                                                                <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
-                                                                <SelectItem value="Chemical Engineering">Chemical Engineering</SelectItem>
-                                                                <SelectItem value="Other">Other</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="batchYear"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <Label>Batch Year</Label>
-                                                        <Select
-                                                            onValueChange={(v) => field.onChange(parseInt(v))}
-                                                            value={field.value?.toString() || ""}
-                                                        >
-                                                            <FormControl>
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder="Select batch" />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent>
-                                                                {[2024, 2025, 2026, 2027, 2028].map(year => (
-                                                                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-
-                                        {/* CGPA and Semester */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <FormField
-                                                control={form.control}
-                                                name="cgpa"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <Label>CGPA (0-10)</Label>
-                                                        <FormControl>
-                                                            <Input
-                                                                type="number"
-                                                                step="0.01"
-                                                                min="0"
-                                                                max="10"
-                                                                placeholder="e.g., 8.5"
-                                                                {...field}
-                                                                value={field.value ?? ""}
-                                                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="semester"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <Label>Semester</Label>
-                                                        <Select
-                                                            onValueChange={(v) => field.onChange(parseInt(v))}
-                                                            value={field.value?.toString() || ""}
-                                                        >
-                                                            <FormControl>
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder="Select semester" />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent>
-                                                                {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
-                                                                    <SelectItem key={sem} value={sem.toString()}>Semester {sem}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-
-                                        {/* 10th and 12th Percentages */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <FormField
-                                                control={form.control}
-                                                name="tenthPercentage"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <Label>10th Percentage</Label>
-                                                        <FormControl>
-                                                            <Input
-                                                                type="number"
-                                                                step="0.01"
-                                                                min="0"
-                                                                max="100"
-                                                                placeholder="e.g., 85.5"
-                                                                {...field}
-                                                                value={field.value ?? ""}
-                                                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="twelfthPercentage"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <Label>12th Percentage</Label>
-                                                        <FormControl>
-                                                            <Input
-                                                                type="number"
-                                                                step="0.01"
-                                                                min="0"
-                                                                max="100"
-                                                                placeholder="e.g., 88.0"
-                                                                {...field}
-                                                                value={field.value ?? ""}
-                                                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
+                {/* FIXED: items-start prevents flex children from stretching infinitely, causing clip issues */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    
+                    {/* LEFT RAIL (4 Cols) */}
+                    <div className="lg:col-span-4 space-y-8">
+                        
+                        {/* Academics */}
+                        <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-7">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-2.5 bg-blue-500/10 rounded-xl"><GraduationCap className="w-5 h-5 text-blue-400" /></div>
+                                <h2 className="font-bold text-white text-lg">Academic Roots</h2>
+                            </div>
+                            
+                            {isEditing ? (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField control={form.control} name="rollNo" render={({ field }) => (
+                                            <FormItem><FormLabel className="text-xs text-slate-400 font-bold uppercase">Roll No</FormLabel><FormControl><Input className={inputClass} {...field} value={field.value ?? ""} /></FormControl></FormItem>
+                                        )} />
+                                        <FormField control={form.control} name="sapId" render={({ field }) => (
+                                            <FormItem><FormLabel className="text-xs text-slate-400 font-bold uppercase">SAP ID</FormLabel><FormControl><Input className={inputClass} {...field} value={field.value ?? ""} /></FormControl></FormItem>
+                                        )} />
                                     </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <p className="text-sm font-medium text-muted-foreground">Roll Number</p>
-                                                <p>{profile.rollNo || "Not set"}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-muted-foreground">SAP ID</p>
-                                                <p>{profile.sapId || "Not set"}</p>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <p className="text-sm font-medium text-muted-foreground">Branch</p>
-                                                <p>{profile.branch || "Not set"}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-muted-foreground">Batch</p>
-                                                <p>{profile.batchYear || "Not set"}</p>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <p className="text-sm font-medium text-muted-foreground">CGPA</p>
-                                                <p className="font-semibold">{profile.cgpa ?? "N/A"}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-muted-foreground">Semester</p>
-                                                <p>{profile.semester ?? "N/A"}</p>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <p className="text-sm font-medium text-muted-foreground">10th %</p>
-                                                <p>{profile.tenthPercentage ?? "N/A"}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-muted-foreground">12th %</p>
-                                                <p>{profile.twelfthPercentage ?? "N/A"}</p>
-                                            </div>
-                                        </div>
+                                    <FormField control={form.control} name="branch" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-xs text-slate-400 font-bold uppercase">Branch</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                                                <FormControl><SelectTrigger className={inputClass}><SelectValue placeholder="Branch" /></SelectTrigger></FormControl>
+                                                <SelectContent className="bg-slate-900 border-slate-700 text-white">
+                                                    <SelectItem value="Computer Science">Computer Science</SelectItem>
+                                                    <SelectItem value="Information Technology">Information Technology</SelectItem>
+                                                    <SelectItem value="Electronics">Electronics</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </FormItem>
+                                    )} />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField control={form.control} name="batchYear" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-xs text-slate-400 font-bold uppercase">Batch</FormLabel>
+                                                <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value?.toString() ?? ""}>
+                                                    <FormControl><SelectTrigger className={inputClass}><SelectValue placeholder="Year" /></SelectTrigger></FormControl>
+                                                    <SelectContent className="bg-slate-900 border-slate-700 text-white">
+                                                        {batchYears.map(yr => <SelectItem key={yr} value={yr.toString()}>{yr}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )} />
+                                        <FormField control={form.control} name="semester" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-xs text-slate-400 font-bold uppercase">Semester</FormLabel>
+                                                <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value?.toString() ?? ""}>
+                                                    <FormControl><SelectTrigger className={inputClass}><SelectValue placeholder="Sem" /></SelectTrigger></FormControl>
+                                                    <SelectContent className="bg-slate-900 border-slate-700 text-white">
+                                                        {[1,2,3,4,5,6,7,8].map(sem => <SelectItem key={sem} value={sem.toString()}>Sem {sem}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )} />
                                     </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField control={form.control} name="cgpa" render={({ field }) => (
+                                            <FormItem><FormLabel className="text-xs text-slate-400 font-bold uppercase">CGPA</FormLabel><FormControl><Input type="number" step="0.01" className={inputClass} {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)} /></FormControl></FormItem>
+                                        )} />
+                                        <FormField control={form.control} name="tenthPercentage" render={({ field }) => (
+                                            <FormItem><FormLabel className="text-xs text-slate-400 font-bold uppercase">10th %</FormLabel><FormControl><Input type="number" step="0.01" className={inputClass} {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)} /></FormControl></FormItem>
+                                        )} />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-3">
+                                    <MetaField label="Roll No" value={profile.rollNo} />
+                                    <MetaField label="SAP ID" value={profile.sapId} />
+                                    <div className="col-span-2"><MetaField label="Branch" value={profile.branch} /></div>
+                                    <MetaField label="Batch" value={profile.batchYear} />
+                                    <MetaField label="Semester" value={profile.semester} />
+                                    <MetaField label="CGPA" value={profile.cgpa} highlight />
+                                    <MetaField label="10th %" value={profile.tenthPercentage} />
+                                </div>
+                            )}
+                        </div>
 
                         {/* Skills */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <div className="space-y-1">
-                                        <CardTitle className="flex items-center gap-2">
-                                            <Code2 className="h-5 w-5 text-blue-600" />
-                                            Skills
-                                        </CardTitle>
-                                        <CardDescription>
-                                            Technologies and tools you are proficient in
-                                        </CardDescription>
-                                    </div>
-                                    {isEditing && (
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => appendSkill({ name: "", proficiency: 1 })}
-                                        >
-                                            <Plus className="h-4 w-4 mr-2" /> Add
-                                        </Button>
-                                    )}
+                        <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-7">
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-emerald-500/10 rounded-xl"><Code2 className="w-5 h-5 text-emerald-400" /></div>
+                                    <h2 className="font-bold text-white text-lg">Core Skills</h2>
                                 </div>
-                            </CardHeader>
-                            <CardContent>
+                                {isEditing && <button type="button" onClick={() => appendSkill({ name: "", proficiency: 1 })} className="text-emerald-400 p-2 hover:bg-emerald-400/10 rounded-lg transition"><Plus className="w-5 h-5" /></button>}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
                                 {isEditing ? (
-                                    <div className="space-y-4">
-                                        {skillFields.map((field, index) => (
-                                            <div key={field.id} className="flex gap-2 items-start">
-                                                <FormField
-                                                    control={form.control}
-                                                    name={`skills.${index}.name`}
-                                                    render={({ field }) => (
-                                                        <FormItem className="flex-1">
-                                                            <FormControl>
-                                                                <Input placeholder="Skill (e.g. React)" {...field} />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => removeSkill(index)}
-                                                    className="text-destructive"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    profile.skills && profile.skills.length > 0 ? (
-                                        <div className="flex flex-wrap gap-2">
-                                            {profile.skills.map((skill: Skill, i: number) => (
-                                                <Badge key={i} variant="outline" className="px-3 py-1">
-                                                    {skill.name}
-                                                </Badge>
-                                            ))}
+                                    skillFields.map((f, i) => (
+                                        <div key={f.id} className="flex items-center gap-2 w-full">
+                                            <FormField control={form.control} name={`skills.${i}.name`} render={({ field }) => (
+                                                <FormItem className="flex-1"><FormControl><Input className={inputClass} placeholder="Skill name" {...field} /></FormControl></FormItem>
+                                            )} />
+                                            <button type="button" onClick={() => removeSkill(i)} className="p-3 bg-rose-500/10 text-rose-500 rounded-xl"><Trash2 className="w-4 h-4" /></button>
                                         </div>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground italic">
-                                            No skills added yet.
-                                        </p>
-                                    )
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        {/* Coding Profiles */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Link2 className="h-5 w-5 text-blue-600" />
-                                        Coding Platforms
-                                    </CardTitle>
-                                    {isEditing && (
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => appendCodingProfile({ platform: "", username: "", url: "" })}
-                                        >
-                                            <Plus className="h-4 w-4 mr-2" /> Add
-                                        </Button>
-                                    )}
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {isEditing ? (
-                                    <div className="space-y-4">
-                                        {codingProfileFields.map((field, index) => (
-                                            <div key={field.id} className="space-y-2 border p-3 rounded-md">
-                                                <div className="flex justify-between items-center">
-                                                    <h4 className="text-sm font-medium">Profile {index + 1}</h4>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => removeCodingProfile(index)}
-                                                        className="h-8 w-8 p-0 text-destructive"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    <FormField
-                                                        control={form.control}
-                                                        name={`codingProfiles.${index}.platform`}
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormControl>
-                                                                    <Input placeholder="Platform (e.g. LeetCode)" {...field} />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                    <FormField
-                                                        control={form.control}
-                                                        name={`codingProfiles.${index}.username`}
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormControl>
-                                                                    <Input placeholder="Username" {...field} />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                </div>
-                                                <FormField
-                                                    control={form.control}
-                                                    name={`codingProfiles.${index}.url`}
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormControl>
-                                                                <Input placeholder="Profile URL" {...field} />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
+                                    ))
                                 ) : (
-                                    profile.codingProfiles && profile.codingProfiles.length > 0 ? (
-                                        profile.codingProfiles.map((cp: CodingProfile, i: number) => (
-                                            <div key={i} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
-                                                <div>
-                                                    <p className="font-medium">{cp.platform}</p>
-                                                    <p className="text-sm text-muted-foreground">{cp.username}</p>
-                                                </div>
-                                                {cp.url && (
-                                                    <a href={cp.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs flex items-center gap-1">
-                                                        <Link2 className="h-3 w-3" /> View
-                                                    </a>
-                                                )}
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground italic">
-                                            No coding profiles linked.
-                                        </p>
-                                    )
+                                    profile.skills?.length > 0 ? profile.skills.map((s: { name: string }, i: number) => (
+                                        <span key={i} className="px-3 py-1.5 bg-slate-950 border border-slate-800 text-slate-300 text-xs font-bold rounded-lg">{s.name}</span>
+                                    )) : <EmptyState message="No skills provided." />
                                 )}
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
+
+                        {/* Soft Skills */}
+                        <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-7">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-2.5 bg-pink-500/10 rounded-xl"><Sparkles className="w-5 h-5 text-pink-400" /></div>
+                                <h2 className="font-bold text-white text-lg">Soft Skills</h2>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {(form.watch("softSkills") || profile.softSkills || []).map((skill: string, idx: number) => (
+                                    <span key={idx} className="px-3 py-1.5 bg-slate-800 text-slate-200 text-xs font-bold rounded-lg flex items-center gap-2">
+                                        {skill}
+                                        {isEditing && <X className="w-3 h-3 cursor-pointer text-slate-400 hover:text-white" onClick={() => {
+                                            const current = form.getValues("softSkills") || [];
+                                            form.setValue("softSkills", current.filter((_, i) => i !== idx));
+                                        }}/>}
+                                    </span>
+                                ))}
+                            </div>
+                            {isEditing && (
+                                <div className="flex gap-2 mt-4">
+                                    <Input value={softSkillInput} onChange={(e) => setSoftSkillInput(e.target.value)} placeholder="Add soft skill" className={inputClass} onKeyDown={(e) => {
+                                        if(e.key === 'Enter') {
+                                            e.preventDefault();
+                                            if(softSkillInput.trim()) {
+                                                form.setValue("softSkills", [...(form.getValues("softSkills") || []), softSkillInput.trim()]);
+                                                setSoftSkillInput("");
+                                            }
+                                        }
+                                    }}/>
+                                    <button type="button" onClick={() => {
+                                        if(softSkillInput.trim()) {
+                                            form.setValue("softSkills", [...(form.getValues("softSkills") || []), softSkillInput.trim()]);
+                                            setSoftSkillInput("");
+                                        }
+                                    }} className="px-4 bg-slate-800 text-white rounded-xl"><Plus className="w-4 h-4"/></button>
+                                </div>
+                            )}
+                            {!isEditing && (!profile.softSkills || profile.softSkills.length === 0) && <EmptyState message="No soft skills added." />}
+                        </div>
+
+                        {/* Platforms */}
+                        <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-7">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-cyan-500/10 rounded-xl"><Link2 className="w-5 h-5 text-cyan-400" /></div>
+                                    <h2 className="font-bold text-white text-lg">Platforms</h2>
+                                </div>
+                                {isEditing && <button type="button" onClick={() => appendLink({ platform: "", username: "", url: "" })} className="text-cyan-400"><Plus className="w-5 h-5" /></button>}
+                            </div>
+                            
+                            {isEditing ? (
+                                <div className="space-y-4">
+                                    {linkFields.map((field, idx) => (
+                                        <div key={field.id} className="p-4 bg-slate-950/50 border border-slate-800 rounded-2xl relative space-y-3">
+                                            <button type="button" onClick={() => removeLink(idx)} className="absolute top-3 right-3 text-rose-500"><Trash2 className="w-4 h-4" /></button>
+                                            <FormField control={form.control} name={`codingProfiles.${idx}.platform`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="Platform" {...field}/></FormControl></FormItem>} />
+                                            <FormField control={form.control} name={`codingProfiles.${idx}.url`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="URL" {...field}/></FormControl></FormItem>} />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {profile.codingProfiles?.length > 0 ? profile.codingProfiles.map((cp: { platform: string, url: string }, i: number) => (
+                                        <a key={i} href={cp.url || "#"} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-slate-950/50 border border-slate-800 rounded-xl hover:border-slate-600 group">
+                                            <span className="font-bold text-slate-200 text-sm">{cp.platform}</span>
+                                            {cp.url && <ExternalLink className="w-4 h-4 text-slate-600 group-hover:text-white" />}
+                                        </a>
+                                    )) : <EmptyState message="No profiles linked." />}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Right Column: Projects & Experience */}
-                    <div className="space-y-6">
-
+                    {/* RIGHT RAIL (8 Cols) */}
+                    <div className="lg:col-span-8 space-y-8">
+                        
                         {/* Resume Section */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <FileText className="h-5 w-5 text-blue-600" />
-                                    Resume
-                                </CardTitle>
-                                <CardDescription>
-                                    Upload your resume to automatically extract skills and experience.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {profile.resumeUrl ? (
-                                    <div className="flex items-center justify-between p-3 border rounded-md bg-muted/20">
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-red-100 p-2 rounded">
-                                                <FileText className="h-5 w-5 text-red-600" />
-                                            </div>
-                                            <div className="space-y-0.5">
-                                                <p className="text-sm font-medium">{profile.resumeFilename || "Resume"}</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    Uploaded {profile.resumeUploadedAt || "Recently"}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button variant="ghost" size="sm" asChild>
-                                                <a href={profile.resumeUrl} target="_blank" rel="noopener noreferrer">
-                                                    View
-                                                </a>
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="text-center p-6 border-2 border-dashed rounded-md bg-muted/10">
-                                        <div className="mx-auto w-10 h-10 bg-muted/30 rounded-full flex items-center justify-center mb-2">
-                                            <Upload className="h-5 w-5 text-muted-foreground" />
-                                        </div>
-                                        <p className="text-sm font-medium">No resume uploaded</p>
-                                        <p className="text-xs text-muted-foreground mb-4">
-                                            Upload PDF or DOCX (max 100KB)
-                                        </p>
-                                    </div>
-                                )}
-
-                                {isEditing && (
-                                    <div>
-                                        <Input
-                                            type="file"
-                                            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                                            onChange={handleFileUpload}
-                                            disabled={isUploading}
-                                            className="cursor-pointer"
-                                        />
-                                        {isUploading && (
-                                            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
-                                                <Loader2 className="h-3 w-3 animate-spin" /> Uploading and processing...
-                                            </p>
-                                        )}
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            * Uploading a new resume will automatically process and update your profile data.
-                                        </p>
-                                    </div>
-                                )}
-
-
-                            </CardContent>
-                        </Card>
-
-                        {/* Work Experience Section (Editable) */}
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <div className="space-y-1">
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Briefcase className="h-5 w-5 text-blue-600" />
-                                        Work Experience
-                                    </CardTitle>
-                                    <CardDescription>Add your internships and full-time roles</CardDescription>
+                        <div className="bg-slate-900 rounded-[2rem] border border-white/5 p-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3.5 bg-indigo-500/10 rounded-2xl"><FileText className="w-6 h-6 text-indigo-400" /></div>
+                                <div>
+                                    <h2 className="font-bold text-white text-lg">Master Resume</h2>
+                                    <p className="text-sm text-slate-400 mt-0.5">{profile.resumeFilename || "No file uploaded"}</p>
                                 </div>
-                                {isEditing && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => appendWorkExperience({
-                                            company: "",
-                                            role: "",
-                                            description: "",
-                                            startDate: "",
-                                            endDate: "",
-                                            location: ""
-                                        })}
-                                    >
-                                        <Plus className="h-4 w-4 mr-2" /> Add
-                                    </Button>
-                                )}
-                            </CardHeader>
-                            <CardContent className="space-y-6">
+                            </div>
+                            
+                            <div className="flex gap-3 w-full sm:w-auto">
                                 {isEditing ? (
-                                    <div className="space-y-6">
-                                        {workExperienceFields.map((field, index) => (
-                                            <div key={field.id} className="grid gap-4 p-4 border rounded-lg relative bg-muted/20">
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
-                                                    onClick={() => removeWorkExperience(index)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="space-y-2">
-                                                        <Label>Company</Label>
-                                                        <Input
-                                                            {...form.register(`workExperience.${index}.company`)}
-                                                            placeholder="Company Name"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label>Role</Label>
-                                                        <Input
-                                                            {...form.register(`workExperience.${index}.role`)}
-                                                            placeholder="Job Title"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label>Start Date</Label>
-                                                        <Input
-                                                            type="month"
-                                                            {...form.register(`workExperience.${index}.startDate`)}
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label>End Date</Label>
-                                                        <Input
-                                                            type="month"
-                                                            {...form.register(`workExperience.${index}.endDate`)}
-                                                        />
-                                                        <p className="text-[10px] text-muted-foreground">Leave empty if currently working here</p>
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label>Description</Label>
-                                                    <textarea
-                                                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                                        {...form.register(`workExperience.${index}.description`)}
-                                                        placeholder="Describe your responsibilities..."
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label>Location</Label>
-                                                    <Input
-                                                        {...form.register(`workExperience.${index}.location`)}
-                                                        placeholder="e.g. Remote, Bangalore"
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
+                                    <div className="relative w-full sm:w-auto">
+                                        <Input type="file" accept=".pdf,.docx" onChange={handleFileUpload} disabled={isUploading} className="absolute inset-0 opacity-0 cursor-pointer w-full" />
+                                        <button type="button" disabled={isUploading} className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                                            {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} {isUploading ? "Parsing..." : "Upload New"}
+                                        </button>
                                     </div>
                                 ) : (
-                                    profile.workExperience && profile.workExperience.length > 0 ? (
-                                        profile.workExperience.map((work: WorkExperience, i: number) => (
-                                            <div key={i} className="relative border-l-2 border-primary/20 pl-4 pb-4 last:pb-0">
-                                                <h3 className="font-semibold">{work.role}</h3>
-                                                <div className="text-primary font-medium">{work.company}</div>
-                                                <div className="text-sm text-muted-foreground mb-2">
-                                                    {work.startDate} - {work.endDate || "Present"}
-                                                    {work.location && ` • ${work.location}`}
-                                                </div>
-                                                <p className="text-sm text-gray-600 line-clamp-5 whitespace-pre-wrap">
-                                                    {work.description}
-                                                </p>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground italic">
-                                            No work experience added yet.
-                                        </p>
-                                    )
+                                    profile.resumeUrl && <a href={profile.resumeUrl} target="_blank" rel="noreferrer" className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm text-center">View PDF</a>
                                 )}
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
-                        {/* Certifications Section */}
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle className="flex items-center gap-2">
-                                    <Sparkles className="h-5 w-5 text-blue-600" />
-                                    Certifications
-                                </CardTitle>
-                                {isEditing && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => appendCertification({ title: "", issuer: "", url: "", dateIssued: "" })}
-                                    >
-                                        <Plus className="h-4 w-4 mr-2" /> Add
-                                    </Button>
-                                )}
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                {isEditing ? (
-                                    <div className="space-y-6">
-                                        {certificationFields.map((field, index) => (
-                                            <div key={field.id} className="grid gap-4 p-4 border rounded-lg relative bg-muted/20">
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
-                                                    onClick={() => removeCertification(index)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="space-y-2">
-                                                        <Label>Title</Label>
-                                                        <Input {...form.register(`certifications.${index}.title`)} placeholder="Certificate Name" />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label>Issuer</Label>
-                                                        <Input {...form.register(`certifications.${index}.issuer`)} placeholder="Issuing Org" />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label>Date Issued</Label>
-                                                        <Input type="month" {...form.register(`certifications.${index}.dateIssued`)} />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label>URL</Label>
-                                                        <Input {...form.register(`certifications.${index}.url`)} placeholder="https://..." />
-                                                    </div>
-                                                </div>
+                        {/* Experience Timeline */}
+                        <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-8">
+                            <div className="flex items-center justify-between mb-10">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-amber-500/10 rounded-xl"><Briefcase className="w-5 h-5 text-amber-400" /></div>
+                                    <h2 className="font-bold text-white text-xl">Experience</h2>
+                                </div>
+                                {isEditing && <button type="button" onClick={() => appendExp({ company: "", role: "", description: "", startDate: "", endDate: "", location: "" })} className="text-xs font-bold text-amber-400 bg-amber-400/10 px-4 py-2 rounded-xl">+ Add Role</button>}
+                            </div>
+
+                            {isEditing ? (
+                                <div className="space-y-6">
+                                    {expFields.map((field, idx) => (
+                                        <div key={field.id} className="p-6 bg-slate-950/50 border border-slate-800 rounded-2xl relative space-y-4">
+                                            <button type="button" onClick={() => removeExp(idx)} className="absolute top-4 right-4 p-2 bg-rose-500/10 text-rose-500 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mr-8">
+                                                <FormField control={form.control} name={`workExperience.${idx}.role`} render={({field}) => <FormItem><FormLabel className="text-xs text-slate-400 font-bold uppercase">Role</FormLabel><FormControl><Input className={inputClass} {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                <FormField control={form.control} name={`workExperience.${idx}.company`} render={({field}) => <FormItem><FormLabel className="text-xs text-slate-400 font-bold uppercase">Company</FormLabel><FormControl><Input className={inputClass} {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                <FormField control={form.control} name={`workExperience.${idx}.startDate`} render={({field}) => <FormItem><FormLabel className="text-xs text-slate-400 font-bold uppercase">Start Date</FormLabel><FormControl><Input type="month" className={inputClass} {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                <FormField control={form.control} name={`workExperience.${idx}.endDate`} render={({field}) => <FormItem><FormLabel className="text-xs text-slate-400 font-bold uppercase">End Date</FormLabel><FormControl><Input type="month" className={inputClass} {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    profile.certifications && profile.certifications.length > 0 ? (
-                                        <div className="space-y-4">
-                                            {profile.certifications.map((cert: Certification, i: number) => (
-                                                <div key={i} className="flex justify-between items-start border-b pb-4 last:border-0 last:pb-0">
-                                                    <div>
-                                                        <div className="font-medium">{cert.title}</div>
-                                                        <div className="text-sm text-muted-foreground">{cert.issuer} • {cert.dateIssued}</div>
-                                                    </div>
-                                                    {cert.url && (
-                                                        <a href={cert.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs flex items-center gap-1">
-                                                            <ExternalLink className="h-3 w-3" /> Verify
-                                                        </a>
-                                                    )}
-                                                </div>
-                                            ))}
+                                            <FormField control={form.control} name={`workExperience.${idx}.description`} render={({field}) => <FormItem><FormLabel className="text-xs text-slate-400 font-bold uppercase">Description</FormLabel><FormControl><textarea className={`${inputClass} min-h-[100px] py-3`} {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
                                         </div>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground italic">No certifications added yet.</p>
-                                    )
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        {/* Research Papers Section */}
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle className="flex items-center gap-2">
-                                    <FileText className="h-5 w-5 text-blue-600" />
-                                    Research Papers
-                                </CardTitle>
-                                {isEditing && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => appendResearchPaper({ title: "", abstract: "", url: "", datePublished: "" })}
-                                    >
-                                        <Plus className="h-4 w-4 mr-2" /> Add
-                                    </Button>
-                                )}
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                {isEditing ? (
-                                    <div className="space-y-6">
-                                        {researchPaperFields.map((field, index) => (
-                                            <div key={field.id} className="grid gap-4 p-4 border rounded-lg relative bg-muted/20">
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
-                                                    onClick={() => removeResearchPaper(index)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="space-y-2">
-                                                        <Label>Title</Label>
-                                                        <Input {...form.register(`researchPapers.${index}.title`)} placeholder="Paper Title" />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label>Date</Label>
-                                                        <Input type="month" {...form.register(`researchPapers.${index}.datePublished`)} />
-                                                    </div>
-                                                    <div className="space-y-2 md:col-span-2">
-                                                        <Label>URL</Label>
-                                                        <Input {...form.register(`researchPapers.${index}.url`)} placeholder="https://..." />
-                                                    </div>
-                                                    <div className="space-y-2 md:col-span-2">
-                                                        <Label>Abstract</Label>
-                                                        <textarea
-                                                            className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                                            {...form.register(`researchPapers.${index}.abstract`)}
-                                                            placeholder="Short abstract..."
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    profile.researchPapers && profile.researchPapers.length > 0 ? (
-                                        <div className="space-y-6">
-                                            {profile.researchPapers.map((paper: ResearchPaper, i: number) => (
-                                                <div key={i}>
-                                                    <div className="font-medium flex items-center justify-between">
-                                                        <span>{paper.title}</span>
-                                                        {paper.url && (
-                                                            <a href={paper.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs flex items-center gap-1">
-                                                                <ExternalLink className="h-3 w-3" /> Link
-                                                            </a>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground mb-1">{paper.datePublished}</div>
-                                                    <p className="text-sm text-gray-600 line-clamp-3">{paper.abstract}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground italic">No research papers added yet.</p>
-                                    )
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        {/* Achievements Section */}
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle className="flex items-center gap-2">
-                                    <Trophy className="h-5 w-5 text-blue-600" />
-                                    Achievements
-                                </CardTitle>
-                                {isEditing && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => appendAchievement({ title: "", description: "", date: "", issuer: "" })}
-                                    >
-                                        <Plus className="h-4 w-4 mr-2" /> Add
-                                    </Button>
-                                )}
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                {isEditing ? (
-                                    <div className="space-y-6">
-                                        {achievementFields.map((field, index) => (
-                                            <div key={field.id} className="grid gap-4 p-4 border rounded-lg relative bg-muted/20">
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
-                                                    onClick={() => removeAchievement(index)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="space-y-2">
-                                                        <Label>Title</Label>
-                                                        <Input {...form.register(`achievements.${index}.title`)} placeholder="Title" />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label>Date</Label>
-                                                        <Input type="month" {...form.register(`achievements.${index}.date`)} />
-                                                    </div>
-                                                    <div className="space-y-2 md:col-span-2">
-                                                        <Label>Issuer</Label>
-                                                        <Input {...form.register(`achievements.${index}.issuer`)} placeholder="Organization / Event" />
-                                                    </div>
-                                                    <div className="space-y-2 md:col-span-2">
-                                                        <Label>Description</Label>
-                                                        <textarea
-                                                            className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                                            {...form.register(`achievements.${index}.description`)}
-                                                            placeholder="Details..."
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    profile.achievements && profile.achievements.length > 0 ? (
-                                        <div className="space-y-4">
-                                            {profile.achievements.map((ach: Achievement, i: number) => (
-                                                <div key={i} className="border-b pb-4 last:border-0 last:pb-0">
-                                                    <div className="font-medium">{ach.title}</div>
-                                                    <div className="text-sm text-muted-foreground">{ach.issuer} • {ach.date}</div>
-                                                    <p className="text-sm text-gray-600 mt-1">{ach.description}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground italic">No achievements added yet.</p>
-                                    )
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        {/* Soft Skills Section */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-xl">Soft Skills</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex flex-wrap gap-2">
-                                    {(form.watch("softSkills") || profile.softSkills || []).map((skill: string, index: number) => (
-                                        <Badge key={index} variant="secondary" className="px-3 py-1">
-                                            {skill}
-                                            {isEditing && (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-4 w-4 ml-2 hover:text-destructive p-0"
-                                                    onClick={() => {
-                                                        const current = form.getValues("softSkills") || [];
-                                                        form.setValue("softSkills", current.filter((_: string, i: number) => i !== index));
-                                                    }}
-                                                >
-                                                    <X className="h-3 w-3" />
-                                                </Button>
-                                            )}
-                                        </Badge>
                                     ))}
-                                    {(!form.watch("softSkills")?.length && (!profile.softSkills || profile.softSkills.length === 0)) && (
-                                        <p className="text-sm text-muted-foreground italic">No soft skills added yet.</p>
-                                    )}
                                 </div>
-
-                                {isEditing && (
-                                    <div className="flex gap-2 max-w-sm">
-                                        <Input
-                                            value={softSkillInput}
-                                            onChange={(e) => setSoftSkillInput(e.target.value)}
-                                            placeholder="Add soft skill"
-                                            onKeyDown={(e) => {
-                                                if (e.key === "Enter") {
-                                                    e.preventDefault();
-                                                    if (softSkillInput.trim()) {
-                                                        const current = form.getValues("softSkills") || [];
-                                                        if (!current.includes(softSkillInput.trim())) {
-                                                            form.setValue("softSkills", [...current, softSkillInput.trim()]);
-                                                        }
-                                                        setSoftSkillInput("");
-                                                    }
-                                                }
-                                            }}
-                                        />
-                                        <Button
-                                            type="button"
-                                            size="icon"
-                                            onClick={() => {
-                                                if (softSkillInput.trim()) {
-                                                    const current = form.getValues("softSkills") || [];
-                                                    if (!current.includes(softSkillInput.trim())) {
-                                                        form.setValue("softSkills", [...current, softSkillInput.trim()]);
-                                                    }
-                                                    setSoftSkillInput("");
-                                                }
-                                            }}
-                                        >
-                                            <Plus className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                            ) : (
+                                <div className="space-y-8 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
+                                    {profile.workExperience?.length > 0 ? profile.workExperience.map((exp: any, i: number) => (
+                                        <div key={i} className="relative pl-12 group">
+                                            <div className="absolute left-0 top-1.5 w-9 h-9 rounded-full bg-slate-900 border-4 border-slate-950 flex items-center justify-center z-10 group-hover:border-amber-500/30 transition-all">
+                                                <div className="w-2 h-2 bg-amber-500 rounded-full" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <h3 className="text-lg font-bold text-white">{exp.role}</h3>
+                                                <p className="text-amber-400 font-semibold text-sm">{exp.company} <span className="text-slate-600 mx-2">•</span> <span className="text-slate-400 font-medium">{exp.startDate} - {exp.endDate || "Present"}</span></p>
+                                                <p className="text-slate-400 text-sm leading-relaxed max-w-2xl whitespace-pre-wrap">{exp.description}</p>
+                                            </div>
+                                        </div>
+                                    )) : <EmptyState message="No experience data found." />}
+                                </div>
+                            )}
+                        </div>
 
                         {/* Projects */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Trophy className="h-5 w-5 text-blue-600" />
-                                        Projects
-                                    </CardTitle>
-                                    {isEditing && (
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => appendProject({ title: "", description: "", techStack: [], url: "" })}
-                                        >
-                                            <Plus className="h-4 w-4 mr-2" /> Add
-                                        </Button>
-                                    )}
+                        <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-8">
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-purple-500/10 rounded-xl"><BookOpen className="w-5 h-5 text-purple-400" /></div>
+                                    <h2 className="font-bold text-white text-xl">Projects</h2>
                                 </div>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                {isEditing ? (
-                                    <div className="space-y-6">
-                                        {projectFields.map((field, index) => (
-                                            <div key={field.id} className="space-y-4 border p-4 rounded-md">
-                                                <div className="flex justify-between items-center">
-                                                    <h4 className="text-sm font-medium">Project {index + 1}</h4>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => removeProject(index)}
-                                                        className="h-8 w-8 p-0 text-destructive"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                                <FormField
-                                                    control={form.control}
-                                                    name={`projects.${index}.title`}
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormControl>
-                                                                <Input placeholder="Project Title" {...field} />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <FormField
-                                                    control={form.control}
-                                                    name={`projects.${index}.description`}
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormControl>
-                                                                <textarea
-                                                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                                                    placeholder="Description"
-                                                                    {...field}
-                                                                    value={field.value ?? ""}
-                                                                />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <div className="grid grid-cols-1 gap-2">
-                                                    <FormField
-                                                        control={form.control}
-                                                        name={`projects.${index}.url`}
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormControl>
-                                                                    <Input placeholder="Project URL (optional)" {...field} value={field.value ?? ""} />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                    {/* Tech Stack Input - simplified as comma separated string for now or just array? 
-                                                         Schema says string array. Providing a helper to convert. 
-                                                         Or we can use a multi-select. 
-                                                         For MVP, let's use a text input and split by comma.
-                                                      */}
-                                                    <FormField
-                                                        control={form.control}
-                                                        name={`projects.${index}.techStack`}
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormControl>
-                                                                    <Input
-                                                                        placeholder="Tech Stack (comma separated)"
-                                                                        value={field.value?.join(", ") || ""}
-                                                                        onChange={(e) => field.onChange(e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
-                                                                    />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
+                                {isEditing && <button type="button" onClick={() => appendProject({ title: "", description: "", techStack: [], url: "" })} className="text-xs font-bold text-purple-400 bg-purple-400/10 px-4 py-2 rounded-xl">+ Add Project</button>}
+                            </div>
+
+                            {isEditing ? (
+                                <div className="space-y-6">
+                                    {projectFields.map((field, idx) => (
+                                        <div key={field.id} className="p-6 bg-slate-950/50 border border-slate-800 rounded-2xl relative space-y-4">
+                                            <button type="button" onClick={() => removeProject(idx)} className="absolute top-4 right-4 p-2 bg-rose-500/10 text-rose-500 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mr-8">
+                                                <FormField control={form.control} name={`projects.${idx}.title`} render={({field}) => <FormItem><FormLabel className="text-xs text-slate-400 font-bold uppercase">Title</FormLabel><FormControl><Input className={inputClass} {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                <FormField control={form.control} name={`projects.${idx}.url`} render={({field}) => <FormItem><FormLabel className="text-xs text-slate-400 font-bold uppercase">URL</FormLabel><FormControl><Input className={inputClass} {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                <div className="md:col-span-2">
+                                                    <FormField control={form.control} name={`projects.${idx}.techStack`} render={({field}) => <FormItem><FormLabel className="text-xs text-slate-400 font-bold uppercase">Tech Stack (comma separated)</FormLabel><FormControl><Input className={inputClass} value={field.value?.join(", ") || ""} onChange={(e) => field.onChange(e.target.value.split(",").map(s=>s.trim()).filter(Boolean))}/></FormControl></FormItem>} />
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    profile.projects && profile.projects.length > 0 ? (
-                                        profile.projects.map((project: Project, i: number) => (
-                                            <div key={i}>
-                                                <div className="flex items-center justify-between">
-                                                    <h3 className="font-semibold">{project.title}</h3>
-                                                    {project.url && (
-                                                        <a href={project.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                                                            <Link2 className="h-4 w-4" />
-                                                        </a>
-                                                    )}
-                                                </div>
-                                                <div className="mt-1 flex flex-wrap gap-1">
-                                                    {project.techStack?.map((t: string, ti: number) => (
-                                                        <span key={ti} className="text-xs bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">{t}</span>
-                                                    ))}
-                                                </div>
-                                                <p className="mt-2 text-sm text-gray-600 line-clamp-2">
-                                                    {project.description}
-                                                </p>
-                                                {i < (profile.projects?.length || 0) - 1 && <Separator className="my-4" />}
+                                            <FormField control={form.control} name={`projects.${idx}.description`} render={({field}) => <FormItem><FormLabel className="text-xs text-slate-400 font-bold uppercase">Description</FormLabel><FormControl><textarea className={`${inputClass} min-h-[80px] py-3`} {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {profile.projects?.length > 0 ? profile.projects.map((p: any, i: number) => (
+                                        <div key={i} className="bg-slate-950/50 border border-slate-800 p-6 rounded-[1.5rem] flex flex-col h-full hover:border-indigo-500/30 transition-all group">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <h3 className="font-bold text-white group-hover:text-indigo-400 transition-colors">{p.title}</h3>
+                                                {p.url && <a href={p.url} target="_blank" rel="noreferrer"><ExternalLink className="w-4 h-4 text-slate-500 hover:text-white" /></a>}
                                             </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground italic">
-                                            No projects added yet.
-                                        </p>
-                                    )
-                                )}
-                            </CardContent>
-                        </Card>
+                                            <p className="text-sm text-slate-400 leading-relaxed line-clamp-3 mb-6 flex-grow">{p.description}</p>
+                                            <div className="flex flex-wrap gap-2 mt-auto">
+                                                {p.techStack?.map((t: string, ti: number) => (
+                                                    <span key={ti} className="text-[10px] font-bold bg-slate-800 px-2 py-1 rounded text-slate-300">{t}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )) : <div className="col-span-2"><EmptyState message="No projects added." /></div>}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Certifications */}
+                        <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-8">
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-yellow-500/10 rounded-xl"><Award className="w-5 h-5 text-yellow-400" /></div>
+                                    <h2 className="font-bold text-white text-xl">Certifications</h2>
+                                </div>
+                                {isEditing && <button type="button" onClick={() => appendCert({ title: "", issuer: "", url: "", dateIssued: "" })} className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-4 py-2 rounded-xl">+ Add Cert</button>}
+                            </div>
+
+                            {isEditing ? (
+                                <div className="space-y-4">
+                                    {certFields.map((field, idx) => (
+                                        <div key={field.id} className="p-5 bg-slate-950/50 border border-slate-800 rounded-2xl relative space-y-4">
+                                            <button type="button" onClick={() => removeCert(idx)} className="absolute top-4 right-4 text-rose-500"><Trash2 className="w-4 h-4" /></button>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mr-8">
+                                                <FormField control={form.control} name={`certifications.${idx}.title`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="Title" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                <FormField control={form.control} name={`certifications.${idx}.issuer`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="Issuer" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                <FormField control={form.control} name={`certifications.${idx}.dateIssued`} render={({field}) => <FormItem><FormControl><Input type="month" className={inputClass} {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                <FormField control={form.control} name={`certifications.${idx}.url`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="URL" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {profile.certifications?.length > 0 ? profile.certifications.map((cert: any, i: number) => (
+                                        <div key={i} className="flex justify-between items-center p-5 bg-slate-950/50 border border-slate-800 rounded-[1.5rem]">
+                                            <div>
+                                                <h3 className="font-bold text-white">{cert.title}</h3>
+                                                <p className="text-sm text-slate-400 mt-1">{cert.issuer} • {cert.dateIssued}</p>
+                                            </div>
+                                            {cert.url && <a href={cert.url} target="_blank" rel="noreferrer" className="p-2 bg-slate-800 rounded-xl hover:bg-slate-700 transition"><ExternalLink className="w-4 h-4 text-white" /></a>}
+                                        </div>
+                                    )) : <EmptyState message="No certifications added." />}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Achievements */}
+                        <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-8">
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-orange-500/10 rounded-xl"><Trophy className="w-5 h-5 text-orange-400" /></div>
+                                    <h2 className="font-bold text-white text-xl">Achievements</h2>
+                                </div>
+                                {isEditing && <button type="button" onClick={() => appendAchieve({ title: "", description: "", date: "", issuer: "" })} className="text-xs font-bold text-orange-400 bg-orange-400/10 px-4 py-2 rounded-xl">+ Add Achv</button>}
+                            </div>
+
+                            {isEditing ? (
+                                <div className="space-y-4">
+                                    {achieveFields.map((field, idx) => (
+                                        <div key={field.id} className="p-5 bg-slate-950/50 border border-slate-800 rounded-2xl relative space-y-4">
+                                            <button type="button" onClick={() => removeAchieve(idx)} className="absolute top-4 right-4 text-rose-500"><Trash2 className="w-4 h-4" /></button>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mr-8">
+                                                <FormField control={form.control} name={`achievements.${idx}.title`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="Title" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                <FormField control={form.control} name={`achievements.${idx}.issuer`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="Issuer" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                <FormField control={form.control} name={`achievements.${idx}.date`} render={({field}) => <FormItem><FormControl><Input type="month" className={inputClass} {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                            </div>
+                                            <FormField control={form.control} name={`achievements.${idx}.description`} render={({field}) => <FormItem><FormControl><textarea className={`${inputClass} min-h-[60px] py-3`} placeholder="Description" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {profile.achievements?.length > 0 ? profile.achievements.map((ach: any, i: number) => (
+                                        <div key={i} className="p-5 bg-slate-950/50 border border-slate-800 rounded-[1.5rem]">
+                                            <h3 className="font-bold text-white">{ach.title}</h3>
+                                            <p className="text-xs text-orange-400 font-bold uppercase tracking-widest mt-1 mb-3">{ach.issuer} • {ach.date}</p>
+                                            <p className="text-sm text-slate-400 leading-relaxed">{ach.description}</p>
+                                        </div>
+                                    )) : <EmptyState message="No achievements added." />}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Research Papers */}
+                        <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-8 mb-20">
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-sky-500/10 rounded-xl"><FileText className="w-5 h-5 text-sky-400" /></div>
+                                    <h2 className="font-bold text-white text-xl">Research Papers</h2>
+                                </div>
+                                {isEditing && <button type="button" onClick={() => appendResearch({ title: "", abstract: "", url: "", datePublished: "" })} className="text-xs font-bold text-sky-400 bg-sky-400/10 px-4 py-2 rounded-xl">+ Add Paper</button>}
+                            </div>
+
+                            {isEditing ? (
+                                <div className="space-y-4">
+                                    {researchFields.map((field, idx) => (
+                                        <div key={field.id} className="p-5 bg-slate-950/50 border border-slate-800 rounded-2xl relative space-y-4">
+                                            <button type="button" onClick={() => removeResearch(idx)} className="absolute top-4 right-4 text-rose-500"><Trash2 className="w-4 h-4" /></button>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mr-8">
+                                                <FormField control={form.control} name={`researchPapers.${idx}.title`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="Paper Title" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                <FormField control={form.control} name={`researchPapers.${idx}.datePublished`} render={({field}) => <FormItem><FormControl><Input type="month" className={inputClass} {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                <div className="md:col-span-2">
+                                                    <FormField control={form.control} name={`researchPapers.${idx}.url`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="URL" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                                </div>
+                                            </div>
+                                            <FormField control={form.control} name={`researchPapers.${idx}.abstract`} render={({field}) => <FormItem><FormControl><textarea className={`${inputClass} min-h-[80px] py-3`} placeholder="Abstract" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {profile.researchPapers?.length > 0 ? profile.researchPapers.map((paper: any, i: number) => (
+                                        <div key={i} className="p-6 bg-slate-950/50 border border-slate-800 rounded-[1.5rem]">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <h3 className="font-bold text-white text-lg">{paper.title}</h3>
+                                                {paper.url && <a href={paper.url} target="_blank" rel="noreferrer" className="p-2 bg-slate-800 rounded-xl hover:bg-slate-700 transition"><ExternalLink className="w-4 h-4 text-white" /></a>}
+                                            </div>
+                                            <p className="text-xs text-sky-400 font-bold uppercase tracking-widest mb-4">Published: {paper.datePublished}</p>
+                                            <p className="text-sm text-slate-400 leading-relaxed">{paper.abstract}</p>
+                                        </div>
+                                    )) : <EmptyState message="No research papers added." />}
+                                </div>
+                            )}
+                        </div>
+
                     </div>
                 </div>
             </Form>
+        </div>
+    );
+}
+
+// --- HELPER COMPONENTS ---
+function MetaField({ label, value, highlight = false }: MetaFieldProps) {
+    return (
+        <div className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50 hover:bg-slate-900 transition-colors">
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1.5">{label}</p>
+            <p className={`text-sm font-bold truncate ${highlight ? 'text-indigo-400' : 'text-slate-200'}`}>
+                {value ?? "—"}
+            </p>
+        </div>
+    );
+}
+
+function EmptyState({ message }: { message: string }) {
+    return (
+        <div className="w-full py-8 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center">
+            <p className="text-sm font-bold text-slate-500">{message}</p>
         </div>
     );
 }

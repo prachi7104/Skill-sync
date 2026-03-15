@@ -13,7 +13,9 @@ const createDriveSchema = z.object({
   roleTitle: z.string().min(1, "Role title is required").max(255),
   location: z.string().max(255).optional().nullable(),
   packageOffered: z.string().max(100).optional().nullable(),
-  rawJd: z.string().min(10, "Job description must be at least 10 characters"),
+  rawJd: z.string()
+    .min(10, "Job description must be at least 10 characters")
+    .max(50000, "Job description cannot exceed 50,000 characters"),
   minCgpa: z.number().min(0).max(10).optional().nullable(),
   eligibleBranches: z.array(z.string()).optional().nullable(),
   eligibleBatchYears: z.array(z.number().int()).optional().nullable(),

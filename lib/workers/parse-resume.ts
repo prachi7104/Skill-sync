@@ -141,6 +141,14 @@ export async function processResumeParseJobs(): Promise<number> {
                     await db.update(students).set({ profileCompleteness: score, updatedAt: new Date() }).where(eq(students.id, studentId));
                 }
             }
+
+            // Queue embedding regeneration after resume parse completes
+            await db.insert(jobs).values({
+                type: "generate_embedding",
+                payload: { targetType: "student", targetId: studentId },
+                priority: 6,
+                status: "pending",
+            }).catch(() => {}); // non-fatal
         }
 
         // 5. Mark job complete

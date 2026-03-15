@@ -7,7 +7,7 @@
  * and JSON types in the SkillSync platform.
  *
  * Stack:            Drizzle ORM 0.30 + PostgreSQL + pgvector
- * Embedding model:  text-embedding-004 → 768-dimensional vectors
+ * Embedding model:  gemini-embedding-001 → 768-dimensional vectors (prefix-truncated from 3072)
  * Deployment:       Supabase PostgreSQL (free tier: 500 MB)
  *
  * Rules:
@@ -32,14 +32,17 @@ import {
   jsonb,
   customType,
   unique,
+  index,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // pgvector custom type
 // ─────────────────────────────────────────────────────────────────────────────
 // Requires `CREATE EXTENSION IF NOT EXISTS vector;` in the target database.
-// Dimension 768 matches the output of `text-embedding-004` (Google Gemini).
+// Dimension 768 matches the output of `gemini-embedding-001` (Google Gemini, MRL-truncated from 3072).
+// WARNING: Do not change models without re-generating ALL embeddings.
+//          Mixed-model embeddings produce unreliable cosine similarity scores.
 // The vector is stored as a PostgreSQL `vector(768)` column.
 
 const vector = customType<{ data: number[]; driverParam: string }>({
@@ -121,6 +124,10 @@ export const users = pgTable("users", {
    * Nullable: user may sign up before linking Microsoft account.
    */
   microsoftId: varchar("microsoft_id", { length: 255 }).unique(),
+
+  // NEW: for staff email+password login
+  passwordHash: varchar("password_hash", { length: 255 }),
+  lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
 
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -335,7 +342,9 @@ export const students = pgTable("students", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => ({
+  embeddingHnsw: index("idx_students_embedding_hnsw").on(table.embedding),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Table: drives
@@ -420,6 +429,9 @@ export const drives = pgTable("drives", {
   /** Application/ranking deadline. Null = no deadline. */
   deadline: timestamp("deadline", { withTimezone: true }),
 
+  /** Status of the ranking pipeline for this drive. */
+  ranking_status: varchar("ranking_status", { length: 20 }).notNull().default("pending"),
+
   // ── Timestamps ────────────────────────────────────────────────────────────
 
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -428,7 +440,9 @@ export const drives = pgTable("drives", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => ({
+  jdEmbeddingHnsw: index("idx_drives_jd_embedding_hnsw").on(table.jdEmbedding),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Table: rankings
@@ -520,7 +534,9 @@ export const rankings = pgTable("rankings", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => ({
+  driveStudentUnq: unique("idx_rankings_drive_student_unique").on(table.driveId, table.studentId),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Table: jobs
@@ -599,7 +615,11 @@ export const jobs = pgTable("jobs", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => ({
+  jobsRankDedupIdx: index("idx_jobs_rank_dedup")
+    .on(sql`(${table.payload}->>'driveId')`)
+    .where(sql`${table.type} = 'rank_students' AND ${table.status} IN ('pending', 'processing')`),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Table: sample_jds

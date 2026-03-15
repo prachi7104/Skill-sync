@@ -54,9 +54,9 @@ export const NEXTAUTH_URL = process.env.NEXTAUTH_URL
 export const STUDENT_EMAIL_DOMAIN = requireEnv("STUDENT_EMAIL_DOMAIN").toLowerCase();
 
 // ── Cloudinary ──────────────────────────────────────────────────────────────
-export const CLOUDINARY_CLOUD_NAME = optionalEnv("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME");
-export const CLOUDINARY_API_KEY = optionalEnv("CLOUDINARY_API_KEY");
-export const CLOUDINARY_API_SECRET = optionalEnv("CLOUDINARY_API_SECRET");
+export const CLOUDINARY_CLOUD_NAME = requireEnv("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME");
+export const CLOUDINARY_API_KEY = requireEnv("CLOUDINARY_API_KEY");
+export const CLOUDINARY_API_SECRET = requireEnv("CLOUDINARY_API_SECRET");
 
 // ── Supabase ────────────────────────────────────────────────────────────────
 export const SUPABASE_URL = optionalEnv("NEXT_PUBLIC_SUPABASE_URL");

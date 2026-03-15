@@ -1,61 +1,21 @@
 {
-    "$schema": "https://openapi.vercel.sh/vercel.json",
-    "framework": "nextjs",
-    "regions": [
-        "bom1"
-    ],
-    "functions": {
-        "app/api/**/*.ts": {
-            "maxDuration": 30
-        },
-        "app/api/cron/**/*.ts": {
-            "maxDuration": 60
-        },
-        "app/api/student/sandbox/**/*.ts": {
-            "maxDuration": 60
-        }
-    },
-    "headers": [
-        {
-            "source": "/api/(.*)",
-            "headers": [
-                {
-                    "key": "Cache-Control",
-                    "value": "no-store, max-age=0"
-                }
-            ]
-        },
-        {
-            "source": "/(.*)",
-            "headers": [
-                {
-                    "key": "X-Content-Type-Options",
-                    "value": "nosniff"
-                },
-                {
-                    "key": "X-Frame-Options",
-                    "value": "DENY"
-                },
-                {
-                    "key": "Referrer-Policy",
-                    "value": "strict-origin-when-cross-origin"
-                }
-            ]
-        },
-        {
-            "source": "/_next/static/(.*)",
-            "headers": [
-                {
-                    "key": "Cache-Control",
-                    "value": "public, max-age=31536000, immutable"
-                }
-            ]
-        }
-    ],
-    "crons": [
-        { "path": "/api/cron/process-jd-enhancement", "schedule": "0 0 * * *" },
-        { "path": "/api/cron/process-resumes",        "schedule": "0 0 * * *" },
-        { "path": "/api/cron/process-embeddings",     "schedule": "0 0 * * *" },
-        { "path": "/api/cron/process-rankings",       "schedule": "0 0 * * *" }
-    ]
+  "crons": [
+    { "path": "/api/cron/nightly-cleanup", "schedule": "0 2 * * *" }
+  ],
+  "functions": {
+    "app/api/cron/**/*.ts": { "maxDuration": 60 },
+    "app/api/drives/[driveId]/rank/route.ts": { "maxDuration": 60 },
+    "app/api/student/sandbox/**/*.ts": { "maxDuration": 60 }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Credentials", "value": "true" },
+        { "key": "Access-Control-Allow-Origin", "value": "https://skill-sync-iota-three.vercel.app" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
+        { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version" }
+      ]
+    }
+  ]
 }

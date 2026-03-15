@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
-import { jobs, rankings } from "@/lib/db/schema";
-import { sql, eq } from "drizzle-orm";
+import { drives } from "@/lib/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
 /**
@@ -27,46 +27,18 @@ export async function GET(
       return NextResponse.json({ error: "Invalid drive ID" }, { status: 400 });
     }
 
-    // Find the latest rank_students job for this drive
-    const [latestJob] = await db
-      .select({
-        id: jobs.id,
-        status: jobs.status,
-        error: jobs.error,
-        createdAt: jobs.createdAt,
-        updatedAt: jobs.updatedAt,
-        latencyMs: jobs.latencyMs,
-      })
-      .from(jobs)
-      .where(
-        sql`${jobs.type} = 'rank_students'
-          AND ${jobs.payload}->>'driveId' = ${driveId}`,
-      )
-      .orderBy(sql`${jobs.createdAt} DESC`)
+    // Get the ranking status directly from the drives table
+    const [drive] = await db
+      .select({ ranking_status: sql<string>`${drives}.ranking_status` })
+      .from(drives)
+      .where(eq(drives.id, driveId))
       .limit(1);
 
-    // Count existing rankings for this drive
-    const [countResult] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(rankings)
-      .where(eq(rankings.driveId, driveId));
+    if (!drive) {
+      return NextResponse.json({ error: "Drive not found" }, { status: 404 });
+    }
 
-    const rankingsCount = countResult?.count ?? 0;
-
-    return NextResponse.json({
-      driveId,
-      rankingsCount,
-      job: latestJob
-        ? {
-          id: latestJob.id,
-          status: latestJob.status,
-          error: latestJob.error,
-          createdAt: latestJob.createdAt,
-          updatedAt: latestJob.updatedAt,
-          latencyMs: latestJob.latencyMs,
-        }
-        : null,
-    });
+    return NextResponse.json({ status: drive.ranking_status });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     if (isRedirectError(err)) throw err;

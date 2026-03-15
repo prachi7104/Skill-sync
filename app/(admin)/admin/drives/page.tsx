@@ -14,6 +14,7 @@ import {
   CardDescription,
   CardFooter,
 } from "@/components/ui/card";
+import Pagination from "@/components/shared/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, MapPin, IndianRupee, Calendar, ExternalLink, Users } from "lucide-react";
@@ -21,8 +22,12 @@ import { getCompanyColor } from "@/lib/utils/company-color";
 import { TriggerRankingButton } from "@/components/faculty/trigger-ranking-button";
 import { cn } from "@/lib/utils";
 
-export default async function AdminDrivesPage() {
+export default async function AdminDrivesPage({ searchParams }: { searchParams: { page?: string } }) {
   await requireRole(["admin"]);
+
+  const page = Number(searchParams?.page ?? 1);
+  const pageSize = 20;
+  const offset = (page - 1) * pageSize;
 
   // ── STEP 1: All drives + creator name ──────────────────────────────────────
   const allDrives = await db
@@ -41,7 +46,12 @@ export default async function AdminDrivesPage() {
     })
     .from(drives)
     .leftJoin(users, eq(drives.createdBy, users.id))
-    .orderBy(desc(drives.createdAt));
+    .orderBy(desc(drives.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  const [{ total: totalDrives }] = await db.select({ total: sql<number>`count(*)::int` }).from(drives);
+  const [{ active: activeDrivesCount }] = await db.select({ active: sql<number>`count(*)::int` }).from(drives).where(eq(drives.isActive, true));
 
   const driveIds = allDrives.map((d) => d.id);
 
@@ -95,9 +105,8 @@ export default async function AdminDrivesPage() {
   );
 
   // ── STEP 4: Summary counts ─────────────────────────────────────────────────
-  const totalDrives = allDrives.length;
-  const activeDrives = allDrives.filter((d) => d.isActive).length;
-  const rankedDrives = allDrives.filter((d) => (statsMap.get(d.id)?.count ?? 0) > 0).length;
+  const activeDrives = activeDrivesCount;
+  const rankedDrives = allDrives.filter((d) => (statsMap.get(d.id)?.count ?? 0) > 0).length; // Just approximate from this page
   const totalRanked = Array.from(statsMap.values()).reduce((s, v) => s + v.count, 0);
 
   return (
@@ -124,13 +133,13 @@ export default async function AdminDrivesPage() {
         <Badge variant="outline" className="text-sm px-3 py-1">
           Total Drives: {totalDrives}
         </Badge>
-        <Badge variant="outline" className="text-sm px-3 py-1 text-emerald-700 border-emerald-200 bg-emerald-50">
+        <Badge variant="outline" className="text-sm px-3 py-1 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
           Active: {activeDrives}
         </Badge>
-        <Badge variant="outline" className="text-sm px-3 py-1 text-gray-500 border-gray-200">
+        <Badge variant="outline" className="text-sm px-3 py-1 text-slate-500 border-slate-700">
           Closed: {totalDrives - activeDrives}
         </Badge>
-        <Badge variant="outline" className="text-sm px-3 py-1 text-indigo-700 border-indigo-200 bg-indigo-50">
+        <Badge variant="outline" className="text-sm px-3 py-1 text-indigo-400 border-indigo-500/20 bg-indigo-500/10">
           Students Ranked: {totalRanked}
         </Badge>
       </div>
@@ -154,10 +163,10 @@ export default async function AdminDrivesPage() {
             else if (stats && stats.count > 0) status = "ranked";
 
             const statusConfig = {
-              ranked: { label: "RANKED", className: "text-emerald-600 bg-emerald-50 border-emerald-200" },
-              processing: { label: "PROCESSING", className: "text-indigo-600 bg-indigo-50 border-indigo-200" },
-              pending: { label: "PENDING", className: "text-amber-600 bg-amber-50 border-amber-200" },
-              closed: { label: "CLOSED", className: "text-gray-500 bg-gray-50 border-gray-200" },
+              ranked: { label: "RANKED", className: "text-emerald-400 bg-emerald-500/15 border-emerald-500/20" },
+              processing: { label: "PROCESSING", className: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" },
+              pending: { label: "PENDING", className: "text-amber-400 bg-amber-500/15 border-amber-500/20" },
+              closed: { label: "CLOSED", className: "text-slate-500 bg-slate-800/50 border-slate-700" },
             };
 
             const config = statusConfig[status];
@@ -209,7 +218,7 @@ export default async function AdminDrivesPage() {
                     <Users className="h-3 w-3" />
                     <span>
                       Created by{" "}
-                      <span className="font-medium text-gray-700">
+                      <span className="font-medium text-slate-300">
                         {drive.creatorName ?? "Unknown"}
                       </span>
                     </span>
@@ -218,22 +227,22 @@ export default async function AdminDrivesPage() {
                   {/* Info pills */}
                   <div className="flex flex-wrap gap-1.5">
                     {drive.location && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-50 border text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
                         <MapPin className="h-3 w-3" /> {drive.location}
                       </div>
                     )}
                     {drive.packageOffered && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-50 border text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
                         <IndianRupee className="h-3 w-3" /> {drive.packageOffered}
                       </div>
                     )}
                     {drive.deadline && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-50 border text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
                         <Calendar className="h-3 w-3" />{" "}
                         {format(new Date(drive.deadline), "MMM d")}
                       </div>
                     )}
-                    <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-50 border text-[10px] text-muted-foreground">
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
                       <Calendar className="h-3 w-3" />{" "}
                       {format(new Date(drive.createdAt), "MMM d, yyyy")}
                     </div>
@@ -279,6 +288,10 @@ export default async function AdminDrivesPage() {
             );
           })}
         </div>
+      )}
+
+      {totalDrives > pageSize && (
+        <Pagination page={page} total={totalDrives} pageSize={pageSize} />
       )}
     </div>
   );

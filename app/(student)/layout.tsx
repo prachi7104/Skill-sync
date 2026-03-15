@@ -1,88 +1,72 @@
 export const dynamic = "force-dynamic";
 
 import { requireRole, getStudentProfile } from "@/lib/auth/helpers";
-import Header from "@/components/shared/header";
-import Link from "next/link";
+import SignOutButton from "@/components/shared/sign-out-button";
+import MobileNav from "@/components/shared/mobile-nav";
 import { StudentProvider } from "@/app/(student)/providers/student-provider";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
-
-const studentLinks = [
-    { href: "/student/dashboard", label: "Dashboard" },
-    { href: "/student/profile", label: "My Profile" },
-    { href: "/student/drives", label: "Drives" },
-    { href: "/student/sandbox", label: "AI Sandbox" },
-];
-
-/**
- * StudentLayout - Server Component
- * 
- * Auth check: requires the user to be a student but does NOT require a
- * completed student profile. This allows onboarding pages (which live under
- * this layout) to render without causing an infinite redirect loop.
- * 
- * If the student profile row doesn't exist (edge case: auth created user
- * but profile insert failed), we auto-create it here.
- */
+import StudentSidebarNav from "@/components/student/student-sidebar-nav";
 
 export default async function StudentLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    // Server-side auth check - redirects to /login if not authenticated,
-    // to /unauthorized if not a student. Does NOT require student profile.
     const user = await requireRole(["student"]);
-
-    // Try to fetch the student profile (may not exist yet for brand-new users)
     let profile = await getStudentProfile(user.id);
 
-    // Auto-create student profile row if missing (defensive: signIn callback
-    // should have created this, but handle edge cases)
     if (!profile) {
         try {
             await db.insert(students).values({ id: user.id }).onConflictDoNothing();
             profile = await getStudentProfile(user.id);
         } catch (e) {
-            console.error("[StudentLayout] Failed to auto-create student profile:", e);
+            console.error("[StudentLayout] Failed to auto-create profile:", e);
         }
     }
 
     return (
         <StudentProvider initialStudent={profile} initialUser={user}>
-            <div className="min-h-screen bg-gray-50">
-                <Header />
-                <div className="flex h-[calc(100vh-64px)]">
-                    <aside className="w-64 border-r bg-white p-6 hidden md:block">
-                        <nav className="space-y-4">
-                            <h2 className="px-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            {/* Soft Dark Canvas using Tailwind Slate */}
+            <div className="min-h-screen bg-slate-950 flex flex-col font-sans text-slate-200 selection:bg-indigo-500/30">
+                
+                {/* Premium Glassmorphic Header */}
+                <header className="h-16 border-b border-slate-800 bg-slate-950/60 backdrop-blur-xl flex items-center justify-between px-8 shrink-0 sticky top-0 z-50">
+                    <div className="flex items-center">
+                        <h1 className="text-xl font-black tracking-tight text-white select-none">
+                            Skill<span className="text-indigo-500">Sync.</span>
+                        </h1>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                        <MobileNav userName={user.name!} />
+                        <div className="text-sm font-medium text-slate-300 hidden md:block">
+                            {user.name} <span className="text-slate-500 font-normal ml-1">(student)</span>
+                        </div>
+                        <SignOutButton />
+                    </div>
+                </header>
+
+                <div className="flex flex-1 h-[calc(100vh-64px)] overflow-hidden relative">
+                    
+                    {/* Ambient Background Glow */}
+                    <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full mix-blend-screen pointer-events-none z-0" />
+
+                    {/* Lighter Slate Sidebar for Depth */}
+                    <aside className="w-64 border-r border-slate-800 bg-slate-900/50 backdrop-blur-md p-6 hidden md:block shrink-0 z-10">
+                        <div className="mb-8 px-2">
+                            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                                 Student Menu
                             </h2>
-                            <StudentNavLinks />
-                        </nav>
+                        </div>
+                        <StudentSidebarNav />
                     </aside>
 
-                    <main className="flex-1 overflow-auto bg-gray-50 p-8">
+                    {/* Main Scrollable Content Area */}
+                    <main className="flex-1 overflow-y-auto bg-transparent relative z-10">
                         {children}
                     </main>
                 </div>
             </div>
         </StudentProvider>
-    );
-}
-
-function StudentNavLinks() {
-    return (
-        <div className="space-y-1">
-            {studentLinks.map((link) => (
-                <Link
-                    key={link.href}
-                    href={link.href}
-                    className="block rounded-md px-3 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                >
-                    {link.label}
-                </Link>
-            ))}
-        </div>
     );
 }

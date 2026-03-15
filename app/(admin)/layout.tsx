@@ -1,54 +1,57 @@
 import { requireRole } from "@/lib/auth/helpers";
-import Header from "@/components/shared/header";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/config";
 import Link from "next/link";
+import SignOutButton from "@/components/shared/sign-out-button";
+import MobileNav from "@/components/shared/mobile-nav";
+import AdminNav from "@/components/admin/admin-nav";
 
-const adminLinks = [
-    { href: "/admin/health", label: "System Health" },
-    { href: "/admin/drives", label: "All Drives" },
-    { href: "/admin/users", label: "User Management" },
-];
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  await requireRole(["admin"]);
+  const session = await getServerSession(authOptions);
+  const name = session?.user?.name ?? "Admin";
 
-/**
- * AdminLayout - Server Component
- * 
- * All auth/role checks happen server-side. No client-side hydration mismatch
- * because we're not using useState/useEffect for auth rendering logic.
- */
-export default async function AdminLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
-    // Server-side auth check - throws error if not authenticated/authorized
-    await requireRole(["admin"]);
-
-    return (
-        <div className="min-h-screen bg-gray-50">
-            <Header />
-            <div className="flex h-[calc(100vh-64px)]">
-                <aside className="w-64 border-r bg-white p-6 hidden md:block">
-                    <nav className="space-y-4">
-                        <h2 className="px-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Admin Menu
-                        </h2>
-                        <div className="space-y-1">
-                            {adminLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className="block rounded-md px-3 py-2 text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                                >
-                                    {link.label}
-                                </Link>
-                            ))}
-                        </div>
-                    </nav>
-                </aside>
-
-                <main className="flex-1 overflow-auto bg-gray-50 p-8">
-                    {children}
-                </main>
-            </div>
+  return (
+    <div className="min-h-screen bg-slate-950 flex flex-col font-sans text-slate-200 selection:bg-indigo-500/30">
+      
+      {/* Header */}
+      <header className="h-16 border-b border-slate-800 bg-slate-950/60 backdrop-blur-xl flex items-center justify-between px-8 shrink-0 sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <Link href="/admin/health" className="text-xl font-black tracking-tight text-white select-none">
+            Skill<span className="text-indigo-500">Sync.</span>
+          </Link>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-full px-2.5 py-1">
+            Master
+          </span>
         </div>
-    );
+        <div className="flex items-center space-x-6">
+          <div className="text-sm font-medium text-slate-300 hidden md:block">
+            {name} <span className="text-rose-400 font-normal ml-1">(admin)</span>
+          </div>
+          <MobileNav userName={name} role="admin" />
+          <SignOutButton />
+        </div>
+      </header>
+
+      <div className="flex flex-1 h-[calc(100vh-64px)] overflow-hidden relative">
+        
+        {/* Ambient glow — rose for admin distinction */}
+        <div className="absolute top-[-10%] right-[-5%] w-[30%] h-[30%] bg-rose-600/8 blur-[100px] rounded-full mix-blend-screen pointer-events-none z-0" />
+
+        {/* Sidebar */}
+        <aside className="w-64 border-r border-slate-800 bg-slate-900/50 backdrop-blur-md p-6 hidden md:block shrink-0 z-10">
+          <div className="mb-8 px-2">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+              Master Dashboard
+            </h2>
+          </div>
+          <AdminNav />
+        </aside>
+
+        <main className="flex-1 overflow-y-auto bg-transparent relative z-10">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
 }

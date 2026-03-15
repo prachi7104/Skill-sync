@@ -19,7 +19,6 @@ import type {
   Project,
   WorkExperience,
   Certification,
-  ParsedJD,
 } from "@/lib/db/schema";
 
 /**
@@ -124,47 +123,55 @@ export function composeStudentEmbeddingText(profile: {
  * @returns Deterministic text representation for embedding generation
  */
 export function composeJDEmbeddingText(jd: {
-  parsedJd?: ParsedJD | null;
+  parsedJd?: any | null;
   rawJd: string;
   roleTitle: string;
   company: string;
 }): string {
-  // If we have a parsed JD, use structured data (no company / summary)
+  const parts: string[] = [];
+
   if (jd.parsedJd) {
-    const parts: string[] = [];
+    const p = jd.parsedJd;
 
-    // Role title only (no company)
-    if (jd.parsedJd.title) {
-      parts.push(`Role: ${jd.parsedJd.title}`);
+    // StructuredJD shape (from process-jd-enhancement)
+    const title = p.role_metadata?.job_title || p.title;
+    if (title) parts.push(`Role: ${title}`);
+
+    const primaryTasks: string[] = p.responsibilities?.primary_tasks ?? [];
+    if (primaryTasks.length > 0) {
+      parts.push(`Responsibilities: ${primaryTasks.join("; ")}`);
     }
 
-    // Responsibilities — what they'll actually do
-    if (jd.parsedJd.responsibilities && jd.parsedJd.responsibilities.length > 0) {
-      parts.push(`Responsibilities: ${jd.parsedJd.responsibilities.join("; ")}`);
+    const hardSkills: string[] = (p.requirements?.hard_requirements?.technical_skills ?? [])
+      .map((s: any) => s.skill).filter(Boolean);
+    if (hardSkills.length > 0) {
+      parts.push(`Required Skills: ${hardSkills.join(", ")}`);
     }
 
-    // Requirements (required skills) — highest signal
-    if (jd.parsedJd.requiredSkills && jd.parsedJd.requiredSkills.length > 0) {
-      parts.push(`Required Skills: ${jd.parsedJd.requiredSkills.join(", ")}`);
+    const softSkills: string[] = (p.requirements?.soft_requirements?.technical_skills ?? [])
+      .map((s: any) => s.skill).filter(Boolean);
+    if (softSkills.length > 0) {
+      parts.push(`Preferred Skills: ${softSkills.join(", ")}`);
     }
 
-    // Preferred skills
-    if (jd.parsedJd.preferredSkills && jd.parsedJd.preferredSkills.length > 0) {
-      parts.push(`Preferred Skills: ${jd.parsedJd.preferredSkills.join(", ")}`);
+    const normalizedHard: string[] = p.normalized_skills?.hard_skills ?? [];
+    if (normalizedHard.length > 0 && hardSkills.length === 0) {
+      parts.push(`Skills: ${normalizedHard.join(", ")}`);
     }
 
-    // Qualifications
-    if (jd.parsedJd.qualifications && jd.parsedJd.qualifications.length > 0) {
-      parts.push(`Qualifications: ${jd.parsedJd.qualifications.join("; ")}`);
+    const keywords: string[] = p.matching_keywords?.primary_keywords ?? [];
+    if (keywords.length > 0) {
+      parts.push(`Keywords: ${keywords.join(", ")}`);
     }
-
-    // NOTE: Intentionally omitting jd.parsedJd.company and jd.parsedJd.summary
-
-    return parts.join(". ");
   }
 
-  // Fallback to raw JD with role title prefix only (no company)
-  return `${jd.roleTitle}. ${jd.rawJd}`;
+  // Always fall back to raw JD if structured extraction yields nothing
+  if (parts.length === 0) {
+    const prefix = `Role: ${jd.roleTitle}`;
+    return `${prefix}. ${jd.rawJd}`.slice(0, 8000);
+  }
+
+  return parts.join(". ");
 }
 
 /**
