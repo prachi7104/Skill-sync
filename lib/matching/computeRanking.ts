@@ -189,6 +189,18 @@ async function ensureJDEmbedding(
 
   const embedding = await generateEmbedding(jdText);
 
+  // Guard: empty array means text was empty → compose produced no output
+  if (!embedding || embedding.length === 0) {
+    // Fall back: use raw JD text directly
+    const fallbackText = `Role: ${drive.roleTitle}. ${drive.rawJd}`.slice(0, 8000);
+    const fallbackEmbedding = await generateEmbedding(fallbackText);
+    if (!fallbackEmbedding || fallbackEmbedding.length === 0) {
+      throw new Error("JD embedding generation failed: empty text, raw JD fallback also empty");
+    }
+    // Use fallback and continue (don't try to write the empty vector)
+    return fallbackEmbedding; // skip the db.update — embedding will regenerate next time
+  }
+
   // Guard: zero vectors mean Gemini failed silently — ranking with a zero JD
   // embedding would assign semanticScore=0 to every student, so abort entirely.
   const isZeroJD = embedding.length === 768 && embedding.every((v) => v === 0);
