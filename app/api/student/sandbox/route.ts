@@ -17,9 +17,6 @@ import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
 import { generateEmbedding, composeStudentEmbeddingText } from "@/lib/embeddings";
 import { isValidEmbedding } from "@/lib/embeddings/generate";
 import { logger } from "@/lib/logger";
-import { getRouter } from "@/lib/antigravity/instance";
-import { GENERATE_SANDBOX_FEEDBACK } from "@/lib/antigravity/prompts";
-import { buildFeedbackPayload, isSoftSkill } from "@/lib/sandbox/build-feedback-payload";
 
 const sandboxSchema = z.object({
   jdText: z.string().min(20, "Job description must be at least 20 characters").max(10000),
@@ -261,42 +258,6 @@ export async function POST(req: NextRequest) {
     // Analyze
     const atsResult = analyzeMatch(parsedJd, parsedResume);
 
-    // LLM Feedback Call
-    let analysisCards = null;
-    let improveFeedback: unknown[] = [];
-    let softSkillSignals: string[] = [];
-
-    try {
-      const router = getRouter();
-      const feedbackResult = await router.execute(
-        "generate_sandbox_feedback",
-        buildFeedbackPayload(parsedJd, parsedResume, atsResult),
-        {
-          systemPrompt: GENERATE_SANDBOX_FEEDBACK,
-          responseFormat: "json",
-          temperature: 0.3,
-          maxTokens: 2000,
-        }
-      );
-
-      if (feedbackResult.success && feedbackResult.data) {
-        const raw = typeof feedbackResult.data === "string"
-          ? feedbackResult.data : JSON.stringify(feedbackResult.data);
-        const cleaned = raw
-          .replace(/<think>[\s\S]*?<\/think>/gi, "")
-          .replace(/^```json\s*/i, "")
-          .replace(/^```\s*/i, "")
-          .replace(/```\s*$/i, "")
-          .trim();
-        const parsed = JSON.parse(cleaned);
-        analysisCards = parsed.cards || null;
-        improveFeedback = Array.isArray(parsed.feedback) ? parsed.feedback : [];
-        softSkillSignals = Array.isArray(parsed.softSkillSignals) ? parsed.softSkillSignals : [];
-      }
-    } catch (feedbackErr) {
-      logger.warn("[Sandbox] LLM feedback non-fatal:", feedbackErr);
-    }
-
     // Override score if ineligible
     if (!eligibilityResult.isEligible) {
       atsResult.match_score.overall = 0;
@@ -330,13 +291,7 @@ export async function POST(req: NextRequest) {
       semanticScore: atsResult.component_breakdown.domain_alignment.percentage,
       structuredScore: atsResult.component_breakdown.hard_requirements.percentage,
       matchedSkills: atsResult.skill_analysis.matched.map(s => s.skill),
-      missingSkills: atsResult.skill_analysis.missing_critical
-        .filter(s => !isSoftSkill(s.skill)).map(s => s.skill),
-      softSkillGaps: atsResult.skill_analysis.missing_critical
-        .filter(s => isSoftSkill(s.skill)).map(s => s.skill),
-      softSkillSignals,
-      analysisCards,
-      improveFeedback,
+      missingSkills: atsResult.skill_analysis.missing_critical.map(s => s.skill),
       shortExplanation: atsResult.match_score.interpretation,
       detailedExplanation: formatDetailedExplanation(atsResult),
       isEligible: eligibilityResult.isEligible,

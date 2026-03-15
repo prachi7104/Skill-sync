@@ -178,82 +178,35 @@ export interface ParsedResumeData {
 // SYSTEM PROMPT
 // ============================================================================
 
-const SYSTEM_PROMPT = `You are a precise resume parser for a university placement system targeting Indian B.Tech/M.Tech students. Extract ALL information into structured JSON. Never invent data.
+const SYSTEM_PROMPT = `You are a resume parser. Extract structured data from the resume text and return ONLY a JSON object.
 
-## EXTRACTION RULES
-
-Skills — scan EVERY section: skills list, project tech stacks, experience descriptions, certifications, summary.
-- "Gemini API" in project tech stack → extract as "Gemini API" (not just "Gemini")
-- "ChatGPT-style platform" + Gemini API → add "LLM Engineering" as inferred skill
-- "session-aware context storage" + MongoDB → implies semantic storage / RAG
-- "XGBoost" in project → extract XGBoost as skill
-- "LLM access", "LLM inference" in description → extract "LLM" as skill
-- Oracle AI Foundations cert → add "Artificial Intelligence" to skills
-- HackerRank Python (Basic) → Python skill with proficiency basic
-- LeetCode rating 1544 → Data Structures and Algorithms skill
-
-Projects — extract ALL tech exactly as written. "Gemini API" not "Gemini". Include ALL items from tech_stack.
-
-Experience — preserve ALL technical details and ALL quantitative metrics. Never summarize away numbers (40%, RMSE 920→115, 450K datapoints).
-
-Return ONLY this JSON. No markdown. No extra text.
-
+Return this EXACT JSON structure:
 {
-  "full_name": "string | null",
-  "email": "string | null",
-  "phone": "string | null",
-  "linkedin_url": "string | null",
-  "professional_summary": "string | null",
-  "coding_profiles": [
-    { "platform": "LeetCode | HackerRank | Codeforces | CodeChef | GeeksForGeeks | GitHub | other",
-      "profile_url": "string", "rating_or_score": "string | null" }
-  ],
-  "education_history": [
-    {
-      "institution": "string", "degree": "B.Tech | M.Tech | B.Sc | null",
-      "branch": "string | null", "level": "10th | 12th | Bachelor's | Master's | null",
-      "year_of_completion": "YYYY | null", "expected_graduation": "YYYY | null",
-      "current_cgpa": 0.0, "score_or_cgpa": "string | null", "percentage": 0.0
-    }
-  ],
-  "experience": [
-    {
-      "company": "string", "role": "string", "is_internship": true,
-      "duration": "Mon YYYY - Mon YYYY",
-      "description": "full text preserving all metrics, tool names, and technical details",
-      "skills_used": ["Python", "GCP", "XGBoost", "REST API"]
-    }
-  ],
-  "projects": [
-    {
-      "title": "string",
-      "description": "full text preserving technical details",
-      "link": "URL | null",
-      "tech_stack": ["Node.js", "React.js", "MongoDB", "Gemini API"],
-      "date": "Mon YYYY | null",
-      "is_team_project": false
-    }
-  ],
-  "skills": [
-    { "name": "normalized skill name", "category": "programming | framework | database | tool | cloud | devops | ml | ai | testing | other" }
-  ],
-  "research_papers": [],
-  "certifications": [
-    { "certification_name": "string", "issuer": "string | null", "verification_link": "URL | null", "date_obtained": "string | null" }
-  ],
-  "achievements": [
-    { "title": "string", "issuer": "string | null", "date": "YYYY-MM | null", "description": "string" }
-  ],
-  "soft_skills": []
+  "full_name": "string or null",
+  "email": "string or null",
+  "phone": "string or null (include country code)",
+  "linkedin_url": "string or null (full URL)",
+  "professional_summary": "string or null",
+  "coding_profiles": [{"platform": "GitHub|LeetCode|etc", "profile_url": "full URL", "rating_or_score": "string or null"}],
+  "education_history": [{"institution": "name", "degree": "B.Tech|M.Tech|etc or null", "branch": "CS|ECE|etc or null", "level": "10th|12th|Bachelor's|Master's or null", "year_of_completion": "YYYY or null", "expected_graduation": "YYYY-MM or null", "current_cgpa": 8.5, "score_or_cgpa": "raw score string or null"}],
+  "experience": [{"company": "name", "role": "title", "is_internship": false, "duration": "Mon YYYY - Mon YYYY or Present", "description": "what was done (combine bullet points into one string)", "skills_used": ["skill1"]}],
+  "projects": [{"title": "name", "description": "what it does", "link": "URL or null", "tech_stack": ["tech1"], "date": "Mon YYYY or null"}],
+  "skills": [{"name": "Python", "category": "programming|framework|database|tool|cloud|devops|testing|other"}],
+  "research_papers": [{"title": "name", "field": "area or null", "paper_link": "URL or null", "skills_demonstrated": ["skill1"]}],
+  "certifications": [{"certification_name": "name", "issuer": "org or null", "verification_link": "URL or null", "date_obtained": "string or null"}],
+  "achievements": [{"title": "Short title (e.g. Hackathon Winner)", "issuer": "Organization/Event", "date": "YYYY-MM", "description": "Details about the achievement"}],
+  "soft_skills": ["communication", "teamwork"]
 }
 
 RULES:
-1. Return ONLY JSON. No markdown.
-2. CGPA as number (8.66). Percentage as number (87.0). Never strings.
-3. Extract ALL skills from ALL sections.
-4. tech_stack: include EXACT API/model names (Gemini API, not Gemini).
-5. Preserve all quantitative metrics in descriptions.
-6. soft_skills: [] — always empty. Never put English or communication here.`;
+1. Return ONLY the JSON. No markdown. No code fences. No explanations.
+2. null for missing strings/numbers, [] for missing arrays.
+3. Categorize each skill: programming, framework, database, tool, cloud, devops, testing, other.
+4. Extract ALL skills from everywhere (skills section, projects, experience).
+5. For CGPA: return as number (8.5), for percentage: return as string ("85%").
+6. Combine experience bullet points into one description string.
+7. Set is_internship=true for internships.
+8. For Achievements: Split the content. Title should be concise. Put details in description.`;
 
 // ============================================================================
 // EMPTY RESULT
@@ -553,7 +506,7 @@ export async function parseResumeWithAI(resumeText: string): Promise<ParsedResum
                 // Accept if score is good enough (≥30 = at least name + some data)
                 if (score >= 30) {
                     // eslint-disable-next-line no-console
-                    console.log(`[AI Parser] ✅ ${model.label} succeeded (score ${score}, attempt ${attempts})`);
+                console.log(`[AI Parser] ✅ ${model.label} succeeded (score ${score}, attempt ${attempts})`);
                     return parsed;
                 }
 
