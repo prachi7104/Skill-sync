@@ -114,10 +114,10 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
             else if (stats && Number(stats.count) > 0) status = "ranked";
 
             const statusConfig = {
-              ranked: { label: "RANKED", className: "text-emerald-600 bg-emerald-50 border-emerald-200" },
-              processing: { label: "PROCESSING", className: "text-indigo-600 bg-indigo-50 border-indigo-200" },
-              pending: { label: "PENDING", className: "text-amber-600 bg-amber-50 border-amber-200" },
-              closed: { label: "CLOSED", className: "text-gray-500 bg-gray-50 border-gray-200" },
+              ranked: { label: "RANKED", className: "text-emerald-400 bg-emerald-500/15 border-emerald-500/20" },
+              processing: { label: "PROCESSING", className: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" },
+              pending: { label: "PENDING", className: "text-amber-400 bg-amber-500/15 border-amber-500/20" },
+              closed: { label: "CLOSED", className: "text-slate-500 bg-slate-800/50 border-slate-700" },
             };
 
             const config = statusConfig[status];
@@ -154,17 +154,17 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
                   {/* Info Pills */}
                   <div className="flex flex-wrap gap-1.5">
                     {drive.location && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-50 border text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
                         <MapPin className="h-3 w-3" /> {drive.location}
                       </div>
                     )}
                     {drive.packageOffered && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-50 border text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
                         <IndianRupee className="h-3 w-3" /> {drive.packageOffered}
                       </div>
                     )}
                     {drive.deadline && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-50 border text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
                         <Calendar className="h-3 w-3" /> {format(new Date(drive.deadline), "MMM d")}
                       </div>
                     )}

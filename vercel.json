@@ -1,10 +1,16 @@
 {
   "crons": [
-    {
-      "path": "/api/cron/nightly-cleanup",
-      "schedule": "0 2 * * *"
-    }
+    { "path": "/api/cron/process-rankings",       "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/process-embeddings",     "schedule": "*/10 * * * *" },
+    { "path": "/api/cron/process-resumes",        "schedule": "*/10 * * * *" },
+    { "path": "/api/cron/process-jd-enhancement", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/nightly-cleanup",        "schedule": "0 2 * * *" }
   ],
+  "functions": {
+    "app/api/cron/**/*.ts": { "maxDuration": 60 },
+    "app/api/drives/[driveId]/rank/route.ts": { "maxDuration": 60 },
+    "app/api/student/sandbox/**/*.ts": { "maxDuration": 60 }
+  },
   "headers": [
     {
       "source": "/api/(.*)",

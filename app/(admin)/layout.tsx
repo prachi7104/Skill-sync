@@ -6,12 +6,6 @@ import SignOutButton from "@/components/shared/sign-out-button";
 import MobileNav from "@/components/shared/mobile-nav";
 import AdminNav from "@/components/admin/admin-nav";
 
-const adminLinks = [
-  { href: "/admin/health", label: "System Health", emoji: "⚡" },
-  { href: "/admin/drives", label: "All Drives", emoji: "🎯" },
-  { href: "/admin/users", label: "User Management", emoji: "👥" },
-];
-
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   await requireRole(["admin"]);
   const session = await getServerSession(authOptions);
@@ -34,7 +28,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="text-sm font-medium text-slate-300 hidden md:block">
             {name} <span className="text-rose-400 font-normal ml-1">(admin)</span>
           </div>
-          <MobileNav userName={name} links={adminLinks} role="admin" />
+          <MobileNav userName={name} role="admin" />
           <SignOutButton />
         </div>
       </header>

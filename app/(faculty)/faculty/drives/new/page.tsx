@@ -134,10 +134,10 @@ export default function NewDrivePage() {
         )}>
           {step > 1 ? <Check className="h-5 w-5" /> : "1"}
         </div>
-        <div className={cn("h-px w-20", step > 1 ? "bg-emerald-500" : "bg-gray-200")} />
+        <div className={cn("h-px w-20", step > 1 ? "bg-emerald-500" : "bg-slate-800")} />
         <div className={cn(
           "flex h-8 w-8 items-center justify-center rounded-full border-2 font-bold",
-          step === 2 ? "border-indigo-600 bg-indigo-600 text-white" : "border-gray-200 text-gray-400"
+          step === 2 ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-800 text-slate-500"
         )}>
           2
         </div>
@@ -244,7 +244,7 @@ export default function NewDrivePage() {
                     min="0"
                     max="10"
                     step="0.5"
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                     {...register("minCgpa", { valueAsNumber: true })}
                   />
                   <p className="text-xs text-muted-foreground uppercase tracking-wider">
@@ -283,7 +283,7 @@ export default function NewDrivePage() {
                           "h-5 w-5 rounded border-2 flex items-center justify-center transition-colors shadow-sm",
                           selectedBranches.includes(branch.value)
                             ? "bg-indigo-600 border-indigo-600"
-                            : "border-gray-200 group-hover:border-gray-300"
+                            : "border-slate-700 group-hover:border-slate-600"
                         )}>
                           {selectedBranches.includes(branch.value) && <Check className="h-3.5 w-3.5 text-white stroke-[3px]" />}
                         </div>
@@ -295,7 +295,7 @@ export default function NewDrivePage() {
                         />
                         <span className={cn(
                           "transition-colors",
-                          selectedBranches.includes(branch.value) ? "text-gray-900 font-medium" : "text-muted-foreground"
+                          selectedBranches.includes(branch.value) ? "text-white font-medium" : "text-muted-foreground"
                         )}>
                           {branch.value}
                         </span>
@@ -320,7 +320,7 @@ export default function NewDrivePage() {
                           "px-4 py-2 rounded-md border text-sm font-semibold transition-all shadow-sm",
                           selectedBatchYears.includes(year)
                             ? "bg-indigo-600 border-indigo-600 text-white"
-                            : "bg-white border-gray-200 text-gray-700 hover:border-indigo-300"
+                            : "bg-slate-900 border-slate-700 text-slate-300 hover:border-indigo-500/50"
                         )}
                       >
                         {year}
@@ -342,7 +342,7 @@ export default function NewDrivePage() {
                           "px-6 py-2 rounded-md border text-sm font-semibold capitalize transition-all shadow-sm",
                           selectedCategories.includes(cat)
                             ? "bg-indigo-600 border-indigo-600 text-white"
-                            : "bg-white border-gray-200 text-gray-700 hover:border-indigo-300"
+                            : "bg-slate-900 border-slate-700 text-slate-300 hover:border-indigo-500/50"
                         )}
                       >
                         {cat}

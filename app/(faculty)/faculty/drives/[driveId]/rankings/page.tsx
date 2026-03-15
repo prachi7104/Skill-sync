@@ -73,11 +73,11 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
         <h1 className="text-2xl font-bold tracking-tight">Rankings — {drive.company}</h1>
         <Card className="border-t-4 border-t-amber-500">
           <CardContent className="py-12 text-center space-y-4">
-            <div className="bg-amber-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto">
-              <TrendingUp className="h-6 w-6 text-amber-600" />
+            <div className="bg-amber-500/15 w-12 h-12 rounded-full flex items-center justify-center mx-auto">
+              <TrendingUp className="h-6 w-6 text-amber-400" />
             </div>
             <div className="space-y-1">
-              <p className="text-lg font-bold text-slate-900">{guardrailError.reason}</p>
+              <p className="text-lg font-bold text-slate-200">{guardrailError.reason}</p>
               <p className="text-sm text-muted-foreground">{guardrailError.nextStep}</p>
             </div>
           </CardContent>
@@ -134,8 +134,8 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
   return (
     <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
       {/* ── Drive Header Card ──────────────────────────────────────────────── */}
-      <Card className="overflow-hidden border-none shadow-md ring-1 ring-slate-200">
-        <div className="bg-slate-50 border-b p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <Card className="overflow-hidden border-none shadow-md ring-1 ring-slate-800">
+        <div className="bg-slate-900/50 border-b border-slate-800 p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
             <div className={cn(
               "h-16 w-16 rounded-xl flex items-center justify-center text-2xl font-black text-white uppercase shadow-lg ring-4 ring-white",
@@ -145,7 +145,7 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none">{drive.company}</h1>
+                <h1 className="text-2xl font-black text-white tracking-tight leading-none">{drive.company}</h1>
                 <Badge variant={drive.isActive ? "default" : "outline"} className={cn(
                   "px-2 py-0.5 text-[10px] font-black tracking-widest uppercase",
                   drive.isActive ? "bg-emerald-500 hover:bg-emerald-600" : "text-slate-500 border-slate-300"
@@ -171,12 +171,12 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button asChild variant="outline" size="sm" className="h-10 text-xs font-bold gap-2 border-slate-200 hover:bg-white hover:text-indigo-600 transition-all shadow-sm">
+            <Button asChild variant="outline" size="sm" className="h-10 text-xs font-bold gap-2 border-slate-800 hover:bg-slate-800 hover:text-indigo-400 transition-all shadow-sm">
               <Link href={`/api/drives/${driveId}/export`} download>
                 <Download className="h-3.5 w-3.5" /> Export All CSV
               </Link>
             </Button>
-            <Button asChild variant="outline" size="sm" className="h-10 text-xs font-bold gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-all shadow-sm">
+            <Button asChild variant="outline" size="sm" className="h-10 text-xs font-bold gap-2 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 transition-all shadow-sm">
               <Link href={`/api/drives/${driveId}/export?shortlistedOnly=true`} download>
                 <Star className="h-3.5 w-3.5 fill-current" /> Export Shortlisted
               </Link>
@@ -185,30 +185,30 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
         </div>
 
         {/* ── Mini Stat Chips ──────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-slate-100 border-t bg-white">
+        <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-slate-800 border-t border-slate-800 bg-slate-900/50">
           <div className="p-6 text-center">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               <Users className="h-3 w-3" /> Total Candidates
             </p>
-            <p className="text-3xl font-mono font-black text-slate-900 leading-none">{rows.length}</p>
+            <p className="text-3xl font-mono font-black text-white leading-none">{rows.length}</p>
           </div>
           <div className="p-6 text-center">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               <TrendingUp className="h-3 w-3" /> Average Score
             </p>
-            <p className="text-3xl font-mono font-black text-slate-900 leading-none">{avgScore}%</p>
+            <p className="text-3xl font-mono font-black text-white leading-none">{avgScore}%</p>
           </div>
           <div className="p-6 text-center">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               <Award className="h-3 w-3" /> Top Match
             </p>
-            <p className="text-3xl font-mono font-black text-slate-900 leading-none">{topScore}%</p>
+            <p className="text-3xl font-mono font-black text-white leading-none">{topScore}%</p>
           </div>
           <div className="p-6 text-center">
             <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
               <Star className="h-3 w-3 fill-current" /> Shortlisted
             </p>
-            <p className="text-3xl font-mono font-black text-slate-900 leading-none">{shortlistedCount}</p>
+            <p className="text-3xl font-mono font-black text-white leading-none">{shortlistedCount}</p>
           </div>
         </div>
       </Card>

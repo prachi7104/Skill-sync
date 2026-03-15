@@ -2,7 +2,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LucideIcon } from "lucide-react";
+import { 
+  LayoutDashboard, 
+  UserCircle, 
+  Briefcase, 
+  Box, 
+  FolderOpen, 
+  Plus,
+  Menu, 
+  X, 
+  LucideIcon 
+} from "lucide-react";
 import SignOutButton from "./sign-out-button";
 import { cn } from "@/lib/utils";
 
@@ -14,15 +24,33 @@ export interface NavLink {
   exact?: boolean;
 }
 
+const ROLE_LINKS: Record<string, NavLink[]> = {
+  student: [
+    { href: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/student/profile", label: "My Profile", icon: UserCircle },
+    { href: "/student/drives", label: "Drives", icon: Briefcase },
+    { href: "/student/sandbox", label: "AI Sandbox", icon: Box },
+  ],
+  faculty: [
+    { href: "/faculty", label: "Dashboard", icon: LayoutDashboard, exact: true },
+    { href: "/faculty/drives", label: "My Drives", icon: FolderOpen },
+    { href: "/faculty/drives/new", label: "New Drive", icon: Plus },
+  ],
+  admin: [
+    { href: "/admin/health", label: "System Health", emoji: "⚡" },
+    { href: "/admin/drives", label: "All Drives", emoji: "🎯" },
+    { href: "/admin/users", label: "User Management", emoji: "👥" },
+  ],
+};
+
 export default function MobileNav({ 
   userName, 
-  links,
   role = "student"
 }: { 
   userName: string; 
-  links: NavLink[];
   role?: "student" | "faculty" | "admin";
 }) {
+  const links = ROLE_LINKS[role] || [];
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 

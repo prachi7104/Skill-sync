@@ -5,14 +5,6 @@ import Link from "next/link";
 import SidebarNav from "@/components/faculty/sidebar-nav";
 import SignOutButton from "@/components/shared/sign-out-button";
 import MobileNav from "@/components/shared/mobile-nav";
-import { LayoutDashboard, FolderOpen, Plus } from "lucide-react";
-
-const facultyLinks = [
-  { href: "/faculty", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/faculty/drives", label: "My Drives", icon: FolderOpen },
-  { href: "/faculty/drives/new", label: "New Drive", icon: Plus },
-];
-
 export default async function FacultyLayout({ children }: { children: React.ReactNode }) {
   await requireRole(["faculty", "admin"]);
   const session = await getServerSession(authOptions);
@@ -32,7 +24,7 @@ export default async function FacultyLayout({ children }: { children: React.Reac
             {name}
             <span className="text-slate-500 font-normal ml-1.5 capitalize">({role})</span>
           </div>
-          <MobileNav userName={name} links={facultyLinks} role="faculty" />
+          <MobileNav userName={name} role="faculty" />
           <SignOutButton />
         </div>
       </header>

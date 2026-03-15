@@ -6,15 +6,7 @@ import MobileNav from "@/components/shared/mobile-nav";
 import { StudentProvider } from "@/app/(student)/providers/student-provider";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
-import { LayoutDashboard, UserCircle, Briefcase, Box } from "lucide-react";
 import StudentSidebarNav from "@/components/student/student-sidebar-nav";
-
-const studentLinks = [
-    { href: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/student/profile", label: "My Profile", icon: UserCircle },
-    { href: "/student/drives", label: "Drives", icon: Briefcase },
-    { href: "/student/sandbox", label: "AI Sandbox", icon: Box },
-];
 
 export default async function StudentLayout({
     children,
@@ -46,7 +38,7 @@ export default async function StudentLayout({
                         </h1>
                     </div>
                     <div className="flex items-center space-x-4">
-                        <MobileNav userName={user.name!} links={studentLinks} />
+                        <MobileNav userName={user.name!} />
                         <div className="text-sm font-medium text-slate-300 hidden md:block">
                             {user.name} <span className="text-slate-500 font-normal ml-1">(student)</span>
                         </div>
