@@ -153,7 +153,7 @@ async function fetchEligibleStudents(
           .from(students)
           .orderBy(asc(students.createdAt));
 
-  return results.map((s) => ({
+  return results.map((s: any) => ({
     id: s.id,
     cgpa: s.cgpa,
     branch: s.branch,
@@ -523,7 +523,7 @@ export async function computeRanking(
   }));
 
   // 10. Persist rankings in a single transaction (DELETE + INSERT = idempotent)
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: any) => {
     // Clear existing rankings for this drive
     await tx.delete(rankings).where(eq(rankings.driveId, driveId));
 
