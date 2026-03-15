@@ -1,7 +1,4 @@
 {
-  "crons": [
-    { "path": "/api/cron/nightly-cleanup", "schedule": "0 2 * * *" }
-  ],
   "functions": {
     "app/api/cron/**/*.ts": { "maxDuration": 60 },
     "app/api/drives/[driveId]/rank/route.ts": { "maxDuration": 60 },

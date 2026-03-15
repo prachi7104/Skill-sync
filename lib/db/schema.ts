@@ -138,37 +138,6 @@ export const users = pgTable("users", {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Table: magic_link_tokens
-// ─────────────────────────────────────────────────────────────────────────────
-// Purpose: One-time login tokens for faculty/admin users who can't use
-// Azure AD OAuth (e.g., @outlook/@hotmail emails outside the UPES tenant).
-// Admin generates a token → sends link → faculty clicks → CredentialsProvider
-// validates → JWT session created. Token is single-use with 24h expiry.
-
-export const magicLinkTokens = pgTable("magic_link_tokens", {
-  /** Primary key — UUID v4 generated at insert time. */
-  id: uuid("id").primaryKey().defaultRandom(),
-
-  /** The user this token is for. FK → users.id. */
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-
-  /** 64-character hex token (randomBytes(32).toString("hex")). */
-  token: varchar("token", { length: 64 }).notNull().unique(),
-
-  /** When this token expires. Typically now + 24 hours. */
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-
-  /** Whether the token has already been consumed. */
-  used: boolean("used").notNull().default(false),
-
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Table: students
 // ─────────────────────────────────────────────────────────────────────────────
 // Purpose: Extended student profile — the primary input for ranking.
@@ -703,16 +672,6 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   }),
   /** Faculty/admin users can create multiple drives. */
   drives: many(drives),
-  /** Magic link tokens issued for this user. */
-  magicLinkTokens: many(magicLinkTokens),
-}));
-
-export const magicLinkTokensRelations = relations(magicLinkTokens, ({ one }) => ({
-  /** The user this token belongs to. */
-  user: one(users, {
-    fields: [magicLinkTokens.userId],
-    references: [users.id],
-  }),
 }));
 
 export const studentsRelations = relations(students, ({ one, many }) => ({

@@ -6,7 +6,8 @@
  * Tests for:
  *   - signIn callback: auto-create students, reject non-student emails,
  *     handle existing users, DB errors
- *   - magic-link authorize: validate token, reject expired/used/student tokens
+ *   - staff-credentials authorize: validate password login for faculty/admin,
+ *     reject missing credentials, students, and invalid passwords
  *
  * Uses inlined logic (mirrors lib/auth/config.ts) to avoid importing
  * modules that depend on server-only / postgres.
@@ -23,6 +24,8 @@ function isStudentEmail(email: string): boolean {
     return domain === STUDENT_EMAIL_DOMAIN;
 }
 
+const mockCompare = vi.fn();
+
 // ── Mock DB ─────────────────────────────────────────────────────────────────
 const mockDb = {
     query: {
@@ -36,15 +39,6 @@ const mockDb = {
     update: vi.fn((_table?: string) => ({
         set: vi.fn((_vals?: Record<string, unknown>) => ({
             where: vi.fn().mockResolvedValue({}),
-        })),
-    })),
-    select: vi.fn(() => ({
-        from: vi.fn(() => ({
-            innerJoin: vi.fn(() => ({
-                where: vi.fn(() => ({
-                    limit: vi.fn(),
-                })),
-            })),
         })),
     })),
 };
@@ -81,25 +75,32 @@ async function simulateSignIn(
     }
 }
 
-// ── Inlined magic-link authorize (mirrors lib/auth/config.ts:43–84) ─────────
-async function simulateAuthorize(token: string | undefined) {
-    if (!token) return null;
+// ── Inlined staff authorize (mirrors lib/auth/config.ts:31–74) ──────────────
+async function simulateAuthorize(credentials: { email?: string; password?: string } | undefined) {
+    if (!credentials?.email || !credentials?.password) return null;
 
-    const limitMock = (mockDb.select() as any).from().innerJoin().where().limit;
-    const rows = await limitMock(1);
-    if (!rows || rows.length === 0) return null;
+    const email = credentials.email.toLowerCase().trim();
+    const password = credentials.password;
 
-    const row = rows[0];
-    if (row.role !== "faculty" && row.role !== "admin") return null;
+    const user = await mockDb.query.users.findFirst({ where: email } as any);
+    if (!user) return null;
 
-    // Mark token as used
-    await (mockDb.update as any)("magicLinkTokens").set({ used: true }).where(row.tokenId);
+    if (user.role !== "faculty" && user.role !== "admin") return null;
+    if (!user.passwordHash) return null;
+
+    const isValid = await mockCompare(password, user.passwordHash);
+    if (!isValid) return null;
+
+    await mockDb.update("users")
+        .set({ lastLoginAt: new Date() })
+        .where(user.id)
+        .catch(() => { /* non-fatal */ });
 
     return {
-        id: row.userId,
-        email: row.email,
-        name: row.name,
-        role: row.role,
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
     };
 }
 
@@ -108,6 +109,7 @@ async function simulateAuthorize(token: string | undefined) {
 describe("Auth Integration", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockCompare.mockReset();
         // Re-wire insert to return new-user-id
         mockDb.insert = vi.fn(() => ({
             values: vi.fn(() => ({
@@ -157,59 +159,84 @@ describe("Auth Integration", () => {
         });
     });
 
-    describe("Magic Link Provider authorize", () => {
-        it("should validate a correct faculty token and return user", async () => {
-            const mockRow = {
-                tokenId: "token-uuid", userId: "user-uuid",
-                email: "faculty@test.com", name: "Faculty", role: "faculty",
+    describe("Staff Credentials Provider authorize", () => {
+        it("should validate a correct faculty password and return user", async () => {
+            const mockUser = {
+                id: "user-uuid",
+                email: "faculty@test.com",
+                name: "Faculty",
+                role: "faculty",
+                passwordHash: "hashed-password",
             };
+            mockDb.query.users.findFirst.mockResolvedValue(mockUser);
+            mockCompare.mockResolvedValue(true);
 
-            const limitMock = vi.fn().mockResolvedValue([mockRow]);
-            const whereMock = vi.fn().mockReturnValue({ limit: limitMock });
-            const innerJoinMock = vi.fn().mockReturnValue({ where: whereMock });
-            const fromMock = vi.fn().mockReturnValue({ innerJoin: innerJoinMock });
-            mockDb.select = vi.fn().mockReturnValue({ from: fromMock }) as any;
-
-            const user = await simulateAuthorize("valid-token");
+            const user = await simulateAuthorize({
+                email: "faculty@test.com",
+                password: "correct-password",
+            });
 
             expect(user).toEqual({
-                id: mockRow.userId,
-                email: mockRow.email,
-                name: mockRow.name,
-                role: mockRow.role,
+                id: mockUser.id,
+                email: mockUser.email,
+                name: mockUser.name,
+                role: mockUser.role,
             });
+            expect(mockCompare).toHaveBeenCalledWith("correct-password", "hashed-password");
             expect(mockDb.update).toHaveBeenCalled();
         });
 
-        it("should return null for expired/used token (empty result)", async () => {
-            const limitMock = vi.fn().mockResolvedValue([]);
-            const whereMock = vi.fn().mockReturnValue({ limit: limitMock });
-            const innerJoinMock = vi.fn().mockReturnValue({ where: whereMock });
-            const fromMock = vi.fn().mockReturnValue({ innerJoin: innerJoinMock });
-            mockDb.select = vi.fn().mockReturnValue({ from: fromMock }) as any;
+        it("should return null when the user does not exist", async () => {
+            mockDb.query.users.findFirst.mockResolvedValue(null);
 
-            const user = await simulateAuthorize("invalid-token");
+            const user = await simulateAuthorize({
+                email: "missing@test.com",
+                password: "whatever",
+            });
+
             expect(user).toBeNull();
         });
 
-        it("should return null if the user role is 'student'", async () => {
-            const mockRow = {
-                tokenId: "t-uuid", userId: "u-uuid", role: "student",
-            };
+        it("should return null if the user role is student", async () => {
+            mockDb.query.users.findFirst.mockResolvedValue({
+                id: "student-id",
+                email: "student@test.com",
+                name: "Student",
+                role: "student",
+                passwordHash: "hashed-password",
+            });
 
-            const limitMock = vi.fn().mockResolvedValue([mockRow]);
-            const whereMock = vi.fn().mockReturnValue({ limit: limitMock });
-            const innerJoinMock = vi.fn().mockReturnValue({ where: whereMock });
-            const fromMock = vi.fn().mockReturnValue({ innerJoin: innerJoinMock });
-            mockDb.select = vi.fn().mockReturnValue({ from: fromMock }) as any;
+            const user = await simulateAuthorize({
+                email: "student@test.com",
+                password: "irrelevant",
+            });
 
-            const user = await simulateAuthorize("student-token");
+            expect(user).toBeNull();
+            expect(mockCompare).not.toHaveBeenCalled();
+        });
+
+        it("should return null when the password is invalid", async () => {
+            mockDb.query.users.findFirst.mockResolvedValue({
+                id: "admin-id",
+                email: "admin@test.com",
+                name: "Admin",
+                role: "admin",
+                passwordHash: "hashed-password",
+            });
+            mockCompare.mockResolvedValue(false);
+
+            const user = await simulateAuthorize({
+                email: "admin@test.com",
+                password: "wrong-password",
+            });
+
             expect(user).toBeNull();
         });
 
-        it("should return null if no token is provided", async () => {
-            const user = await simulateAuthorize(undefined);
-            expect(user).toBeNull();
+        it("should return null if credentials are missing", async () => {
+            expect(await simulateAuthorize(undefined)).toBeNull();
+            expect(await simulateAuthorize({ email: "faculty@test.com" })).toBeNull();
+            expect(await simulateAuthorize({ password: "secret" })).toBeNull();
         });
     });
 });
