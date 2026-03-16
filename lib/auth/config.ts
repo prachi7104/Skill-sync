@@ -3,7 +3,7 @@ import AzureADProvider from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/lib/db";
 import { users, students } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import {
   MICROSOFT_CLIENT_ID,
@@ -112,23 +112,30 @@ export const authOptions: NextAuthOptions = {
           return true;
         }
 
-        // Unknown non-student emails cannot be auto-created.
-        if (!isStudentEmail(email)) {
+        // New user — resolve college from email domain
+        const domain = email.split("@")[1];
+        const [college] = await db.execute(sql`
+          SELECT id FROM colleges WHERE student_domain = ${domain} LIMIT 1
+        `) as unknown as Array<{ id: string }>;
+
+        if (!college) {
+          // Unknown domain not in DB — deny sign-in
           return "/login?error=NotAuthorized";
         }
 
-        // Auto-create student account
+        // Auto-create student account with college linkage
         const [newUser] = await db
           .insert(users)
           .values({
             email,
-            name: user.name || "Student",
+            name: user.name || email.split("@")[0],
             role: "student",
             microsoftId: account?.providerAccountId,
+            collegeId: college.id,
           })
           .returning();
 
-        await db.insert(students).values({ id: newUser.id });
+        await db.insert(students).values({ id: newUser.id, collegeId: college.id });
         return true;
       } catch (error) {
         console.error("[auth] signIn error:", error);
@@ -140,28 +147,30 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         const dbUser = await db.query.users.findFirst({
           where: eq(users.email, user.email!),
-          columns: { id: true, role: true, name: true, email: true },
+          columns: { id: true, role: true, name: true, email: true, collegeId: true },
         });
         if (dbUser) {
           token.id = dbUser.id;
           token.role = dbUser.role;
           token.name = dbUser.name;
           token.email = dbUser.email;
+          token.collegeId = dbUser.collegeId ?? "";
           token.roleCheckedAt = Date.now();
         }
       }
 
-      // Re-fetch role once per hour
+      // Re-fetch role + collegeId once per hour
       const ROLE_REFRESH_MS = 60 * 60 * 1000;
       const lastChecked = (token.roleCheckedAt as number | undefined) ?? 0;
       if (token.id && Date.now() - lastChecked > ROLE_REFRESH_MS) {
         try {
           const fresh = await db.query.users.findFirst({
             where: eq(users.id, token.id as string),
-            columns: { role: true },
+            columns: { role: true, collegeId: true },
           });
           if (fresh) {
             token.role = fresh.role;
+            token.collegeId = fresh.collegeId ?? token.collegeId;
             token.roleCheckedAt = Date.now();
           }
         } catch {}
@@ -174,6 +183,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as "student" | "faculty" | "admin";
         session.user.name = token.name as string;
+        session.user.collegeId = token.collegeId as string;
       }
       return session;
     },

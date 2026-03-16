@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { desc, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 
 // ── GET /api/admin/users ───────────────────────────────────────────────────
 // Returns ALL users (all roles) for the admin user management page.
@@ -20,7 +20,16 @@ export async function GET(req: Request) {
   const pageSize = 20;
   const offset = (page - 1) * pageSize;
 
-  const [{ total }] = await db.select({ total: sql<number>`count(*)::int` }).from(users);
+  // Scope to the admin's own college. Falls back to all users if collegeId is missing
+  // (e.g. seeded super-admin without a college assignment).
+  const collegeFilter = session.user.collegeId
+    ? eq(users.collegeId, session.user.collegeId)
+    : undefined;
+
+  const [{ total }] = await db
+    .select({ total: sql<number>`count(*)::int` })
+    .from(users)
+    .where(collegeFilter);
 
   const allUsers = await db
     .select({
@@ -31,6 +40,7 @@ export async function GET(req: Request) {
       createdAt: users.createdAt,
     })
     .from(users)
+    .where(collegeFilter)
     .orderBy(desc(users.createdAt))
     .limit(pageSize)
     .offset(offset);

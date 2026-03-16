@@ -7,11 +7,13 @@ declare module "next-auth" {
         user: {
             id: string;
             role: "student" | "faculty" | "admin";
+            collegeId: string;
         } & DefaultSession["user"];
     }
 
     interface User extends DefaultUser {
         role?: "student" | "faculty" | "admin";
+        collegeId?: string;
     }
 }
 
@@ -19,5 +21,6 @@ declare module "next-auth/jwt" {
     interface JWT {
         id: string;
         role: "student" | "faculty" | "admin";
+        collegeId: string;
     }
 }

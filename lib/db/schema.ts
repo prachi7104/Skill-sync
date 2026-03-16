@@ -98,6 +98,28 @@ export const jobTypeEnum = pgEnum("job_type", [
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Table: colleges
+// ─────────────────────────────────────────────────────────────────────────────
+// Purpose: Institution registry. One row per registered college.
+// Phase 2: Added for multi-college support — Drizzle type inference only.
+// DO NOT drizzle-push; the table is already provisioned in the database.
+
+export const colleges = pgTable("colleges", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 255 }).notNull(),
+  shortCode: varchar("short_code", { length: 20 }).notNull().unique(),
+  studentDomain: varchar("student_domain", { length: 100 }).notNull(),
+  staffDomain: varchar("staff_domain", { length: 100 }),
+  city: varchar("city", { length: 100 }),
+  country: varchar("country", { length: 50 }).notNull().default("India"),
+  plan: varchar("plan", { length: 20 }).notNull().default("free"),
+  isActive: boolean("is_active").notNull().default(true),
+  settings: jsonb("settings").notNull().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Table: users
 // ─────────────────────────────────────────────────────────────────────────────
 // Purpose: Authentication identity + role assignment.
@@ -124,6 +146,9 @@ export const users = pgTable("users", {
    * Nullable: user may sign up before linking Microsoft account.
    */
   microsoftId: varchar("microsoft_id", { length: 255 }).unique(),
+
+  /** College this user belongs to. Nullable for legacy/seeded admin accounts. */
+  collegeId: uuid("college_id").references(() => colleges.id, { onDelete: "cascade" }),
 
   // NEW: for staff email+password login
   passwordHash: varchar("password_hash", { length: 255 }),
@@ -155,6 +180,9 @@ export const students = pgTable("students", {
   id: uuid("id")
     .primaryKey()
     .references(() => users.id, { onDelete: "cascade" }),
+
+  /** College this student belongs to (denormalised from users for fast queries). */
+  collegeId: uuid("college_id").references(() => colleges.id, { onDelete: "cascade" }),
 
   // ── Identity ──────────────────────────────────────────────────────────────
 
