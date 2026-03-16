@@ -19,6 +19,9 @@ import type {
   Project,
   WorkExperience,
   Certification,
+  ResearchPaper,
+  Achievement,
+  CodingProfile,
 } from "@/lib/db/schema";
 
 /**
@@ -26,7 +29,7 @@ import type {
  * Tuned to keep inputs within typical embedding model limits.
  * Prioritizes skills and project titles over long descriptions.
  */
-const MAX_EMBEDDING_TEXT_LENGTH = 1500;
+const MAX_EMBEDDING_TEXT_LENGTH = 2000;
 
 /**
  * Composes embedding text from a student profile.
@@ -48,6 +51,10 @@ export function composeStudentEmbeddingText(profile: {
   projects?: Project[] | null;
   workExperience?: WorkExperience[] | null;
   certifications?: Certification[] | null;
+  researchPapers?: ResearchPaper[] | null;
+  achievements?: Achievement[] | null;
+  softSkills?: string[] | null;
+  codingProfiles?: CodingProfile[] | null;
 }): string {
   const parts: string[] = [];
 
@@ -57,7 +64,12 @@ export function composeStudentEmbeddingText(profile: {
     parts.push(`Skills: ${skillNames}`);
   }
 
-  // 2. Projects (titles + tech stacks first, descriptions added later if space allows)
+  // 2. Soft skills (light signal)
+  if (profile.softSkills && profile.softSkills.length > 0) {
+    parts.push(`Soft Skills: ${profile.softSkills.slice(0, 10).join(", ")}`);
+  }
+
+  // 3. Projects (titles + tech stacks first, descriptions added later if space allows)
   const projectTitles: string[] = [];
   const projectDescriptions: string[] = [];
   if (profile.projects && profile.projects.length > 0) {
@@ -71,7 +83,7 @@ export function composeStudentEmbeddingText(profile: {
     parts.push(`Projects: ${projectTitles.join("; ")}`);
   }
 
-  // 3. Work experience (roles + companies)
+  // 4. Work experience (roles + companies)
   if (profile.workExperience && profile.workExperience.length > 0) {
     const workTexts = profile.workExperience.map(
       (w) => `${w.role} at ${w.company}`,
@@ -79,15 +91,47 @@ export function composeStudentEmbeddingText(profile: {
     parts.push(`Experience: ${workTexts.join("; ")}`);
   }
 
-  // 4. Certifications (names only)
+  // 5. Certifications (names + issuer)
   if (profile.certifications && profile.certifications.length > 0) {
-    const certNames = profile.certifications.map((c) => c.title).join(", ");
+    const certNames = profile.certifications
+      .map((c) => (c.issuer ? `${c.title} (${c.issuer})` : c.title))
+      .join(", ");
     parts.push(`Certifications: ${certNames}`);
+  }
+
+  // 6. Coding platforms (platform signal only)
+  if (profile.codingProfiles && profile.codingProfiles.length > 0) {
+    const platforms = profile.codingProfiles
+      .map((cp) => cp.platform)
+      .filter(Boolean)
+      .slice(0, 10);
+    if (platforms.length > 0) {
+      parts.push(`Coding Profiles: ${platforms.join(", ")}`);
+    }
+  }
+
+  // 7. Research papers (important for AI/ML/research roles)
+  if (profile.researchPapers && profile.researchPapers.length > 0) {
+    const papers = profile.researchPapers.map((r) => r.title).filter(Boolean);
+    if (papers.length > 0) {
+      parts.push(`Research: ${papers.join(", ")}`);
+    }
+  }
+
+  // 8. Achievements (first 5)
+  if (profile.achievements && profile.achievements.length > 0) {
+    const ach = profile.achievements
+      .slice(0, 5)
+      .map((a) => a.title ?? String(a))
+      .filter(Boolean);
+    if (ach.length > 0) {
+      parts.push(`Achievements: ${ach.join("; ")}`);
+    }
   }
 
   let text = parts.join(". ");
 
-  // 5. If under budget, append project descriptions for richer context
+  // 9. If under budget, append project descriptions for richer context
   if (text.length < MAX_EMBEDDING_TEXT_LENGTH && projectDescriptions.length > 0) {
     const remaining = MAX_EMBEDDING_TEXT_LENGTH - text.length - 2; // ". " separator
     const descText = projectDescriptions.join("; ").slice(0, remaining);

@@ -181,12 +181,23 @@ export async function POST(req: NextRequest) {
         const workExperience = (profile.workExperience as WorkExperience[] | null) ?? [];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const certifications = (profile.certifications as any[] | null) ?? [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const researchPapers = (profile.researchPapers as any[] | null) ?? [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const achievements = (profile.achievements as any[] | null) ?? [];
+        const softSkills = (profile.softSkills as string[] | null) ?? [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const codingProfiles = (profile.codingProfiles as any[] | null) ?? [];
 
         const embeddingText = composeStudentEmbeddingText({
           skills,
           projects,
           workExperience,
-          certifications
+          certifications,
+          researchPapers,
+          achievements,
+          softSkills,
+          codingProfiles,
         });
 
         const embedding = await generateEmbedding(embeddingText);

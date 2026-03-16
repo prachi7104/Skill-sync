@@ -71,6 +71,10 @@ export async function processEmbeddingJobs() {
                         projects: true,
                         workExperience: true,
                         certifications: true,
+                        researchPapers: true,
+                        achievements: true,
+                        softSkills: true,
+                        codingProfiles: true,
                     },
                 });
 
@@ -83,6 +87,10 @@ export async function processEmbeddingJobs() {
                     projects: student.projects,
                     workExperience: student.workExperience,
                     certifications: student.certifications,
+                    researchPapers: student.researchPapers,
+                    achievements: student.achievements,
+                    softSkills: student.softSkills,
+                    codingProfiles: student.codingProfiles,
                 });
 
                 if (!text || text.trim().length === 0) {

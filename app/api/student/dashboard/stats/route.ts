@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireStudentProfile } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
-import { drives, rankings } from "@/lib/db/schema";
+import { drives, rankings, students } from "@/lib/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
@@ -30,6 +30,15 @@ export async function GET() {
             .where(and(eq(rankings.studentId, user.id), eq(rankings.shortlisted, true)));
         const shortlistedCount = shortlistedResult?.count ?? 0;
 
+        const [embeddingStatus] = await db
+            .select({
+                hasEmbedding: sql<boolean>`${students.embedding} IS NOT NULL`,
+                updatedAt: students.updatedAt,
+            })
+            .from(students)
+            .where(eq(students.id, user.id))
+            .limit(1);
+
         const requiredCompleted = Boolean(
             profile.sapId &&
             profile.rollNo &&
@@ -53,6 +62,8 @@ export async function GET() {
                 sandboxUsageToday: profile.sandboxUsageToday ?? 0,
                 sandboxUsageMonth: profile.sandboxUsageMonth ?? 0,
                 requiredCompleted,
+                hasEmbedding: embeddingStatus?.hasEmbedding ?? false,
+                profileUpdatedAt: embeddingStatus?.updatedAt ?? null,
             }
         });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

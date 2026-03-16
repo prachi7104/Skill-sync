@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 type AmcatData = {
     hasAmcat: boolean;
@@ -34,6 +35,7 @@ export default function StudentDashboard() {
         shortlistedCount: 0,
         sandboxUsageToday: 0,
         requiredCompleted: false,
+        hasEmbedding: false,
     });
     const [amcat, setAmcat] = useState<AmcatData>({ hasAmcat: false });
 
@@ -120,6 +122,22 @@ export default function StudentDashboard() {
                 <p className="text-slate-400 text-lg font-medium">
                     Welcome back, <span className="text-slate-100 font-bold">{user.name}</span>. Here&apos;s what&apos;s happening.
                 </p>
+                <div className="flex items-center gap-2 pt-1">
+                    <div
+                        className={cn(
+                            "h-2 w-2 rounded-full",
+                            stats.hasEmbedding ? "bg-emerald-500" : "animate-pulse bg-rose-500",
+                        )}
+                        title={
+                            stats.hasEmbedding
+                                ? "Profile embedding generated. You are ready for ranking and sandbox."
+                                : "Profile embedding pending. Complete profile fields to enable ranking and sandbox."
+                        }
+                    />
+                    <span className="text-xs text-slate-500">
+                        {stats.hasEmbedding ? "AI Ready" : "Profile Indexing..."}
+                    </span>
+                </div>
             </div>
 
             <div className="grid grid-cols-12 gap-5">

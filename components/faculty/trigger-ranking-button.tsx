@@ -15,6 +15,11 @@ type ButtonState = "idle" | "loading" | "queued" | "error" | "already_processing
 export function TriggerRankingButton({ driveId, initialStatus }: TriggerRankingButtonProps) {
     const [state, setState] = useState<ButtonState>("idle");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [embeddingCheck, setEmbeddingCheck] = useState<{
+        total: number;
+        withEmbedding: number;
+        loading: boolean;
+    } | null>(null);
 
     useEffect(() => {
         if (initialStatus === "processing") {
@@ -24,7 +29,48 @@ export function TriggerRankingButton({ driveId, initialStatus }: TriggerRankingB
         }
     }, [initialStatus]);
 
+    useEffect(() => {
+        checkEmbeddings().catch(() => undefined);
+    }, [driveId]);
+
+    async function checkEmbeddings() {
+        setEmbeddingCheck((prev) => ({
+            total: prev?.total ?? 0,
+            withEmbedding: prev?.withEmbedding ?? 0,
+            loading: true,
+        }));
+        const res = await fetch(`/api/drives/${driveId}/embedding-check`);
+        if (res.ok) {
+            const data = await res.json();
+            setEmbeddingCheck({
+                total: data.total ?? 0,
+                withEmbedding: data.withEmbedding ?? 0,
+                loading: false,
+            });
+        } else {
+            setEmbeddingCheck((prev) =>
+                prev ? { ...prev, loading: false } : { total: 0, withEmbedding: 0, loading: false },
+            );
+        }
+    }
+
+    async function queueMissingEmbeddings() {
+        try {
+            const res = await fetch(`/api/drives/${driveId}/queue-embeddings`, {
+                method: "POST",
+            });
+            if (!res.ok) {
+                throw new Error("Failed to queue missing embeddings");
+            }
+            await checkEmbeddings();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+            setErrorMessage(err.message || "Unable to queue embeddings");
+        }
+    }
+
     async function handleTrigger() {
+        await checkEmbeddings().catch(() => undefined);
         setState("loading");
         setErrorMessage(null);
 
@@ -134,6 +180,23 @@ export function TriggerRankingButton({ driveId, initialStatus }: TriggerRankingB
                     <AlertCircle className="h-3 w-3" />
                     {errorMessage}
                 </span>
+            )}
+            {embeddingCheck && !embeddingCheck.loading && embeddingCheck.withEmbedding < embeddingCheck.total && (
+                <div className="mt-2 w-full rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-left">
+                    <p className="text-sm font-medium text-amber-300">
+                        {embeddingCheck.total - embeddingCheck.withEmbedding} of {embeddingCheck.total} eligible students have no embedding yet.
+                    </p>
+                    <p className="mt-1 text-xs text-amber-400/70">
+                        These students will be skipped in ranking. You can queue their embeddings now and retry shortly.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={queueMissingEmbeddings}
+                        className="mt-2 text-xs text-amber-300 underline hover:text-amber-200"
+                    >
+                        Queue missing embeddings now
+                    </button>
+                </div>
             )}
         </div>
     );

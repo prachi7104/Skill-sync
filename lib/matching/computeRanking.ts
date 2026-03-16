@@ -30,7 +30,7 @@ import "server-only";
 import pLimit from "p-limit";
 import { db } from "@/lib/db";
 import { students, drives, rankings } from "@/lib/db/schema";
-import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
+import type { Skill, Project, WorkExperience, ResearchPaper, Achievement, CodingProfile } from "@/lib/db/schema";
 import { eq, and, gte, inArray, type SQL, asc, sql } from "drizzle-orm";
 import {
   generateEmbedding,
@@ -85,6 +85,10 @@ interface StudentForRanking {
   workExperience: WorkExperience[] | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   certifications: any[] | null;
+  researchPapers: ResearchPaper[] | null;
+  achievements: Achievement[] | null;
+  softSkills: string[] | null;
+  codingProfiles: CodingProfile[] | null;
   embedding: number[] | null;
   resumeUrl: string | null;
 }
@@ -140,6 +144,10 @@ async function fetchEligibleStudents(
     projects: students.projects,
     workExperience: students.workExperience,
     certifications: students.certifications,
+    researchPapers: students.researchPapers,
+    achievements: students.achievements,
+    softSkills: students.softSkills,
+    codingProfiles: students.codingProfiles,
     embedding: students.embedding,
     resumeUrl: students.resumeUrl,
   };
@@ -166,6 +174,10 @@ async function fetchEligibleStudents(
     projects: s.projects as Project[] | null,
     workExperience: s.workExperience as WorkExperience[] | null,
     certifications: s.certifications,
+    researchPapers: s.researchPapers,
+    achievements: s.achievements,
+    softSkills: s.softSkills,
+    codingProfiles: s.codingProfiles,
     embedding: s.embedding,
     resumeUrl: s.resumeUrl ?? null,
   }));
@@ -239,6 +251,10 @@ async function ensureStudentEmbedding(
     projects: student.projects,
     workExperience: student.workExperience,
     certifications: student.certifications,
+    researchPapers: student.researchPapers,
+    achievements: student.achievements,
+    softSkills: student.softSkills,
+    codingProfiles: student.codingProfiles,
   });
 
   if (!profileText || profileText.trim().length === 0) {
