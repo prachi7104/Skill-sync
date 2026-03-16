@@ -13,6 +13,12 @@ interface SandboxResult {
     hardSkillsScore: number; softSkillsScore: number; experienceScore: number; domainMatchScore: number;
     recommendation: string; matchedSkills: string[]; missingSkills: string[];
     shortExplanation: string; detailedExplanation: string; isEligible: boolean; ineligibilityReason?: string;
+    seniorityWarning?: string | null;
+    scoreBreakdown?: {
+        semantic: { score: number; weight: number; label: string };
+        ats: { score: number; weight: number; label: string };
+        hasEmbedding: boolean;
+    };
     redFlags?: Array<{ flag: string; severity: "Critical" | "Minor"; impact: number }>;
     usage: { dailyUsed: number; dailyLimit: number; monthlyUsed: number; monthlyLimit: number; };
 }
@@ -86,16 +92,14 @@ export default function QuickSandbox() {
         return "bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]";
     }
 
-    function getRecommendationColor(rec: string) {
-        const recColor: Record<string, string> = {
-            "STRONG MATCH": "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-            "GOOD MATCH": "bg-blue-500/15 text-blue-400 border-blue-500/20",
-            "MODERATE MATCH": "bg-amber-500/15 text-amber-400 border-amber-500/20",
-            "WEAK MATCH": "bg-orange-500/15 text-orange-400 border-orange-500/20",
-            "REJECT": "bg-rose-500/15 text-rose-400 border-rose-500/20",
-        };
-        return recColor[rec] ?? recColor["REJECT"];
-    }
+    const REC_STYLE: Record<string, string> = {
+        "STRONG MATCH": "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+        "GOOD MATCH": "bg-blue-500/15 text-blue-400 border-blue-500/20",
+        "MODERATE MATCH": "bg-amber-500/15 text-amber-400 border-amber-500/20",
+        "WEAK MATCH": "bg-orange-500/15 text-orange-400 border-orange-500/20",
+        "REJECT": "bg-rose-500/15 text-rose-400 border-rose-500/20",
+        "Ineligible": "bg-rose-500/15 text-rose-400 border-rose-500/20",
+    };
 
     const inputClass = "bg-slate-950/50 border-slate-800 text-white rounded-xl focus:ring-indigo-500";
 
@@ -201,8 +205,8 @@ export default function QuickSandbox() {
                                 </div>
                                 <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-2 mb-4">Overall Match</p>
                                 {result.recommendation && (
-                                    <span className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${getRecommendationColor(result.recommendation)}`}>
-                                        {result.recommendation.replace(/_/g, " ")}
+                                    <span className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${REC_STYLE[result.recommendation] ?? ""}`}>
+                                        {result.recommendation}
                                     </span>
                                 )}
                             </div>
@@ -236,6 +240,48 @@ export default function QuickSandbox() {
                             </div>
                         )}
                     </div>
+
+                    <div className="rounded-xl bg-slate-900/60 border border-white/5 p-4 space-y-3">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Score Breakdown</p>
+
+                        <div className="space-y-2.5">
+                            <div>
+                                <div className="flex items-center justify-between text-xs mb-1">
+                                    <span className="text-slate-400">Semantic Match (70%)</span>
+                                    <span className="text-white font-bold">{result.scoreBreakdown?.semantic.score.toFixed(1) ?? result.semanticScore.toFixed(1)}</span>
+                                </div>
+                                <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-indigo-500 rounded-full transition-all"
+                                        style={{ width: `${result.scoreBreakdown?.semantic.score ?? result.semanticScore}%` }}
+                                    />
+                                </div>
+                                {!result.scoreBreakdown?.hasEmbedding && (
+                                    <p className="text-xs text-amber-400 mt-0.5">Showing ATS approximation. Complete profile for real semantic score.</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <div className="flex items-center justify-between text-xs mb-1">
+                                    <span className="text-slate-400">Keyword Match (30%)</span>
+                                    <span className="text-white font-bold">{result.scoreBreakdown?.ats.score.toFixed(1) ?? result.structuredScore.toFixed(1)}</span>
+                                </div>
+                                <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-amber-500 rounded-full transition-all"
+                                        style={{ width: `${result.scoreBreakdown?.ats.score ?? result.structuredScore}%` }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {result.seniorityWarning && (
+                        <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 flex items-start gap-2">
+                            <span className="text-amber-400 text-sm shrink-0 mt-0.5">i</span>
+                            <p className="text-amber-300 text-xs leading-relaxed">{result.seniorityWarning}</p>
+                        </div>
+                    )}
 
                     <div className="grid md:grid-cols-2 gap-6">
                         <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-7">

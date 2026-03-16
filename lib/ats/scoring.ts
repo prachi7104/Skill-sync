@@ -68,7 +68,7 @@ function getWeights(roleType: string, seniority: string) {
     return { hard: 0.20, research: 0.0, soft: 0.10, exp: 0.10, domain: 0.60 };
 }
 
-function getHireRecommendation(score: number): ATSScore["match_score"]["hire_recommendation"] {
+export function getHireRecommendation(score: number): ATSScore["match_score"]["hire_recommendation"] {
     if (score >= 80) return "STRONG MATCH";
     if (score >= 60) return "GOOD MATCH";
     if (score >= 40) return "MODERATE MATCH";
