@@ -19,6 +19,8 @@ export async function GET() {
     const required = {
       sapId: Boolean(profile.sapId),
       rollNo: Boolean(profile.rollNo),
+      tenthPercentage: typeof profile.tenthPercentage === "number" && profile.tenthPercentage > 0,
+      twelfthPercentage: typeof profile.twelfthPercentage === "number" && profile.twelfthPercentage > 0,
       resume: Boolean(profile.resumeUrl),
       skills: Array.isArray(profile.skills) && profile.skills.length > 0,
       projects: Array.isArray(profile.projects) && profile.projects.length > 0,
