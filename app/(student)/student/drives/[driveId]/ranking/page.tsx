@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { enforceProfileGate, enforceRankingsExist, GuardrailViolation } from "@/lib/guardrails";
 import Link from "next/link";
 import AnalysisPanel from "./analysis-panel";
+import MarkdownRenderer from "@/components/shared/markdown-renderer";
 
 interface PageProps {
   params: { driveId: string };
@@ -133,7 +134,7 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
           <Card>
             <CardHeader>
               <CardTitle>Your Match Result</CardTitle>
-              <CardDescription>{myRanking.shortExplanation}</CardDescription>
+              <CardDescription>{myRanking.shortExplanation.replace(/^#+\s*/gm, "")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -205,9 +206,10 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm leading-relaxed whitespace-pre-line">
-                {myRanking.detailedExplanation}
-              </p>
+              <MarkdownRenderer
+                content={myRanking.detailedExplanation}
+                className="text-sm"
+              />
             </CardContent>
           </Card>
 

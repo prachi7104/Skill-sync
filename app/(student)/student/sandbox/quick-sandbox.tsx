@@ -87,10 +87,14 @@ export default function QuickSandbox() {
     }
 
     function getRecommendationColor(rec: string) {
-        if (rec === "STRONG_MATCH" || rec === "STRONG_HIRE") return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-        if (rec === "INTERVIEW" || rec === "HIRE") return "bg-blue-500/10 text-blue-400 border-blue-500/20";
-        if (rec === "CONSIDER" || rec === "HOLD") return "bg-amber-500/10 text-amber-400 border-amber-500/20";
-        return "bg-rose-500/10 text-rose-400 border-rose-500/20";
+        const recColor: Record<string, string> = {
+            "STRONG MATCH": "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+            "GOOD MATCH": "bg-blue-500/15 text-blue-400 border-blue-500/20",
+            "MODERATE MATCH": "bg-amber-500/15 text-amber-400 border-amber-500/20",
+            "WEAK MATCH": "bg-orange-500/15 text-orange-400 border-orange-500/20",
+            "REJECT": "bg-rose-500/15 text-rose-400 border-rose-500/20",
+        };
+        return recColor[rec] ?? recColor["REJECT"];
     }
 
     const inputClass = "bg-slate-950/50 border-slate-800 text-white rounded-xl focus:ring-indigo-500";

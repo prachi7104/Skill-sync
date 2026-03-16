@@ -6,7 +6,7 @@ import { GuardrailViolation } from "@/lib/guardrails/errors";
 import { db } from "@/lib/db";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { students } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { checkEligibility, type EligibilityCriteria, type StudentProfile } from "@/lib/matching";
 import { parseJD } from "@/lib/jd/parser";
 import { analyzeMatch } from "@/lib/ats";
@@ -14,7 +14,7 @@ import { ATSScore } from "@/lib/ats/types";
 import { ParsedResumeData } from "@/lib/resume/ai-parser";
 import { z } from "zod";
 import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
-import { generateEmbedding, composeStudentEmbeddingText } from "@/lib/embeddings";
+import { generateEmbedding, composeStudentEmbeddingText, cosineSimilarity } from "@/lib/embeddings";
 import { isValidEmbedding } from "@/lib/embeddings/generate";
 import { logger } from "@/lib/logger";
 
@@ -192,10 +192,12 @@ export async function POST(req: NextRequest) {
         const embedding = await generateEmbedding(embeddingText);
 
         // Save to DB so we don't regenerate next time
-        await db
-          .update(students)
-          .set({ embedding, updatedAt: new Date() })
-          .where(eq(students.id, user.id));
+        await db.execute(sql`
+          UPDATE students
+          SET   embedding  = ${`[${embedding.join(",")}]`}::vector(768),
+                updated_at = NOW()
+          WHERE id = ${user.id}
+        `);
 
         // Update local object so gate passes
         profile.embedding = embedding;
@@ -279,6 +281,21 @@ export async function POST(req: NextRequest) {
       .where(eq(students.id, user.id))
       .limit(1);
 
+    let semanticScore = atsResult.component_breakdown.domain_alignment.percentage;
+    try {
+      const profileEmbedding = profile.embedding as number[] | null;
+      if (isValidEmbedding(profileEmbedding)) {
+        const safeProfileEmbedding = profileEmbedding as number[];
+        const jdEmbedding = await generateEmbedding(jdText, "jd");
+        if (isValidEmbedding(jdEmbedding) && jdEmbedding.length === safeProfileEmbedding.length) {
+          semanticScore = Math.max(0, Math.min(100, cosineSimilarity(safeProfileEmbedding, jdEmbedding) * 100));
+        }
+      }
+    } catch (semanticErr: unknown) {
+      const semanticErrMsg = semanticErr instanceof Error ? semanticErr.message : String(semanticErr);
+      logger.warn(`[Sandbox] Semantic score fallback used (domain alignment) due to embedding error: ${semanticErrMsg}`);
+    }
+
     return NextResponse.json({
       matchScore: atsResult.match_score.overall,
       // 4-dimension breakdown (new scoring system)
@@ -288,7 +305,7 @@ export async function POST(req: NextRequest) {
       domainMatchScore: atsResult.component_breakdown.domain_alignment.percentage,
       recommendation: atsResult.match_score.hire_recommendation,
       // Backward compat — keep old field names mapped to closest new equivalents
-      semanticScore: atsResult.component_breakdown.domain_alignment.percentage,
+      semanticScore,
       structuredScore: atsResult.component_breakdown.hard_requirements.percentage,
       matchedSkills: atsResult.skill_analysis.matched.map(s => s.skill),
       missingSkills: atsResult.skill_analysis.missing_critical.map(s => s.skill),

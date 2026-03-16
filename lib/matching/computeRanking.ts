@@ -31,7 +31,7 @@ import pLimit from "p-limit";
 import { db } from "@/lib/db";
 import { students, drives, rankings } from "@/lib/db/schema";
 import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
-import { eq, and, gte, inArray, type SQL, asc } from "drizzle-orm";
+import { eq, and, gte, inArray, type SQL, asc, sql } from "drizzle-orm";
 import {
   generateEmbedding,
   composeStudentEmbeddingText,
@@ -213,10 +213,12 @@ async function ensureJDEmbedding(
     );
   }
 
-  await db
-    .update(drives)
-    .set({ jdEmbedding: embedding, updatedAt: new Date() })
-    .where(eq(drives.id, drive.id));
+  await db.execute(sql`
+    UPDATE drives
+    SET   jd_embedding = ${`[${embedding.join(",")}]`}::vector(768),
+          updated_at   = NOW()
+    WHERE id = ${drive.id}
+  `);
 
   return embedding;
 }
@@ -257,10 +259,12 @@ async function ensureStudentEmbedding(
     return null;
   }
 
-  await db
-    .update(students)
-    .set({ embedding, updatedAt: new Date() })
-    .where(eq(students.id, student.id));
+  await db.execute(sql`
+    UPDATE students
+    SET   embedding  = ${`[${embedding.join(",")}]`}::vector(768),
+          updated_at = NOW()
+    WHERE id = ${student.id}
+  `);
 
   return embedding;
 }

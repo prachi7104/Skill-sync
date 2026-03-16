@@ -14,7 +14,7 @@ const createDriveSchema = z.object({
   location: z.string().max(255).optional().nullable(),
   packageOffered: z.string().max(100).optional().nullable(),
   seasonId: z.string().uuid().optional().nullable(),
-  rankingsVisible: z.boolean().optional().default(false),
+  rankingsVisible: z.boolean().optional().default(true),
   placementType: z.enum(["placement", "internship", "apprenticeship"]).optional().default("placement"),
   rawJd: z.string()
     .min(10, "Job description must be at least 10 characters")
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         seasonId: data.seasonId ?? null,
         location: data.location ?? null,
         packageOffered: data.packageOffered ?? null,
-        rankingsVisible: data.rankingsVisible ?? false,
+        rankingsVisible: data.rankingsVisible ?? true,
         placementType: data.placementType ?? "placement",
         rawJd: data.rawJd,
         minCgpa: data.minCgpa ?? null,

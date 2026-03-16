@@ -84,7 +84,7 @@ export interface ATSScore {
         overall: number;
         interpretation: string;
         confidence: "High" | "Medium" | "Low";
-        hire_recommendation: "STRONG_HIRE" | "HIRE" | "INTERVIEW" | "HOLD" | "PASS" | "REJECT";
+        hire_recommendation: "STRONG MATCH" | "GOOD MATCH" | "MODERATE MATCH" | "WEAK MATCH" | "REJECT";
     };
     component_breakdown: {
         hard_requirements: { score: number; max: number; percentage: number; verdict: string };

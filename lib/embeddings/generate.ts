@@ -2,6 +2,12 @@ import { GoogleGenerativeAI, TaskType } from "@google/generative-ai";
 
 export const EMBEDDING_DIMENSION = 768;
 
+function normalizeEmbedding(vec: number[]): number[] {
+  const norm = Math.sqrt(vec.reduce((sum, v) => sum + v * v, 0));
+  if (norm === 0) return vec;
+  return vec.map((v) => v / norm);
+}
+
 /**
  * Generate a 768-dim embedding vector.
  * Fallback chain:
@@ -35,7 +41,7 @@ export async function generateEmbedding(
       if (truncated.length !== EMBEDDING_DIMENSION) {
         throw new Error(`Unexpected dimension after truncation: ${truncated.length}`);
       }
-      return truncated;
+      return normalizeEmbedding(truncated);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.warn("[embeddings] Gemini failed:", msg);
