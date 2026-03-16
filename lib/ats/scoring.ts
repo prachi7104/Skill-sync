@@ -115,14 +115,14 @@ export function calculateATSScore(
     const weights = getWeights(jd.role_metadata.role_type, jd.role_metadata.seniority_level);
 
     // 1. Hard Skills Score
-    const totalHard = jd.requirements.hard_requirements.technical_skills.length;
+    const totalHard = (jd.requirements?.hard_requirements?.technical_skills ?? []).length;
     const matchedHard = skillAnalysis.matched.filter(m => m.matched_category === "Hard Requirement").length;
     // If JD has no extractable hard requirements, score conservatively at 50
     // (not 100 — we genuinely don't know if the candidate matches)
     const hardScore = totalHard > 0 ? (matchedHard / totalHard) * 100 : 50;
 
     // 2. Soft Skills Score
-    const totalSoft = jd.requirements.soft_requirements.technical_skills.length;
+    const totalSoft = (jd.requirements?.soft_requirements?.technical_skills ?? []).length;
     let softScore = 100;
     if (totalSoft > 0) {
         const matchedSoft = skillAnalysis.matched.filter(m => m.matched_category === "Soft Requirement").length;

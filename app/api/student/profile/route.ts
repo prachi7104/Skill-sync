@@ -150,7 +150,7 @@ export async function PATCH(req: NextRequest) {
         (updatedProfileSnapshot as Record<string, unknown>).email = user.email;
 
         const { score: completeness } = computeCompleteness(updatedProfileSnapshot);
-        updateData.profileCompleteness = completeness;
+        updateData.profileCompleteness = Math.round(completeness);
         updateData.updatedAt = new Date();
 
         // Perform the update

@@ -15,6 +15,17 @@ export function isStudentEmail(email: string): boolean {
   return email.toLowerCase().split("@")[1] === STUDENT_EMAIL_DOMAIN;
 }
 
+function deriveSapFromEmail(email: string): string | null {
+  if (!email.toLowerCase().includes("stu.upes.ac.in")) return null;
+  const username = email.split("@")[0].toLowerCase();
+  const match = username.match(/\.(\d+)$/);
+  if (!match) return null;
+  const digits = match[1];
+  const padded = digits.padStart(6, "0");
+  const prefix = digits.length >= 6 ? "500" : "590";
+  return prefix + padded;
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     // ── Provider 1: Microsoft OAuth (students only) ─────────────────────
@@ -109,6 +120,58 @@ export const authOptions: NextAuthOptions = {
               .where(eq(users.id, existing.id))
               .catch(() => {});
           }
+
+          if (existing.role === "student") {
+            // Try to auto-populate SAP if missing
+            const derivedSap = deriveSapFromEmail(email);
+            if (derivedSap) {
+              // Check if student profile needs SAP populated
+              const [studentRow] = await db.execute(sql`
+                SELECT sap_id FROM students WHERE id = ${existing.id} LIMIT 1
+              `) as unknown as Array<{ sap_id: string | null }>;
+
+              if (studentRow && !studentRow.sap_id) {
+                await db.execute(sql`
+                  UPDATE students SET sap_id = ${derivedSap}, updated_at = NOW()
+                  WHERE id = ${existing.id}
+                  AND sap_id IS NULL
+                `);
+              }
+            }
+
+            // Link student to roster if a matching SAP entry exists
+            const sapToCheck = derivedSap || null;
+            if (sapToCheck) {
+              await db.execute(sql`
+                UPDATE student_roster
+                SET student_id = ${existing.id}, linked_at = NOW()
+                WHERE college_id = (SELECT college_id FROM users WHERE id = ${existing.id})
+                  AND sap_id = ${sapToCheck}
+                  AND student_id IS NULL
+              `).catch(() => {});
+
+              // Also populate profile fields from roster if student data is incomplete
+              const [rosterRow] = await db.execute(sql`
+                SELECT sap_id, roll_no, branch, batch_year, course, full_name
+                FROM student_roster
+                WHERE sap_id = ${sapToCheck}
+                  AND student_id = ${existing.id}
+                LIMIT 1
+              `) as unknown as Array<Record<string, unknown>>;
+
+              if (rosterRow) {
+                await db.execute(sql`
+                  UPDATE students SET
+                    sap_id = COALESCE(sap_id, ${rosterRow.sap_id ?? null}),
+                    roll_no = COALESCE(roll_no, ${rosterRow.roll_no ?? null}),
+                    branch = COALESCE(branch, ${rosterRow.branch ?? null}),
+                    batch_year = COALESCE(batch_year, ${rosterRow.batch_year ?? null}),
+                    updated_at = NOW()
+                  WHERE id = ${existing.id}
+                `).catch(() => {});
+              }
+            }
+          }
           return true;
         }
 
@@ -135,7 +198,12 @@ export const authOptions: NextAuthOptions = {
           })
           .returning();
 
-        await db.insert(students).values({ id: newUser.id, collegeId: college.id });
+        const derivedSapId = deriveSapFromEmail(email);
+        await db.insert(students).values({
+          id: newUser.id,
+          collegeId: college.id,
+          sapId: derivedSapId ?? undefined,
+        });
         return true;
       } catch (error) {
         console.error("[auth] signIn error:", error);
@@ -159,6 +227,21 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
+      // Force re-fetch if collegeId is missing (stale JWT from before college_id was added)
+      if (token.id && (!token.collegeId || token.collegeId === "")) {
+        try {
+          const fresh = await db.query.users.findFirst({
+            where: eq(users.id, token.id as string),
+            columns: { role: true, collegeId: true },
+          });
+          if (fresh) {
+            token.role = fresh.role;
+            token.collegeId = fresh.collegeId ?? "";
+            token.roleCheckedAt = Date.now();
+          }
+        } catch {}
+      }
+
       // Re-fetch role + collegeId once per hour
       const ROLE_REFRESH_MS = 60 * 60 * 1000;
       const lastChecked = (token.roleCheckedAt as number | undefined) ?? 0;
@@ -170,7 +253,7 @@ export const authOptions: NextAuthOptions = {
           });
           if (fresh) {
             token.role = fresh.role;
-            token.collegeId = fresh.collegeId ?? token.collegeId;
+            token.collegeId = fresh.collegeId ?? "";
             token.roleCheckedAt = Date.now();
           }
         } catch {}

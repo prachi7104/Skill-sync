@@ -103,8 +103,7 @@ export async function POST(req: NextRequest) {
                     resource_type: "raw",
                     // Remove the format from public_id — let Cloudinary handle the extension
                     public_id: `${user.id}_${timestamp}`,
-                    // Remove access_mode: "public" — raw files use the secure_url directly
-                    // which is always accessible with your Cloudinary credentials
+                    access_mode: "public",
                     overwrite: true,
                     // Add format explicitly based on file type
                     format: isPdf ? "pdf" : "docx",

@@ -7,6 +7,7 @@ import { StudentProvider } from "@/app/(student)/providers/student-provider";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
 import StudentSidebarNav from "@/components/student/student-sidebar-nav";
+import OnboardingBanner from "@/components/student/onboarding-banner";
 
 export default async function StudentLayout({
     children,
@@ -25,8 +26,32 @@ export default async function StudentLayout({
         }
     }
 
+    const onboardingRequired = !profile?.sapId ||
+        !profile?.rollNo ||
+        !profile?.cgpa ||
+        !profile?.branch ||
+        !profile?.batchYear ||
+        typeof profile?.tenthPercentage !== "number" ||
+        typeof profile?.twelfthPercentage !== "number";
+
+    const requiredCount = [
+        !!profile?.sapId,
+        !!profile?.rollNo,
+        !!profile?.cgpa,
+        !!profile?.branch,
+        !!profile?.batchYear,
+        typeof profile?.tenthPercentage === "number",
+        typeof profile?.twelfthPercentage === "number",
+    ].filter(Boolean).length;
+    const onboardingProgress = Math.round((requiredCount / 7) * 100);
+
     return (
-        <StudentProvider initialStudent={profile} initialUser={user}>
+        <StudentProvider
+            initialStudent={profile}
+            initialUser={user}
+            onboardingRequired={onboardingRequired}
+            onboardingProgress={onboardingProgress}
+        >
             {/* Soft Dark Canvas using Tailwind Slate */}
             <div className="min-h-screen bg-slate-950 flex flex-col font-sans text-slate-200 selection:bg-indigo-500/30">
                 
@@ -45,6 +70,8 @@ export default async function StudentLayout({
                         <SignOutButton />
                     </div>
                 </header>
+
+                <OnboardingBanner />
 
                 <div className="flex flex-1 h-[calc(100vh-64px)] overflow-hidden relative">
                     
