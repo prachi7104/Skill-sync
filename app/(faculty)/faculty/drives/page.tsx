@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, MapPin, IndianRupee, Calendar, ExternalLink } from "lucide-react";
 import { getCompanyColor } from "@/lib/utils/company-color";
 import { TriggerRankingButton } from "@/components/faculty/trigger-ranking-button";
+import { DriveConflictsButton } from "@/components/faculty/drive-conflicts-button";
 import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
 
@@ -86,11 +87,14 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
             Managing {totalDrives} total placement drives
           </p>
         </div>
-        <Button asChild className="gap-2 bg-indigo-600 hover:bg-indigo-700">
-          <Link href="/faculty/drives/new">
-            <Plus className="h-4 w-4" /> Create Drive
-          </Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <DriveConflictsButton />
+          <Button asChild className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+            <Link href="/faculty/drives/new">
+              <Plus className="h-4 w-4" /> Create Drive
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Grid */}

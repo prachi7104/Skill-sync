@@ -745,6 +745,82 @@ export const sandboxConfig = pgTable("sandbox_config", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const companyExperiences = pgTable("company_experiences", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  collegeId: uuid("college_id")
+    .notNull()
+    .references(() => colleges.id, { onDelete: "cascade" }),
+  authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
+  companyName: varchar("company_name", { length: 255 }).notNull(),
+  companyNormalized: varchar("company_normalized", { length: 255 }).notNull(),
+  roleTitle: varchar("role_title", { length: 255 }),
+  driveType: varchar("drive_type", { length: 30 }).default("placement"),
+  outcome: varchar("outcome", { length: 30 }).notNull().default("not_disclosed"),
+  interviewProcess: text("interview_process"),
+  tips: text("tips"),
+  difficulty: integer("difficulty").notNull().default(3),
+  wouldRecommend: boolean("would_recommend"),
+  showName: boolean("show_name").notNull().default(false),
+  isAdminPosted: boolean("is_admin_posted").notNull().default(false),
+  studentName: varchar("student_name", { length: 255 }),
+  studentEmail: varchar("student_email", { length: 320 }),
+  batchYear: integer("batch_year"),
+  category: batchCategoryEnum("category_snapshot"),
+  aiScreenScore: real("ai_screen_score").notNull().default(1),
+  aiScreenPassed: boolean("ai_screen_passed").notNull().default(true),
+  aiScreenReason: text("ai_screen_reason"),
+  aiScreenedAt: timestamp("ai_screened_at", { withTimezone: true }),
+  status: varchar("status", { length: 30 }).notNull().default("pending"),
+  helpfulCount: integer("helpful_count").notNull().default(0),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  rejectedReason: text("rejected_reason"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const companyExperienceVotes = pgTable(
+  "company_experience_votes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    experienceId: uuid("experience_id")
+      .notNull()
+      .references(() => companyExperiences.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    experienceVoteUnique: unique("idx_company_experience_votes_unique").on(table.experienceId, table.userId),
+  }),
+);
+
+export const resources = pgTable("resources", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  collegeId: uuid("college_id")
+    .notNull()
+    .references(() => colleges.id, { onDelete: "cascade" }),
+  authorId: uuid("author_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  section: varchar("section", { length: 20 }).notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body"),
+  bodyFormat: varchar("body_format", { length: 20 }).notNull().default("markdown"),
+  attachmentUrl: text("attachment_url"),
+  attachmentName: varchar("attachment_name", { length: 255 }),
+  attachmentMime: varchar("attachment_mime", { length: 120 }),
+  attachmentSizeKb: integer("attachment_size_kb"),
+  tags: text("tags").array().notNull().default(sql`ARRAY[]::text[]`),
+  companyName: varchar("company_name", { length: 255 }),
+  viewCount: integer("view_count").notNull().default(0),
+  helpfulCount: integer("helpful_count").notNull().default(0),
+  isPublished: boolean("is_published").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Relations (Drizzle relational query API)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -807,6 +883,28 @@ export const sandboxConfigRelations = relations(sandboxConfig, ({ one }) => ({
   college: one(colleges, {
     fields: [sandboxConfig.collegeId],
     references: [colleges.id],
+  }),
+}));
+
+export const companyExperiencesRelations = relations(companyExperiences, ({ one }) => ({
+  college: one(colleges, {
+    fields: [companyExperiences.collegeId],
+    references: [colleges.id],
+  }),
+  author: one(users, {
+    fields: [companyExperiences.authorId],
+    references: [users.id],
+  }),
+}));
+
+export const resourcesRelations = relations(resources, ({ one }) => ({
+  college: one(colleges, {
+    fields: [resources.collegeId],
+    references: [colleges.id],
+  }),
+  author: one(users, {
+    fields: [resources.authorId],
+    references: [users.id],
   }),
 }));
 
