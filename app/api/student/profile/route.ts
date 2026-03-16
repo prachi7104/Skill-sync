@@ -80,6 +80,25 @@ export async function PATCH(req: NextRequest) {
         // Validate - allow partial updates for PATCH
         const validatedData = studentProfileSchema.partial().parse(body);
 
+        const LOCKED_FIELDS = ["batchYear", "sapId"] as const;
+        for (const field of LOCKED_FIELDS) {
+            const incoming = (validatedData as Record<string, unknown>)[field];
+            if (incoming === undefined) continue;
+
+            const current = (profile as Record<string, unknown>)[field];
+            if (current !== null && current !== undefined && current !== "") {
+                if (incoming !== current) {
+                    const fieldLabel = field === "batchYear" ? "Batch year" : "SAP ID";
+                    return NextResponse.json(
+                        {
+                            error: `${fieldLabel} cannot be changed after it has been set. Contact admin if correction is needed.`
+                        },
+                        { status: 400 }
+                    );
+                }
+            }
+        }
+
         // Build update object
         const updateData: Record<string, unknown> = {};
 

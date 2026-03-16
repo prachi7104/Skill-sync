@@ -71,9 +71,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ suggestions: rows.map((row) => row.value), canSubmit });
     }
 
+    const statusFilter = sql`(
+      ce.status = 'published'
+      OR (ce.author_id = ${user.id} AND ce.status IN ('pending', 'ai_approved', 'ai_flagged'))
+    )`;
+
     const whereParts = [
       sql`ce.college_id = ${user.collegeId}`,
-      sql`ce.status = 'published'`,
+      statusFilter,
     ];
 
     if (company) {
@@ -112,6 +117,7 @@ export async function GET(req: NextRequest) {
           ce.category_snapshot,
           ce.helpful_count,
           ce.created_at,
+          (ce.author_id = ${user.id} AND ce.status != 'published') AS is_own_draft,
           EXISTS(
             SELECT 1
             FROM company_experience_votes cev
@@ -140,6 +146,7 @@ export async function GET(req: NextRequest) {
         category_snapshot: string | null;
         helpful_count: number;
         created_at: string;
+        is_own_draft: boolean;
         has_voted: boolean;
       }>;
 

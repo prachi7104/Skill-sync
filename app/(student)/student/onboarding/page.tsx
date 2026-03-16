@@ -32,7 +32,7 @@ interface StepDef {
 const STEPS: StepDef[] = [
   {
     key: "identity",
-    label: "Identity",
+    label: "Personal",
     description: "Your university IDs and contact",
     required: ["sapId", "rollNo"],
   },
@@ -62,7 +62,7 @@ const STEPS: StepDef[] = [
   },
   {
     key: "extras",
-    label: "Extras",
+    label: "Achievements",
     description: "Certifications, research, profiles",
     required: [],
   },
@@ -403,6 +403,7 @@ export default function OnboardingPage() {
         });
         if (!res.ok) throw new Error("save-failed");
         setSaveState("saved");
+        isUserChangeRef.current = false;
         setTimeout(() => setSaveState("idle"), 2000);
       } catch {
         setSaveState("error");
@@ -627,7 +628,13 @@ export default function OnboardingPage() {
                 autofillVersion={autofillVersion}
               />
             )}
-            {activeStep === "academics" && <AcademicsStep form={form} setField={setField} />}
+            {activeStep === "academics" && (
+              <AcademicsStep
+                form={form}
+                setField={setField}
+                student={student as Record<string, unknown> | null}
+              />
+            )}
             {activeStep === "skills" && (
               <SkillsStep form={form} setField={setField} autofillVersion={autofillVersion} />
             )}
@@ -810,15 +817,22 @@ function IdentityStep({
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FormField label="SAP ID" required hint="9-digit number, e.g. 500125613">
-          <Input
-            value={form.sapId}
-            onChange={(e) => setField("sapId", e.target.value)}
-            placeholder="500125613"
-            maxLength={9}
-            className={cn("border-slate-700 bg-slate-800 text-white", autofillClass)}
-          />
-        </FormField>
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium text-slate-200">
+            SAP ID <span className="text-slate-500 text-xs ml-1">(auto-filled from university email)</span>
+          </Label>
+          <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5">
+            <span className="text-sm font-mono text-white flex-1">
+              {form.sapId || <span className="text-slate-500 italic">Deriving from email...</span>}
+            </span>
+            <Lock className="w-4 h-4 text-slate-500 shrink-0" />
+          </div>
+          {form.sapId && (
+            <p className="text-xs text-slate-500">
+              Derived from your university email. Contact admin if incorrect.
+            </p>
+          )}
+        </div>
         <FormField label="Roll Number" required hint="R followed by 10 digits, e.g. R2142212345">
           <Input
             value={form.rollNo}
@@ -859,9 +873,11 @@ function IdentityStep({
 function AcademicsStep({
   form,
   setField,
+  student,
 }: {
   form: ProfileForm;
   setField: <K extends keyof ProfileForm>(k: K, v: ProfileForm[K]) => void;
+  student: Record<string, unknown> | null;
 }) {
   return (
     <div className="space-y-6">
@@ -894,19 +910,26 @@ function AcademicsStep({
           </select>
         </FormField>
 
-        <FormField label="Batch Year" required hint="Year of graduation">
-          <select
-            value={form.batchYear}
-            onChange={(e) => setField("batchYear", e.target.value)}
-            className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
-          >
-            <option value="">Select year</option>
-            {BATCH_YEARS.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
+        <FormField label="Batch Year" required hint="Year of graduation - cannot be changed after saving">
+          {student?.batchYear ? (
+            <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5">
+              <span className="text-sm text-white flex-1">{String(student.batchYear)}</span>
+              <Lock className="w-4 h-4 text-slate-500 shrink-0" />
+            </div>
+          ) : (
+            <select
+              value={form.batchYear}
+              onChange={(e) => setField("batchYear", e.target.value)}
+              className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500"
+            >
+              <option value="">Select year</option>
+              {BATCH_YEARS.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          )}
         </FormField>
 
         <FormField label="Semester">
