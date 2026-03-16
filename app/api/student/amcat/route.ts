@@ -39,7 +39,17 @@ export async function GET() {
     `) as unknown as Array<Record<string, unknown>>;
 
     if (!result) {
-      return NextResponse.json({ hasAmcat: false });
+      return NextResponse.json({ hasAmcat: false, reason: "no_session" });
+    }
+
+    if (result && result.score === -1) {
+      return NextResponse.json({
+        hasAmcat: true,
+        ...result,
+        isAbsent: true,
+        score: null,
+        category: null,
+      });
     }
 
     return NextResponse.json({ hasAmcat: true, ...result });

@@ -1,6 +1,7 @@
 import "server-only";
 
 export interface AmcatRowRaw {
+  email: string | null;
   sap_id: string;
   full_name: string;
   course: string | null;
@@ -88,6 +89,10 @@ export function validateWeights(weights: AmcatScoreWeights): { valid: boolean; r
 }
 
 const COLUMN_MAP: Record<string, keyof AmcatRowRaw> = {
+  "email id": "email",
+  "email": "email",
+  "emailid": "email",
+  "email_id": "email",
   "full name": "full_name",
   "name": "full_name",
   "sapid": "sap_id",
@@ -133,12 +138,6 @@ function normalizeHeader(header: string): string {
   return header.toLowerCase().trim().replace(/\s+/g, " ");
 }
 
-function parseScore(value: unknown): number | null {
-  if (value === null || value === undefined || value === "") return null;
-  const parsed = Number(value);
-  return Number.isNaN(parsed) ? null : Math.round(parsed);
-}
-
 function parseCategory(value: unknown): "alpha" | "beta" | "gamma" | null {
   const parsed = String(value ?? "").toLowerCase().trim();
   if (parsed === "alpha") return "alpha";
@@ -158,7 +157,7 @@ export function parseAmcatRows(
 
   const unmapped = headers.filter((header) => {
     const key = normalizeHeader(header);
-    return !COLUMN_MAP[key] && !["formula used", "bifurcation basis"].includes(key);
+    return !COLUMN_MAP[key] && !["formula used", "bifurcation basis", ""].includes(key);
   });
 
   const data: AmcatRowRaw[] = [];
@@ -166,6 +165,15 @@ export function parseAmcatRows(
 
   for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
     const rawRow = rows[rowIndex] as unknown[];
+    const sapColumnIndex = mappedHeaders.findIndex((header) => header === "sap_id");
+    const sapRaw = sapColumnIndex >= 0 ? rawRow[sapColumnIndex] : null;
+    const sapStr = String(sapRaw ?? "").trim().replace(/\s+/g, "");
+
+    // Skip footer/metadata rows.
+    if (!sapStr || !/^\d{8,9}$/.test(sapStr)) {
+      continue;
+    }
+
     const obj: Partial<AmcatRowRaw> = {};
 
     for (let columnIndex = 0; columnIndex < mappedHeaders.length; columnIndex++) {
@@ -174,25 +182,39 @@ export function parseAmcatRows(
 
       const value = rawRow[columnIndex];
 
-      if (["cs_score", "cp_score", "automata_score", "automata_fix_score", "quant_score", "csv_total"].includes(field)) {
-        (obj as Record<string, unknown>)[field] = parseScore(value);
+      if (["cs_score", "cp_score", "automata_score", "automata_fix_score", "quant_score"].includes(field)) {
+        const strVal = String(value ?? "").trim();
+        if (strVal === "" || strVal === "-") {
+          (obj as Record<string, unknown>)[field] = null;
+        } else {
+          const n = Number(strVal);
+          (obj as Record<string, unknown>)[field] = Number.isNaN(n) ? null : Math.round(n);
+        }
+      } else if (field === "csv_total") {
+        const strVal = String(value ?? "").trim();
+        if (strVal === "" || strVal === "-") {
+          obj.csv_total = null;
+        } else {
+          const n = Number(strVal);
+          obj.csv_total = Number.isNaN(n) ? null : n;
+        }
       } else if (field === "attendance_pct") {
-        obj.attendance_pct = value !== null && value !== "" ? Number(value) : null;
+        const strVal = String(value ?? "").trim();
+        obj.attendance_pct = strVal ? Number(strVal) || null : null;
       } else if (field === "csv_category") {
         obj.csv_category = parseCategory(value);
+      } else if (field === "email") {
+        const emailStr = String(value ?? "").trim();
+        obj.email = emailStr || null;
       } else {
-        (obj as Record<string, unknown>)[field] = value !== null && value !== "" ? String(value).trim() : null;
+        (obj as Record<string, unknown>)[field] =
+          value !== null && value !== "" && value !== undefined ? String(value).trim() : null;
       }
     }
 
-    const sapId = obj.sap_id?.replace(/\s+/g, "") ?? "";
-    if (!sapId || !/^\d{6,9}$/.test(sapId)) {
-      errors.push(`Row ${rowIndex + 2}: Invalid or missing SAP ID "${sapId}"`);
-      continue;
-    }
-
     data.push({
-      sap_id: sapId,
+      email: obj.email ?? null,
+      sap_id: sapStr,
       full_name: obj.full_name ?? "Unknown",
       course: obj.course ?? null,
       branch: obj.branch ?? null,
@@ -217,6 +239,7 @@ export interface AmcatProcessedRow extends AmcatRowRaw {
   computed_category: "alpha" | "beta" | "gamma";
   final_category: "alpha" | "beta" | "gamma";
   rank_in_session: number;
+  is_absent: boolean;
 }
 
 export function processAmcatData(
@@ -224,26 +247,46 @@ export function processAmcatData(
   weights: AmcatScoreWeights = DEFAULT_WEIGHTS,
   thresholds: AmcatCategoryThresholds = DEFAULT_THRESHOLDS,
 ): AmcatProcessedRow[] {
-  const withScores = raw
-    .filter((row) => row.status?.toLowerCase() !== "absent")
-    .map((row) => {
-      const computed_total = computeAmcatTotal(row, weights);
-      const computed_category = computeAmcatCategory(computed_total, thresholds);
+  const withScores = raw.map((row) => {
+    const isAbsent = row.status?.toLowerCase() === "absent" || (row.csv_total !== null && row.csv_total < 0);
+
+    if (isAbsent) {
       return {
         ...row,
-        computed_total,
-        computed_category,
-        final_category: computed_category,
-        rank_in_session: 0,
+        computed_total: -1,
+        computed_category: "gamma" as const,
+        final_category: "gamma" as const,
+        rank_in_session: 9999,
+        is_absent: true,
       };
-    });
+    }
 
-  withScores.sort((a, b) => b.computed_total - a.computed_total);
-  withScores.forEach((row, index) => {
+    const computed_total = computeAmcatTotal(row, weights);
+    const computed_category = computeAmcatCategory(computed_total, thresholds);
+    return {
+      ...row,
+      computed_total,
+      computed_category,
+      final_category: computed_category,
+      rank_in_session: 0,
+      is_absent: false,
+    };
+  });
+
+  const presentStudents = withScores.filter((row) => !row.is_absent);
+  const absentStudents = withScores.filter((row) => row.is_absent);
+
+  presentStudents.sort((a, b) => b.computed_total - a.computed_total);
+  presentStudents.forEach((row, index) => {
     row.rank_in_session = index + 1;
   });
 
-  return withScores;
+  const lastRank = presentStudents.length;
+  absentStudents.forEach((row, index) => {
+    row.rank_in_session = lastRank + index + 1;
+  });
+
+  return [...presentStudents, ...absentStudents];
 }
 
 export function computeCategoryDistribution(rows: AmcatProcessedRow[]) {
