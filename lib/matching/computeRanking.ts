@@ -29,9 +29,9 @@ import "server-only";
 
 import pLimit from "p-limit";
 import { db } from "@/lib/db";
-import { students, drives, rankings } from "@/lib/db/schema";
+import { students, drives, rankings, users } from "@/lib/db/schema";
 import type { Skill, Project, WorkExperience, ResearchPaper, Achievement, CodingProfile } from "@/lib/db/schema";
-import { eq, and, gte, inArray, type SQL, asc, sql } from "drizzle-orm";
+import { eq, asc, sql } from "drizzle-orm";
 import {
   generateEmbedding,
   composeStudentEmbeddingText,
@@ -42,6 +42,7 @@ import {
 } from "@/lib/embeddings";
 import {
   computeAllScores,
+  checkEligibility,
   generateDetailedExplanation,
   type EligibilityCriteria,
   type StudentProfile,
@@ -90,7 +91,7 @@ interface StudentForRanking {
   softSkills: string[] | null;
   codingProfiles: CodingProfile[] | null;
   embedding: number[] | null;
-  resumeUrl: string | null;
+  profileCompleteness: number | null;
 }
 
 // ── DB helpers ──────────────────────────────────────────────────────────────
@@ -100,8 +101,22 @@ interface StudentForRanking {
  */
 async function fetchDrive(driveId: string) {
   const result = await db
-    .select()
+    .select({
+      id: drives.id,
+      createdBy: drives.createdBy,
+      company: drives.company,
+      roleTitle: drives.roleTitle,
+      rawJd: drives.rawJd,
+      parsedJd: drives.parsedJd,
+      minCgpa: drives.minCgpa,
+      eligibleBranches: drives.eligibleBranches,
+      eligibleBatchYears: drives.eligibleBatchYears,
+      eligibleCategories: drives.eligibleCategories,
+      jdEmbedding: drives.jdEmbedding,
+      collegeId: users.collegeId,
+    })
     .from(drives)
+    .innerJoin(users, eq(drives.createdBy, users.id))
     .where(eq(drives.id, driveId))
     .limit(1);
 
@@ -113,56 +128,30 @@ async function fetchDrive(driveId: string) {
  * DB-level pre-filter (inclusive with NULL fallback), further filtering by
  * exact criteria is done in `checkEligibility`.
  */
-async function fetchEligibleStudents(
-  criteria: EligibilityCriteria,
+async function fetchAllStudentsForCollege(
+  collegeId: string,
 ): Promise<StudentForRanking[]> {
-  const conditions: (SQL | undefined)[] = [];
-
-  if (criteria.minCgpa !== null && criteria.minCgpa !== undefined) {
-    conditions.push(gte(students.cgpa, criteria.minCgpa));
-  }
-
-  if (criteria.eligibleBranches && criteria.eligibleBranches.length > 0) {
-    conditions.push(inArray(students.branch, criteria.eligibleBranches));
-  }
-
-  if (criteria.eligibleBatchYears && criteria.eligibleBatchYears.length > 0) {
-    conditions.push(inArray(students.batchYear, criteria.eligibleBatchYears));
-  }
-
-  if (criteria.eligibleCategories && criteria.eligibleCategories.length > 0) {
-    conditions.push(inArray(students.category, criteria.eligibleCategories));
-  }
-
-  const selectColumns = {
-    id: students.id,
-    cgpa: students.cgpa,
-    branch: students.branch,
-    batchYear: students.batchYear,
-    category: students.category,
-    skills: students.skills,
-    projects: students.projects,
-    workExperience: students.workExperience,
-    certifications: students.certifications,
-    researchPapers: students.researchPapers,
-    achievements: students.achievements,
-    softSkills: students.softSkills,
-    codingProfiles: students.codingProfiles,
-    embedding: students.embedding,
-    resumeUrl: students.resumeUrl,
-  };
-
-  const results =
-    conditions.length > 0
-      ? await db
-          .select(selectColumns)
-          .from(students)
-          .where(and(...conditions))
-          .orderBy(asc(students.createdAt))
-      : await db
-          .select(selectColumns)
-          .from(students)
-          .orderBy(asc(students.createdAt));
+  const results = await db
+    .select({
+      id: students.id,
+      cgpa: students.cgpa,
+      branch: students.branch,
+      batchYear: students.batchYear,
+      category: students.category,
+      skills: students.skills,
+      projects: students.projects,
+      workExperience: students.workExperience,
+      certifications: students.certifications,
+      researchPapers: students.researchPapers,
+      achievements: students.achievements,
+      softSkills: students.softSkills,
+      codingProfiles: students.codingProfiles,
+      embedding: students.embedding,
+      profileCompleteness: students.profileCompleteness,
+    })
+    .from(students)
+    .where(eq(students.collegeId, collegeId))
+    .orderBy(asc(students.createdAt));
 
   return results.map((s: any) => ({
     id: s.id,
@@ -179,7 +168,7 @@ async function fetchEligibleStudents(
     softSkills: s.softSkills,
     codingProfiles: s.codingProfiles,
     embedding: s.embedding,
-    resumeUrl: s.resumeUrl ?? null,
+    profileCompleteness: s.profileCompleteness ?? 0,
   }));
 }
 
@@ -369,17 +358,21 @@ export async function computeRanking(
     eligibleCategories: drive.eligibleCategories,
   };
 
-  // 3. Fetch candidate students (DB pre-filtered)
-  let allStudents = await fetchEligibleStudents(eligibility);
+  if (!drive.collegeId) {
+    throw new Error(`Drive ${driveId} creator has no college context`);
+  }
+
+  // 3. Fetch all students in the same college
+  let allStudents = await fetchAllStudentsForCollege(drive.collegeId);
   // eslint-disable-next-line no-console
-  console.log(`[Ranking] Found ${allStudents.length} candidate students`);
+  console.log(`[Ranking] Total students in college: ${allStudents.length}`);
   const totalStudentsFetched = allStudents.length;
 
-  const MAX_STUDENTS_PER_RANKING_RUN = 200;
+  const MAX_STUDENTS_PER_RANKING_RUN = 5000;
   if (allStudents.length > MAX_STUDENTS_PER_RANKING_RUN) {
     // eslint-disable-next-line no-console
     console.warn(
-      `[Ranking] Student cap applied — processing ${MAX_STUDENTS_PER_RANKING_RUN}/${allStudents.length} students. Upgrade server for full ranking.`,
+      `[Ranking] Cap applied: ${MAX_STUDENTS_PER_RANKING_RUN}/${allStudents.length}`,
       { driveId },
     );
     allStudents = allStudents.slice(0, MAX_STUDENTS_PER_RANKING_RUN);
@@ -408,6 +401,8 @@ export async function computeRanking(
     studentId: string;
     scoring: ScoringResult;
     cgpa: number | null;
+    profileCompleteness: number;
+    isEligible: boolean;
   };
 
   const scoredStudents: ScoredStudent[] = [];
@@ -442,11 +437,56 @@ export async function computeRanking(
 
     const { student, embedding: studentEmbedding } = result.value;
 
+    const eligibilityResult = checkEligibility(
+      {
+        cgpa: student.cgpa,
+        branch: student.branch,
+        batchYear: student.batchYear,
+        category: student.category,
+        skillNames: [],
+        projectKeywords: [],
+      },
+      eligibility,
+    );
+
+    if (!eligibilityResult.isEligible) {
+      scoredStudents.push({
+        studentId: student.id,
+        scoring: {
+          matchScore: 0,
+          semanticScore: 0,
+          structuredScore: 0,
+          matchedSkills: [],
+          missingSkills: [],
+          shortExplanation: `Ineligible: ${eligibilityResult.reason}`,
+          isEligible: false,
+          ineligibilityReason: eligibilityResult.reason ?? "Does not meet drive criteria",
+        },
+        cgpa: student.cgpa,
+        profileCompleteness: student.profileCompleteness ?? 0,
+        isEligible: false,
+      });
+      continue;
+    }
+
     if (!studentEmbedding) {
       skippedNoEmbedding++;
-      errors.push(
-        `Skipped student ${student.id}: empty profile, cannot generate embedding`,
-      );
+      scoredStudents.push({
+        studentId: student.id,
+        scoring: {
+          matchScore: 0,
+          semanticScore: 0,
+          structuredScore: 0,
+          matchedSkills: [],
+          missingSkills: [],
+          shortExplanation: "Profile incomplete - no embedding generated yet",
+          isEligible: true,
+          ineligibilityReason: undefined,
+        },
+        cgpa: student.cgpa,
+        profileCompleteness: student.profileCompleteness ?? 0,
+        isEligible: true,
+      });
       continue;
     }
 
@@ -480,6 +520,8 @@ export async function computeRanking(
         studentId: student.id,
         scoring,
         cgpa: student.cgpa,
+        profileCompleteness: student.profileCompleteness ?? 0,
+        isEligible: true,
       });
     } catch (err: unknown) {
       const errorMsg = `Failed to process student ${student.id}: ${err instanceof Error ? err.message : String(err)}`;
@@ -493,19 +535,9 @@ export async function computeRanking(
     `[Ranking] Computed scores for ${scoredStudents.length} students`,
   );
 
-  // 7. Filter: only eligible students appear in rankings
-  const eligibleStudents = scoredStudents.filter(
-    (s) => s.scoring.isEligible,
-  );
-
-  // eslint-disable-next-line no-console
-  console.log(
-    `[Ranking] Eligible: ${eligibleStudents.length} / ${scoredStudents.length}`,
-  );
-
-  // 8. Sort with tie-breaking:
+  // 7. Sort all students with tie-breaking:
   //    matchScore DESC → semanticScore DESC → CGPA DESC → UUID ASC
-  eligibleStudents.sort((a, b) => {
+  scoredStudents.sort((a, b) => {
     // Primary: matchScore DESC
     if (a.scoring.matchScore !== b.scoring.matchScore) {
       return b.scoring.matchScore - a.scoring.matchScore;
@@ -524,18 +556,14 @@ export async function computeRanking(
     return a.studentId.localeCompare(b.studentId);
   });
 
-  // 9. Assign rank positions (1-indexed)
-  const rankedWithPositions = eligibleStudents.map((r, index) => ({
+  // 8. Assign rank positions (1-indexed)
+  const rankedWithPositions = scoredStudents.map((r, index) => ({
     ...r,
     rankPosition: index + 1,
   }));
 
-  // 10. Persist rankings in a single transaction (DELETE + INSERT = idempotent)
+  // 9. Persist rankings in a single upsert transaction
   await db.transaction(async (tx: any) => {
-    // Clear existing rankings for this drive
-    await tx.delete(rankings).where(eq(rankings.driveId, driveId));
-
-    // Insert new rankings
     if (rankedWithPositions.length > 0) {
       const rankingRows = rankedWithPositions.map((r) => ({
         driveId,
@@ -553,9 +581,28 @@ export async function computeRanking(
           rankPosition: r.rankPosition,
         }),
         rankPosition: r.rankPosition,
+        isEligible: r.isEligible,
+        ineligibilityReason: r.scoring.ineligibilityReason ?? null,
+        profileCompletenessAtRank: r.profileCompleteness ?? 0,
       }));
 
-      await tx.insert(rankings).values(rankingRows);
+      await tx.insert(rankings).values(rankingRows).onConflictDoUpdate({
+        target: [rankings.driveId, rankings.studentId],
+        set: {
+          matchScore: sql`excluded.match_score`,
+          semanticScore: sql`excluded.semantic_score`,
+          structuredScore: sql`excluded.structured_score`,
+          matchedSkills: sql`excluded.matched_skills`,
+          missingSkills: sql`excluded.missing_skills`,
+          shortExplanation: sql`excluded.short_explanation`,
+          detailedExplanation: sql`excluded.detailed_explanation`,
+          rankPosition: sql`excluded.rank_position`,
+          isEligible: sql`excluded.is_eligible`,
+          ineligibilityReason: sql`excluded.ineligibility_reason`,
+          profileCompletenessAtRank: sql`excluded.profile_completeness_at_rank`,
+          updatedAt: new Date(),
+        },
+      });
     }
   });
 
@@ -573,7 +620,7 @@ export async function computeRanking(
   return {
     driveId,
     totalStudents: totalStudentsFetched,
-    eligibleStudents: eligibleStudents.length,
+    eligibleStudents: scoredStudents.filter((s) => s.isEligible).length,
     rankedStudents: rankedWithPositions.length,
     wasTruncated: totalStudentsFetched > MAX_STUDENTS_PER_RANKING_RUN,
     truncatedAt: MAX_STUDENTS_PER_RANKING_RUN,

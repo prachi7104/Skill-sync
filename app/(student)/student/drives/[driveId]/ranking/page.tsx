@@ -34,6 +34,7 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
       id: drives.id,
       company: drives.company,
       roleTitle: drives.roleTitle,
+      rankingsVisible: drives.rankingsVisible,
     })
     .from(drives)
     .where(eq(drives.id, driveId))
@@ -41,6 +42,14 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
 
   if (!drive) {
     notFound();
+  }
+
+  if (!drive.rankingsVisible && user.role === "student") {
+    return (
+      <div className="text-center p-12">
+        <p className="text-slate-400">Rankings for this drive have not been published yet.</p>
+      </div>
+    );
   }
 
   // ── Phase 5.5: Profile gate + rankings existence ───────────────────────

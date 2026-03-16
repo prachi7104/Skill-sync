@@ -32,7 +32,7 @@ export default function OnboardingBanner() {
         href="/student/onboarding"
         className="text-xs font-bold text-amber-400 hover:text-amber-300 whitespace-nowrap ml-2"
       >
-        Continue setup ->
+        Continue setup &rarr;
       </Link>
     </div>
   );

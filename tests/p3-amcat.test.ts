@@ -54,6 +54,7 @@ describe("AMCAT score computation", () => {
   it("should assign ranks with higher score as better rank", () => {
     const rows = [
       {
+        email: null,
         sap_id: "500001",
         full_name: "A",
         status: "Present",
@@ -70,6 +71,7 @@ describe("AMCAT score computation", () => {
         attendance_pct: null,
       },
       {
+        email: null,
         sap_id: "500002",
         full_name: "B",
         status: "Present",
@@ -147,12 +149,12 @@ describe("CSV column mapping", () => {
     expect(data[0].cs_score).toBeNull();
   });
 
-  it("should reject rows with invalid SAP IDs", () => {
+  it("should skip rows with invalid SAP IDs", () => {
     const headers = ["SAPID", "Full Name"];
     const rows = [["INVALID", "Test"]];
     const { data, errors } = parseAmcatRows(headers, rows);
 
     expect(data).toHaveLength(0);
-    expect(errors).toHaveLength(1);
+    expect(errors).toHaveLength(0);
   });
 });

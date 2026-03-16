@@ -504,6 +504,15 @@ export const rankings = pgTable("rankings", {
   /** Skills the JD requires that the student is missing. */
   missingSkills: jsonb("missing_skills").$type<string[]>().notNull(),
 
+  /** Whether the student met drive eligibility criteria at ranking time. */
+  isEligible: boolean("is_eligible").notNull().default(true),
+
+  /** Human-readable reason for ineligibility. */
+  ineligibilityReason: text("ineligibility_reason"),
+
+  /** Snapshot of profile completeness score when ranking was computed. */
+  profileCompletenessAtRank: integer("profile_completeness_at_rank"),
+
   // ── Explanations ──────────────────────────────────────────────────────────
 
   /**
