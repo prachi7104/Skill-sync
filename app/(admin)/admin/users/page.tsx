@@ -446,6 +446,7 @@ export default function AdminUsersPage() {
               <Input
                 id="fac-password"
                 type="password"
+                autoComplete="new-password"
                 placeholder={autoGeneratePassword ? "Auto-generated strong password" : "Min 8 chars, 1 uppercase, 1 number"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
