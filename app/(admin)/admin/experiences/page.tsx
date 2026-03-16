@@ -24,6 +24,10 @@ type ModerationRow = {
   ai_screen_score: number | null;
   ai_screen_reason: string | null;
   created_at: string;
+  updated_at: string;
+  author_real_name: string | null;
+  author_email: string | null;
+  reviewed_by_name: string | null;
 };
 
 export default function AdminExperiencesPage() {
@@ -105,10 +109,16 @@ export default function AdminExperiencesPage() {
                 <div>
                   <p className="font-bold text-white">{row.student_name ?? "Unknown student"}</p>
                   <p className="text-xs text-slate-400">{row.student_email ?? "No email stored"}</p>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Author: {row.author_real_name ?? "System"} {row.author_email ? `(${row.author_email})` : ""}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-white">{row.company_name}</p>
                   <p className="text-xs text-slate-400">{row.role_title ?? "Unknown role"}</p>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Created: {new Date(row.created_at).toLocaleString("en-IN")}
+                  </p>
                 </div>
               </div>
               {row.interview_process ? <div><p className="mb-1 text-xs font-bold uppercase text-slate-500">Interview Process</p><p className="line-clamp-4 text-sm text-slate-300">{row.interview_process}</p></div> : null}
@@ -133,6 +143,10 @@ export default function AdminExperiencesPage() {
               </CardHeader>
               <CardContent className="text-sm text-slate-300">
                 <p>{row.student_name ?? "Anonymous"}</p>
+                <p className="mt-1 text-xs text-slate-500">Author: {row.author_real_name ?? "System"} {row.author_email ? `(${row.author_email})` : ""}</p>
+                <p className="mt-1 text-xs text-slate-500">Created: {new Date(row.created_at).toLocaleString("en-IN")}</p>
+                <p className="mt-1 text-xs text-slate-500">Updated: {new Date(row.updated_at).toLocaleString("en-IN")}</p>
+                {row.reviewed_by_name ? <p className="mt-1 text-xs text-slate-500">Reviewed by: {row.reviewed_by_name}</p> : null}
               </CardContent>
             </Card>
           ))}

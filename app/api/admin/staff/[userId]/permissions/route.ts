@@ -61,7 +61,12 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { grantedComponents } = body as { grantedComponents?: unknown };
+    const { grantedComponents, department, designation, isActive } = body as {
+        grantedComponents?: unknown;
+        department?: string | null;
+        designation?: string | null;
+        isActive?: boolean;
+    };
 
     if (!Array.isArray(grantedComponents)) {
         return NextResponse.json(
@@ -85,6 +90,9 @@ export async function PUT(
         UPDATE staff_profiles
         SET
             granted_components = ${finalComponents}::staff_component[],
+            department = COALESCE(${department ?? null}, department),
+            designation = COALESCE(${designation ?? null}, designation),
+            is_active = COALESCE(${isActive ?? null}, is_active),
             updated_at = NOW()
         WHERE user_id = ${params.userId}
         AND college_id = ${session.user.collegeId}
@@ -96,5 +104,11 @@ export async function PUT(
         await redis.del(`staff_perms:${params.userId}`).catch(() => {});
     }
 
-    return NextResponse.json({ success: true, grantedComponents: finalComponents });
+    return NextResponse.json({
+        success: true,
+        grantedComponents: finalComponents,
+        department: department ?? null,
+        designation: designation ?? null,
+        isActive: isActive ?? null,
+    });
 }

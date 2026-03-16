@@ -57,9 +57,14 @@ export async function GET(req: NextRequest) {
         ce.student_name,
         ce.student_email,
         ce.created_at,
+        ce.updated_at,
         ce.published_at,
-        ce.rejected_reason
+        ce.rejected_reason,
+        u.name AS author_real_name,
+        u.email AS author_email,
+        NULL::text AS reviewed_by_name
       FROM company_experiences ce
+      LEFT JOIN users u ON u.id = ce.author_id
       WHERE ce.college_id = ${user.collegeId}
         AND ${whereClause}
       ORDER BY ce.created_at DESC

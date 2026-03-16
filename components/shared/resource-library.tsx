@@ -40,6 +40,7 @@ type ResourceRow = {
   attachment_size_kb: number | null;
   tags: string[];
   company_name: string | null;
+  status?: "draft" | "published" | "archived";
   view_count: number;
   helpful_count: number;
   created_at: string;
@@ -54,6 +55,8 @@ export default function ResourceLibrary() {
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [canCreate, setCanCreate] = useState(false);
+  const [viewerRole, setViewerRole] = useState<"student" | "faculty" | "admin" | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published" | "archived">("all");
   const [selected, setSelected] = useState<ResourceRow | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -62,6 +65,7 @@ export default function ResourceLibrary() {
     body: "",
     tags: "",
     companyName: "",
+    status: "published" as "draft" | "published",
     file: null as File | null,
   });
 
@@ -74,15 +78,17 @@ export default function ResourceLibrary() {
       setLoading(true);
       const params = new URLSearchParams({ section, category });
       if (search) params.set("q", search);
+      if (statusFilter !== "all") params.set("status", statusFilter);
       const res = await fetch(`/api/resources?${params.toString()}`);
       const json = await res.json();
       setResources(json.resources ?? []);
       setCanCreate(Boolean(json.canCreate));
+      setViewerRole((json.viewerRole ?? null) as "student" | "faculty" | "admin" | null);
       setLoading(false);
     }
 
     load().catch(() => setLoading(false));
-  }, [category, search, section]);
+  }, [category, search, section, statusFilter]);
 
   async function openResource(resource: ResourceRow) {
     setSelected(resource);
@@ -100,6 +106,7 @@ export default function ResourceLibrary() {
     body.append("bodyFormat", "markdown");
     body.append("tags", form.tags);
     body.append("companyName", form.companyName);
+    body.append("status", form.status);
     if (form.file) body.append("file", form.file);
 
     const res = await fetch("/api/resources", { method: "POST", body });
@@ -111,9 +118,9 @@ export default function ResourceLibrary() {
       return;
     }
 
-    toast.success("Resource created");
+    toast.success(form.status === "draft" ? "Resource saved as draft" : "Resource created");
     setCreateOpen(false);
-    setForm({ title: "", body: "", tags: "", companyName: "", file: null });
+    setForm({ title: "", body: "", tags: "", companyName: "", status: "published", file: null });
     const refresh = await fetch(`/api/resources?section=${section}&category=${category}`);
     const refreshed = await refresh.json();
     setResources(refreshed.resources ?? []);
@@ -140,6 +147,25 @@ export default function ResourceLibrary() {
           <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
             <aside className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/50 p-4">
               <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search resources" className="border-white/10 bg-slate-950 text-slate-100" />
+              {(viewerRole === "faculty" || viewerRole === "admin") ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {(["all", "published", "draft", "archived"] as const).map((statusKey) => (
+                    <button
+                      key={statusKey}
+                      type="button"
+                      onClick={() => setStatusFilter(statusKey)}
+                      className={cn(
+                        "rounded-xl px-3 py-2 text-xs font-semibold",
+                        statusFilter === statusKey
+                          ? "bg-indigo-600 text-white"
+                          : "bg-slate-950 text-slate-300 hover:bg-slate-800"
+                      )}
+                    >
+                      {statusKey === "all" ? "All" : statusKey.charAt(0).toUpperCase() + statusKey.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               <div className="space-y-2">
                 {sideCategories.map((item) => (
                   <button key={item} type="button" onClick={() => setCategory(item)} className={cn("w-full rounded-xl px-4 py-3 text-left text-sm font-semibold", category === item ? "bg-indigo-600 text-white" : "bg-slate-950 text-slate-300 hover:bg-slate-800")}>{formatCategoryLabel(item)}</button>
@@ -156,6 +182,11 @@ export default function ResourceLibrary() {
                     <div className="min-w-0 flex-1">
                       <div className="mb-2 flex items-center gap-2">
                         <Badge className="border border-white/10 bg-slate-800 text-slate-200">{formatCategoryLabel(resource.category)}</Badge>
+                        {resource.status && resource.status !== "published" ? (
+                          <Badge className="border border-amber-500/30 bg-amber-500/10 text-amber-300">
+                            {resource.status.toUpperCase()}
+                          </Badge>
+                        ) : null}
                         {resource.attachment_url ? <Upload className="h-3.5 w-3.5 text-slate-400" /> : null}
                       </div>
                       <h3 className="text-sm font-bold leading-tight text-white">{resource.title}</h3>
@@ -232,6 +263,19 @@ export default function ResourceLibrary() {
                 <Input type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={(event) => setForm((current) => ({ ...current, file: event.target.files?.[0] ?? null }))} className="border-white/10 bg-slate-900 text-slate-100" />
               </div>
             </div>
+            {viewerRole === "faculty" ? (
+              <div className="space-y-2">
+                <Label>Publish Status</Label>
+                <select
+                  value={form.status}
+                  onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as "draft" | "published" }))}
+                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                >
+                  <option value="published">Publish now</option>
+                  <option value="draft">Save as draft</option>
+                </select>
+              </div>
+            ) : null}
             <div className="space-y-2 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
               <Label>Preview</Label>
               {form.body ? <MarkdownRenderer content={form.body} /> : <p className="text-sm text-slate-400">Markdown preview will appear here.</p>}

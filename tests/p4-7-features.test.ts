@@ -9,6 +9,8 @@ describe("phases 4-7 feature coverage", () => {
       email: "student@example.com",
       branch: "CSE",
       batchYear: 2026,
+      tenthPercentage: 91,
+      twelfthPercentage: 89,
       skills: [
         { name: "TypeScript", proficiency: 3 },
         { name: "React", proficiency: 3 },

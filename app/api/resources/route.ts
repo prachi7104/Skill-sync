@@ -16,6 +16,7 @@ const resourceSchema = z.object({
   bodyFormat: z.enum(["markdown", "text"]).optional().nullable(),
   tags: z.array(z.string()).optional().nullable(),
   companyName: z.string().max(255).optional().nullable(),
+  status: z.enum(["draft", "published", "archived"]).optional(),
 });
 
 export const dynamic = "force-dynamic";
@@ -32,14 +33,25 @@ export async function GET(req: NextRequest) {
     const section = url.searchParams.get("section");
     const category = url.searchParams.get("category");
     const search = url.searchParams.get("q");
+    const status = url.searchParams.get("status");
     const page = Number(url.searchParams.get("page") ?? "1");
     const pageSize = 20;
     const offset = (page - 1) * pageSize;
 
     const whereParts = [
       sql`r.college_id = ${user.collegeId}`,
-      sql`r.is_published = true`,
     ];
+
+    if (user.role === "student") {
+      whereParts.push(sql`r.status = 'published'`);
+    } else if (user.role === "faculty") {
+      if (status === "draft" || status === "published" || status === "archived") {
+        whereParts.push(sql`r.status = ${status}`);
+      }
+      whereParts.push(sql`(r.status = 'published' OR r.author_id = ${user.id})`);
+    } else if (status === "draft" || status === "published" || status === "archived") {
+      whereParts.push(sql`r.status = ${status}`);
+    }
 
     if (section) whereParts.push(sql`r.section = ${section}`);
     if (category) whereParts.push(sql`r.category = ${category}`);
@@ -60,8 +72,10 @@ export async function GET(req: NextRequest) {
         r.attachment_size_kb,
         r.tags,
         r.company_name,
+        r.status,
         r.view_count,
         r.helpful_count,
+        r.is_published,
         r.created_at,
         r.updated_at,
         u.name AS author_name
@@ -76,7 +90,12 @@ export async function GET(req: NextRequest) {
       ? true
       : await hasComponent(section === "softskills" ? "softskills_content" : "technical_content");
 
-    return NextResponse.json({ resources, canCreate, categoryLabels: Object.fromEntries(resources.map((resource) => [resource.category as string, formatCategoryLabel(String(resource.category))])) });
+    return NextResponse.json({
+      resources,
+      canCreate,
+      viewerRole: user.role,
+      categoryLabels: Object.fromEntries(resources.map((resource) => [resource.category as string, formatCategoryLabel(String(resource.category))])),
+    });
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return NextResponse.json({ error: "Failed to load resources" }, { status: 500 });
@@ -154,11 +173,13 @@ export async function POST(req: NextRequest) {
       INSERT INTO resources (
         college_id, author_id, section, category, title,
         body, body_format, attachment_url, attachment_name, attachment_mime, attachment_size_kb,
-        tags, company_name
+        tags, company_name, status, is_published
       ) VALUES (
         ${user.collegeId}, ${user.id}, ${parsedBody.section}, ${parsedBody.category}, ${parsedBody.title},
         ${parsedBody.body ?? null}, ${parsedBody.bodyFormat ?? "markdown"}, ${attachmentUrl}, ${attachmentName}, ${attachmentMime}, ${attachmentSizeKb},
-        ${parsedBody.tags ?? []}::text[], ${parsedBody.companyName ?? null}
+        ${parsedBody.tags ?? []}::text[], ${parsedBody.companyName ?? null},
+        ${user.role === "faculty" && parsedBody.status === "draft" ? "draft" : "published"},
+        ${user.role === "faculty" && parsedBody.status === "draft" ? false : true}
       ) RETURNING id
     `) as unknown as Array<{ id: string }>;
 

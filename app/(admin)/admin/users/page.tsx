@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,9 +24,11 @@ import {
   AlertCircle,
   Copy,
   Settings2,
+  Search,
 } from "lucide-react";
 import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type User = {
   id: string;
@@ -34,6 +36,10 @@ type User = {
   name: string;
   role: "student" | "faculty" | "admin";
   createdAt: string;
+  department?: string | null;
+  designation?: string | null;
+  is_active?: boolean | null;
+  granted_components?: string[] | null;
 };
 
 // ── Component permission definitions ────────────────────────────────────────
@@ -68,11 +74,18 @@ const ROLE_CONFIG = {
 };
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const searchParams = useSearchParams();
   const page = Number(searchParams.get("page") ?? 1);
-  const pageSize = 20;
+  const searchParamsString = searchParams.toString();
+  const pageSize = 25;
+  const [search, setSearch] = useState(searchParams.get("q") ?? "");
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get("q") ?? "");
+  const [filterRole, setFilterRole] = useState<"" | "admin" | "faculty" | "student">(
+    (searchParams.get("role") as "" | "admin" | "faculty" | "student" | null) ?? ""
+  );
 
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -98,6 +111,9 @@ export default function AdminUsersPage() {
   // Edit permissions state
   const [editUser, setEditUser] = useState<User | null>(null);
   const [editComponents, setEditComponents] = useState<string[]>([]);
+  const [editDepartment, setEditDepartment] = useState("");
+  const [editDesignation, setEditDesignation] = useState("");
+  const [editIsActive, setEditIsActive] = useState(true);
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [editSuccess, setEditSuccess] = useState(false);
@@ -111,7 +127,11 @@ export default function AdminUsersPage() {
     setLoading(true);
     setFetchError(null);
     try {
-      const allRes = await fetch(`/api/admin/users?page=${page}&pageSize=${pageSize}`);
+      const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+      if (debouncedSearch.trim()) params.set("q", debouncedSearch.trim());
+      if (filterRole) params.set("role", filterRole);
+
+      const allRes = await fetch(`/api/admin/users?${params.toString()}`);
       if (allRes.ok) {
         const allData = await allRes.json();
         setUsers(allData.data ?? []);
@@ -129,8 +149,42 @@ export default function AdminUsersPage() {
   }
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParamsString);
+    const q = params.get("q") ?? "";
+    const roleParam = params.get("role");
+    const role: "" | "admin" | "faculty" | "student" =
+      roleParam === "admin" || roleParam === "faculty" || roleParam === "student" ? roleParam : "";
+
+    setSearch(q);
+    setDebouncedSearch(q);
+    setFilterRole(role);
+  }, [searchParamsString]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParamsString);
+    if (debouncedSearch.trim()) params.set("q", debouncedSearch.trim());
+    else params.delete("q");
+
+    if (filterRole) params.set("role", filterRole);
+    else params.delete("role");
+
+    params.set("page", "1");
+    const nextQuery = params.toString();
+    if (nextQuery !== searchParamsString) {
+      router.replace(`?${nextQuery}`);
+    }
+  }, [debouncedSearch, filterRole, router, searchParamsString]);
+
+  useEffect(() => {
     fetchUsers();
-  }, [page]);
+  }, [page, debouncedSearch, filterRole]);
 
   function toggleNewComponent(key: string) {
     setNewGrantedComponents((prev) =>
@@ -185,14 +239,19 @@ export default function AdminUsersPage() {
     }
   }
 
-  async function handleCopyGeneratedPassword() {
+  async function handleCopyPassword() {
     if (!generatedPassword) return;
     try {
       await navigator.clipboard.writeText(generatedPassword);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      toast.success("Password copied to clipboard", {
+        description: "Send this to the user securely - it won't be shown again.",
+      });
+      setTimeout(() => setCopied(false), 3000);
     } catch {
-      setCopied(false);
+      const el = document.getElementById("generated-pw-display") as HTMLInputElement | null;
+      el?.select();
+      toast.info("Click the password text and copy manually (Ctrl+C)");
     }
   }
 
@@ -206,11 +265,20 @@ export default function AdminUsersPage() {
       if (res.ok) {
         const data = await res.json();
         setEditComponents(data.data?.granted_components ?? []);
+        setEditDepartment(data.data?.department ?? "");
+        setEditDesignation(data.data?.designation ?? "");
+        setEditIsActive(Boolean(data.data?.is_active ?? true));
       } else {
         setEditComponents([]);
+        setEditDepartment("");
+        setEditDesignation("");
+        setEditIsActive(true);
       }
     } catch {
       setEditComponents([]);
+      setEditDepartment("");
+      setEditDesignation("");
+      setEditIsActive(true);
     } finally {
       setEditLoading(false);
     }
@@ -231,7 +299,12 @@ export default function AdminUsersPage() {
       const res = await fetch(`/api/admin/staff/${editUser.id}/permissions`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ grantedComponents: editComponents }),
+        body: JSON.stringify({
+          grantedComponents: editComponents,
+          department: editDepartment.trim() || null,
+          designation: editDesignation.trim() || null,
+          isActive: editIsActive,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -448,16 +521,34 @@ export default function AdminUsersPage() {
               This password is shown <strong>ONCE</strong>. Copy it now and send to the user securely.
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-md border bg-slate-950 text-slate-100 px-4 py-3 my-2">
-            <p className="font-mono text-sm break-all">{generatedPassword || "—"}</p>
+          <div className="rounded-xl bg-slate-800 border border-slate-700 p-3">
+            <p className="text-xs text-slate-400 mb-2">Generated Password (shown once)</p>
+            <div className="flex items-center gap-3">
+              <input
+                id="generated-pw-display"
+                type="text"
+                readOnly
+                value={generatedPassword ?? ""}
+                className="flex-1 font-mono text-sm text-white bg-transparent border-none outline-none select-all"
+              />
+              <Button
+                onClick={handleCopyPassword}
+                size="sm"
+                className={cn(
+                  "transition-all",
+                  copied ? "bg-emerald-600 hover:bg-emerald-600" : "bg-slate-700 hover:bg-slate-600"
+                )}
+              >
+                {copied ? <><Check className="w-3.5 h-3.5 mr-1" /> Copied</> : <><Copy className="w-3.5 h-3.5 mr-1" /> Copy</>}
+              </Button>
+            </div>
           </div>
+          <p className="text-xs text-amber-400 mt-2">
+            Save this password now. It cannot be recovered after closing this dialog. Send it securely.
+          </p>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setShowGeneratedPasswordModal(false)}>
               Close
-            </Button>
-            <Button type="button" onClick={handleCopyGeneratedPassword} className="gap-2">
-              <Copy className="h-4 w-4" />
-              {copied ? "Copied!" : "Copy to clipboard"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -475,29 +566,60 @@ export default function AdminUsersPage() {
           {editLoading && !editComponents.length ? (
             <div className="py-8 text-center text-muted-foreground text-sm">Loading permissions…</div>
           ) : (
-            <div className="grid sm:grid-cols-2 gap-2 py-2">
-              {COMPONENTS.map(({ key, label, desc, locked }) => (
-                <label
-                  key={key}
-                  className={cn(
-                    "flex items-start gap-2.5 rounded-md border p-3 cursor-pointer transition-colors",
-                    locked ? "opacity-60 cursor-not-allowed bg-muted" : "hover:bg-muted/50",
-                    (locked || editComponents.includes(key)) ? "border-indigo-300 bg-indigo-50/40" : ""
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={locked || editComponents.includes(key)}
-                    disabled={!!locked}
-                    onChange={() => !locked && toggleEditComponent(key)}
-                    className="h-4 w-4 mt-0.5 shrink-0"
+            <div className="space-y-4 py-2">
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-department">Department</Label>
+                  <Input
+                    id="edit-department"
+                    value={editDepartment}
+                    onChange={(e) => setEditDepartment(e.target.value)}
+                    placeholder="Computer Science"
                   />
-                  <div>
-                    <p className="text-sm font-medium leading-none">{label}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
-                  </div>
-                </label>
-              ))}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-designation">Designation</Label>
+                  <Input
+                    id="edit-designation"
+                    value={editDesignation}
+                    onChange={(e) => setEditDesignation(e.target.value)}
+                    placeholder="Placement Coordinator"
+                  />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={editIsActive}
+                  onChange={(e) => setEditIsActive(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                Is Active
+              </label>
+              <div className="grid sm:grid-cols-2 gap-2">
+                {COMPONENTS.map(({ key, label, desc, locked }) => (
+                  <label
+                    key={key}
+                    className={cn(
+                      "flex items-start gap-2.5 rounded-md border p-3 cursor-pointer transition-colors",
+                      locked ? "opacity-60 cursor-not-allowed bg-muted" : "hover:bg-muted/50",
+                      (locked || editComponents.includes(key)) ? "border-indigo-300 bg-indigo-50/40" : ""
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={locked || editComponents.includes(key)}
+                      disabled={!!locked}
+                      onChange={() => !locked && toggleEditComponent(key)}
+                      className="h-4 w-4 mt-0.5 shrink-0"
+                    />
+                    <div>
+                      <p className="text-sm font-medium leading-none">{label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
             </div>
           )}
           {editError && (
@@ -521,6 +643,34 @@ export default function AdminUsersPage() {
       </Dialog>
 
       {/* User List */}
+      <div className="flex items-center gap-3 mb-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or email..."
+            className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-indigo-500"
+          />
+        </div>
+        <div className="flex gap-2">
+          {(["", "admin", "faculty", "student"] as const).map((r) => (
+            <button
+              key={r}
+              onClick={() => setFilterRole(r)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                filterRole === r
+                  ? "bg-indigo-600/20 border border-indigo-500/30 text-indigo-400"
+                  : "bg-slate-800 border border-transparent text-slate-400 hover:text-white"
+              }`}
+            >
+              {r === "" ? "All" : r.charAt(0).toUpperCase() + r.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {fetchError ? (
         <div className="rounded-md bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-700">
           {fetchError}
@@ -547,7 +697,7 @@ export default function AdminUsersPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="divide-y">
+                  <div className="max-h-[600px] overflow-y-auto rounded-xl border border-white/5 divide-y">
                     {group.map((user: User) => {
                       const rs = resetState[user.email];
                       return (
@@ -576,36 +726,48 @@ export default function AdminUsersPage() {
                             {/* Password Reset — only for faculty/admin */}
                             {(role === "faculty" || role === "admin") && (
                               <div className="space-y-1.5 w-full sm:w-auto flex flex-col items-end">
-                                <div className="flex gap-2">
+                                <form
+                                  onSubmit={(e) => {
+                                    e.preventDefault();
+                                    handleResetPassword(user.id, user.email);
+                                  }}
+                                  className="flex items-center gap-2"
+                                >
                                   <Input
                                     type="password"
+                                    autoComplete="new-password"
                                     placeholder="New Password"
-                                    className="h-7 text-xs w-[120px]"
-                                    value={rs?.resetPassword || ""}
+                                    className="h-7 text-xs w-[130px]"
+                                    value={rs?.resetPassword ?? ""}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                       setResetState((prev: typeof resetState) => ({
                                         ...prev,
-                                        [user.email]: { ...prev[user.email], resetPassword: e.target.value },
+                                        [user.email]: {
+                                          ...prev[user.email],
+                                          resetPassword: e.target.value,
+                                          loading: false,
+                                          error: null,
+                                          success: false,
+                                        },
                                       }))
                                     }
                                   />
                                   <Button
+                                    type="submit"
                                     size="sm"
                                     variant="outline"
                                     disabled={rs?.loading || !rs?.resetPassword || rs.resetPassword.length < 8}
-                                    onClick={() => handleResetPassword(user.id, user.email)}
                                     className="gap-1.5 text-xs h-7 px-3"
                                   >
                                     {rs?.loading ? (
                                       <RefreshCw className="h-3 w-3 animate-spin" />
-                                    ) : rs?.success ? (
-                                      <Check className="h-3 w-3 text-emerald-500" />
                                     ) : (
                                       <ShieldCheck className="h-3 w-3" />
                                     )}
-                                    {rs?.loading ? "Resetting…" : rs?.success ? "Reset!" : "Reset"}
+                                    {rs?.loading ? "Resetting..." : "Reset"}
                                   </Button>
-                                </div>
+                                  {rs?.success && <Check className="w-4 h-4 text-emerald-400" />}
+                                </form>
                                 {rs?.error && <p className="text-[10px] text-rose-600">{rs.error}</p>}
                               </div>
                             )}
