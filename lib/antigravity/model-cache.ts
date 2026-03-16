@@ -1,6 +1,7 @@
 import "server-only";
 
 import { db } from "@/lib/db";
+import { getRedis } from "@/lib/redis";
 import { sql } from "drizzle-orm";
 
 export interface CachedModel {
@@ -20,10 +21,24 @@ let cache: CachedModel[] | null = null;
 let cacheTime = 0;
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
+const REDIS_CACHE_KEY = "antigravity:active-models";
 
 export const AntigravityModelCache = {
   async getActive(taskType?: string): Promise<CachedModel[]> {
     const now = Date.now();
+    const redis = getRedis();
+
+    if (redis && (!cache || now - cacheTime > CACHE_TTL_MS)) {
+      try {
+        const cached = await redis.get<CachedModel[]>(REDIS_CACHE_KEY);
+        if (cached && Array.isArray(cached)) {
+          cache = cached;
+          cacheTime = now;
+        }
+      } catch (err) {
+        console.warn("[AntigravityModelCache] Redis fetch failed:", err);
+      }
+    }
 
     if (!cache || now - cacheTime > CACHE_TTL_MS) {
       try {
@@ -36,6 +51,10 @@ export const AntigravityModelCache = {
 
         cache = rows;
         cacheTime = now;
+
+        if (redis) {
+          await redis.set(REDIS_CACHE_KEY, rows, { ex: 300 }).catch(() => undefined);
+        }
       } catch (err) {
         console.warn("[AntigravityModelCache] DB fetch failed, using stale/empty cache:", err);
         cache = cache ?? [];
@@ -49,5 +68,9 @@ export const AntigravityModelCache = {
   invalidate() {
     cache = null;
     cacheTime = 0;
+    const redis = getRedis();
+    if (redis) {
+      void redis.del(REDIS_CACHE_KEY).catch(() => undefined);
+    }
   },
 };

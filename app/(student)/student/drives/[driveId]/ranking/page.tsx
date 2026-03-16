@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { enforceProfileGate, enforceRankingsExist, GuardrailViolation } from "@/lib/guardrails";
 import Link from "next/link";
+import AnalysisPanel from "./analysis-panel";
 
 interface PageProps {
   params: { driveId: string };
@@ -209,6 +210,8 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
               </p>
             </CardContent>
           </Card>
+
+          <AnalysisPanel driveId={driveId} />
         </>
       )}
     </div>

@@ -3,15 +3,14 @@
 import { useStudent } from "@/app/(student)/providers/student-provider";
 import { useRouter } from "next/navigation";
 import { computeCompleteness } from "@/lib/profile/completeness";
-import { 
-    FileText, ArrowRight, Sparkles, AlertCircle, 
-    Briefcase, Award, BarChart3, Eye, CheckCircle2,
+import {
+    FileText, ArrowRight, Sparkles, AlertCircle,
+    Briefcase, Award, Eye, CheckCircle2,
     Loader2
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
-import { getOnboardingRoute, TOTAL_ONBOARDING_STEPS } from "@/lib/onboarding/config";
 
 type AmcatData = {
     hasAmcat: boolean;
@@ -29,13 +28,33 @@ type AmcatData = {
 export default function StudentDashboard() {
     const { user, student, isLoading } = useStudent();
     const router = useRouter();
-    const [stats, setStats] = useState({ activeDrivesCount: 0, rankingsCount: 0 });
+    const [stats, setStats] = useState({
+        activeDrivesCount: 0,
+        rankingsCount: 0,
+        shortlistedCount: 0,
+        sandboxUsageToday: 0,
+        requiredCompleted: false,
+    });
     const [amcat, setAmcat] = useState<AmcatData>({ hasAmcat: false });
 
     useEffect(() => {
         if (!isLoading && student) {
-            if (student.onboardingStep < TOTAL_ONBOARDING_STEPS) {
-                router.push(getOnboardingRoute(student.onboardingStep));
+            const shouldRedirect =
+                !student.sapId ||
+                !student.rollNo ||
+                !student.resumeUrl ||
+                !student.branch ||
+                student.batchYear === null ||
+                student.batchYear === undefined ||
+                student.cgpa === null ||
+                student.cgpa === undefined ||
+                !Array.isArray(student.skills) ||
+                student.skills.length === 0 ||
+                !Array.isArray(student.projects) ||
+                student.projects.length === 0;
+
+            if (shouldRedirect) {
+                router.push("/student/onboarding");
             }
         }
     }, [isLoading, student, router]);
@@ -46,7 +65,7 @@ export default function StudentDashboard() {
                 const res = await fetch("/api/student/dashboard/stats");
                 if (res.ok) {
                     const data = await res.json();
-                    setStats(data);
+                    setStats(data.data ?? data);
                 }
             } catch {
                 // Silently handle to fix unused error linting
@@ -85,12 +104,13 @@ export default function StudentDashboard() {
         email: user.email,
     });
     
-    const activeDrives = stats?.activeDrivesCount ?? 0;
-    const rankings = stats?.rankingsCount ?? 0;
-    const sandboxUsageToday = student.sandboxUsageToday ?? 0;
+    const activeDrives = stats.activeDrivesCount ?? 0;
+    const rankings = stats.rankingsCount ?? 0;
+    const shortlisted = stats.shortlistedCount ?? 0;
+    const sandboxUsageToday = stats.sandboxUsageToday ?? 0;
 
     return (
-        <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 p-8 md:p-10 pb-32">
+        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 p-8 md:p-10 pb-32">
             
             {/* Header */}
             <div className="space-y-2">
@@ -102,12 +122,28 @@ export default function StudentDashboard() {
                 </p>
             </div>
 
-            {/* Top Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <StatCard title="Placement Drives" value={activeDrives} icon={Briefcase} subtitle="Active now" />
-                <StatCard title="Rankings" value={rankings} icon={Award} subtitle="Received" />
-                <StatCard title="Profile Score" value={`${score}%`} icon={BarChart3} subtitle="Completeness" />
-                <StatCard title="Sandbox Usage" value={`${sandboxUsageToday}/5`} icon={Eye} subtitle="Today" />
+            <div className="grid grid-cols-12 gap-5">
+                <div className="col-span-12 lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <StatCard title="Active Drives" value={activeDrives} icon={Briefcase} subtitle="Eligible now" />
+                    <StatCard title="Rankings" value={rankings} icon={Award} subtitle="Generated" />
+                    <StatCard title="Shortlisted" value={shortlisted} icon={CheckCircle2} subtitle="Positive outcomes" />
+                    <StatCard title="Sandbox Usage" value={`${sandboxUsageToday}/5`} icon={Eye} subtitle="Today" />
+                </div>
+                <div className="col-span-12 lg:col-span-5">
+                    <div className="bg-slate-900/60 rounded-2xl border border-white/5 p-6 h-full">
+                        <h3 className="text-sm uppercase tracking-wider text-slate-400">Profile Ring</h3>
+                        <div className="mt-4 flex items-center justify-between">
+                            <div>
+                                <p className="text-4xl font-black text-white">{score}%</p>
+                                <p className="text-sm text-slate-400">Completeness</p>
+                            </div>
+                            <Link href="/student/onboarding" className="text-sm text-indigo-400 hover:text-indigo-300">Improve profile</Link>
+                        </div>
+                        <div className="mt-4 h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-indigo-500" style={{ width: `${score}%` }} />
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {amcat.hasAmcat && (
@@ -148,10 +184,10 @@ export default function StudentDashboard() {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+            <div className="grid grid-cols-12 gap-6 md:gap-8">
                 
                 {/* Resume Status Card */}
-                <div className="lg:col-span-2 bg-slate-900/60 rounded-[2.5rem] border border-white/5 p-8 space-y-6 relative overflow-hidden group">
+                <div className="col-span-12 lg:col-span-8 bg-slate-900/60 rounded-[2.5rem] border border-white/5 p-8 space-y-6 relative overflow-hidden group">
                     <div className="flex items-center space-x-3 text-indigo-400 relative z-10">
                         <FileText className="w-6 h-6" />
                         <h3 className="font-bold text-white text-xl tracking-tight">Resume Status</h3>
@@ -189,7 +225,7 @@ export default function StudentDashboard() {
                                     <p className="font-bold text-white text-base">No Resume Uploaded</p>
                                     <p className="text-sm text-slate-400 mt-1 font-medium">AI match rates are significantly lower without a resume.</p>
                                 </div>
-                                <Link href="/student/onboarding/resume"
+                                                                <Link href="/student/onboarding"
                                       className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all whitespace-nowrap shadow-[0_0_20px_rgba(79,70,229,0.3)]">
                                     Upload Now
                                 </Link>
@@ -199,7 +235,7 @@ export default function StudentDashboard() {
                 </div>
 
                 {/* Profile Completeness Score */}
-                <div className="bg-slate-900/60 rounded-[2.5rem] border border-white/5 p-8 space-y-8 relative overflow-hidden">
+                <div className="col-span-12 lg:col-span-4 bg-slate-900/60 rounded-[2.5rem] border border-white/5 p-8 space-y-8 relative overflow-hidden">
                     <h3 className="font-bold text-white flex items-center space-x-3 text-xl tracking-tight">
                         <Sparkles className="w-6 h-6 text-emerald-400" />
                         <span>Completeness</span>
@@ -244,6 +280,17 @@ export default function StudentDashboard() {
                 </div>
             </div>
 
+            <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-6 flex items-center justify-between">
+                <div>
+                    <p className="text-white font-semibold">Quick Actions</p>
+                    <p className="text-sm text-slate-400">Jump to active drives or refine your profile to improve shortlist odds.</p>
+                </div>
+                <div className="flex gap-3">
+                    <Link href="/student/drives" className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold">Explore Drives</Link>
+                    <Link href="/student/onboarding" className="px-4 py-2 rounded-lg border border-white/15 text-slate-100 text-sm font-semibold">Edit Onboarding</Link>
+                </div>
+            </div>
+
             {/* Profile Sections Grid */}
             <div className="bg-slate-900/60 rounded-[2.5rem] border border-white/5 p-8 md:p-10">
                 <h3 className="font-bold text-white mb-8 text-xl tracking-tight">Data Parameters</h3>
@@ -269,13 +316,13 @@ function StatCard({ title, value, subtitle, icon: Icon }: any) {
   return (
     <div className="bg-slate-900/60 p-7 rounded-2xl border border-white/5 relative group hover:border-indigo-500/40 hover:bg-slate-900/80 transition-all duration-300 overflow-hidden">
       <div className="flex flex-col justify-between h-full space-y-6 relative z-10">
-        <h4 className="text-sm font-bold text-slate-300 tracking-tight uppercase tracking-[0.1em]">{title}</h4>
+                <h4 className="text-sm font-bold text-slate-300 uppercase tracking-[0.1em]">{title}</h4>
         <div>
             <p className="text-4xl font-black text-white tracking-tighter leading-none">{value ?? 0}</p>
             <p className="text-[11px] font-bold text-slate-500 mt-2.5 tracking-[0.1em] uppercase">{subtitle}</p>
         </div>
       </div>
-      <div className="absolute top-6 right-6 p-3 bg-white/5 rounded-2xl group-hover:bg-indigo-500/20 transition-colors duration-300 relative z-10">
+            <div className="absolute top-6 right-6 z-10 rounded-2xl bg-white/5 p-3 transition-colors duration-300 group-hover:bg-indigo-500/20">
         <Icon className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 transition-colors duration-300" />
       </div>
     </div>

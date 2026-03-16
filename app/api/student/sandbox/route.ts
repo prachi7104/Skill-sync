@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireStudentProfile } from "@/lib/auth/helpers";
-import { enforceSandboxLimits, enforceProfileGate } from "@/lib/guardrails";
+import { enforceSandboxLimits, enforceProfileGate, incrementSandboxUsage } from "@/lib/guardrails";
 import { GuardrailViolation } from "@/lib/guardrails/errors";
 import { db } from "@/lib/db";
 import { isRedirectError } from "next/dist/client/components/redirect";
@@ -266,8 +266,8 @@ export async function POST(req: NextRequest) {
       atsResult.red_flags.push({ flag: eligibilityResult.reason || "Did not meet eligibility criteria", severity: "Critical", impact: -100 });
     }
 
-    // 7. Increment usage counters (DISABLED)
-    // await incrementSandboxUsage(user.id);
+    // 7. Increment usage counters after successful analysis
+    await incrementSandboxUsage(user.id);
 
     // 8. Fetch updated usage for request context
     const [updated] = await db

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +19,9 @@ const schema = z.object({
   roleTitle: z.string().min(1, "Required"),
   location: z.string().optional(),
   packageOffered: z.string().optional(),
+  seasonId: z.string().uuid().optional().nullable(),
+  rankingsVisible: z.boolean().optional(),
+  placementType: z.enum(["placement", "internship", "apprenticeship"]).optional(),
   deadline: z.string().optional(),          // YYYY-MM-DD string from date input
   rawJd: z.string().min(50, "At least 50 characters"),
   minCgpa: z.number().min(0).max(10).optional(),
@@ -34,6 +37,7 @@ export default function NewDrivePage() {
   const [step, setStep] = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [seasons, setSeasons] = useState<Array<{ id: string; name: string }>>([]);
 
   const {
     register,
@@ -49,6 +53,9 @@ export default function NewDrivePage() {
       eligibleBranches: [],
       eligibleBatchYears: [],
       eligibleCategories: [],
+      rankingsVisible: false,
+      placementType: "placement",
+      seasonId: null,
     },
   });
 
@@ -57,6 +64,21 @@ export default function NewDrivePage() {
   const selectedBranches = watch("eligibleBranches") ?? [];
   const selectedBatchYears = watch("eligibleBatchYears") ?? [];
   const selectedCategories = watch("eligibleCategories") ?? [];
+
+  useEffect(() => {
+    async function loadSeasons() {
+      try {
+        const res = await fetch("/api/seasons");
+        if (!res.ok) return;
+        const data = await res.json();
+        setSeasons(data.seasons ?? []);
+      } catch {
+        setSeasons([]);
+      }
+    }
+
+    loadSeasons();
+  }, []);
 
   async function nextStep() {
     const isValid = await trigger(["company", "roleTitle"]);
@@ -70,6 +92,7 @@ export default function NewDrivePage() {
     const payload = {
       ...values,
       deadline: values.deadline ? new Date(values.deadline).toISOString() : null,
+      seasonId: values.seasonId || null,
       minCgpa: (values.minCgpa === 0 || !values.minCgpa) ? null : values.minCgpa,
       eligibleBranches: values.eligibleBranches?.length ? values.eligibleBranches : null,
       eligibleBatchYears: values.eligibleBatchYears?.length ? values.eligibleBatchYears : null,
@@ -197,7 +220,41 @@ export default function NewDrivePage() {
                     </Label>
                     <Input id="deadline" type="date" {...register("deadline")} />
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="seasonId">Season</Label>
+                    <select
+                      id="seasonId"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      {...register("seasonId")}
+                    >
+                      <option value="">No season</option>
+                      {seasons.map((season) => (
+                        <option key={season.id} value={season.id}>
+                          {season.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="placementType">Placement Type</Label>
+                    <select
+                      id="placementType"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      {...register("placementType")}
+                    >
+                      <option value="placement">Placement</option>
+                      <option value="internship">Internship</option>
+                      <option value="apprenticeship">Apprenticeship</option>
+                    </select>
+                  </div>
                 </div>
+
+                <label className="flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2 text-sm">
+                  <input type="checkbox" {...register("rankingsVisible")} />
+                  Allow students to view ranking details for this drive
+                </label>
 
                 <div className="flex justify-end pt-4">
                   <Button type="button" onClick={nextStep} className="gap-2 bg-indigo-600 hover:bg-indigo-700">

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireStudentProfile } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, rankings } from "@/lib/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
     try {
-        const { user } = await requireStudentProfile();
+        const { user, profile } = await requireStudentProfile();
 
         const [activeDrivesResult] = await db
             .select({ count: sql<number>`count(*)::int` })
@@ -24,11 +24,35 @@ export async function GET() {
             .where(eq(rankings.studentId, user.id));
         const rankingsCount = rankingsResult?.count ?? 0;
 
+        const [shortlistedResult] = await db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(rankings)
+            .where(and(eq(rankings.studentId, user.id), eq(rankings.shortlisted, true)));
+        const shortlistedCount = shortlistedResult?.count ?? 0;
+
+        const requiredCompleted = Boolean(
+            profile.sapId &&
+            profile.rollNo &&
+            profile.resumeUrl &&
+            profile.branch &&
+            typeof profile.batchYear === "number" &&
+            typeof profile.cgpa === "number" &&
+            Array.isArray(profile.skills) &&
+            profile.skills.length > 0 &&
+            Array.isArray(profile.projects) &&
+            profile.projects.length > 0
+        );
+
         return NextResponse.json({
             success: true,
             data: {
                 activeDrivesCount,
                 rankingsCount,
+                shortlistedCount,
+                profileCompleteness: profile.profileCompleteness ?? 0,
+                sandboxUsageToday: profile.sandboxUsageToday ?? 0,
+                sandboxUsageMonth: profile.sandboxUsageMonth ?? 0,
+                requiredCompleted,
             }
         });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

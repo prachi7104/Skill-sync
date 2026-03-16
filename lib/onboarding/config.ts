@@ -1,38 +1,16 @@
 /**
- * Onboarding step configuration.
- * Maps step numbers to their corresponding routes.
- * 
- * Complete flow with all profile sections:
- * 0: Welcome
- * 1: Resume Upload (AI parse → autofill all subsequent steps)
- * 2: Basic Info (SAP ID*, Roll No*, Phone, LinkedIn) - *required
- * 3: Academics (10th, 12th, CGPA, branch, semester) - optional
- * 4: Skills (prefilled from resume parse) - optional
- * 5: Projects (prefilled from resume parse) - optional
- * 6: Experience/Work (prefilled from resume parse) - optional
- * 7: Coding Profiles (prefilled from resume parse) - optional
- * 8: Soft Skills & Achievements (prefilled from resume parse) - optional
- * 9: Review & Submit
- * 10: Complete (redirects to dashboard)
+ * Onboarding routing has been simplified to a single tabbed page.
+ * Legacy step constants remain only for backward compatibility.
  */
 export const ONBOARDING_STEP_ROUTES: Record<number, string> = {
     0: "/student/onboarding/welcome",
-    1: "/student/onboarding/resume",
-    2: "/student/onboarding/basic",
-    3: "/student/onboarding/academics",
-    4: "/student/onboarding/skills",
-    5: "/student/onboarding/projects",
-    6: "/student/onboarding/experience",
-    7: "/student/onboarding/coding-profiles",
-    8: "/student/onboarding/soft-skills",
-    9: "/student/onboarding/review",
+    1: "/student/onboarding",
 };
 
 /**
- * Total number of onboarding steps (0-9 = 10 steps).
- * Step 10 marks completion.
+ * Legacy constant retained for compatibility with older code.
  */
-export const TOTAL_ONBOARDING_STEPS = 10;
+export const TOTAL_ONBOARDING_STEPS = 1;
 
 /**
  * Get the route for a given onboarding step.
@@ -42,7 +20,7 @@ export function getOnboardingRoute(step: number): string {
     if (step >= TOTAL_ONBOARDING_STEPS) {
         return "/student/dashboard";
     }
-    return ONBOARDING_STEP_ROUTES[step] || "/student/onboarding/welcome";
+    return ONBOARDING_STEP_ROUTES[step] || "/student/onboarding";
 }
 
 /**
@@ -55,6 +33,6 @@ export function getNextStep(currentStep: number): number {
 /**
  * Check if a step is the final review step.
  */
-export function isReviewStep(step: number): boolean {
-    return step === 9;
+export function isReviewStep(_step: number): boolean {
+    return false;
 }

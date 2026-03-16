@@ -359,6 +359,9 @@ export const drives = pgTable("drives", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
 
+  /** Placement season this drive belongs to. Null for legacy drives. */
+  seasonId: uuid("season_id").references(() => seasons.id, { onDelete: "set null" }),
+
   // ── Company & Role ────────────────────────────────────────────────────────
 
   /** Recruiting company name. */
@@ -422,6 +425,12 @@ export const drives = pgTable("drives", {
 
   /** Whether this drive is currently accepting rankings. */
   isActive: boolean("is_active").notNull().default(true),
+
+  /** Whether students can view drive rankings/details for this drive. */
+  rankingsVisible: boolean("rankings_visible").notNull().default(false),
+
+  /** Recruitment type used for filtering and reporting. */
+  placementType: varchar("placement_type", { length: 30 }).notNull().default("placement"),
 
   /** Application/ranking deadline. Null = no deadline. */
   deadline: timestamp("deadline", { withTimezone: true }),
@@ -508,6 +517,16 @@ export const rankings = pgTable("rankings", {
    * skill alignment, experience relevance, academic fit, and gaps.
    */
   detailedExplanation: text("detailed_explanation").notNull(),
+
+  /** Cached resume impact analysis JSON generated from drive-specific prompt. */
+  resumeDiffJson: jsonb("resume_diff_json").$type<Record<string, unknown> | null>(),
+
+  /** Cached interview preparation question-set generated for this drive. */
+  interviewQuestionsJson: jsonb("interview_questions_json")
+    .$type<Record<string, unknown> | null>(),
+
+  /** Timestamp of latest generated analysis payloads for this ranking. */
+  analysisGeneratedAt: timestamp("analysis_generated_at", { withTimezone: true }),
 
   // ── Position ──────────────────────────────────────────────────────────────
 
@@ -687,6 +706,46 @@ export const aiRateLimits = pgTable(
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Table: seasons
+// ─────────────────────────────────────────────────────────────────────────────
+// Purpose: College-scoped placement seasons used for filtering dashboards and
+// assigning drives to a specific recruiting cycle.
+
+export const seasons = pgTable("seasons", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  collegeId: uuid("college_id")
+    .notNull()
+    .references(() => colleges.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 120 }).notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  startsAt: timestamp("starts_at", { withTimezone: true }),
+  endsAt: timestamp("ends_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const sandboxConfig = pgTable("sandbox_config", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  collegeId: uuid("college_id")
+    .notNull()
+    .references(() => colleges.id, { onDelete: "cascade" }),
+  studentDailyLimit: integer("student_daily_limit").notNull().default(3),
+  studentMonthlyLimit: integer("student_monthly_limit").notNull().default(20),
+  facultyDailyLimit: integer("faculty_daily_limit").notNull().default(10),
+  facultyMonthlyLimit: integer("faculty_monthly_limit").notNull().default(100),
+  studentDetailedDaily: integer("student_detailed_daily").notNull().default(2),
+  studentDetailedMonthly: integer("student_detailed_monthly").notNull().default(10),
+  facultyDetailedDaily: integer("faculty_detailed_daily").notNull().default(5),
+  facultyDetailedMonthly: integer("faculty_detailed_monthly").notNull().default(30),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Relations (Drizzle relational query API)
 // ─────────────────────────────────────────────────────────────────────────────
 // These do NOT create FK constraints (those are in the table definitions above).
@@ -700,6 +759,15 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   }),
   /** Faculty/admin users can create multiple drives. */
   drives: many(drives),
+}));
+
+export const collegesRelations = relations(colleges, ({ many, one }) => ({
+  users: many(users),
+  seasons: many(seasons),
+  sandboxConfig: one(sandboxConfig, {
+    fields: [colleges.id],
+    references: [sandboxConfig.collegeId],
+  }),
 }));
 
 export const studentsRelations = relations(students, ({ one, many }) => ({
@@ -718,8 +786,28 @@ export const drivesRelations = relations(drives, ({ one, many }) => ({
     fields: [drives.createdBy],
     references: [users.id],
   }),
+  /** Optional placement season for this drive. */
+  season: one(seasons, {
+    fields: [drives.seasonId],
+    references: [seasons.id],
+  }),
   /** All ranking results generated for this drive. */
   rankings: many(rankings),
+}));
+
+export const seasonsRelations = relations(seasons, ({ one, many }) => ({
+  college: one(colleges, {
+    fields: [seasons.collegeId],
+    references: [colleges.id],
+  }),
+  drives: many(drives),
+}));
+
+export const sandboxConfigRelations = relations(sandboxConfig, ({ one }) => ({
+  college: one(colleges, {
+    fields: [sandboxConfig.collegeId],
+    references: [colleges.id],
+  }),
 }));
 
 export const rankingsRelations = relations(rankings, ({ one }) => ({

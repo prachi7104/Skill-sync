@@ -28,7 +28,7 @@ async function testRedisConnection(): Promise<boolean> {
  * No charts, no exports, no filters.
  *
  * Returns:
- *   studentsOnboarded   — students with onboarding_step >= 7
+ *   studentsOnboarded   — students with profile_completeness >= 80
  *   studentsWithEmbeddings — students with non-null embedding
  *   drivesCreated       — total drives
  *   drivesRanked        — drives with at least 1 ranking row
@@ -48,11 +48,11 @@ export async function GET() {
       totalStudentsResult,
       redisOk,
     ] = await Promise.all([
-      // Students who completed onboarding (step >= 7)
+      // Students considered onboarded by profile completeness
       db
         .select({ count: sql<number>`count(*)::int` })
         .from(students)
-        .where(sql`${students.onboardingStep} >= 7`),
+        .where(sql`${students.profileCompleteness} >= 80`),
 
       // Students with non-null embedding
       db

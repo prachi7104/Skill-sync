@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import Groq from "groq-sdk";
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
@@ -37,21 +36,21 @@ export async function POST(
 
   try {
     if (model.provider === "google") {
-      const genAI = new GoogleGenerativeAI(
-        process.env.GOOGLE_GENERATIVE_AI_API_KEY || "",
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model.model_key}?key=${process.env.GOOGLE_GENERATIVE_AI_API_KEY || ""}`,
+        { method: "GET", cache: "no-store" },
       );
-      const targetModel = genAI.getGenerativeModel({ model: model.model_key });
-      await targetModel.generateContent({
-        contents: [{ role: "user", parts: [{ text: "ping" }] }],
-      });
+      if (!response.ok) {
+        throw new Error(`Google model metadata check failed: ${response.status}`);
+      }
       ok = true;
     } else if (model.provider === "groq") {
       const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
-      await groq.chat.completions.create({
-        model: model.model_key,
-        messages: [{ role: "user", content: "ping" }],
-        max_tokens: 5,
-      });
+      const models = await groq.models.list();
+      const found = models.data.some((item) => item.id === model.model_key);
+      if (!found) {
+        throw new Error("Groq model not available");
+      }
       ok = true;
     }
   } catch (err) {

@@ -77,7 +77,7 @@ export async function requireStudentProfile() {
     const profile = await getStudentProfile(user.id);
 
     if (!profile) {
-        redirect("/student/onboarding/welcome");
+        redirect("/student/onboarding");
     }
 
     return { user, profile };
