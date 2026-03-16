@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/admin/health", label: "System Health", emoji: "⚡" },
   { href: "/admin/drives", label: "All Drives", emoji: "🎯" },
+  { href: "/admin/amcat", label: "AMCAT", emoji: "📊" },
   { href: "/admin/users", label: "User Management", emoji: "👥" },
   { href: "/admin/ai-models", label: "AI Models", emoji: "🤖" },
   { href: "/admin/settings", label: "Settings", emoji: "⚙️" },

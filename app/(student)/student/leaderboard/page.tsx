@@ -1,0 +1,244 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Download, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+type LeaderboardSession = {
+  id: string;
+  session_name: string;
+  test_date: string | null;
+  batch_year: number | null;
+  total_students?: number;
+  alpha_count?: number;
+  beta_count?: number;
+  gamma_count?: number;
+};
+
+type LeaderboardRow = {
+  rank: number;
+  name: string;
+  branch: string | null;
+  score: number;
+  category: "alpha" | "beta" | "gamma";
+};
+
+type MyRank = {
+  rank: number;
+  score: number;
+  category: "alpha" | "beta" | "gamma";
+} | null;
+
+const badgeStyles: Record<string, string> = {
+  alpha: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  beta: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  gamma: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+};
+
+export default function StudentLeaderboardPage() {
+  const [loading, setLoading] = useState(true);
+  const [hasData, setHasData] = useState(false);
+  const [session, setSession] = useState<LeaderboardSession | null>(null);
+  const [sessions, setSessions] = useState<LeaderboardSession[]>([]);
+  const [top50, setTop50] = useState<LeaderboardRow[]>([]);
+  const [myRank, setMyRank] = useState<MyRank>(null);
+  const [isInTop50, setIsInTop50] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+
+  async function fetchLeaderboard(sessionId?: string) {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      if (sessionId) params.set("sessionId", sessionId);
+
+      const res = await fetch(`/api/student/amcat/leaderboard?${params.toString()}`);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error ?? "Failed to load leaderboard");
+      if (!data.hasData) {
+        setHasData(false);
+        return;
+      }
+
+      setHasData(true);
+      setSession(data.session as LeaderboardSession);
+      setSessions((data.sessions ?? []) as LeaderboardSession[]);
+      setTop50((data.top50 ?? []) as LeaderboardRow[]);
+      setMyRank((data.myRank ?? null) as MyRank);
+      setIsInTop50(Boolean(data.isInTop50));
+      setSelectedSessionId(String((data.session as LeaderboardSession).id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load leaderboard");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, []);
+
+  const stats = useMemo(() => ({
+    total: Number(session?.total_students ?? 0),
+    alpha: Number(session?.alpha_count ?? 0),
+    beta: Number(session?.beta_count ?? 0),
+    gamma: Number(session?.gamma_count ?? 0),
+  }), [session]);
+
+  function downloadCsv() {
+    const rows = [
+      ["Rank", "Name", "Branch", "Score", "Category"],
+      ...top50.map((row) => [row.rank, row.name, row.branch ?? "", row.score, row.category]),
+    ];
+
+    if (!isInTop50 && myRank) {
+      rows.push(["", "", "", "", ""]);
+      rows.push([myRank.rank, "You", "", myRank.score, myRank.category]);
+    }
+
+    const csv = rows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `amcat-leaderboard-${selectedSessionId || "latest"}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto p-8 md:p-10 pb-32 space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">AMCAT Leaderboard</h1>
+          <p className="text-slate-400 mt-1">Top performers from published AMCAT sessions</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Select
+            value={selectedSessionId}
+            onValueChange={(value) => {
+              setSelectedSessionId(value);
+              fetchLeaderboard(value);
+            }}
+            disabled={!hasData || loading}
+          >
+            <SelectTrigger className="w-[260px] bg-slate-900 border-white/10 text-white">
+              <SelectValue placeholder="Select session" />
+            </SelectTrigger>
+            <SelectContent>
+              {sessions.map((sessionRow) => (
+                <SelectItem key={sessionRow.id} value={sessionRow.id}>
+                  {sessionRow.session_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button variant="outline" className="gap-2" onClick={downloadCsv} disabled={!hasData || loading || top50.length === 0}>
+            <Download className="h-4 w-4" /> Download CSV
+          </Button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[240px]">
+          <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>
+      ) : !hasData ? (
+        <div className="rounded-xl border border-white/10 bg-slate-900/60 px-4 py-6 text-sm text-slate-300">
+          No published AMCAT data is available yet.
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Stat title="Total Participants" value={stats.total} />
+            <Stat title="Alpha" value={stats.alpha} />
+            <Stat title="Beta" value={stats.beta} />
+            <Stat title="Gamma" value={stats.gamma} />
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-slate-900/60 overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Rank</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Branch</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead>Category</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {top50.map((row) => (
+                  <TableRow key={`${row.rank}-${row.name}`}>
+                    <TableCell className="font-semibold">#{row.rank}</TableCell>
+                    <TableCell>{row.name}</TableCell>
+                    <TableCell>{row.branch ?? "-"}</TableCell>
+                    <TableCell>{row.score}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={badgeStyles[row.category]}>
+                        {row.category}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+
+                {!isInTop50 && myRank && (
+                  <>
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-slate-500">...</TableCell>
+                    </TableRow>
+                    <TableRow className="bg-indigo-500/10">
+                      <TableCell className="font-semibold">#{myRank.rank}</TableCell>
+                      <TableCell className="font-semibold">You</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>{myRank.score}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={cn(badgeStyles[myRank.category], "font-semibold")}>
+                          {myRank.category}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  </>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Stat({ title, value }: { title: string; value: number }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+      <p className="text-xs uppercase tracking-wide text-slate-400">{title}</p>
+      <p className="text-2xl font-black text-white mt-2">{value}</p>
+    </div>
+  );
+}

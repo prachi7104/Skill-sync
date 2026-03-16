@@ -13,10 +13,24 @@ import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { getOnboardingRoute, TOTAL_ONBOARDING_STEPS } from "@/lib/onboarding/config";
 
+type AmcatData = {
+    hasAmcat: boolean;
+    score?: number;
+    category?: "alpha" | "beta" | "gamma";
+    rank?: number;
+    total_students?: number;
+    cs_score?: number | null;
+    cp_score?: number | null;
+    automata_score?: number | null;
+    automata_fix_score?: number | null;
+    quant_score?: number | null;
+};
+
 export default function StudentDashboard() {
     const { user, student, isLoading } = useStudent();
     const router = useRouter();
     const [stats, setStats] = useState({ activeDrivesCount: 0, rankingsCount: 0 });
+    const [amcat, setAmcat] = useState<AmcatData>({ hasAmcat: false });
 
     useEffect(() => {
         if (!isLoading && student) {
@@ -39,6 +53,22 @@ export default function StudentDashboard() {
             }
         }
         if (student) fetchStats();
+    }, [student]);
+
+    useEffect(() => {
+        async function fetchAmcat() {
+            try {
+                const res = await fetch("/api/student/amcat");
+                if (res.ok) {
+                    const data = await res.json();
+                    setAmcat(data);
+                }
+            } catch {
+                // AMCAT is optional on dashboard
+            }
+        }
+
+        if (student) fetchAmcat();
     }, [student]);
 
     if (isLoading || !student || !user) {
@@ -79,6 +109,44 @@ export default function StudentDashboard() {
                 <StatCard title="Profile Score" value={`${score}%`} icon={BarChart3} subtitle="Completeness" />
                 <StatCard title="Sandbox Usage" value={`${sandboxUsageToday}/5`} icon={Eye} subtitle="Today" />
             </div>
+
+            {amcat.hasAmcat && (
+                <div className="bg-slate-900/60 rounded-2xl border border-white/5 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold text-white">AMCAT Performance</h3>
+                        <CategoryBadge category={amcat.category || "gamma"} />
+                    </div>
+
+                    <div className="flex items-baseline gap-3 mb-4">
+                        <span className="text-4xl font-black text-white">{amcat.score ?? 0}</span>
+                        <span className="text-slate-400 text-sm">/ 100</span>
+                        <span className="text-slate-400 text-sm ml-auto">
+                            Rank #{amcat.rank ?? "-"} of {amcat.total_students ?? "-"}
+                        </span>
+                    </div>
+
+                    <div className="space-y-2">
+                        {[
+                            { label: "Automata", score: amcat.automata_score ?? 0 },
+                            { label: "Automata Fix", score: amcat.automata_fix_score ?? 0 },
+                            { label: "CS", score: amcat.cs_score ?? 0 },
+                            { label: "CP", score: amcat.cp_score ?? 0 },
+                            { label: "Quant", score: amcat.quant_score ?? 0 },
+                        ].map((section) => (
+                            <div key={section.label} className="flex items-center gap-3">
+                                <span className="text-xs text-slate-400 w-24">{section.label}</span>
+                                <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-indigo-500 rounded-full"
+                                        style={{ width: `${Math.max(0, Math.min(100, section.score))}%` }}
+                                    />
+                                </div>
+                                <span className="text-xs text-slate-300 w-8 text-right">{section.score}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                 
@@ -236,4 +304,18 @@ function ProfileSectionItem({ label, count, min, isOptional }: any) {
       </div>
     </div>
   );
+}
+
+function CategoryBadge({ category }: { category: "alpha" | "beta" | "gamma" }) {
+    const style = category === "alpha"
+        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+        : category === "beta"
+            ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+            : "bg-rose-500/10 text-rose-400 border-rose-500/20";
+
+    return (
+        <span className={`text-xs uppercase font-bold px-2.5 py-1 rounded-full border ${style}`}>
+            {category}
+        </span>
+    );
 }

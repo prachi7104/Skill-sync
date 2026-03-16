@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, UserCircle, Briefcase, Box, Settings } from "lucide-react";
+import { LayoutDashboard, UserCircle, Briefcase, Box, Settings, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const studentLinks = [
   { href: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/student/profile", label: "My Profile", icon: UserCircle },
   { href: "/student/drives", label: "Drives", icon: Briefcase },
+  { href: "/student/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/student/sandbox", label: "AI Sandbox", icon: Box },
   { href: "/student/settings", label: "Settings", icon: Settings },
 ];
