@@ -124,6 +124,11 @@ export async function GET(req: NextRequest) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("[Cron:Rankings] Worker failed:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({
+      error: error.message || String(error),
+      timestamp: new Date().toISOString(),
+      type: "cron_worker_failure",
+      worker: "process-rankings"
+    }, { status: 500 });
   }
 }

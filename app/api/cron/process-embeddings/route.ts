@@ -43,6 +43,11 @@ export async function GET(req: NextRequest) {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[Cron:Embeddings] Worker failed:", err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({
+      error: message,
+      timestamp: new Date().toISOString(),
+      type: "cron_worker_failure",
+      worker: "process-embeddings"
+    }, { status: 500 });
   }
 }

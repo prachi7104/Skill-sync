@@ -466,19 +466,25 @@ export async function parseJD(rawJd: string, titleHint?: string, companyHint?: s
     }
   );
 
-  if (result.success && result.data) {
-    const parsed = typeof result.data === 'string'
-      ? parseAIResponse(result.data)
-      : result.data as StructuredJD;
-
-    if (parsed) {
-      // eslint-disable-next-line no-console
-      console.log(`[JD Parser] Success via ${result.modelUsed}`);
-      return validateAndFillDefaults(parsed, titleHint, companyHint);
-    }
+  if (!result.success) {
+    throw new Error(`JD parsing API failed: ${result.error || "Unknown error"}`);
   }
 
-  throw new Error(`JD advanced parsing failed: ${result.error || "Unknown error"}`);
+  if (!result.data) {
+    throw new Error("JD parsing returned no data from router");
+  }
+
+  const parsed = typeof result.data === 'string'
+    ? parseAIResponse(result.data)
+    : result.data as StructuredJD;
+
+  if (!parsed) {
+    throw new Error("Failed to parse JD response: Invalid JSON or malformed response");
+  }
+
+  // eslint-disable-next-line no-console
+  console.log(`[JD Parser] Success via ${result.modelUsed}`);
+  return validateAndFillDefaults(parsed, titleHint, companyHint);
 }
 
 function parseAIResponse(response: string): StructuredJD | null {
@@ -488,10 +494,16 @@ function parseAIResponse(response: string): StructuredJD | null {
     else if (cleaned.startsWith("```")) cleaned = cleaned.slice(3);
     if (cleaned.endsWith("```")) cleaned = cleaned.slice(0, -3);
 
-    return JSON.parse(cleaned.trim());
+    const trimmed = cleaned.trim();
+    return JSON.parse(trimmed);
   } catch (e) {
     // eslint-disable-next-line no-console
-    console.error("[JD Parser] JSON Parse Error:", e);
+    console.error("[JD Parser] JSON Parse Error:", {
+      error: e instanceof Error ? e.message : String(e),
+      responseLength: response.length,
+      responsePreview: response.substring(0, 200),
+      fullResponse: response
+    });
     return null;
   }
 }

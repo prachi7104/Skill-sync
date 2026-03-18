@@ -65,7 +65,44 @@ npm run drizzle:push
     - Setup the build command to include `npm run drizzle:push` OR run it manually from your local machine pointing to the production DB URL.
     - *Recommended*: Run `npm run drizzle:push` locally with `DATABASE_URL` set to production before deploying breaking schema changes.
 
+## Pre-Deploy Checklist
+
+Before deploying to production, verify the following:
+
+### Code Quality
+- [ ] **TypeScript**: `npx tsc --noEmit` → 0 errors
+- [ ] **Linting**: `npm run lint` → 0 errors
+- [ ] **Tests**: `npm run test` → all tests pass
+
+### Environment & Secrets
+- [ ] **Cloudinary API Key**: Verify `CLOUDINARY_API_KEY` in Vercel env vars (no "your-" prefix)
+- [ ] **CRON_SECRET**: Set in Vercel env vars and GitHub Actions secrets
+- [ ] **VERCEL_APP_URL**: Set in GitHub Actions secrets for cron authentication
+- [ ] **NextAuth Secret**: Generated with `openssl rand -base64 32` and set in Vercel
+
+### Database & Security
+- [ ] **RLS Policies**: Run `npx tsx scripts/verify-rls.ts` → all policies applied
+- [ ] **Indexes**: Run `npx tsx scripts/apply-indexes.ts` → all indexes exist
+- [ ] **Vector Extension**: Enabled in Supabase (`CREATE EXTENSION IF NOT EXISTS vector`)
+
+### Feature Testing
+- [ ] **Faculty Flow**: Create faculty → login → create drive → verify rankings page loads
+- [ ] **Student Flow**: Create student → complete onboarding → upload resume → verify rankings
+- [ ] **Sandbox**: Student submits code → scoring completes within 45s
+- [ ] **Cron Jobs**: All workers execute without errors in Vercel logs
+
+### Monitoring Setup
+- [ ] **Health Endpoint**: Run `npx tsx scripts/health-check.ts` to verify system health
+- [ ] **Stuck Jobs**: Check Supabase jobs table for any "processing" status >1 hour
+- [ ] **Student Profiles**: No students without college_id in Supabase
+
+### Post-Deploy Validation
+- [ ] **Smoke Test**: Log in as student/faculty, navigate main flows
+- [ ] **API Logs**: Check Vercel Function logs for errors/warnings
+- [ ] **Database**: Verify no alerts in Supabase dashboard
+
 ## Troubleshooting
 
 - **Build Errors**: Check the Vercel logs. Common issues include type errors or missing env vars during build (if using `check-types` in build).
 - **Timeouts**: The Sandbox Analysis can take up to 45 seconds. We have configured `vercel.json` to allow 60s for these routes.
+- **Cron Failures**: Check the structured error response in Vercel Logs. Errors include `timestamp`, `type: "cron_worker_failure"`, and `worker` name.
