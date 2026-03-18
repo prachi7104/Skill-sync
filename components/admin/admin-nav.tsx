@@ -10,6 +10,7 @@ const links = [
   { href: "/admin/resources", label: "Resources", emoji: "📚" },
   { href: "/admin/amcat", label: "AMCAT", emoji: "📊" },
   { href: "/admin/users", label: "User Management", emoji: "👥" },
+  { href: "/admin/students", label: "Students", emoji: "👨‍🎓" },
   { href: "/admin/ai-models", label: "AI Models", emoji: "🤖" },
   { href: "/admin/settings", label: "Settings", emoji: "⚙️" },
 ];
