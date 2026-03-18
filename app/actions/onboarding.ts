@@ -50,8 +50,14 @@ export async function updateOnboardingStep(step: number) {
     // 2. Get or create the student profile (defensive, matches layout pattern)
     let profile = await getStudentProfile(user.id);
     if (!profile) {
+        if (!user.collegeId) {
+            throw new Error("Student profile not found and user has no collegeId — cannot auto-create.");
+        }
         try {
-            await db.insert(students).values({ id: user.id }).onConflictDoNothing();
+            await db.insert(students).values({ 
+              id: user.id,
+              collegeId: user.collegeId,
+            }).onConflictDoNothing();
             profile = await getStudentProfile(user.id);
         } catch (e) {
             console.error("[updateOnboardingStep] Failed to auto-create profile:", e);

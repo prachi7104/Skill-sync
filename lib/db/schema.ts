@@ -182,7 +182,9 @@ export const students = pgTable("students", {
     .references(() => users.id, { onDelete: "cascade" }),
 
   /** College this student belongs to (denormalised from users for fast queries). */
-  collegeId: uuid("college_id").references(() => colleges.id, { onDelete: "cascade" }),
+  collegeId: uuid("college_id")
+    .notNull()
+    .references(() => colleges.id, { onDelete: "cascade" }),
 
   // ── Identity ──────────────────────────────────────────────────────────────
 

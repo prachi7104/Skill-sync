@@ -18,11 +18,18 @@ export default async function StudentLayout({
     let profile = await getStudentProfile(user.id);
 
     if (!profile) {
-        try {
-            await db.insert(students).values({ id: user.id }).onConflictDoNothing();
-            profile = await getStudentProfile(user.id);
-        } catch (e) {
-            console.error("[StudentLayout] Failed to auto-create profile:", e);
+        if (!user.collegeId) {
+            console.error("[StudentLayout] Cannot create student profile: user has no collegeId");
+        } else {
+            try {
+                await db.insert(students).values({ 
+                  id: user.id,
+                  collegeId: user.collegeId,
+                }).onConflictDoNothing();
+                profile = await getStudentProfile(user.id);
+            } catch (e) {
+                console.error("[StudentLayout] Failed to auto-create profile:", e);
+            }
         }
     }
 

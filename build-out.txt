@@ -1,0 +1,129 @@
+﻿
+> skillsync@0.1.0 build
+> next build
+
+  Γû▓ Next.js 14.2.35
+  - Environments: .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/47) ...
+   Generating static pages (11/47) 
+   Generating static pages (23/47) 
+   Generating static pages (35/47) 
+ Γ£ô Generating static pages (47/47)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                               Size     First Load JS
+Γöî ╞Æ /                                                     196 B          96.4 kB
+Γö£ Γùï /_not-found                                           148 B          87.7 kB
+Γö£ ╞Æ /admin                                                196 B          96.4 kB
+Γö£ ╞Æ /admin/ai-models                                      3.66 kB        91.2 kB
+Γö£ ╞Æ /admin/amcat                                          9.7 kB          136 kB
+Γö£ ╞Æ /admin/drives                                         795 B           108 kB
+Γö£ ╞Æ /admin/drives/[driveId]/rankings                      156 B           138 kB
+Γö£ ╞Æ /admin/experiences                                    7.32 kB         116 kB
+Γö£ ╞Æ /admin/health                                         1.27 kB        88.8 kB
+Γö£ ╞Æ /admin/resources                                      163 B           172 kB
+Γö£ ╞Æ /admin/sandbox                                        3.55 kB        97.8 kB
+Γö£ ╞Æ /admin/settings                                       1.2 kB         98.4 kB
+Γö£ ╞Æ /admin/users                                          9.71 kB         126 kB
+Γö£ ╞Æ /api/admin/ai-models                                  0 B                0 B
+Γö£ ╞Æ /api/admin/ai-models/[modelId]                        0 B                0 B
+Γö£ ╞Æ /api/admin/ai-models/[modelId]/ping                   0 B                0 B
+Γö£ ╞Æ /api/admin/amcat                                      0 B                0 B
+Γö£ ╞Æ /api/admin/amcat/[sessionId]                          0 B                0 B
+Γö£ ╞Æ /api/admin/amcat/[sessionId]/publish                  0 B                0 B
+Γö£ ╞Æ /api/admin/amcat/[sessionId]/weights                  0 B                0 B
+Γö£ ╞Æ /api/admin/experiences                                0 B                0 B
+Γö£ ╞Æ /api/admin/experiences/[experienceId]                 0 B                0 B
+Γö£ ╞Æ /api/admin/faculty                                    0 B                0 B
+Γö£ ╞Æ /api/admin/faculty/[userId]/reset-password            0 B                0 B
+Γö£ ╞Æ /api/admin/health                                     0 B                0 B
+Γö£ ╞Æ /api/admin/health/cloudinary                          0 B                0 B
+Γö£ ╞Æ /api/admin/sandbox                                    0 B                0 B
+Γö£ ╞Æ /api/admin/sandbox-config                             0 B                0 B
+Γö£ ╞Æ /api/admin/seasons                                    0 B                0 B
+Γö£ ╞Æ /api/admin/staff/[userId]/permissions                 0 B                0 B
+Γö£ ╞Æ /api/admin/students/import                            0 B                0 B
+Γö£ ╞Æ /api/admin/users                                      0 B                0 B
+Γö£ ╞Æ /api/auth/[...nextauth]                               0 B                0 B
+Γö£ ╞Æ /api/auth/change-password                             0 B                0 B
+Γö£ ╞Æ /api/cron/nightly-cleanup                             0 B                0 B
+Γö£ ╞Æ /api/cron/process-embeddings                          0 B                0 B
+Γö£ ╞Æ /api/cron/process-jd-enhancement                      0 B                0 B
+Γö£ ╞Æ /api/cron/process-rankings                            0 B                0 B
+Γö£ ╞Æ /api/cron/process-resumes                             0 B                0 B
+Γö£ ╞Æ /api/db-status                                        0 B                0 B
+Γö£ ╞Æ /api/db-test                                          0 B                0 B
+Γö£ ╞Æ /api/drives                                           0 B                0 B
+Γö£ ╞Æ /api/drives/[driveId]/analysis/me                     0 B                0 B
+Γö£ ╞Æ /api/drives/[driveId]/embedding-check                 0 B                0 B
+Γö£ ╞Æ /api/drives/[driveId]/export                          0 B                0 B
+Γö£ ╞Æ /api/drives/[driveId]/queue-embeddings                0 B                0 B
+Γö£ ╞Æ /api/drives/[driveId]/rank                            0 B                0 B
+Γö£ ╞Æ /api/drives/[driveId]/rank/status                     0 B                0 B
+Γö£ ╞Æ /api/drives/[driveId]/rankings                        0 B                0 B
+Γö£ ╞Æ /api/drives/[driveId]/rankings/[studentId]/shortlist  0 B                0 B
+Γö£ ╞Æ /api/drives/[driveId]/rankings/me                     0 B                0 B
+Γö£ ╞Æ /api/faculty/bulk-eligibility                         0 B                0 B
+Γö£ ╞Æ /api/faculty/drives/conflicts                         0 B                0 B
+Γö£ ╞Æ /api/faculty/experiences                              0 B                0 B
+Γö£ ╞Æ /api/faculty/experiences/[experienceId]               0 B                0 B
+Γö£ ╞Æ /api/faculty/sandbox                                  0 B                0 B
+Γö£ ╞Æ /api/jobs/[id]                                        0 B                0 B
+Γö£ ╞Æ /api/resources                                        0 B                0 B
+Γö£ ╞Æ /api/resources/[resourceId]/view                      0 B                0 B
+Γö£ ╞Æ /api/seasons                                          0 B                0 B
+Γö£ ╞Æ /api/student/amcat                                    0 B                0 B
+Γö£ ╞Æ /api/student/amcat/leaderboard                        0 B                0 B
+Γö£ ╞Æ /api/student/career-coach                             0 B                0 B
+Γö£ ╞Æ /api/student/dashboard/stats                          0 B                0 B
+Γö£ ╞Æ /api/student/experiences                              0 B                0 B
+Γö£ ╞Æ /api/student/experiences/[experienceId]/helpful       0 B                0 B
+Γö£ ╞Æ /api/student/profile                                  0 B                0 B
+Γö£ ╞Æ /api/student/profile/completeness                     0 B                0 B
+Γö£ ╞Æ /api/student/profile/merge                            0 B                0 B
+Γö£ ╞Æ /api/student/resume                                   0 B                0 B
+Γö£ ╞Æ /api/student/resume/preview                           0 B                0 B
+Γö£ ╞Æ /api/student/sandbox                                  0 B                0 B
+Γö£ ╞Æ /api/student/sandbox/detailed                         0 B                0 B
+Γö£ ╞Æ /api/test                                             0 B                0 B
+Γö£ ╞Æ /faculty                                              193 B          96.4 kB
+Γö£ ╞Æ /faculty/drives                                       1.84 kB         122 kB
+Γö£ ╞Æ /faculty/drives/[driveId]/rankings                    156 B           138 kB
+Γö£ ╞Æ /faculty/drives/new                                   5.63 kB         125 kB
+Γö£ ╞Æ /faculty/resources                                    163 B           172 kB
+Γö£ ╞Æ /faculty/sandbox                                      2.77 kB        97.1 kB
+Γö£ ╞Æ /faculty/settings                                     1.2 kB         98.4 kB
+Γö£ Γùï /login                                                9.29 kB         107 kB
+Γö£ ╞Æ /student                                              148 B          87.7 kB
+Γö£ ╞Æ /student/career-coach                                 3.08 kB        97.4 kB
+Γö£ ╞Æ /student/companies                                    156 B           156 kB
+Γö£ ╞Æ /student/companies/[company]                          157 B           156 kB
+Γö£ ╞Æ /student/companies/submit                             3.98 kB         152 kB
+Γö£ ╞Æ /student/dashboard                                    6.66 kB         127 kB
+Γö£ ╞Æ /student/drives                                       196 B          96.4 kB
+Γö£ ╞Æ /student/drives/[driveId]/ranking                     3.58 kB         107 kB
+Γö£ ╞Æ /student/leaderboard                                  5.23 kB         128 kB
+Γö£ ╞Æ /student/onboarding                                   15 kB           247 kB
+Γö£ ╞Æ /student/profile                                      11.7 kB         177 kB
+Γö£ ╞Æ /student/resources                                    163 B           172 kB
+Γö£ ╞Æ /student/sandbox                                      6.55 kB         276 kB
+Γö£ ╞Æ /student/sandbox/detailed                             611 B           238 kB
+Γö£ ╞Æ /student/settings                                     958 B          98.2 kB
+Γöö Γùï /unauthorized                                         193 B          96.4 kB
++ First Load JS shared by all                             87.5 kB
+  Γö£ chunks/2117-d6ebc74ed0823bd1.js                       31.9 kB
+  Γö£ chunks/fd9d1056-d1ca968017a23812.js                   53.6 kB
+  Γöö other shared chunks (total)                           1.97 kB
+
+
+╞Æ Middleware                                              49.7 kB
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+
