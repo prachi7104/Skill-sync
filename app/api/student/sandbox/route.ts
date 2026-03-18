@@ -18,6 +18,9 @@ import { z } from "zod";
 import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
 import { generateEmbedding, composeStudentEmbeddingText, cosineSimilarity, isValidEmbedding } from "@/lib/embeddings";
 import { logger } from "@/lib/logger";
+import { GENERATE_SANDBOX_FEEDBACK } from "@/lib/antigravity/prompts";
+import { buildFeedbackPayload } from "@/lib/sandbox/build-feedback-payload";
+import { getRouter } from "@/lib/antigravity/instance";
 
 const sandboxSchema = z.object({
   jdText: z.string().min(20, "Job description must be at least 20 characters").max(10000),
@@ -381,6 +384,39 @@ export async function POST(req: NextRequest) {
         ? `This role requires ${expRequired}+ years of professional experience. Student profiles will score lower due to limited industry experience, this is expected and by design.`
         : null;
 
+    // ── Generate AI card feedback (new system) ────────────────────────────────
+    let cardFeedback: Record<string, unknown> | null = null;
+    try {
+      // Build payload for the AI prompt
+      const feedbackPayload = buildFeedbackPayload(
+        parsedJd as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        parsedResume as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        atsResult
+      );
+
+      // Call AI with the card-generation prompt
+      const router = getRouter();
+      const aiResult = await router.execute(
+        "sandbox_feedback",
+        `${feedbackPayload}\n\nGenerate the feedback cards now.`,
+        {
+          systemPrompt: GENERATE_SANDBOX_FEEDBACK,
+          responseFormat: "json",
+          temperature: 0.3,
+          maxTokens: 2000,
+        }
+      );
+
+      if (aiResult.success && aiResult.data) {
+        const raw = typeof aiResult.data === "string" ? aiResult.data : JSON.stringify(aiResult.data);
+        const cleaned = raw.replace(/```json|```/g, "").trim();
+        cardFeedback = JSON.parse(cleaned);
+      }
+    } catch (feedbackErr) {
+      console.warn("[Sandbox] Card feedback generation failed, falling back to old format:", feedbackErr);
+      // cardFeedback stays null — frontend falls back to old display
+    }
+
     // 7. Increment usage counters after successful analysis (students only)
     if (role === "student") {
       await incrementSandboxUsage(authUser.id);
@@ -427,6 +463,8 @@ export async function POST(req: NextRequest) {
         monthlyUsed: updated?.sandboxUsageMonth ?? 0,
         monthlyLimit: 20,
       },
+      cardFeedback,        // New structured card data (null if AI generation failed)
+      feedbackVersion: cardFeedback ? "v2_cards" : "v1_text",  // Frontend knows which to use
       analysis: atsResult // Full new ATS result
     });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -494,6 +494,14 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
     maxLatency: 3000,
     description: "Generate JD embedding via Gemini text-embedding-004",
   },
+
+  sandbox_feedback: {
+    priority: ["groq_llama_4_scout", "groq_qwen_32b", "gemini_2_0_flash", "groq_llama_3_3_70b"],
+    requiresLongContext: false,
+    requiresStructured: true,
+    maxLatency: 20000,
+    description: "Generate structured resume feedback cards for sandbox",
+  },
 };
 
 // ============================================================================

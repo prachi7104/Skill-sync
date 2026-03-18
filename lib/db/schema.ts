@@ -110,6 +110,9 @@ export const staffComponentEnum = pgEnum("staff_component", [
   "analytics_view",
 ]);
 
+/** Placement drive recruitment type. */
+export const placementTypeEnum = pgEnum("placement_type", ["placement", "internship", "ppo", "other"]);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Table: colleges
 // ─────────────────────────────────────────────────────────────────────────────
@@ -414,6 +417,11 @@ export const drives = pgTable("drives", {
   /** Placement season this drive belongs to. Null for legacy drives. */
   seasonId: uuid("season_id").references(() => seasons.id, { onDelete: "set null" }),
 
+  /** College this drive belongs to. Must be set at creation from faculty's college. */
+  collegeId: uuid("college_id")
+    .notNull()
+    .references(() => colleges.id, { onDelete: "cascade" }),
+
   // ── Company & Role ────────────────────────────────────────────────────────
 
   /** Recruiting company name. */
@@ -482,7 +490,7 @@ export const drives = pgTable("drives", {
   rankingsVisible: boolean("rankings_visible").notNull().default(false),
 
   /** Recruitment type used for filtering and reporting. */
-  placementType: varchar("placement_type", { length: 30 }).notNull().default("placement"),
+  placementType: placementTypeEnum("placement_type").notNull().default("placement"),
 
   /** Application/ranking deadline. Null = no deadline. */
   deadline: timestamp("deadline", { withTimezone: true }),
@@ -922,6 +930,11 @@ export const drivesRelations = relations(drives, ({ one, many }) => ({
   creator: one(users, {
     fields: [drives.createdBy],
     references: [users.id],
+  }),
+  /** College this drive belongs to. */
+  college: one(colleges, {
+    fields: [drives.collegeId],
+    references: [colleges.id],
   }),
   /** Optional placement season for this drive. */
   season: one(seasons, {

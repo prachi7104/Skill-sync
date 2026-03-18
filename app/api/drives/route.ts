@@ -35,6 +35,13 @@ export async function POST(req: NextRequest) {
   try {
     const user = await requireRole(["faculty", "admin"]);
 
+    if (!user.collegeId) {
+      return NextResponse.json(
+        { message: "Your account must be associated with a college to create drives" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const parsed = createDriveSchema.safeParse(body);
 
@@ -61,6 +68,7 @@ export async function POST(req: NextRequest) {
     const [drive] = await db
       .insert(drives)
       .values({
+        collegeId: user.collegeId,
         createdBy: user.id,
         company: data.company,
         roleTitle: data.roleTitle,
