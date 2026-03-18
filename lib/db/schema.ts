@@ -97,6 +97,19 @@ export const jobTypeEnum = pgEnum("job_type", [
   "rank_students",
 ]);
 
+/** Staff component permissions — faculty/admin capabilities granted per user. */
+export const staffComponentEnum = pgEnum("staff_component", [
+  "drive_management",
+  "amcat_management",
+  "technical_content",
+  "softskills_content",
+  "company_experiences",
+  "student_feedback_posting",
+  "sandbox_access",
+  "student_management",
+  "analytics_view",
+]);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Table: colleges
 // ─────────────────────────────────────────────────────────────────────────────
@@ -160,6 +173,43 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Table: staff_profiles
+// ─────────────────────────────────────────────────────────────────────────────
+// Purpose: Faculty/admin capabilities and profile information.
+// 1:N relationship — a faculty/admin user has exactly one staff_profiles row.
+// Stores department, designation, and component permissions (capabilities).
+
+export const staffProfiles = pgTable("staff_profiles", {
+  /** PK and FK → users.id. One staff profile per staff user. */
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  /** College this staff member belongs to (denormalised from users for fast queries). */
+  collegeId: uuid("college_id").references(() => colleges.id, { onDelete: "cascade" }),
+
+  /** Department or team (e.g., "Human Resources", "Technical Team"). */
+  department: varchar("department", { length: 255 }),
+
+  /** Job title or role (e.g., "Placement Coordinator", "Technical Lead"). */
+  designation: varchar("designation", { length: 255 }),
+
+  /** Array of granted component permissions. See: staffComponentEnum */
+  grantedComponents: text("granted_components")
+    .array()
+    .notNull()
+    .default(sql`ARRAY[]::text[]`),
+
+  /** Admin who created this staff profile. */
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "restrict" }),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
