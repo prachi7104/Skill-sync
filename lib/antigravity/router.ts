@@ -505,107 +505,6 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
 };
 
 // ============================================================================
-// RATE LIMITER — Track Usage Across All Models
-// ============================================================================
-
-interface RateLimitState {
-  rpm: Map<string, number[]>;
-  rpd: Map<string, number[]>;
-}
-
-class RateLimiter {
-  private state: RateLimitState = {
-    rpm: new Map(),
-    rpd: new Map(),
-  };
-
-  private getLimit(value: number | null | "unlimited" | undefined): number {
-    if (value === "unlimited" || value === null || value === undefined) {
-      return Infinity;
-    }
-    return Number.isFinite(value) ? value : Infinity;
-  }
-
-  canMakeRequest(modelKey: string): boolean {
-    const model = MODEL_REGISTRY[modelKey];
-    if (!model) return false;
-
-    // Explicitly handle "unlimited" and null
-    const rpmLimit = this.getLimit(model.rpm);
-    const rpdLimit = this.getLimit(model.rpd);
-
-    // If limits are infinite, always allow
-    if (rpmLimit === Infinity && rpdLimit === Infinity) return true;
-
-    const now = Date.now();
-    const oneMinuteAgo = now - 60_000;
-    const oneDayAgo = now - 86_400_000;
-
-    const rpmTimestamps = (this.state.rpm.get(modelKey) || []).filter(
-      (t) => t > oneMinuteAgo,
-    );
-    const rpdTimestamps = (this.state.rpd.get(modelKey) || []).filter(
-      (t) => t > oneDayAgo,
-    );
-
-    if (rpmTimestamps.length >= rpmLimit) return false;
-    if (rpdTimestamps.length >= rpdLimit) return false;
-
-    return true;
-  }
-
-  recordRequest(modelKey: string): void {
-    const now = Date.now();
-
-    // Clean up old timestamps while we are at it to avoid memory leaks
-    const oneMinuteAgo = now - 60_000;
-    const oneDayAgo = now - 86_400_000;
-
-    let rpmTimestamps = this.state.rpm.get(modelKey) || [];
-    rpmTimestamps = rpmTimestamps.filter((t) => t > oneMinuteAgo);
-    rpmTimestamps.push(now);
-    this.state.rpm.set(modelKey, rpmTimestamps);
-
-    let rpdTimestamps = this.state.rpd.get(modelKey) || [];
-    rpdTimestamps = rpdTimestamps.filter((t) => t > oneDayAgo);
-    rpdTimestamps.push(now);
-    this.state.rpd.set(modelKey, rpdTimestamps);
-  }
-
-  getAvailableCapacity(modelKey: string): { rpm: number; rpd: number } {
-    const model = MODEL_REGISTRY[modelKey];
-    if (!model) return { rpm: 0, rpd: 0 };
-
-    const rpmLimit = this.getLimit(model.rpm);
-    const rpdLimit = this.getLimit(model.rpd);
-
-    if (rpmLimit === Infinity && rpdLimit === Infinity) {
-      return { rpm: 999999, rpd: 999999 };
-    }
-
-    const now = Date.now();
-    const oneMinuteAgo = now - 60_000;
-    const oneDayAgo = now - 86_400_000;
-
-    const rpmUsed = (this.state.rpm.get(modelKey) || []).filter(
-      (t) => t > oneMinuteAgo,
-    ).length;
-    const rpdUsed = (this.state.rpd.get(modelKey) || []).filter(
-      (t) => t > oneDayAgo,
-    ).length;
-
-    return {
-      rpm: rpmLimit - rpmUsed,
-      rpd: rpdLimit - rpdUsed,
-    };
-  }
-
-  resetStats(): void {
-    this.state = { rpm: new Map(), rpd: new Map() };
-  }
-}
-
-// ============================================================================
 // HEALTH MONITORING — Track Failures & Circuit Breaking
 // ============================================================================
 
@@ -717,7 +616,6 @@ const TRUSTED_TASK_TYPES = new Set([
 ]);
 
 export class AntigravityRouter {
-  private rateLimiter: RateLimiter;
   private healthMonitor: ModelHealthMonitor;
   private googleAI: GoogleGenerativeAI | null = null;
   private groqClient: Groq | null = null;
@@ -729,7 +627,6 @@ export class AntigravityRouter {
     groqApiKey?: string;
     enableLogging?: boolean;
   }) {
-    this.rateLimiter = new RateLimiter();
     this.healthMonitor = new ModelHealthMonitor();
     this.enableLogging = config.enableLogging ?? false;
 
@@ -866,7 +763,6 @@ export class AntigravityRouter {
       if (!model) continue;
       if (task.requiresLongContext && !model.capabilities.longContext) continue;
       if (model.latency > task.maxLatency) continue;
-      if (!this.rateLimiter.canMakeRequest(modelKey)) continue;
       if (!this.healthMonitor.isHealthy(modelKey)) continue;
       return modelKey;
     }
@@ -892,14 +788,6 @@ export class AntigravityRouter {
     const guardKey = "groq_prompt_guard";
     if (!TRUSTED_TASK_TYPES.has(taskType) && MODEL_REGISTRY[guardKey]) {
       const guardModel = MODEL_REGISTRY[guardKey];
-
-      // Strict: Guard must be available and allowed
-      if (!this.rateLimiter.canMakeRequest(guardKey)) {
-        console.warn(`[antigravity] ⚠️ Prompt Guard rate-limited.`);
-        return { success: false, error: "Safety Guard Unavailable (Rate Limit)" };
-      }
-
-      this.rateLimiter.recordRequest(guardKey);
 
       try {
         // Execute guard - specialized short context call
@@ -969,8 +857,6 @@ export class AntigravityRouter {
         if (!withinLimit) {
           continue;
         }
-
-        this.rateLimiter.recordRequest(selectedModel.modelKey);
 
         let result: unknown;
 
@@ -1175,14 +1061,12 @@ export class AntigravityRouter {
   getStatus(): Record<
     string,
     {
-      available: { rpm: number; rpd: number };
       model: { id: string; provider: string; tier: number; latency: number };
     }
   > {
     const status: Record<
       string,
       {
-        available: { rpm: number; rpd: number };
         model: { id: string; provider: string; tier: number; latency: number };
       }
     > = {};
@@ -1195,15 +1079,10 @@ export class AntigravityRouter {
           tier: model.tier,
           latency: model.latency,
         },
-        available: this.rateLimiter.getAvailableCapacity(key),
       };
     }
 
     return status;
-  }
-
-  resetRateLimits(): void {
-    this.rateLimiter.resetStats();
   }
 }
 

@@ -200,11 +200,20 @@ export const staffProfiles = pgTable("staff_profiles", {
   /** Job title or role (e.g., "Placement Coordinator", "Technical Lead"). */
   designation: varchar("designation", { length: 255 }),
 
+  /** Employee ID from HR systems. */
+  employeeId: varchar("employee_id", { length: 50 }),
+
+  /** Contact phone number. */
+  phone: varchar("phone", { length: 20 }),
+
   /** Array of granted component permissions. See: staffComponentEnum */
   grantedComponents: text("granted_components")
     .array()
     .notNull()
     .default(sql`ARRAY[]::text[]`),
+
+  /** Whether this staff profile is currently active. */
+  isActive: boolean("is_active").notNull().default(true),
 
   /** Admin who created this staff profile. */
   createdBy: uuid("created_by")
@@ -886,6 +895,94 @@ export const resources = pgTable("resources", {
   viewCount: integer("view_count").notNull().default(0),
   helpfulCount: integer("helpful_count").notNull().default(0),
   isPublished: boolean("is_published").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Table: amcat_sessions
+// ─────────────────────────────────────────────────────────────────────────────
+// Purpose: Store AMCAT test sessions created by colleges for batch assessments.
+
+export const amcatSessions = pgTable("amcat_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  collegeId: uuid("college_id").notNull().references(() => colleges.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  academicYear: varchar("academic_year", { length: 20 }),
+  weights: jsonb("weights").notNull().default({}),
+  thresholds: jsonb("thresholds").notNull().default({}),
+  isPublished: boolean("is_published").notNull().default(false),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Table: amcat_results
+// ─────────────────────────────────────────────────────────────────────────────
+// Purpose: Store AMCAT test results for students, linked to sessions.
+
+export const amcatResults = pgTable("amcat_results", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sessionId: uuid("session_id").notNull().references(() => amcatSessions.id, { onDelete: "cascade" }),
+  collegeId: uuid("college_id").notNull().references(() => colleges.id, { onDelete: "cascade" }),
+  sapId: varchar("sap_id", { length: 20 }).notNull(),
+  studentId: uuid("student_id").references(() => students.id, { onDelete: "set null" }),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }),
+  csScore: real("cs_score"),
+  cpScore: real("cp_score"),
+  automataScore: real("automata_score"),
+  automataFixScore: real("automata_fix_score"),
+  quantScore: real("quant_score"),
+  totalScore: real("total_score"),
+  category: batchCategoryEnum("category"),
+  rankInSession: integer("rank_in_session"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  sessionSapUnq: unique().on(t.sessionId, t.sapId),
+}));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Table: student_roster
+// ─────────────────────────────────────────────────────────────────────────────
+// Purpose: Import and track student roster data from CSV uploads.
+
+export const studentRoster = pgTable("student_roster", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  collegeId: uuid("college_id").notNull().references(() => colleges.id, { onDelete: "cascade" }),
+  sapId: varchar("sap_id", { length: 20 }).notNull(),
+  email: varchar("email", { length: 320 }),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  course: varchar("course", { length: 100 }),
+  branch: varchar("branch", { length: 100 }),
+  batchYear: integer("batch_year"),
+  rollNo: varchar("roll_no", { length: 20 }),
+  programmeName: varchar("programme_name", { length: 150 }),
+  studentId: uuid("student_id").references(() => students.id, { onDelete: "set null" }),
+  linkedAt: timestamp("linked_at", { withTimezone: true }),
+  importedFrom: varchar("imported_from", { length: 50 }).notNull().default("roster_csv"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  collegeRosterUnq: unique().on(t.collegeId, t.sapId),
+}));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Table: placement_outcomes
+// ─────────────────────────────────────────────────────────────────────────────
+// Purpose: Track final placement outcomes for students across drives.
+
+export const placementOutcomes = pgTable("placement_outcomes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  driveId: uuid("drive_id").notNull().references(() => drives.id, { onDelete: "cascade" }),
+  studentId: uuid("student_id").notNull().references(() => students.id, { onDelete: "cascade" }),
+  collegeId: uuid("college_id").notNull().references(() => colleges.id, { onDelete: "cascade" }),
+  finalStatus: text("final_status").notNull(),
+  offerAmount: varchar("offer_amount", { length: 100 }),
+  joiningDate: timestamp("joining_date", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
