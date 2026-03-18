@@ -1,7 +1,7 @@
 import { getCachedSession } from "@/lib/auth/session-cache";
 import { db } from "@/lib/db";
 import { users, students } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 /**
@@ -77,8 +77,52 @@ export async function requireStudentProfile() {
     const profile = await getStudentProfile(user.id);
 
     if (!profile) {
-        redirect("/student/onboarding/welcome");
+        redirect("/student/onboarding");
     }
 
     return { user, profile };
+}
+
+/**
+ * Checks if the current staff user (admin or faculty) has a specific component permission.
+ * Admins always return true. Faculty must have the component in their granted_components array.
+ */
+export async function hasComponent(component: string): Promise<boolean> {
+    const user = await getCurrentUser();
+    if (!user) return false;
+    if (user.role === "admin") return true;
+    if (user.role === "student") return false;
+
+    const [profile] = await db.execute(sql`
+        SELECT granted_components FROM staff_profiles WHERE user_id = ${user.id}
+    `) as unknown as Array<{ granted_components: string[] }>;
+
+    if (!profile) return false;
+    return profile.granted_components.includes(component);
+}
+
+/**
+ * Enforces that the current user has a required component permission.
+ * Redirects to /unauthorized if not.
+ */
+export async function requireComponent(component: string) {
+    const user = await requireAuth();
+    if (user.role === "admin") return user; // admin bypasses
+
+    const allowed = await hasComponent(component);
+    if (!allowed) redirect("/unauthorized");
+
+    return user;
+}
+
+/**
+ * Returns the college_id for the current user.
+ * Used to scope all data queries. Throws if missing (not redirect — safe for API routes too).
+ */
+export async function getCurrentCollegeId(): Promise<string> {
+    const session = await getCachedSession();
+    if (!session?.user?.collegeId) {
+        throw new Error("No college associated with this account");
+    }
+    return session.user.collegeId;
 }

@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
-import { drives, rankings, jobs } from "@/lib/db/schema";
+import { drives, rankings, jobs, seasons } from "@/lib/db/schema";
 import { eq, count, avg, sql, and, inArray } from "drizzle-orm";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
@@ -31,15 +31,34 @@ const StatCard = ({ label, value, icon: Icon, color = "indigo" }: any) => (
   </div>
 );
 
-export default async function FacultyDashboardPage() {
+export default async function FacultyDashboardPage({
+    searchParams,
+}: {
+    searchParams?: { seasonId?: string };
+}) {
     const user = await requireRole(["faculty", "admin"]);
+    const selectedSeasonId = searchParams?.seasonId ?? "all";
+
+    const seasonRows = user.collegeId
+        ? await db.query.seasons.findMany({
+            where: eq(seasons.collegeId, user.collegeId),
+            columns: { id: true, name: true },
+            orderBy: [sql`${seasons.createdAt} DESC`],
+        })
+        : [];
 
     // YOUR EXACT BACKEND LOGIC
-    const facultyDrives = await db.select({ id: drives.id, company: drives.company, roleTitle: drives.roleTitle, isActive: drives.isActive, createdAt: drives.createdAt })
-        .from(drives).where(eq(drives.createdBy, user.id)).orderBy(sql`${drives.createdAt} DESC`);
+    const facultyDrives = await db.select({ id: drives.id, company: drives.company, roleTitle: drives.roleTitle, isActive: drives.isActive, createdAt: drives.createdAt, seasonId: drives.seasonId })
+        .from(drives)
+        .where(eq(drives.createdBy, user.id))
+        .orderBy(sql`${drives.createdAt} DESC`);
 
-    const driveIds = facultyDrives.map((d) => d.id);
-    const activeDriveCount = facultyDrives.filter((d) => d.isActive).length;
+    const filteredDrives = selectedSeasonId === "all"
+        ? facultyDrives
+        : facultyDrives.filter((d) => d.seasonId === selectedSeasonId);
+
+    const driveIds = filteredDrives.map((d) => d.id);
+    const activeDriveCount = filteredDrives.filter((d) => d.isActive).length;
 
     let totalRanked = 0; let avgScore: string | null = null; let pendingJobCount = 0; let activityFeed: any[] = [];
     const rankingCounts = new Map<string, { count: number; avgScore: number | null }>();
@@ -64,10 +83,39 @@ export default async function FacultyDashboardPage() {
                     <h1 className="text-3xl font-bold text-white tracking-tight mb-1">Good morning, {user.name.split(" ")[0]}</h1>
                     <p className="text-sm text-slate-500">Faculty Dashboard — UPES Placement Portal</p>
                 </div>
-                <Link href="/faculty/drives/new" className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center space-x-2 hover:bg-indigo-700 transition-all shadow-sm">
-                    <PlusCircle className="w-4 h-4" /><span>Create Drive</span>
-                </Link>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 max-w-[420px] overflow-x-auto">
+                        <Link
+                            href="/faculty"
+                            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${selectedSeasonId === "all" ? "bg-indigo-600 text-white" : "bg-slate-900 text-slate-300 border border-white/10"}`}
+                        >
+                            All seasons
+                        </Link>
+                        {seasonRows.map((season) => (
+                            <Link
+                                key={season.id}
+                                href={`/faculty?seasonId=${season.id}`}
+                                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${selectedSeasonId === season.id ? "bg-indigo-600 text-white" : "bg-slate-900 text-slate-300 border border-white/10"}`}
+                            >
+                                {season.name}
+                            </Link>
+                        ))}
+                    </div>
+                    <Link href="/faculty/drives/new" className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center space-x-2 hover:bg-indigo-700 transition-all shadow-sm">
+                        <PlusCircle className="w-4 h-4" /><span>Create Drive</span>
+                    </Link>
+                </div>
             </header>
+
+            <div className="mb-6 rounded-xl border border-white/10 bg-slate-900/50 p-4 text-sm text-slate-300">
+                <p className="font-semibold text-white mb-1">Bulk Eligibility Snapshot</p>
+                <p>Select a drive in the rankings table and query <span className="font-mono">/api/faculty/bulk-eligibility?driveId=...</span> for batch eligibility counts.</p>
+                <div className="mt-2 flex gap-2 flex-wrap">
+                    <Link href="/faculty/drives" className="text-indigo-400 hover:text-indigo-300">Open Drives</Link>
+                    <span>•</span>
+                    <span>{filteredDrives.length} drives in current season scope</span>
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
                 <StatCard label="Active Drives" value={activeDriveCount} icon={Briefcase} color="indigo" />
@@ -112,7 +160,7 @@ export default async function FacultyDashboardPage() {
                                 <tr className="bg-slate-950/50"><th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Details</th><th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th><th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Analytics</th></tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {facultyDrives.slice(0, 5).map((drive) => {
+                                {filteredDrives.slice(0, 5).map((drive) => {
                                     const analytics = rankingCounts.get(drive.id);
                                     return (
                                         <tr key={drive.id} className="hover:bg-slate-800/50 transition-colors">

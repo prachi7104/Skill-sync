@@ -103,8 +103,7 @@ export async function POST(req: NextRequest) {
                     resource_type: "raw",
                     // Remove the format from public_id — let Cloudinary handle the extension
                     public_id: `${user.id}_${timestamp}`,
-                    // Remove access_mode: "public" — raw files use the secure_url directly
-                    // which is always accessible with your Cloudinary credentials
+                    access_mode: "public",
                     overwrite: true,
                     // Add format explicitly based on file type
                     format: isPdf ? "pdf" : "docx",
@@ -145,11 +144,9 @@ export async function POST(req: NextRequest) {
             })
             .where(eq(students.id, user.id));
 
-        // 7. Enqueue AI parsing job (ONLY if onboarding is NOT complete)
-        // Post-onboarding uploads are storage-only updates.
+        // 7. Enqueue AI parsing job for onboarding and low-completeness profiles.
         let jobId: string | null = null;
-        const isOnboarded = profile.onboardingStep >= 10;
-        const shouldQueue = source === "onboarding" || !isOnboarded;
+        const shouldQueue = source === "onboarding" || (profile.profileCompleteness ?? 0) < 80;
 
         // If onboarding flow or not yet complete, enqueue a parse job so the server
         // can attempt server-side extraction when client-side text is missing.

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
-import { jobs, students } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
-import { generateEmbedding, composeStudentEmbeddingText } from "@/lib/embeddings";
+import { jobs, students, drives } from "@/lib/db/schema";
+import { eq, and, sql } from "drizzle-orm";
+import { generateEmbedding, composeStudentEmbeddingText, composeJDEmbeddingText } from "@/lib/embeddings";
 
 const MAX_JOBS_PER_TICK = 3;
 
@@ -71,6 +71,10 @@ export async function processEmbeddingJobs() {
                         projects: true,
                         workExperience: true,
                         certifications: true,
+                        researchPapers: true,
+                        achievements: true,
+                        softSkills: true,
+                        codingProfiles: true,
                     },
                 });
 
@@ -83,6 +87,10 @@ export async function processEmbeddingJobs() {
                     projects: student.projects,
                     workExperience: student.workExperience,
                     certifications: student.certifications,
+                    researchPapers: student.researchPapers,
+                    achievements: student.achievements,
+                    softSkills: student.softSkills,
+                    codingProfiles: student.codingProfiles,
                 });
 
                 if (!text || text.trim().length === 0) {
@@ -97,12 +105,50 @@ export async function processEmbeddingJobs() {
                     throw new Error("Gemini returned a zero vector — embedding generation failed. Will retry.");
                 }
 
-                await db
-                    .update(students)
-                    .set({ embedding, updatedAt: new Date() })
-                    .where(eq(students.id, targetId));
+                await db.execute(sql`
+                    UPDATE students
+                    SET   embedding  = ${`[${embedding.join(",")}]`}::vector(768),
+                          updated_at = NOW()
+                    WHERE id = ${targetId}
+                `);
+            } else if (targetType === "drive") {
+                const [drive] = await db
+                    .select({
+                        id: drives.id,
+                        rawJd: drives.rawJd,
+                        parsedJd: drives.parsedJd,
+                        roleTitle: drives.roleTitle,
+                        company: drives.company,
+                    })
+                    .from(drives)
+                    .where(eq(drives.id, targetId))
+                    .limit(1);
+
+                if (!drive) throw new Error(`Drive not found: ${targetId}`);
+
+                const jdText = composeJDEmbeddingText({
+                    parsedJd: drive.parsedJd,
+                    rawJd: drive.rawJd,
+                    roleTitle: drive.roleTitle,
+                    company: drive.company,
+                });
+
+                if (!jdText || jdText.trim().length < 10) {
+                    throw new Error("JD text too short to embed");
+                }
+
+                const embedding = await generateEmbedding(jdText);
+
+                const isZero = embedding.length === 768 && embedding.every((v) => v === 0);
+                if (isZero) throw new Error("Zero vector returned for drive — Gemini failed silently");
+
+                await db.execute(sql`
+                    UPDATE drives
+                    SET   jd_embedding = ${`[${embedding.join(",")}]`}::vector(768),
+                          updated_at   = NOW()
+                    WHERE id = ${targetId}
+                `);
             } else {
-                // Drive embeddings are handled by the ranking pipeline
                 throw new Error(`Unsupported target type: ${targetType}`);
             }
 

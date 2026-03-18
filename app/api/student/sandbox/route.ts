@@ -1,21 +1,22 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireStudentProfile } from "@/lib/auth/helpers";
-import { enforceSandboxLimits, enforceProfileGate } from "@/lib/guardrails";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/config";
+import { enforceSandboxLimits, enforceProfileGate, incrementSandboxUsage } from "@/lib/guardrails";
 import { GuardrailViolation } from "@/lib/guardrails/errors";
 import { db } from "@/lib/db";
 import { isRedirectError } from "next/dist/client/components/redirect";
-import { students } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { students, users } from "@/lib/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { checkEligibility, type EligibilityCriteria, type StudentProfile } from "@/lib/matching";
 import { parseJD } from "@/lib/jd/parser";
 import { analyzeMatch } from "@/lib/ats";
+import { getHireRecommendation } from "@/lib/ats/scoring";
 import { ATSScore } from "@/lib/ats/types";
 import { ParsedResumeData } from "@/lib/resume/ai-parser";
 import { z } from "zod";
 import type { Skill, Project, WorkExperience } from "@/lib/db/schema";
-import { generateEmbedding, composeStudentEmbeddingText } from "@/lib/embeddings";
-import { isValidEmbedding } from "@/lib/embeddings/generate";
+import { generateEmbedding, composeStudentEmbeddingText, cosineSimilarity, isValidEmbedding } from "@/lib/embeddings";
 import { logger } from "@/lib/logger";
 
 const sandboxSchema = z.object({
@@ -169,11 +170,62 @@ function mapProfileToResumeData(profile: any, skills: Skill[], projects: Project
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Auth — require student with profile
-    const { user, profile } = await requireStudentProfile();
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const [authUser] = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.email, session.user.email))
+      .limit(1);
+
+    if (!authUser) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = authUser.role;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let profile: any = null;
+    if (role === "student") {
+      const [studentRow] = await db
+        .select()
+        .from(students)
+        .where(eq(students.id, authUser.id))
+        .limit(1);
+
+      if (!studentRow) {
+        return NextResponse.json({ message: "Student profile not found" }, { status: 404 });
+      }
+      profile = studentRow;
+    } else {
+      // Faculty/admin can run JD sandbox without student embedding context.
+      profile = {
+        id: authUser.id,
+        skills: [],
+        projects: [],
+        workExperience: [],
+        certifications: [],
+        embedding: null,
+        cgpa: null,
+        branch: null,
+        batchYear: null,
+        category: null,
+        sandboxUsageToday: 0,
+        sandboxUsageMonth: 0,
+        sandboxResetDate: null,
+        sandboxMonthResetDate: null,
+      };
+    }
 
     // Fix: If embedding is missing or all-zeros (e.g. from legacy profile or failed job), generate it now
-    if (!isValidEmbedding(profile.embedding as number[])) {
+    if (role === "student" && !isValidEmbedding(profile.embedding as number[])) {
       logger.info("[Sandbox] Profile embedding missing. Generating on-the-fly...");
       try {
         const skills = (profile.skills as Skill[] | null) ?? [];
@@ -181,21 +233,34 @@ export async function POST(req: NextRequest) {
         const workExperience = (profile.workExperience as WorkExperience[] | null) ?? [];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const certifications = (profile.certifications as any[] | null) ?? [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const researchPapers = (profile.researchPapers as any[] | null) ?? [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const achievements = (profile.achievements as any[] | null) ?? [];
+        const softSkills = (profile.softSkills as string[] | null) ?? [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const codingProfiles = (profile.codingProfiles as any[] | null) ?? [];
 
         const embeddingText = composeStudentEmbeddingText({
           skills,
           projects,
           workExperience,
-          certifications
+          certifications,
+          researchPapers,
+          achievements,
+          softSkills,
+          codingProfiles,
         });
 
         const embedding = await generateEmbedding(embeddingText);
 
         // Save to DB so we don't regenerate next time
-        await db
-          .update(students)
-          .set({ embedding, updatedAt: new Date() })
-          .where(eq(students.id, user.id));
+        await db.execute(sql`
+          UPDATE students
+          SET   embedding  = ${`[${embedding.join(",")}]`}::vector(768),
+                updated_at = NOW()
+          WHERE id = ${authUser.id}
+        `);
 
         // Update local object so gate passes
         profile.embedding = embedding;
@@ -207,10 +272,14 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Profile gate — must have complete enough profile
-    await enforceProfileGate(user.id);
+    if (role === "student") {
+      await enforceProfileGate(authUser.id);
+    }
 
     // 3. Sandbox rate limits
-    await enforceSandboxLimits(user.id);
+    if (role === "student") {
+      await enforceSandboxLimits(authUser.id, role);
+    }
 
     // 4. Parse input
     const body = await req.json();
@@ -253,55 +322,110 @@ export async function POST(req: NextRequest) {
     const projects = (profile.projects as Project[] | null) ?? [];
     const workExperience = (profile.workExperience as WorkExperience[] | null) ?? [];
 
-    const parsedResume = mapProfileToResumeData(profile, skills, projects, workExperience, user.name);
+    const parsedResume = mapProfileToResumeData(profile, skills, projects, workExperience, authUser.name);
 
     // Analyze
     const atsResult = analyzeMatch(parsedJd, parsedResume);
 
-    // Override score if ineligible
+    let jdEmbedding: number[] | null = null;
+    try {
+      const rawJdEmbedding = await generateEmbedding(jdText, "jd");
+      if (isValidEmbedding(rawJdEmbedding)) {
+        const norm = Math.sqrt(rawJdEmbedding.reduce((s, v) => s + v * v, 0));
+        jdEmbedding = norm > 0 ? rawJdEmbedding.map((v) => v / norm) : null;
+      }
+    } catch (embErr: unknown) {
+      const embErrMsg = embErr instanceof Error ? embErr.message : String(embErr);
+      logger.warn(`[Sandbox] JD embedding failed, using ATS-only scoring: ${embErrMsg}`);
+    }
+
+    let matchScore: number;
+    let semanticScore: number;
+    let structuredScore: number;
+
+    const studentEmbedding = isValidEmbedding(profile.embedding as number[])
+      ? (profile.embedding as number[])
+      : null;
+
+    if (jdEmbedding && studentEmbedding) {
+      const cosine = cosineSimilarity(studentEmbedding, jdEmbedding);
+      semanticScore = Math.round(cosine * 100 * 100) / 100;
+      structuredScore = atsResult.match_score.overall;
+      matchScore = Math.round((semanticScore * 0.7 + structuredScore * 0.3) * 100) / 100;
+    } else {
+      semanticScore = atsResult.component_breakdown.domain_alignment.percentage;
+      structuredScore = atsResult.match_score.overall;
+      matchScore = atsResult.match_score.overall;
+      logger.warn("[Sandbox] Falling back to ATS-only scoring (no embeddings)");
+    }
+
     if (!eligibilityResult.isEligible) {
       atsResult.match_score.overall = 0;
       atsResult.match_score.interpretation = "Ineligible";
       atsResult.match_score.hire_recommendation = "REJECT";
-      atsResult.red_flags.push({ flag: eligibilityResult.reason || "Did not meet eligibility criteria", severity: "Critical", impact: -100 });
+      atsResult.red_flags.push({
+        flag: eligibilityResult.reason || "Did not meet eligibility criteria",
+        severity: "Critical",
+        impact: -100,
+      });
+
+      matchScore = 0;
+      semanticScore = 0;
+      structuredScore = 0;
     }
 
-    // 7. Increment usage counters (DISABLED)
-    // await incrementSandboxUsage(user.id);
+    const expRequired = (parsedJd as { role_metadata?: { experience_years_min?: number } })
+      ?.role_metadata?.experience_years_min ?? 0;
+    const seniorityWarning =
+      expRequired >= 3
+        ? `This role requires ${expRequired}+ years of professional experience. Student profiles will score lower due to limited industry experience, this is expected and by design.`
+        : null;
 
-    // 8. Fetch updated usage for request context
-    const [updated] = await db
-      .select({
-        sandboxUsageToday: students.sandboxUsageToday,
-        sandboxUsageMonth: students.sandboxUsageMonth,
-      })
-      .from(students)
-      .where(eq(students.id, user.id))
-      .limit(1);
+    // 7. Increment usage counters after successful analysis (students only)
+    if (role === "student") {
+      await incrementSandboxUsage(authUser.id);
+    }
+
+    // 8. Fetch updated usage for request context (students only)
+    const [updated] = role === "student"
+      ? await db
+          .select({
+            sandboxUsageToday: students.sandboxUsageToday,
+            sandboxUsageMonth: students.sandboxUsageMonth,
+          })
+          .from(students)
+          .where(eq(students.id, authUser.id))
+          .limit(1)
+      : [{ sandboxUsageToday: 0, sandboxUsageMonth: 0 }];
 
     return NextResponse.json({
-      matchScore: atsResult.match_score.overall,
+      matchScore,
+      semanticScore,
+      structuredScore,
       // 4-dimension breakdown (new scoring system)
       hardSkillsScore: atsResult.component_breakdown.hard_requirements.percentage,
       softSkillsScore: atsResult.component_breakdown.soft_requirements.percentage,
       experienceScore: atsResult.component_breakdown.experience_level.percentage,
       domainMatchScore: atsResult.component_breakdown.domain_alignment.percentage,
-      recommendation: atsResult.match_score.hire_recommendation,
-      // Backward compat — keep old field names mapped to closest new equivalents
-      semanticScore: atsResult.component_breakdown.domain_alignment.percentage,
-      structuredScore: atsResult.component_breakdown.hard_requirements.percentage,
+      recommendation: eligibilityResult.isEligible ? getHireRecommendation(matchScore) : "Ineligible",
       matchedSkills: atsResult.skill_analysis.matched.map(s => s.skill),
       missingSkills: atsResult.skill_analysis.missing_critical.map(s => s.skill),
       shortExplanation: atsResult.match_score.interpretation,
       detailedExplanation: formatDetailedExplanation(atsResult),
       isEligible: eligibilityResult.isEligible,
-      ineligibilityReason: eligibilityResult.reason,
+      ineligibilityReason: eligibilityResult.reason ?? null,
       redFlags: atsResult.red_flags,
+      seniorityWarning,
+      scoreBreakdown: {
+        semantic: { score: semanticScore, weight: 70, label: "Semantic Match" },
+        ats: { score: structuredScore, weight: 30, label: "Keyword Match" },
+        hasEmbedding: Boolean(jdEmbedding && studentEmbedding),
+      },
       usage: {
         dailyUsed: updated?.sandboxUsageToday ?? 0,
-        dailyLimit: 5,
+        dailyLimit: 3,
         monthlyUsed: updated?.sandboxUsageMonth ?? 0,
-        monthlyLimit: 30,
+        monthlyLimit: 20,
       },
       analysis: atsResult // Full new ATS result
     });

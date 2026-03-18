@@ -68,6 +68,14 @@ function getWeights(roleType: string, seniority: string) {
     return { hard: 0.20, research: 0.0, soft: 0.10, exp: 0.10, domain: 0.60 };
 }
 
+export function getHireRecommendation(score: number): ATSScore["match_score"]["hire_recommendation"] {
+    if (score >= 80) return "STRONG MATCH";
+    if (score >= 60) return "GOOD MATCH";
+    if (score >= 40) return "MODERATE MATCH";
+    if (score >= 20) return "WEAK MATCH";
+    return "REJECT";
+}
+
 function computeSoftEvidenceScore(resume: EnhancedResume): number {
     let evidenceCount = 0;
     
@@ -107,14 +115,14 @@ export function calculateATSScore(
     const weights = getWeights(jd.role_metadata.role_type, jd.role_metadata.seniority_level);
 
     // 1. Hard Skills Score
-    const totalHard = jd.requirements.hard_requirements.technical_skills.length;
+    const totalHard = (jd.requirements?.hard_requirements?.technical_skills ?? []).length;
     const matchedHard = skillAnalysis.matched.filter(m => m.matched_category === "Hard Requirement").length;
     // If JD has no extractable hard requirements, score conservatively at 50
     // (not 100 — we genuinely don't know if the candidate matches)
     const hardScore = totalHard > 0 ? (matchedHard / totalHard) * 100 : 50;
 
     // 2. Soft Skills Score
-    const totalSoft = jd.requirements.soft_requirements.technical_skills.length;
+    const totalSoft = (jd.requirements?.soft_requirements?.technical_skills ?? []).length;
     let softScore = 100;
     if (totalSoft > 0) {
         const matchedSoft = skillAnalysis.matched.filter(m => m.matched_category === "Soft Requirement").length;
@@ -218,14 +226,14 @@ export function calculateATSScore(
 
     // Interpretation
     let interpretation = "";
-    let recommendation: ATSScore["match_score"]["hire_recommendation"] = "PASS";
+    const recommendation = getHireRecommendation(finalScore);
 
-    if (finalScore >= 90) { interpretation = "Exceptional Match"; recommendation = "STRONG_HIRE"; }
-    else if (finalScore >= 75) { interpretation = "Strong Match"; recommendation = "HIRE"; }
-    else if (finalScore >= 60) { interpretation = "Moderate Match"; recommendation = "INTERVIEW"; }
-    else if (finalScore >= 45) { interpretation = "Weak Match"; recommendation = "HOLD"; }
-    else if (finalScore >= 30) { interpretation = "Poor Match"; recommendation = "PASS"; }
-    else { interpretation = "No Match"; recommendation = "REJECT"; }
+    if (finalScore >= 90) { interpretation = "Exceptional Match"; }
+    else if (finalScore >= 75) { interpretation = "Strong Match"; }
+    else if (finalScore >= 60) { interpretation = "Moderate Match"; }
+    else if (finalScore >= 45) { interpretation = "Weak Match"; }
+    else if (finalScore >= 30) { interpretation = "Poor Match"; }
+    else { interpretation = "No Match"; }
 
     // Recommendations Generation
     const candRecs: string[] = [];

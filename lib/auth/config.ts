@@ -3,17 +3,27 @@ import AzureADProvider from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/lib/db";
 import { users, students } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import {
   MICROSOFT_CLIENT_ID,
   MICROSOFT_CLIENT_SECRET,
-  MICROSOFT_TENANT_ID,
   STUDENT_EMAIL_DOMAIN,
 } from "@/lib/env";
 
 export function isStudentEmail(email: string): boolean {
   return email.toLowerCase().split("@")[1] === STUDENT_EMAIL_DOMAIN;
+}
+
+function deriveSapFromEmail(email: string): string | null {
+  if (!email.toLowerCase().includes("stu.upes.ac.in")) return null;
+  const username = email.split("@")[0].toLowerCase();
+  const match = username.match(/\.(\d+)$/);
+  if (!match) return null;
+  const digits = match[1];
+  const padded = digits.padStart(6, "0");
+  const prefix = digits.length >= 6 ? "500" : "590";
+  return prefix + padded;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -22,7 +32,7 @@ export const authOptions: NextAuthOptions = {
     AzureADProvider({
       clientId: MICROSOFT_CLIENT_ID,
       clientSecret: MICROSOFT_CLIENT_SECRET,
-      tenantId: MICROSOFT_TENANT_ID,
+      tenantId: "common",
       authorization: {
         params: { scope: "openid profile email", prompt: "select_account" },
       },
@@ -92,14 +102,9 @@ export const authOptions: NextAuthOptions = {
       // Staff Credentials provider — user already validated in authorize()
       if (account?.provider === "staff-credentials") return true;
 
-      // Microsoft OAuth — student path only
+      // Microsoft OAuth flow
       if (!user.email) return false;
       const email = user.email.toLowerCase();
-
-      // Block non-student emails from Microsoft OAuth
-      if (!isStudentEmail(email)) {
-        return "/login?error=NotAuthorized";
-      }
 
       try {
         const existing = await db.query.users.findFirst({
@@ -115,21 +120,90 @@ export const authOptions: NextAuthOptions = {
               .where(eq(users.id, existing.id))
               .catch(() => {});
           }
+
+          if (existing.role === "student") {
+            // Try to auto-populate SAP if missing
+            const derivedSap = deriveSapFromEmail(email);
+            if (derivedSap) {
+              // Check if student profile needs SAP populated
+              const [studentRow] = await db.execute(sql`
+                SELECT sap_id FROM students WHERE id = ${existing.id} LIMIT 1
+              `) as unknown as Array<{ sap_id: string | null }>;
+
+              if (studentRow && !studentRow.sap_id) {
+                await db.execute(sql`
+                  UPDATE students SET sap_id = ${derivedSap}, updated_at = NOW()
+                  WHERE id = ${existing.id}
+                  AND sap_id IS NULL
+                `);
+              }
+            }
+
+            // Link student to roster if a matching SAP entry exists
+            const sapToCheck = derivedSap || null;
+            if (sapToCheck) {
+              await db.execute(sql`
+                UPDATE student_roster
+                SET student_id = ${existing.id}, linked_at = NOW()
+                WHERE college_id = (SELECT college_id FROM users WHERE id = ${existing.id})
+                  AND sap_id = ${sapToCheck}
+                  AND student_id IS NULL
+              `).catch(() => {});
+
+              // Also populate profile fields from roster if student data is incomplete
+              const [rosterRow] = await db.execute(sql`
+                SELECT sap_id, roll_no, branch, batch_year, course, full_name
+                FROM student_roster
+                WHERE sap_id = ${sapToCheck}
+                  AND student_id = ${existing.id}
+                LIMIT 1
+              `) as unknown as Array<Record<string, unknown>>;
+
+              if (rosterRow) {
+                await db.execute(sql`
+                  UPDATE students SET
+                    sap_id = COALESCE(sap_id, ${rosterRow.sap_id ?? null}),
+                    roll_no = COALESCE(roll_no, ${rosterRow.roll_no ?? null}),
+                    branch = COALESCE(branch, ${rosterRow.branch ?? null}),
+                    batch_year = COALESCE(batch_year, ${rosterRow.batch_year ?? null}),
+                    updated_at = NOW()
+                  WHERE id = ${existing.id}
+                `).catch(() => {});
+              }
+            }
+          }
           return true;
         }
 
-        // Auto-create student account
+        // New user — resolve college from email domain
+        const domain = email.split("@")[1];
+        const [college] = await db.execute(sql`
+          SELECT id FROM colleges WHERE student_domain = ${domain} LIMIT 1
+        `) as unknown as Array<{ id: string }>;
+
+        if (!college) {
+          // Unknown domain not in DB — deny sign-in
+          return "/login?error=NotAuthorized";
+        }
+
+        // Auto-create student account with college linkage
         const [newUser] = await db
           .insert(users)
           .values({
             email,
-            name: user.name || "Student",
+            name: user.name || email.split("@")[0],
             role: "student",
             microsoftId: account?.providerAccountId,
+            collegeId: college.id,
           })
           .returning();
 
-        await db.insert(students).values({ id: newUser.id });
+        const derivedSapId = deriveSapFromEmail(email);
+        await db.insert(students).values({
+          id: newUser.id,
+          collegeId: college.id,
+          sapId: derivedSapId ?? undefined,
+        });
         return true;
       } catch (error) {
         console.error("[auth] signIn error:", error);
@@ -141,28 +215,45 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         const dbUser = await db.query.users.findFirst({
           where: eq(users.email, user.email!),
-          columns: { id: true, role: true, name: true, email: true },
+          columns: { id: true, role: true, name: true, email: true, collegeId: true },
         });
         if (dbUser) {
           token.id = dbUser.id;
           token.role = dbUser.role;
           token.name = dbUser.name;
           token.email = dbUser.email;
+          token.collegeId = dbUser.collegeId ?? "";
           token.roleCheckedAt = Date.now();
         }
       }
 
-      // Re-fetch role once per hour
+      // Force re-fetch if collegeId is missing (stale JWT from before college_id was added)
+      if (token.id && (!token.collegeId || token.collegeId === "")) {
+        try {
+          const fresh = await db.query.users.findFirst({
+            where: eq(users.id, token.id as string),
+            columns: { role: true, collegeId: true },
+          });
+          if (fresh) {
+            token.role = fresh.role;
+            token.collegeId = fresh.collegeId ?? "";
+            token.roleCheckedAt = Date.now();
+          }
+        } catch {}
+      }
+
+      // Re-fetch role + collegeId once per hour
       const ROLE_REFRESH_MS = 60 * 60 * 1000;
       const lastChecked = (token.roleCheckedAt as number | undefined) ?? 0;
       if (token.id && Date.now() - lastChecked > ROLE_REFRESH_MS) {
         try {
           const fresh = await db.query.users.findFirst({
             where: eq(users.id, token.id as string),
-            columns: { role: true },
+            columns: { role: true, collegeId: true },
           });
           if (fresh) {
             token.role = fresh.role;
+            token.collegeId = fresh.collegeId ?? "";
             token.roleCheckedAt = Date.now();
           }
         } catch {}
@@ -175,17 +266,14 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as "student" | "faculty" | "admin";
         session.user.name = token.name as string;
+        session.user.collegeId = token.collegeId as string;
       }
       return session;
     },
 
     async redirect({ url, baseUrl }) {
-      const path = url.startsWith(baseUrl) ? url.slice(baseUrl.length) : url;
-      if (path.startsWith("/faculty") || path.startsWith("/admin") || path.startsWith("/student")) {
-        return baseUrl + "/";
-      }
-      if (url.startsWith("/")) return baseUrl + url;
-      if (url.startsWith(baseUrl)) return url;
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },
   },

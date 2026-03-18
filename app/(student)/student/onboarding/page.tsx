@@ -868,7 +868,6 @@ export default function OnboardingPage() {
                 {gateWarning}
               </div>
             )}
-
             <div className="absolute bottom-4 left-[1.85rem] top-[4.5rem] -z-10 w-px bg-slate-800" />
           </div>
         </aside>
@@ -887,7 +886,6 @@ export default function OnboardingPage() {
               ✓ Profile autofilled from your resume. Review and continue.
             </div>
           )}
-
           <div className="space-y-6 rounded-2xl border border-white/5 bg-slate-900/60 p-6 shadow-lg">
             {activeStep === "identity" && (
               <IdentityStep
@@ -1167,7 +1165,6 @@ function IdentityStep({
           />
         </FormField>
       </div>
-
       <p className="text-xs text-slate-500 mt-2">
         Fill your Roll Number to unlock all other tabs.
       </p>

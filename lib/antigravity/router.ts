@@ -23,6 +23,8 @@
 import { GoogleGenerativeAI, TaskType } from "@google/generative-ai";
 import Groq from "groq-sdk";
 import { logger } from "@/lib/logger";
+import { AntigravityModelCache } from "./model-cache";
+import { checkAndIncrementRateLimit } from "./db-rate-limiter";
 
 // ============================================================================
 // MODEL REGISTRY & CONFIGURATION
@@ -685,6 +687,15 @@ export interface ExecuteResult<T = string> {
   blocked?: boolean;
 }
 
+interface CandidateModel {
+  modelKey: string;
+  modelId: string;
+  provider: "google" | "groq";
+  rpmLimit: number;
+  rpdLimit: number;
+  source: "db" | "registry";
+}
+
 /** Tasks whose inputs are already validated by auth + file upload guards.
  *  These skip the Prompt Guard to prevent false positives on resume/JD text. */
 const TRUSTED_TASK_TYPES = new Set([
@@ -741,6 +752,77 @@ export class AntigravityRouter {
     }
   }
 
+  private async getCurrentUsage(modelKey: string): Promise<number> {
+    const now = new Date();
+    const windowStart = new Date(now);
+    windowStart.setSeconds(0, 0);
+
+    try {
+      const { db } = await import("@/lib/db");
+      const { sql } = await import("drizzle-orm");
+      const rows = await db.execute(sql`
+        SELECT request_count
+        FROM ai_rate_limits
+        WHERE model_key = ${modelKey}
+          AND window_start = ${windowStart.toISOString()}
+        LIMIT 1
+      `);
+
+      const usageRows = rows as unknown as Array<{ request_count: number }>;
+      return Number(usageRows[0]?.request_count ?? 0);
+    } catch {
+      return 0;
+    }
+  }
+
+  private async getExecutionCandidates(taskType: string): Promise<CandidateModel[]> {
+    const dbModels = await AntigravityModelCache.getActive(taskType);
+
+    if (dbModels.length > 0) {
+      return dbModels
+        .filter((m) => m.provider === "google" || m.provider === "groq")
+        .map((model) => ({
+          modelKey: model.model_key,
+          modelId: model.model_key,
+          provider: model.provider,
+          rpmLimit: model.rpm_limit,
+          rpdLimit: model.rpd_limit,
+          source: "db" as const,
+        }));
+    }
+
+    const task = TASK_DEFINITIONS[taskType];
+    if (!task) return [];
+
+    const mappedCandidates: Array<CandidateModel | null> = task.priority.map((modelKey) => {
+      const model = MODEL_REGISTRY[modelKey];
+      if (!model) return null;
+      if (task.requiresLongContext && !model.capabilities.longContext) return null;
+      if (model.latency > task.maxLatency) return null;
+
+      return {
+        modelKey,
+        modelId: model.id,
+        provider: model.provider,
+        rpmLimit:
+          typeof model.rpm === "number"
+            ? model.rpm
+            : model.rpm === "unlimited"
+              ? Number.MAX_SAFE_INTEGER
+              : 60,
+        rpdLimit:
+          typeof model.rpd === "number"
+            ? model.rpd
+            : model.rpd === "unlimited"
+              ? Number.MAX_SAFE_INTEGER
+              : 10000,
+        source: "registry",
+      };
+    });
+
+    return mappedCandidates.filter((m): m is CandidateModel => m !== null);
+  }
+
   // ── Model Selection ─────────────────────────────────────────────────────
 
   async selectModel(taskType: string): Promise<string | null> {
@@ -749,32 +831,35 @@ export class AntigravityRouter {
       throw new Error(`Unknown task type: ${taskType}`);
     }
 
-    for (const modelKey of task.priority) {
-      const model = MODEL_REGISTRY[modelKey];
-      if (!model) continue;
+    const candidates = await this.getExecutionCandidates(taskType);
+    for (const candidate of candidates) {
+      if (candidate.provider === "google" && !this.googleAI) continue;
+      if (candidate.provider === "groq" && !this.groqClient) continue;
+      if (!this.healthMonitor.isHealthy(candidate.modelKey)) continue;
 
-      if (task.requiresLongContext && !model.capabilities.longContext) continue;
-      if (model.latency > task.maxLatency) continue;
-
-      if (!this.rateLimiter.canMakeRequest(modelKey)) {
+      const currentUsage = await this.getCurrentUsage(candidate.modelKey);
+      if (currentUsage >= candidate.rpmLimit) {
         if (this.enableLogging) {
-          logger.info(`[antigravity] ⚠️ ${modelKey} rate-limited, skipping`);
-        }
-        continue;
-      }
-
-      // Check health
-      if (!this.healthMonitor.isHealthy(modelKey)) {
-        if (this.enableLogging) {
-          logger.info(`[antigravity] ⚠️ ${modelKey} unhealthy, skipping`);
+          logger.info(`[antigravity] ⚠️ ${candidate.modelKey} rate-limited, skipping`);
         }
         continue;
       }
 
       if (this.enableLogging) {
-        logger.info(`[antigravity] ✅ Selected ${modelKey} for ${taskType}`);
+        logger.info(`[antigravity] ✅ Selected ${candidate.modelKey} for ${taskType}`);
       }
 
+      return candidate.modelKey;
+    }
+
+    // Fallback to legacy static selection path if no DB model is selectable.
+    for (const modelKey of task.priority) {
+      const model = MODEL_REGISTRY[modelKey];
+      if (!model) continue;
+      if (task.requiresLongContext && !model.capabilities.longContext) continue;
+      if (model.latency > task.maxLatency) continue;
+      if (!this.rateLimiter.canMakeRequest(modelKey)) continue;
+      if (!this.healthMonitor.isHealthy(modelKey)) continue;
       return modelKey;
     }
 
@@ -830,54 +915,99 @@ export class AntigravityRouter {
 
 
     // 2. Try models in priority chain
-    for (const modelKey of task.priority) {
-      const model = MODEL_REGISTRY[modelKey];
-      if (!model) continue;
+    const triedModels = new Set<string>();
+    const MAX_ATTEMPTS = Math.max(3, task.priority.length);
 
-      // Rate limit check
-      if (!this.rateLimiter.canMakeRequest(modelKey)) continue;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const candidates = await this.getExecutionCandidates(taskType);
+
+      let selectedModel: CandidateModel | null = null;
+      for (const candidate of candidates) {
+        if (triedModels.has(candidate.modelKey)) continue;
+        if (!this.healthMonitor.isHealthy(candidate.modelKey)) {
+          triedModels.add(candidate.modelKey);
+          continue;
+        }
+        if (candidate.provider === "google" && !this.googleAI) {
+          triedModels.add(candidate.modelKey);
+          continue;
+        }
+        if (candidate.provider === "groq" && !this.groqClient) {
+          triedModels.add(candidate.modelKey);
+          continue;
+        }
+
+        const currentUsage = await this.getCurrentUsage(candidate.modelKey);
+        if (currentUsage >= candidate.rpmLimit) {
+          triedModels.add(candidate.modelKey);
+          continue;
+        }
+
+        selectedModel = candidate;
+        break;
+      }
+
+      if (!selectedModel) {
+        return { success: false, error: `All models exhausted for task: ${taskType}` };
+      }
+
+      triedModels.add(selectedModel.modelKey);
 
       try {
-        // Record request before execution
-        this.rateLimiter.recordRequest(modelKey);
+        const withinLimit = await checkAndIncrementRateLimit(
+          selectedModel.modelKey,
+          selectedModel.rpmLimit,
+        );
+        if (!withinLimit) {
+          continue;
+        }
+
+        this.rateLimiter.recordRequest(selectedModel.modelKey);
 
         let result: unknown;
 
-        if (model.provider === "google") {
+        if (selectedModel.provider === "google") {
           if (taskType.startsWith("embed_")) {
-            result = await this.embedGoogle(model.id, prompt);
+            result = await this.embedGoogle(selectedModel.modelId, prompt);
           } else {
-            result = await this.executeGoogle(model.id, prompt, options);
+            result = await this.executeGoogle(selectedModel.modelId, prompt, options);
           }
-        } else if (model.provider === "groq") {
+        } else if (selectedModel.provider === "groq") {
           // Assume text generation for Groq unless specific embedding support added later
-          result = await this.executeGroq(model.id, prompt, options);
+          result = await this.executeGroq(selectedModel.modelId, prompt, options);
         } else {
           continue;
         }
 
-        this.healthMonitor.recordSuccess(modelKey);
+        this.healthMonitor.recordSuccess(selectedModel.modelKey);
 
         return {
           success: true,
           data: result as T,
-          modelUsed: modelKey,
+          modelUsed: selectedModel.modelKey,
         };
 
       } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
         if (this.enableLogging) {
-          const msg = error instanceof Error ? error.message : String(error);
-          console.error(`[antigravity] ❌ ${modelKey} failed: ${msg}`);
+          console.error(`[antigravity] ❌ ${selectedModel.modelKey} failed: ${msg}`);
         }
 
-        this.healthMonitor.recordFailure(modelKey);
+        this.healthMonitor.recordFailure(selectedModel.modelKey);
+
+        if (/429|rate|limit/i.test(msg)) {
+          if (this.enableLogging) {
+            logger.warn(`[antigravity] ${selectedModel.modelKey} returned provider rate limit`);
+          }
+          continue;
+        }
 
         // Continue to next model in priority chain
         continue;
       }
     }
 
-    return { success: false, error: "All models failed or rate limited" };
+    return { success: false, error: `Failed after ${MAX_ATTEMPTS} attempts for task: ${taskType}` };
   }
 
   // ── Provider Implementations ────────────────────────────────────────────

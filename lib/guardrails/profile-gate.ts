@@ -42,6 +42,10 @@ const MIN_COMPLETENESS = 70;
 export async function enforceProfileGate(studentId: string): Promise<void> {
   const [student] = await db
     .select({
+      sapId: students.sapId,
+      rollNo: students.rollNo,
+      tenthPercentage: students.tenthPercentage,
+      twelfthPercentage: students.twelfthPercentage,
       skills: students.skills,
       resumeUrl: students.resumeUrl,
       embedding: students.embedding,
@@ -60,6 +64,23 @@ export async function enforceProfileGate(studentId: string): Promise<void> {
 
   if (!student) {
     throw ERRORS.STUDENT_NOT_FOUND();
+  }
+
+  // ── Check 0: Required identity + academics fields ─────────────────────
+  const missingRequired: string[] = [];
+  if (!student.sapId) missingRequired.push("sapId");
+  if (!student.rollNo) missingRequired.push("rollNo");
+  if (!(typeof student.tenthPercentage === "number" && student.tenthPercentage > 0)) {
+    missingRequired.push("tenthPercentage");
+  }
+  if (!(typeof student.twelfthPercentage === "number" && student.twelfthPercentage > 0)) {
+    missingRequired.push("twelfthPercentage");
+  }
+  if (missingRequired.length > 0) {
+    throw ERRORS.PROFILE_INCOMPLETE(
+      student.profileCompleteness ?? 0,
+      missingRequired.map((f) => `Complete required field: ${f}`),
+    );
   }
 
   // ── Check 1: Skills must exist ─────────────────────────────────────────

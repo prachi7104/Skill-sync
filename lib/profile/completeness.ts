@@ -11,6 +11,8 @@ interface StudentForCompleteness {
     codingProfiles?: CodingProfile[] | null;
     branch?: string | null;
     batchYear?: number | null;
+    tenthPercentage?: number | null;
+    twelfthPercentage?: number | null;
 }
 
 interface CompletenessResult {
@@ -73,11 +75,18 @@ export function computeCompleteness(student: StudentForCompleteness): Completene
     breakdown.workExperience = workScore;
 
     // 5. Education (10)
-    // Basic education present (branch, batchYear)
+    // Branch + batch are baseline (5), 10th and 12th add 2.5 each.
     let eduScore = 0;
     if (student.branch && student.batchYear) {
-        eduScore = 10;
-    } else {
+        eduScore += 5;
+    }
+    if (typeof student.tenthPercentage === "number" && student.tenthPercentage > 0) {
+        eduScore += 2.5;
+    }
+    if (typeof student.twelfthPercentage === "number" && student.twelfthPercentage > 0) {
+        eduScore += 2.5;
+    }
+    if (eduScore < 10) {
         missing.push("Complete academic details (Branch & Batch)");
     }
     score += eduScore;

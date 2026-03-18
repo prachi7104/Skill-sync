@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { validatePasswordStrength } from "@/lib/auth/password";
 
 export async function PUT(req: NextRequest, { params }: { params: { userId: string } }) {
   const session = await getServerSession(authOptions);
@@ -13,8 +14,13 @@ export async function PUT(req: NextRequest, { params }: { params: { userId: stri
   }
 
   const { password } = await req.json();
-  if (!password || password.length < 8) {
-    return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+  if (!password) {
+    return NextResponse.json({ error: "Password is required" }, { status: 400 });
+  }
+
+  const validation = validatePasswordStrength(password);
+  if (!validation.valid) {
+    return NextResponse.json({ error: validation.reason }, { status: 400 });
   }
 
   const hash = await bcrypt.hash(password, 12);

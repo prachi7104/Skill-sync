@@ -8,6 +8,18 @@ import { db } from "@/lib/db";
 import { students, drives, rankings, jobs } from "@/lib/db/schema";
 import { eq, isNotNull, sql } from "drizzle-orm";
 import { isRedirectError } from "next/dist/client/components/redirect";
+import { getRedis } from "@/lib/redis";
+
+async function testRedisConnection(): Promise<boolean> {
+  const redis = getRedis();
+  if (!redis) return false;
+  try {
+    await redis.ping();
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * GET /api/admin/health
@@ -16,7 +28,7 @@ import { isRedirectError } from "next/dist/client/components/redirect";
  * No charts, no exports, no filters.
  *
  * Returns:
- *   studentsOnboarded   — students with onboarding_step >= 7
+ *   studentsOnboarded   — students with profile_completeness >= 80
  *   studentsWithEmbeddings — students with non-null embedding
  *   drivesCreated       — total drives
  *   drivesRanked        — drives with at least 1 ranking row
@@ -26,7 +38,7 @@ export async function GET() {
   try {
     await requireRole(["admin"]);
 
-    // Execute all counts in parallel
+    // Execute all counts + Redis ping in parallel
     const [
       onboardedResult,
       embeddingsResult,
@@ -34,12 +46,13 @@ export async function GET() {
       drivesRankedResult,
       jobFailuresResult,
       totalStudentsResult,
+      redisOk,
     ] = await Promise.all([
-      // Students who completed onboarding (step >= 7)
+      // Students considered onboarded by profile completeness
       db
         .select({ count: sql<number>`count(*)::int` })
         .from(students)
-        .where(sql`${students.onboardingStep} >= 7`),
+        .where(sql`${students.profileCompleteness} >= 80`),
 
       // Students with non-null embedding
       db
@@ -63,6 +76,9 @@ export async function GET() {
 
       // Total student rows
       db.select({ count: sql<number>`count(*)::int` }).from(students),
+
+      // Redis connectivity check
+      testRedisConnection(),
     ]);
 
     return NextResponse.json(
@@ -73,6 +89,7 @@ export async function GET() {
         drivesCreated: drivesCreatedResult[0]?.count ?? 0,
         drivesRanked: drivesRankedResult[0]?.count ?? 0,
         jobFailures: jobFailuresResult[0]?.count ?? 0,
+        redisOk,
         timestamp: new Date().toISOString(),
       },
       { status: 200 },

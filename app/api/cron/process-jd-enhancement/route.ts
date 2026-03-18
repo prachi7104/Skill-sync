@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jobs, drives } from "@/lib/db/schema";
-import { eq, and, lt, desc, asc } from "drizzle-orm";
+import { eq, and, lt, desc, asc, sql } from "drizzle-orm";
 import { parseJD } from "@/lib/jd/parser";
 import { generateEmbedding, isValidEmbedding } from "@/lib/embeddings/generate";
 import { CRON_SECRET } from "@/lib/env";
@@ -151,21 +151,37 @@ export async function GET(req: NextRequest) {
           // Don't fail the job — still save parsedJd
         }
 
-        // Update drive with parsed JD data (StructuredJD shape) and embedding
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const updatePayload: any = {
-          enhancedJd,
-          parsedJd: structuredJd as unknown as Record<string, unknown>,
-          updatedAt: new Date(),
-        };
-        if (jdEmbedding) {
-          updatePayload.jdEmbedding = jdEmbedding;
-        }
-
+        // Step 1: Save parsed JD + enhanced text via Drizzle (JSONB works)
         await db
           .update(drives)
-          .set(updatePayload)
+          .set({
+            enhancedJd,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            parsedJd: structuredJd as any,
+            updatedAt: new Date(),
+          })
           .where(eq(drives.id, driveId));
+
+        // Step 2: Save vector via raw SQL cast
+        if (jdEmbedding && jdEmbedding.length === 768) {
+          const isZero = jdEmbedding.every((v) => v === 0);
+          if (!isZero) {
+            await db.execute(sql`
+              UPDATE drives
+              SET   jd_embedding = ${`[${jdEmbedding.join(",")}]`}::vector(768),
+                    updated_at   = NOW()
+              WHERE id = ${driveId}
+            `);
+          }
+        } else {
+          logger.warn(`[JDEnhance] Embedding failed for drive ${driveId}, queuing fallback job`);
+          await db.insert(jobs).values({
+            type: "generate_embedding",
+            payload: { targetType: "drive", targetId: driveId },
+            priority: 8,
+            status: "pending",
+          }).catch(() => {});
+        }
 
         const hardSkillCount = structuredJd.requirements?.hard_requirements?.technical_skills?.length ?? 0;
 

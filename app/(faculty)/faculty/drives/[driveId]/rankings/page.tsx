@@ -91,6 +91,9 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
     .select({
       rankPosition: rankings.rankPosition,
       matchScore: rankings.matchScore,
+      isEligible: rankings.isEligible,
+      ineligibilityReason: rankings.ineligibilityReason,
+      profileCompletenessAtRank: rankings.profileCompletenessAtRank,
       matchedSkills: rankings.matchedSkills,
       missingSkills: rankings.missingSkills,
       shortExplanation: rankings.shortExplanation,
@@ -109,6 +112,12 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
     .innerJoin(users, eq(students.id, users.id))
     .where(eq(rankings.driveId, driveId))
     .orderBy(asc(rankings.rankPosition));
+
+  const eligibleRankings = rows.filter((r) => r.isEligible && r.matchScore > 0);
+  const incompleteRankings = rows.filter(
+    (r) => r.isEligible && r.matchScore === 0 && !r.ineligibilityReason,
+  );
+  const ineligibleRankings = rows.filter((r) => !r.isEligible);
 
   // ── Compute score distribution ─────────────────────────────────────────
   const buckets = [0, 20, 40, 60, 80, 100];
@@ -225,6 +234,51 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
         distribution={distribution}
         driveId={driveId}
       />
+
+      <Card className="border-slate-800 bg-slate-900/40">
+        <CardContent className="pt-6 space-y-6">
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black uppercase tracking-wider text-emerald-300">Eligible + Scored</h3>
+              <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">{eligibleRankings.length}</Badge>
+            </div>
+            {eligibleRankings.slice(0, 10).map((r) => (
+              <div key={r.studentId} className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-sm flex items-center justify-between">
+                <span className="text-slate-200">#{r.rankPosition} {r.studentName}</span>
+                <span className="text-emerald-300 font-semibold">{r.matchScore.toFixed(1)}%</span>
+              </div>
+            ))}
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black uppercase tracking-wider text-amber-300">Eligible + Incomplete Profile</h3>
+              <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30">{incompleteRankings.length}</Badge>
+            </div>
+            {incompleteRankings.slice(0, 10).map((r) => (
+              <div key={r.studentId} className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-sm flex items-center justify-between">
+                <span className="text-slate-200">#{r.rankPosition} {r.studentName}</span>
+                <Badge variant="outline" className="border-amber-500/40 text-amber-300">Complete Profile</Badge>
+              </div>
+            ))}
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black uppercase tracking-wider text-slate-300">Ineligible</h3>
+              <Badge className="bg-slate-700/50 text-slate-200 border border-slate-600">{ineligibleRankings.length}</Badge>
+            </div>
+            {ineligibleRankings.slice(0, 10).map((r) => (
+              <div key={r.studentId} className="rounded-lg border border-slate-700 bg-slate-800/40 px-3 py-2 text-sm flex items-center justify-between gap-3">
+                <span className="text-slate-300">#{r.rankPosition} {r.studentName}</span>
+                <Badge variant="outline" className="border-slate-500 text-slate-300 max-w-[60%] truncate">
+                  {r.ineligibilityReason ?? "Does not meet criteria"}
+                </Badge>
+              </div>
+            ))}
+          </section>
+        </CardContent>
+      </Card>
     </div>
   );
 }

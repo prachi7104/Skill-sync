@@ -35,7 +35,6 @@ function optionalEnv(key: string, fallback: string = ""): string {
 // ── Microsoft / Azure AD ────────────────────────────────────────────────────
 export const MICROSOFT_CLIENT_ID = requireEnv("MICROSOFT_CLIENT_ID");
 export const MICROSOFT_CLIENT_SECRET = requireEnv("MICROSOFT_CLIENT_SECRET");
-export const MICROSOFT_TENANT_ID = requireEnv("MICROSOFT_TENANT_ID");
 
 // ── Database ────────────────────────────────────────────────────────────────
 export const DATABASE_URL = requireEnv("DATABASE_URL");
@@ -71,11 +70,14 @@ export const GROQ_API_KEY = optionalEnv("GROQ_API_KEY");
 export const MISTRAL_API_KEY = optionalEnv("MISTRAL_API_KEY");
 export const GOOGLE_GENERATIVE_AI_API_KEY = optionalEnv("GOOGLE_GENERATIVE_AI_API_KEY");
 
+// ── Redis (Upstash) ──────────────────────────────────────────────────────────
+export const UPSTASH_REDIS_REST_URL = optionalEnv("UPSTASH_REDIS_REST_URL");
+export const UPSTASH_REDIS_REST_TOKEN = optionalEnv("UPSTASH_REDIS_REST_TOKEN");
+
 // ── Convenience export for all env vars ─────────────────────────────────────
 export const env = {
   MICROSOFT_CLIENT_ID,
   MICROSOFT_CLIENT_SECRET,
-  MICROSOFT_TENANT_ID,
   DATABASE_URL,
   NEXTAUTH_SECRET,
   NEXTAUTH_URL,
@@ -88,4 +90,6 @@ export const env = {
   GROQ_API_KEY,
   MISTRAL_API_KEY,
   GOOGLE_GENERATIVE_AI_API_KEY,
+  UPSTASH_REDIS_REST_URL,
+  UPSTASH_REDIS_REST_TOKEN,
 };

@@ -288,9 +288,26 @@ const providers = [
 ## Security Considerations
 
 ### Authentication
-- Supabase JWT tokens (httpOnly cookies in Next.js 14)
-- Session management via Supabase Auth Helpers
-- Magic links for passwordless auth option
+- NextAuth JWT session strategy with role claims (student, faculty, admin)
+- Microsoft OAuth (tenantId=common) for student login and existing staff OAuth login
+- Staff credentials provider for faculty/admin email + password login
+
+#### Auth Flow (Phase 1)
+- Student flow: Microsoft OAuth -> if email domain matches student domain and user does not exist, auto-create user + student profile -> role=student.
+- Existing user OAuth flow: any email domain is allowed if user already exists in database; preserves faculty/admin login via Microsoft.
+- Staff credentials flow: faculty/admin can log in with email/password; password is bcrypt-hashed.
+- Redirect callback: only performs safe URL validation (relative or same-origin) and does not override role routing.
+- Home routing: app/page.tsx performs role-based destination routing to student dashboard, faculty dashboard, or admin health.
+
+#### Password Management
+- Admin create faculty: password optional; system auto-generates strong password when omitted and returns plaintext once in response.
+- Admin reset password: admin can reset faculty/admin passwords without current-password verification.
+- Self-service change password: faculty/admin must provide current password and a strong new password.
+- Students do not have local passwords and continue to authenticate through Microsoft OAuth.
+
+#### Migration Safety Guard
+- Drizzle schema push/generate is blocked by default via DRIZZLE_MIGRATIONS_ENABLED guard in drizzle.config.ts.
+- Schema changes are expected to be applied manually via Supabase SQL Editor in controlled environments.
 
 ### Data Protection
 - PostgreSQL Row-Level Security (RLS)

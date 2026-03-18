@@ -80,6 +80,25 @@ export async function PATCH(req: NextRequest) {
         // Validate - allow partial updates for PATCH
         const validatedData = studentProfileSchema.partial().parse(body);
 
+        const LOCKED_FIELDS = ["batchYear", "sapId"] as const;
+        for (const field of LOCKED_FIELDS) {
+            const incoming = (validatedData as Record<string, unknown>)[field];
+            if (incoming === undefined) continue;
+
+            const current = (profile as Record<string, unknown>)[field];
+            if (current !== null && current !== undefined && current !== "") {
+                if (incoming !== current) {
+                    const fieldLabel = field === "batchYear" ? "Batch year" : "SAP ID";
+                    return NextResponse.json(
+                        {
+                            error: `${fieldLabel} cannot be changed after it has been set. Contact admin if correction is needed.`
+                        },
+                        { status: 400 }
+                    );
+                }
+            }
+        }
+
         // Build update object
         const updateData: Record<string, unknown> = {};
 
@@ -150,7 +169,7 @@ export async function PATCH(req: NextRequest) {
         (updatedProfileSnapshot as Record<string, unknown>).email = user.email;
 
         const { score: completeness } = computeCompleteness(updatedProfileSnapshot);
-        updateData.profileCompleteness = completeness;
+        updateData.profileCompleteness = Math.round(completeness);
         updateData.updatedAt = new Date();
 
         // Perform the update
@@ -159,38 +178,51 @@ export async function PATCH(req: NextRequest) {
             .set(updateData)
             .where(eq(students.id, user.id));
 
-        // Queue embedding generation when profile is sufficiently complete (>= 50%)
-        // or if completeness has meaningfully increased
-        const hasSignificantChange = Math.abs(completeness - (profile.profileCompleteness ?? 0)) >= 10;
-        
-        if (completeness >= 50 || hasSignificantChange) {
-            // Check if there's already a pending embedding job for THIS student
-            const existingJob = await db.query.jobs.findFirst({
-                where: and(
-                    eq(jobs.type, "generate_embedding"),
-                    eq(jobs.status, "pending"),
-                    sql`${jobs.payload}->>'targetId' = ${user.id}`,
-                ),
-            });
+        const EMBEDDING_SIGNAL_FIELDS = [
+            "skills",
+            "projects",
+            "workExperience",
+            "certifications",
+            "researchPapers",
+            "achievements",
+            "softSkills",
+        ] as const;
 
-            // Only queue if no pending job exists for this student
+        const hasSignalChange = EMBEDDING_SIGNAL_FIELDS.some((field) => field in updateData);
+        const isFirstTimeComplete =
+            completeness >= 50 && (profile.profileCompleteness ?? 0) < 50;
+        const shouldQueueEmbedding = hasSignalChange || isFirstTimeComplete;
+
+        if (shouldQueueEmbedding && completeness >= 50) {
+            const [existingJob] = await db
+                .select({ id: jobs.id })
+                .from(jobs)
+                .where(
+                    and(
+                        eq(jobs.type, "generate_embedding"),
+                        sql`${jobs.status} IN ('pending', 'processing')`,
+                        sql`${jobs.payload}->>'targetType' = 'student'`,
+                        sql`${jobs.payload}->>'targetId' = ${user.id}`,
+                    ),
+                )
+                .limit(1);
+
             if (!existingJob) {
                 await db.insert(jobs).values({
                     type: "generate_embedding",
+                    payload: { targetType: "student", targetId: user.id },
+                    priority: 7,
                     status: "pending",
-                    priority: 5,
-                    payload: {
-                        targetType: "student",
-                        targetId: user.id,
-                    },
+                });
+
+                logger.info("[Profile PATCH] Queued embedding job", {
+                    userId: user.id,
+                    completeness,
                 });
 
                 // Trigger worker immediately (fire-and-forget)
                 processEmbeddingJobs().catch((err) =>
-                    console.error(
-                        "[Profile Update] Inline embedding generation failed:",
-                        err,
-                    ),
+                    console.error("[Profile Update] Inline embedding generation failed:", err),
                 );
             }
         }

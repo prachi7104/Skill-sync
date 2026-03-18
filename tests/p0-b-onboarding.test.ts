@@ -118,7 +118,6 @@ describe("Form field validation", () => {
     expect(validate("R214221234")).toBe(false);
   });
 });
-
 describe("Two-track resume upload state machine", () => {
   type ResumeState = "idle" | "extracting" | "analyzing" | "uploading" | "parsing" | "done" | "error";
 

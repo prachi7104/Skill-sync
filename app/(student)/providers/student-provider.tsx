@@ -25,6 +25,8 @@ interface StudentContextType {
     isLoading: boolean;
     error: string | null;
     refresh: () => Promise<void>;
+    onboardingRequired: boolean;
+    onboardingProgress: number;
 }
 
 const StudentContext = createContext<StudentContextType | undefined>(undefined);
@@ -32,11 +34,15 @@ const StudentContext = createContext<StudentContextType | undefined>(undefined);
 export function StudentProvider({
     children,
     initialStudent = null,
-    initialUser = null
+    initialUser = null,
+    onboardingRequired = false,
+    onboardingProgress = 0,
 }: {
     children: ReactNode;
     initialStudent?: Student | null;
     initialUser?: UserInfo | null;
+    onboardingRequired?: boolean;
+    onboardingProgress?: number;
 }) {
     const [student, setStudent] = useState<Student | null>(initialStudent);
     const [user, setUser] = useState<UserInfo | null>(initialUser);
@@ -128,6 +134,8 @@ export function StudentProvider({
                 isLoading,
                 error,
                 refresh: refreshStudentData,
+                onboardingRequired,
+                onboardingProgress,
             }}
         >
             {children}

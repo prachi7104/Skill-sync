@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { drives, jobs, students, rankings } from "@/lib/db/schema";
+import { drives, jobs, students, rankings, seasons } from "@/lib/db/schema";
 import { requireRole, requireStudentProfile } from "@/lib/auth/helpers";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
@@ -13,6 +13,9 @@ const createDriveSchema = z.object({
   roleTitle: z.string().min(1, "Role title is required").max(255),
   location: z.string().max(255).optional().nullable(),
   packageOffered: z.string().max(100).optional().nullable(),
+  seasonId: z.string().uuid().optional().nullable(),
+  rankingsVisible: z.boolean().optional().default(true),
+  placementType: z.enum(["placement", "internship", "ppo", "other"]).optional().default("placement"),
   rawJd: z.string()
     .min(10, "Job description must be at least 10 characters")
     .max(50000, "Job description cannot exceed 50,000 characters"),
@@ -44,6 +47,16 @@ export async function POST(req: NextRequest) {
 
     const data = parsed.data;
 
+    if (data.seasonId && user.collegeId) {
+      const season = await db.query.seasons.findFirst({
+        where: and(eq(seasons.id, data.seasonId), eq(seasons.collegeId, user.collegeId)),
+        columns: { id: true },
+      });
+      if (!season) {
+        return NextResponse.json({ message: "Invalid season for your college" }, { status: 400 });
+      }
+    }
+
     // Insert drive
     const [drive] = await db
       .insert(drives)
@@ -51,8 +64,11 @@ export async function POST(req: NextRequest) {
         createdBy: user.id,
         company: data.company,
         roleTitle: data.roleTitle,
+        seasonId: data.seasonId ?? null,
         location: data.location ?? null,
         packageOffered: data.packageOffered ?? null,
+        rankingsVisible: data.rankingsVisible ?? true,
+        placementType: data.placementType ?? "placement",
         rawJd: data.rawJd,
         minCgpa: data.minCgpa ?? null,
         eligibleBranches: data.eligibleBranches ?? null,

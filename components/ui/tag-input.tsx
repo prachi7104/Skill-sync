@@ -10,6 +10,7 @@ export interface TagInputProps {
   tags: string[];
   onChange: (tags: string[]) => void;
   placeholder?: string;
+  disabled?: boolean;
   maxTags?: number;
   className?: string;
 }
@@ -18,7 +19,8 @@ export function TagInput({
   tags,
   onChange,
   placeholder = "Add tag...",
-  maxTags,
+  disabled = false,
+  maxTags = 30,
   className,
 }: TagInputProps) {
   const [inputValue, setInputValue] = React.useState("");
@@ -63,24 +65,29 @@ export function TagInput({
             className="flex items-center gap-1 bg-indigo-500/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/30 transition-colors"
           >
             {tag}
-            <button
-              type="button"
-              onClick={() => removeTag(index)}
-              className="rounded-full hover:bg-indigo-500/50 p-0.5 transition-colors"
-            >
-              <X className="h-3 w-3" />
-            </button>
+            {!disabled && (
+              <button
+                type="button"
+                onClick={() => removeTag(index)}
+                className="rounded-full hover:bg-indigo-500/50 p-0.5 transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
           </Badge>
         ))}
       </div>
-      <Input
-        value={inputValue}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        onBlur={addTag}
-        placeholder={tags.length === 0 ? placeholder : "Add more..."}
-        className="border-slate-700 bg-slate-800 text-white focus-visible:ring-indigo-500/50"
-      />
+      {!disabled && (
+        <Input
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onBlur={addTag}
+          placeholder={tags.length === 0 ? placeholder : "Add more..."}
+          className="border-slate-700 bg-slate-800 text-white focus-visible:ring-indigo-500/50"
+          disabled={disabled}
+        />
+      )}
     </div>
   );
 }
