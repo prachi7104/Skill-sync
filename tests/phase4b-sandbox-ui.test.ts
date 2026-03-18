@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
-import { render, screen } from "@testing-library/react";
-import QuickSandbox from "@/app/(student)/student/sandbox/quick-sandbox";
+import { render } from "@testing-library/react";
 
 // Mock the API call
 global.fetch = vi.fn();
