@@ -373,6 +373,15 @@ export default function AdminAmcatPage() {
             <CardDescription>CSV/XLSX up to 10MB</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <a 
+              href="/amcat-template.csv" 
+              download 
+              className="inline-flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition-colors"
+            >
+              <UploadCloud className="h-3 w-3" />
+              Download CSV Template
+            </a>
+
             <div
               className="border border-dashed rounded-md p-5 text-center bg-slate-50 hover:bg-slate-100 transition-colors"
               onDragOver={(e) => e.preventDefault()}
