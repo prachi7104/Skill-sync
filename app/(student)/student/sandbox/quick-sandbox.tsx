@@ -8,12 +8,31 @@ import {
 } from "@/components/ui/select";
 import { AlertTriangle, XCircle, Briefcase, FileText, CheckCircle2, Sparkles, Target, Activity } from "lucide-react";
 
+interface CardFeedback {
+  cards: {
+    technicalSkills: { score: number; bullets: string[] };
+    experienceDepth: { score: number; bullets: string[] };
+    domainAlignment: { score: number; bullets: string[]; multiDomainNote: string | null };
+    resumeQuality: { score: number; bullets: string[] };
+  };
+  feedback: Array<{
+    priority: "Critical" | "Medium" | "Low";
+    type: "add_to_resume" | "learn_skill" | "quantify" | "highlight" | "format";
+    title: string;
+    body: string;
+    evidence: string;
+  }>;
+  softSkillSignals: string[];
+}
+
 interface SandboxResult {
     matchScore: number; semanticScore: number; structuredScore: number;
     hardSkillsScore: number; softSkillsScore: number; experienceScore: number; domainMatchScore: number;
     recommendation: string; matchedSkills: string[]; missingSkills: string[];
     shortExplanation: string; detailedExplanation: string; isEligible: boolean; ineligibilityReason?: string;
     seniorityWarning?: string | null;
+    feedbackVersion?: "v2_cards" | "v1_text";
+    cardFeedback?: CardFeedback | null;
     scoreBreakdown?: {
         semantic: { score: number; weight: number; label: string };
         ats: { score: number; weight: number; label: string };
@@ -81,16 +100,12 @@ export default function QuickSandbox() {
     }
 
     function getScoreColor(score: number) {
-        if (score >= 75) return "text-emerald-400";
-        if (score >= 50) return "text-amber-400";
+        if (score >= 80) return "text-emerald-400";
+        if (score >= 60) return "text-amber-400";
         return "text-rose-400";
     }
 
-    function getScoreBarColor(score: number) {
-        if (score >= 75) return "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]";
-        if (score >= 50) return "bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]";
-        return "bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]";
-    }
+    const inputClass = "bg-slate-950/50 border-slate-800 text-white rounded-xl focus:ring-indigo-500";
 
     const REC_STYLE: Record<string, string> = {
         "STRONG MATCH": "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
@@ -100,8 +115,6 @@ export default function QuickSandbox() {
         "REJECT": "bg-rose-500/15 text-rose-400 border-rose-500/20",
         "Ineligible": "bg-rose-500/15 text-rose-400 border-rose-500/20",
     };
-
-    const inputClass = "bg-slate-950/50 border-slate-800 text-white rounded-xl focus:ring-indigo-500";
 
     return (
         <div className="space-y-6">
@@ -195,144 +208,375 @@ export default function QuickSandbox() {
 
             {result && (
                 <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                    <div className="bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-white/5 p-8 relative overflow-hidden">
-                        <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none" />
-                        
-                        <div className="flex flex-col md:flex-row items-center gap-10 relative z-10">
-                            <div className="text-center md:border-r border-slate-800 md:pr-10">
-                                <div className={`text-6xl font-black tracking-tighter ${getScoreColor(result.matchScore)}`}>
-                                    {result.matchScore.toFixed(1)}%
-                                </div>
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-2 mb-4">Overall Match</p>
-                                {result.recommendation && (
-                                    <span className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${REC_STYLE[result.recommendation] ?? ""}`}>
-                                        {result.recommendation}
-                                    </span>
-                                )}
-                            </div>
-                            
-                            <div className="flex-1 space-y-5 w-full">
-                                <ScoreRow label="Domain Knowledge" pct={result.domainMatchScore ?? result.semanticScore} colorClass={getScoreBarColor(result.domainMatchScore ?? result.semanticScore)} />
-                                <ScoreRow label="Hard Skills" pct={result.hardSkillsScore ?? result.structuredScore} colorClass={getScoreBarColor(result.hardSkillsScore ?? result.structuredScore)} />
-                                <ScoreRow label="Soft Skills" pct={result.softSkillsScore ?? 0} colorClass={getScoreBarColor(result.softSkillsScore ?? 0)} />
-                                <ScoreRow label="Experience Req" pct={result.experienceScore ?? 0} colorClass={getScoreBarColor(result.experienceScore ?? 0)} />
-                            </div>
-                        </div>
-
-                        {!result.isEligible && (
-                            <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-sm text-amber-400 font-medium flex gap-3">
-                                <AlertTriangle className="h-5 w-5 shrink-0" />
-                                <div><strong className="text-amber-300">Not Eligible:</strong> {result.ineligibilityReason}</div>
-                            </div>
-                        )}
-
-                        {result.redFlags && result.redFlags.length > 0 && (
-                            <div className="mt-6 space-y-3 pt-6 border-t border-slate-800">
-                                <h4 className="text-xs font-bold text-rose-400 uppercase tracking-widest flex items-center gap-2">
-                                    <AlertTriangle className="h-4 w-4" /> Detected Flags
-                                </h4>
-                                {result.redFlags.map((rf, i) => (
-                                    <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border text-sm font-medium ${rf.severity === "Critical" ? "bg-rose-500/10 border-rose-500/20 text-rose-300" : "bg-amber-500/10 border-amber-500/20 text-amber-300"}`}>
-                                        <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                                        <span><strong className="text-white mr-2">{rf.severity}</strong> {rf.flag} (-{rf.impact} pts)</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="rounded-xl bg-slate-900/60 border border-white/5 p-4 space-y-3">
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Score Breakdown</p>
-
-                        <div className="space-y-2.5">
-                            <div>
-                                <div className="flex items-center justify-between text-xs mb-1">
-                                    <span className="text-slate-400">Semantic Match (70%)</span>
-                                    <span className="text-white font-bold">{result.scoreBreakdown?.semantic.score.toFixed(1) ?? result.semanticScore.toFixed(1)}</span>
-                                </div>
-                                <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-indigo-500 rounded-full transition-all"
-                                        style={{ width: `${result.scoreBreakdown?.semantic.score ?? result.semanticScore}%` }}
-                                    />
-                                </div>
-                                {!result.scoreBreakdown?.hasEmbedding && (
-                                    <p className="text-xs text-amber-400 mt-0.5">Showing ATS approximation. Complete profile for real semantic score.</p>
-                                )}
-                            </div>
-
-                            <div>
-                                <div className="flex items-center justify-between text-xs mb-1">
-                                    <span className="text-slate-400">Keyword Match (30%)</span>
-                                    <span className="text-white font-bold">{result.scoreBreakdown?.ats.score.toFixed(1) ?? result.structuredScore.toFixed(1)}</span>
-                                </div>
-                                <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-amber-500 rounded-full transition-all"
-                                        style={{ width: `${result.scoreBreakdown?.ats.score ?? result.structuredScore}%` }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {result.seniorityWarning && (
-                        <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 flex items-start gap-2">
-                            <span className="text-amber-400 text-sm shrink-0 mt-0.5">i</span>
-                            <p className="text-amber-300 text-xs leading-relaxed">{result.seniorityWarning}</p>
-                        </div>
-                    )}
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-7">
-                            <h4 className="text-sm font-bold text-emerald-400 mb-4 flex items-center gap-2">
-                                <CheckCircle2 className="h-5 w-5" /> Matched Skills ({result.matchedSkills.length})
-                            </h4>
-                            <div className="flex flex-wrap gap-2">
-                                {result.matchedSkills.length > 0 ? result.matchedSkills.map(s => (
-                                    <span key={s} className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold rounded-lg">{s}</span>
-                                )) : <span className="text-xs text-slate-500 italic">No skills matched</span>}
-                            </div>
-                        </div>
-                        <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-7">
-                            <h4 className="text-sm font-bold text-rose-400 mb-4 flex items-center gap-2">
-                                <XCircle className="h-5 w-5" /> Missing Skills ({result.missingSkills.length})
-                            </h4>
-                            <div className="flex flex-wrap gap-2">
-                                {result.missingSkills.length > 0 ? result.missingSkills.map(s => (
-                                    <span key={s} className="px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-bold rounded-lg">{s}</span>
-                                )) : <span className="text-xs text-emerald-500 italic font-bold">100% skill coverage!</span>}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-8">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2.5 bg-indigo-500/10 rounded-xl"><Sparkles className="w-5 h-5 text-indigo-400" /></div>
-                            <h2 className="font-bold text-white text-lg">AI Analysis</h2>
-                        </div>
-                        <p className="text-sm font-bold text-slate-300 mb-4">{result.shortExplanation}</p>
-                        <pre className="whitespace-pre-wrap text-sm text-slate-400 bg-slate-950 border border-slate-800 rounded-2xl p-6 font-mono leading-relaxed">
-                            {result.detailedExplanation}
-                        </pre>
-                    </div>
-
+                  {result.feedbackVersion === "v2_cards" && result.cardFeedback ? (
+                    <ResultSectionV2 result={result} REC_STYLE={REC_STYLE} />
+                  ) : (
+                    <ResultSectionV1 result={result} getScoreColor={getScoreColor} REC_STYLE={REC_STYLE} />
+                  )}
                 </div>
             )}
         </div>
     );
 }
 
-function ScoreRow({ label, pct, colorClass }: { label: string, pct: number, colorClass: string }) {
-    return (
-        <div>
-            <div className="flex justify-between text-xs mb-1.5 font-bold">
-                <span className="text-slate-400 uppercase tracking-wider">{label}</span>
-                <span className="text-white">{pct.toFixed(1)}%</span>
+function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STYLE: Record<string, string> }) {
+  const cardFeedback = result.cardFeedback!;
+  
+  return (
+    <>
+      {/* Header Card */}
+      <div className="bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-white/5 p-8 relative overflow-hidden">
+        <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none" />
+        
+        <div className="relative z-10">
+          <div className="flex flex-col md:flex-row items-center gap-10">
+            <div className="text-center md:border-r border-slate-800 md:pr-10">
+              <div className={`text-6xl font-black tracking-tighter ${result.matchScore >= 80 ? "text-emerald-400" : result.matchScore >= 60 ? "text-amber-400" : "text-rose-400"}`}>
+                {result.matchScore.toFixed(1)}%
+              </div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-2 mb-4">Overall Match</p>
+              {result.recommendation && (
+                <span className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest border ${REC_STYLE[result.recommendation] ?? ""}`}>
+                  {result.recommendation}
+                </span>
+              )}
             </div>
-            <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                <div className={`h-full rounded-full transition-all duration-1000 ${colorClass}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+            
+            <div className="flex-1">
+              <p className="text-sm font-bold text-slate-300 mb-8">{result.shortExplanation}</p>
+              <Tabs defaultValue="overview" className="w-full">
+                <TabsList className="bg-slate-950/50 p-1.5 rounded-xl border border-slate-800 w-full grid grid-cols-3 h-auto mb-6">
+                  <TabsTrigger value="overview" className="py-2.5 text-xs font-bold data-[state=active]:bg-slate-800">
+                    Overview
+                  </TabsTrigger>
+                  <TabsTrigger value="improve" className="py-2.5 text-xs font-bold data-[state=active]:bg-slate-800">
+                    Improve Resume
+                  </TabsTrigger>
+                  <TabsTrigger value="keywords" className="py-2.5 text-xs font-bold data-[state=active]:bg-slate-800">
+                    Keywords
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* TAB 1: OVERVIEW */}
+                <TabsContent value="overview" className="space-y-6 mt-0">
+                  <div className="grid grid-cols-2 gap-4 md:gap-6">
+                    <DimensionCard
+                      title="Technical Skills"
+                      score={result.hardSkillsScore}
+                      bullets={cardFeedback.cards.technicalSkills.bullets}
+                    />
+                    <DimensionCard
+                      title="Experience Depth"
+                      score={result.experienceScore}
+                      bullets={cardFeedback.cards.experienceDepth.bullets}
+                    />
+                    <DimensionCard
+                      title="Domain Alignment"
+                      score={result.domainMatchScore}
+                      bullets={cardFeedback.cards.domainAlignment.bullets}
+                      note={cardFeedback.cards.domainAlignment.multiDomainNote}
+                    />
+                    <DimensionCard
+                      title="Resume Quality"
+                      score={cardFeedback.cards.resumeQuality.score}
+                      bullets={cardFeedback.cards.resumeQuality.bullets}
+                    />
+                  </div>
+
+                  {/* Seniority Fit */}
+                  <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-6">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Seniority Fit</p>
+                    {result.seniorityWarning ? (
+                      <p className="text-sm text-amber-300 mb-4">{result.seniorityWarning}</p>
+                    ) : (
+                      <p className="text-sm text-emerald-300 mb-4">Role level matches your profile</p>
+                    )}
+                    <div className="space-y-2.5">
+                      <ScoreRow label="Hard Skills" pct={result.hardSkillsScore} />
+                      <ScoreRow label="Experience" pct={result.experienceScore} />
+                      <ScoreRow label="Domain" pct={result.domainMatchScore} />
+                      <ScoreRow label="Seniority" pct={result.experienceScore} />
+                    </div>
+                  </div>
+
+                  {/* Soft Skills */}
+                  <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Soft Skills</p>
+                      <span className="px-2 py-0.5 bg-slate-800 text-slate-400 text-[10px] font-bold rounded-md">not scored</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mb-4">Soft skills detected from resume evidence — shown for awareness, not included in scoring.</p>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {cardFeedback.softSkillSignals.length > 0 ? (
+                        cardFeedback.softSkillSignals.map((signal, i) => (
+                          <span key={i} className="px-3 py-1.5 bg-slate-800/50 border border-slate-700 text-slate-300 text-xs rounded-lg font-medium">
+                            {signal.split(":")[0]}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs text-slate-500 italic">No soft skill signals detected</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500">JD soft skill requirements are shown as profile suggestions, not technical gaps.</p>
+                  </div>
+                </TabsContent>
+
+                {/* TAB 2: IMPROVE RESUME */}
+                <TabsContent value="improve" className="space-y-6 mt-0">
+                  {["Critical", "Medium", "Low"].map((priority) => {
+                    const items = cardFeedback.feedback.filter(f => 
+                      priority === "Critical" ? f.priority === "Critical" :
+                      priority === "Medium" ? f.priority === "Medium" :
+                      f.priority === "Low"
+                    );
+                    if (items.length === 0) return null;
+                    
+                    return (
+                      <div key={priority}>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                          {priority === "Critical" ? "🔴 HIGH PRIORITY" : priority === "Medium" ? "🟡 MEDIUM PRIORITY" : "⚪ LOW PRIORITY"}
+                        </p>
+                        <div className="space-y-3">
+                          {items.map((item, i) => (
+                            <FeedbackCard key={i} item={item} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </TabsContent>
+
+                {/* TAB 3: KEYWORDS */}
+                <TabsContent value="keywords" className="space-y-6 mt-0">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-6">
+                      <p className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-4">Missing from Resume</p>
+                      <div className="flex flex-wrap gap-2">
+                        {result.missingSkills.length > 0 ? (
+                          result.missingSkills.map(skill => (
+                            <span key={skill} className="px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-bold rounded-lg">
+                              {skill}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-emerald-500 italic font-bold">100% skill coverage!</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-6">
+                      <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-4">Already Present</p>
+                      <div className="flex flex-wrap gap-2">
+                        {result.matchedSkills.length > 0 ? (
+                          result.matchedSkills.map(skill => (
+                            <span key={skill} className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold rounded-lg">
+                              {skill}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-slate-500 italic">No matched skills</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {cardFeedback.cards.domainAlignment.multiDomainNote && (
+                    <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-6">
+                      <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Multi-Domain Note</p>
+                      <p className="text-sm text-indigo-300">{cardFeedback.cards.domainAlignment.multiDomainNote}</p>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </div>
+          </div>
+
+          {!result.isEligible && (
+            <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-sm text-amber-400 font-medium flex gap-3">
+              <AlertTriangle className="h-5 w-5 shrink-0" />
+              <div><strong className="text-amber-300">Not Eligible:</strong> {result.ineligibilityReason}</div>
+            </div>
+          )}
+
+          {result.redFlags && result.redFlags.length > 0 && (
+            <div className="mt-6 space-y-3 pt-6 border-t border-slate-800">
+              <h4 className="text-xs font-bold text-rose-400 uppercase tracking-widest flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" /> Detected Flags
+              </h4>
+              {result.redFlags.map((rf, i) => (
+                <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border text-sm font-medium ${rf.severity === "Critical" ? "bg-rose-500/10 border-rose-500/20 text-rose-300" : "bg-amber-500/10 border-amber-500/20 text-amber-300"}`}>
+                  <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span><strong className="text-white mr-2">{rf.severity}</strong> {rf.flag} (-{rf.impact} pts)</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-    )
+      </div>
+    </>
+  );
+}
+
+function DimensionCard({ title, score, bullets, note }: { title: string; score: number; bullets: string[]; note?: string | null }) {
+  return (
+    <div className={`bg-slate-900/60 border ${score >= 80 ? "border-emerald-500/20" : score >= 60 ? "border-amber-500/20" : "border-rose-500/20"} rounded-2xl p-5`}>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-sm font-bold text-white">{title}</h4>
+        <span className={`text-lg font-black ${score >= 80 ? "text-emerald-400" : score >= 60 ? "text-amber-400" : "text-rose-400"}`}>
+          {score.toFixed(0)}%
+        </span>
+      </div>
+      <div className="space-y-2">
+        {bullets.map((bullet, i) => (
+          <p key={i} className="text-xs text-slate-300 leading-relaxed">• {bullet}</p>
+        ))}
+      </div>
+      {note && <p className="text-xs text-slate-400 mt-3 pt-3 border-t border-slate-800 italic">{note}</p>}
+    </div>
+  );
+}
+
+function FeedbackCard({ item }: { item: CardFeedback["feedback"][0] }) {
+  const typeColors: Record<string, { badge: string; label: string }> = {
+    add_to_resume: { badge: "bg-amber-500/10 border-amber-500/20 text-amber-300", label: "Critical gap" },
+    learn_skill: { badge: "bg-rose-500/10 border-rose-500/20 text-rose-300", label: "Learn skill" },
+    quantify: { badge: "bg-blue-500/10 border-blue-500/20 text-blue-300", label: "Strengthen evidence" },
+    highlight: { badge: "bg-purple-500/10 border-purple-500/20 text-purple-300", label: "Highlight deeper" },
+    format: { badge: "bg-slate-700/20 border-slate-700/40 text-slate-300", label: "Format fix" },
+  };
+
+  const colors = typeColors[item.type] || typeColors.format;
+
+  return (
+    <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-5">
+      <div className="flex items-start justify-between gap-4 mb-3">
+        <h5 className="text-sm font-bold text-white flex-1">{item.title}</h5>
+        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border whitespace-nowrap ${colors.badge}`}>
+          {colors.label}
+        </span>
+      </div>
+      <p className="text-xs text-slate-300 leading-relaxed mb-2">{item.body}</p>
+      <p className="text-xs text-slate-500 italic">— {item.evidence}</p>
+    </div>
+  );
+}
+
+function ScoreRow({ label, pct }: { label: string; pct: number }) {
+  return (
+    <div>
+      <div className="flex justify-between text-xs mb-1.5 font-bold">
+        <span className="text-slate-400 uppercase tracking-wider">{label}</span>
+        <span className="text-white">{pct.toFixed(1)}%</span>
+      </div>
+      <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-1000 ${pct >= 80 ? "bg-emerald-500" : pct >= 60 ? "bg-amber-500" : "bg-rose-500"}`}
+          style={{ width: `${Math.min(pct, 100)}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ResultSectionV1({ result, getScoreColor, REC_STYLE }: { result: SandboxResult; getScoreColor: (score: number) => string; REC_STYLE: Record<string, string> }) {
+  return (
+    <>
+      <div className="bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-white/5 p-8 relative overflow-hidden">
+        <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none" />
+        <p className="text-xs text-slate-500 mb-6 font-bold">Showing simplified analysis</p>
+        <div className="relative z-10">
+          <div className="flex flex-col md:flex-row items-center gap-10">
+            <div className="text-center md:border-r border-slate-800 md:pr-10">
+              <div className={`text-6xl font-black tracking-tighter ${getScoreColor(result.matchScore)}`}>
+                {result.matchScore.toFixed(1)}%
+              </div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-2 mb-4">Overall Match</p>
+              {result.recommendation && (
+                <span className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${REC_STYLE[result.recommendation] ?? ""}`}>
+                  {result.recommendation}
+                </span>
+              )}
+            </div>
+            
+            <div className="flex-1 space-y-5 w-full">
+              <ScoreRowV1 label="Domain Knowledge" pct={result.domainMatchScore ?? result.semanticScore} />
+              <ScoreRowV1 label="Hard Skills" pct={result.hardSkillsScore ?? result.structuredScore} />
+              <ScoreRowV1 label="Soft Skills" pct={result.softSkillsScore ?? 0} />
+              <ScoreRowV1 label="Experience Req" pct={result.experienceScore ?? 0} />
+            </div>
+          </div>
+
+          {!result.isEligible && (
+            <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-sm text-amber-400 font-medium flex gap-3">
+              <AlertTriangle className="h-5 w-5 shrink-0" />
+              <div><strong className="text-amber-300">Not Eligible:</strong> {result.ineligibilityReason}</div>
+            </div>
+          )}
+
+          {result.redFlags && result.redFlags.length > 0 && (
+            <div className="mt-6 space-y-3 pt-6 border-t border-slate-800">
+              <h4 className="text-xs font-bold text-rose-400 uppercase tracking-widest flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" /> Detected Flags
+              </h4>
+              {result.redFlags.map((rf, i) => (
+                <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border text-sm font-medium ${rf.severity === "Critical" ? "bg-rose-500/10 border-rose-500/20 text-rose-300" : "bg-amber-500/10 border-amber-500/20 text-amber-300"}`}>
+                  <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span><strong className="text-white mr-2">{rf.severity}</strong> {rf.flag} (-{rf.impact} pts)</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-7">
+          <h4 className="text-sm font-bold text-emerald-400 mb-4 flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5" /> Matched Skills ({result.matchedSkills.length})
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {result.matchedSkills.length > 0 ? result.matchedSkills.map(s => (
+              <span key={s} className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold rounded-lg">{s}</span>
+            )) : <span className="text-xs text-slate-500 italic">No skills matched</span>}
+          </div>
+        </div>
+        <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-7">
+          <h4 className="text-sm font-bold text-rose-400 mb-4 flex items-center gap-2">
+            <XCircle className="h-5 w-5" /> Missing Skills ({result.missingSkills.length})
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {result.missingSkills.length > 0 ? result.missingSkills.map(s => (
+              <span key={s} className="px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-bold rounded-lg">{s}</span>
+            )) : <span className="text-xs text-emerald-500 italic font-bold">100% skill coverage!</span>}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-slate-900/50 rounded-[2rem] border border-white/5 p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2.5 bg-indigo-500/10 rounded-xl"><Sparkles className="w-5 h-5 text-indigo-400" /></div>
+          <h2 className="font-bold text-white text-lg">AI Analysis</h2>
+        </div>
+        <p className="text-sm font-bold text-slate-300 mb-4">{result.shortExplanation}</p>
+        <pre className="whitespace-pre-wrap text-sm text-slate-400 bg-slate-950 border border-slate-800 rounded-2xl p-6 font-mono leading-relaxed">
+          {result.detailedExplanation}
+        </pre>
+      </div>
+    </>
+  );
+}
+
+function ScoreRowV1({ label, pct }: { label: string; pct: number }) {
+  const colorClass = pct >= 80 ? "bg-emerald-500" : pct >= 60 ? "bg-amber-500" : "bg-rose-500";
+  return (
+    <div>
+      <div className="flex justify-between text-xs mb-1.5 font-bold">
+        <span className="text-slate-400 uppercase tracking-wider">{label}</span>
+        <span className="text-white">{pct.toFixed(1)}%</span>
+      </div>
+      <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all duration-1000 ${colorClass}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+      </div>
+    </div>
+  );
 }
