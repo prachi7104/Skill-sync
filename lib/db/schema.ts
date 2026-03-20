@@ -426,7 +426,7 @@ export const drives = pgTable("drives", {
   /** Placement season this drive belongs to. Null for legacy drives. */
   seasonId: uuid("season_id").references(() => seasons.id, { onDelete: "set null" }),
 
-  /** College this drive belongs to. Must be set at creation from faculty's college. */
+  /** College this drive belongs to. NOT NULL — set at creation from creator's college. */
   collegeId: uuid("college_id")
     .notNull()
     .references(() => colleges.id, { onDelete: "cascade" }),

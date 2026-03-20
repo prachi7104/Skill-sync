@@ -44,6 +44,8 @@ import {
   computeAllScores,
   checkEligibility,
   generateDetailedExplanation,
+  computeSkillOverlap,
+  round2,
   type EligibilityCriteria,
   type StudentProfile,
   type ScoringResult,
@@ -470,16 +472,22 @@ export async function computeRanking(
     }
 
     if (!studentEmbedding) {
-      skippedNoEmbedding++;
+      // No embedding — use ATS-only scoring (30% of max)
+      const { overlapRatio, matchedSkills, missingSkills } = computeSkillOverlap(
+        extractStudentSkillNames(student.skills),
+        requiredSkills,
+      );
+      const atsOnlyScore = overlapRatio * 30;  // Max 30 (structured weight)
+
       scoredStudents.push({
         studentId: student.id,
         scoring: {
-          matchScore: 0,
+          matchScore: round2(atsOnlyScore),
           semanticScore: 0,
-          structuredScore: 0,
-          matchedSkills: [],
-          missingSkills: [],
-          shortExplanation: "Profile incomplete - no embedding generated yet",
+          structuredScore: round2(atsOnlyScore / 0.3),  // Normalize back
+          matchedSkills,
+          missingSkills,
+          shortExplanation: "Keyword match only — generate profile embedding for full score",
           isEligible: true,
           ineligibilityReason: undefined,
         },

@@ -508,6 +508,6 @@ export function computeAllScores(
 // ── Utility ─────────────────────────────────────────────────────────────────
 
 /** Round to 2 decimal places. */
-function round2(n: number): number {
+export function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }

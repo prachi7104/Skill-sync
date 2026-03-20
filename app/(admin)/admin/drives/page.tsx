@@ -39,6 +39,7 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
       packageOffered: drives.packageOffered,
       deadline: drives.deadline,
       isActive: drives.isActive,
+      parsedJd: drives.parsedJd,
       createdAt: drives.createdAt,
       createdBy: drives.createdBy,
       creatorName: users.name,
@@ -157,14 +158,16 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
             const stats = statsMap.get(drive.id);
             const isProcessing = processingDriveIds.has(drive.id);
 
-            let status: "pending" | "ranked" | "processing" | "closed" = "pending";
+            let status: "pending" | "ranked" | "processing" | "closed" | "jd_analyzing" = "pending";
             if (!drive.isActive) status = "closed";
+            else if (!drive.parsedJd) status = "jd_analyzing";
             else if (isProcessing) status = "processing";
             else if (stats && stats.count > 0) status = "ranked";
 
             const statusConfig = {
               ranked: { label: "RANKED", className: "text-emerald-400 bg-emerald-500/15 border-emerald-500/20" },
               processing: { label: "PROCESSING", className: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" },
+              jd_analyzing: { label: "JD ANALYZING", className: "text-violet-400 bg-violet-500/10 border-violet-500/20" },
               pending: { label: "PENDING", className: "text-amber-400 bg-amber-500/15 border-amber-500/20" },
               closed: { label: "CLOSED", className: "text-slate-500 bg-slate-800/50 border-slate-700" },
             };
@@ -282,7 +285,11 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
                   >
                     View Rankings <ExternalLink className="h-3 w-3" />
                   </Link>
-                  <TriggerRankingButton driveId={drive.id} initialStatus={status} />
+                  <TriggerRankingButton 
+                    driveId={drive.id} 
+                    initialStatus={status as any} 
+                    jdReady={!!drive.parsedJd} 
+                  />
                 </CardFooter>
               </Card>
             );

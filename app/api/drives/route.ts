@@ -68,7 +68,9 @@ export async function POST(req: NextRequest) {
     const [drive] = await db
       .insert(drives)
       .values({
-        collegeId: user.collegeId,
+        collegeId: user.collegeId ?? (() => { 
+          throw new Error("Faculty must be assigned to a college before creating drives"); 
+        })(),
         createdBy: user.id,
         company: data.company,
         roleTitle: data.roleTitle,
@@ -135,7 +137,10 @@ export async function GET(_req: NextRequest) {
     if (!isStudent) {
       // Faculty/Admin: return drives they created, ordered by newest first
       const result = await db.query.drives.findMany({
-        where: eq(drives.createdBy, user!.id),
+        where: 
+          user!.role === "admin" && user!.collegeId
+            ? eq(drives.collegeId, user!.collegeId)
+            : eq(drives.createdBy, user!.id),
         orderBy: (drives, { desc }) => [desc(drives.createdAt)],
       });
 

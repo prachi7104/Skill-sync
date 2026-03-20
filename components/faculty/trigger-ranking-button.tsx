@@ -7,12 +7,13 @@ import { cn } from "@/lib/utils";
 
 interface TriggerRankingButtonProps {
     driveId: string;
-    initialStatus: "pending" | "ranked" | "processing" | "closed";
+    initialStatus: "pending" | "ranked" | "processing" | "closed" | "jd_analyzing";
+    jdReady: boolean;
 }
 
 type ButtonState = "idle" | "loading" | "queued" | "error" | "already_processing" | "ranked";
 
-export function TriggerRankingButton({ driveId, initialStatus }: TriggerRankingButtonProps) {
+export function TriggerRankingButton({ driveId, initialStatus, jdReady }: TriggerRankingButtonProps) {
     const [state, setState] = useState<ButtonState>("idle");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [embeddingCheck, setEmbeddingCheck] = useState<{
@@ -118,6 +119,15 @@ export function TriggerRankingButton({ driveId, initialStatus }: TriggerRankingB
             setState("error");
             setErrorMessage(err.message || "Something went wrong");
         }
+    }
+
+    if (!jdReady) {
+        return (
+            <Button variant="outline" size="sm" disabled className="gap-2 text-violet-400 bg-violet-500/10 border-violet-500/20">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Analyzing JD... (~3 min)
+            </Button>
+        );
     }
 
     if (state === "ranked") {

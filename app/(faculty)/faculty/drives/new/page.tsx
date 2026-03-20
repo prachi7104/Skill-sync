@@ -21,7 +21,7 @@ const schema = z.object({
   packageOffered: z.string().optional(),
   seasonId: z.string().uuid().optional().nullable(),
   rankingsVisible: z.boolean().optional(),
-  placementType: z.enum(["placement", "internship", "apprenticeship"]).optional(),
+  placementType: z.enum(["placement", "internship", "ppo", "other"]).optional(),
   deadline: z.string().optional(),          // YYYY-MM-DD string from date input
   rawJd: z.string().min(50, "At least 50 characters"),
   minCgpa: z.number().min(0).max(10).optional(),
@@ -244,9 +244,10 @@ export default function NewDrivePage() {
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       {...register("placementType")}
                     >
-                      <option value="placement">Placement</option>
+                      <option value="placement">Full-time Placement</option>
                       <option value="internship">Internship</option>
-                      <option value="apprenticeship">Apprenticeship</option>
+                      <option value="ppo">Pre-Placement Offer (PPO)</option>
+                      <option value="other">Other</option>
                     </select>
                   </div>
                 </div>
