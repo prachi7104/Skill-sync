@@ -6,6 +6,7 @@ import MobileNav from "@/components/shared/mobile-nav";
 import { StudentProvider } from "@/app/(student)/providers/student-provider";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import StudentSidebarNav from "@/components/student/student-sidebar-nav";
 import OnboardingBanner from "@/components/student/onboarding-banner";
 
@@ -33,28 +34,33 @@ export default async function StudentLayout({
         }
     }
 
-    // Fallback UI if profile creation failed
-    if (!profile && user) {
+    // Derive and store SAP ID if not set
+    if (profile && !profile.sapId) {
+        const { deriveSapFromEmailPublic } = await import("@/lib/auth/derive-sap");
+        const derivedSap = deriveSapFromEmailPublic(user.email);
+        if (derivedSap) {
+            await db.update(students)
+                .set({ sapId: derivedSap, updatedAt: new Date() })
+                .where(eq(students.id, user.id))
+                .catch(() => {});  // non-fatal
+            // Refresh profile to include sapId
+            profile = await getStudentProfile(user.id);
+        }
+    }
+
+    if (!profile) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-                <div className="text-center space-y-4 max-w-md">
-                    <div className="space-y-2">
-                        <h1 className="text-2xl font-bold text-white">Profile Setup Required</h1>
-                        <p className="text-slate-300">
-                            We couldn't create your student profile. This usually means your 
-                            college configuration needs to be set up by an admin.
-                        </p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-sm font-mono text-slate-400 bg-slate-900 rounded p-3">
-                            Error: {user.collegeId ? "profile_creation_failed" : "college_id_missing"}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                            {user.collegeId 
-                                ? "Try refreshing the page or contact support."
-                                : "Contact your placement coordinator to set up your college account."}
-                        </p>
-                    </div>
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+                <div className="text-center max-w-md space-y-4 p-8">
+                    <div className="text-4xl">⚠️</div>
+                    <h1 className="text-xl font-bold text-white">Profile Setup Required</h1>
+                    <p className="text-slate-400 text-sm">
+                        Your account exists but your student profile couldn&apos;t be created.
+                        This usually means your college hasn&apos;t been configured yet.
+                    </p>
+                    <p className="text-xs text-slate-600 font-mono">
+                        Error: college_id is null — contact your placement coordinator
+                    </p>
                     <div className="pt-4">
                         <SignOutButton />
                     </div>

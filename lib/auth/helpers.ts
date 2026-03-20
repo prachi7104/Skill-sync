@@ -126,3 +126,9 @@ export async function getCurrentCollegeId(): Promise<string> {
     }
     return session.user.collegeId;
 }
+
+/**
+ * Derives a 9-digit SAP ID from a UPES student email address.
+ * Re-exported from lib/auth/derive-sap.ts for convenience.
+ */
+export { deriveSapFromEmailPublic } from "@/lib/auth/derive-sap";

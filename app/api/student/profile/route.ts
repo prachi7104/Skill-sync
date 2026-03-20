@@ -83,7 +83,7 @@ export async function PATCH(req: NextRequest) {
         const LOCKED_FIELDS = ["batchYear", "sapId"] as const;
         for (const field of LOCKED_FIELDS) {
             const incoming = (validatedData as Record<string, unknown>)[field];
-            if (incoming === undefined) continue;
+            if (incoming === undefined || incoming === null) continue;
 
             const current = (profile as Record<string, unknown>)[field];
             if (current !== null && current !== undefined && current !== "") {

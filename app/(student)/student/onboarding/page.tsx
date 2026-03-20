@@ -251,12 +251,14 @@ function toFormFromStudent(student: Record<string, unknown> | null): ProfileForm
 
 function buildPatch(step: StepKey, form: ProfileForm): Record<string, unknown> {
   const patches: Record<StepKey, () => Record<string, unknown>> = {
-    identity: () => ({
-      sapId: form.sapId || null,
-      rollNo: form.rollNo || null,
-      phone: form.phone || null,
-      linkedin: form.linkedin || null,
-    }),
+    identity: () => {
+      const patch: Record<string, unknown> = {};
+      if (form.sapId) patch.sapId = form.sapId;
+      if (form.rollNo) patch.rollNo = form.rollNo;
+      if (form.phone) patch.phone = form.phone;
+      if (form.linkedin) patch.linkedin = form.linkedin;
+      return patch;
+    },
     academics: () => ({
       cgpa: form.cgpa ? Number(form.cgpa) : null,
       branch: form.branch || null,

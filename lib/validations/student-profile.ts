@@ -101,12 +101,16 @@ export const researchPaperSchema = z.object({
 export const studentProfileSchema = z.object({
     // Identity fields (Compulsory)
     // Roll No: e.g. R2142233333 (R + 10 digits)
-    rollNo: z.string({ required_error: "Roll Number is required" })
-        .regex(/^R\d{10}$/, "Roll Number must be format 'R' followed by 10 digits (e.g., R2142233333)"),
+    rollNo: z.string()
+        .regex(/^R\d{10}$/, "Roll Number must be format 'R' followed by 10 digits (e.g., R2142233333)")
+        .optional()
+        .nullable(),
 
     // SAP ID: e.g. 500126666 (9 digits)
-    sapId: z.string({ required_error: "SAP ID is required" })
-        .regex(/^\d{9}$/, "SAP ID must be exactly 9 digits (e.g., 500126666)"),
+    sapId: z.string()
+        .regex(/^\d{9}$/, "SAP ID must be exactly 9 digits (e.g., 500126666)")
+        .optional()
+        .nullable(),
 
     // Academic fields (Optional)
     tenthPercentage: z
