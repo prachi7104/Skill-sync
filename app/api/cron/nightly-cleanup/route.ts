@@ -29,6 +29,12 @@ export async function GET(req: NextRequest) {
       .set({ sandboxUsageToday: 0, sandboxResetDate: today })
       .where(sql`sandbox_reset_date < ${today}`);
 
+    // Clean up stale AI rate limit windows (older than 24h)
+    await db.execute(sql`DELETE FROM ai_rate_limits WHERE window_start < NOW() - INTERVAL '24 hours'`);
+
+    // Clean up completed/failed jobs older than 7 days
+    await db.execute(sql`DELETE FROM jobs WHERE status IN ('completed','failed') AND updated_at < NOW() - INTERVAL '7 days'`);
+
     return NextResponse.json({ 
       stuck: stuck.length, 
       deleted: deleted.length,

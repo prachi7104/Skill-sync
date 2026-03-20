@@ -41,6 +41,8 @@ export default async function StudentDrivesPage() {
     return true;
   });
 
+  const hasIncompleteProfile = !profile.branch || !profile.cgpa || !profile.batchYear;
+
   const studentRankings = await db.query.rankings.findMany({
     where: eq(rankings.studentId, user.id),
   });
@@ -60,13 +62,25 @@ export default async function StudentDrivesPage() {
       </div>
 
       {eligible.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 rounded-3xl border border-dashed border-slate-700 bg-slate-900/30">
-          <Briefcase className="w-12 h-12 text-slate-600 mb-4" />
-          <h3 className="text-lg font-bold text-white mb-1">No eligible drives yet</h3>
-          <p className="text-slate-400 text-sm max-w-xs text-center">
-            No active drives match your branch, batch year, and CGPA right now. Check back soon.
-          </p>
-        </div>
+        hasIncompleteProfile ? (
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 text-center">
+            <p className="text-amber-400 font-bold">Complete your profile to see eligible drives</p>
+            <p className="text-slate-400 text-sm mt-2">
+              Add your branch, CGPA, and batch year in your profile to see drives you qualify for.
+            </p>
+            <Link href="/student/onboarding" className="mt-4 inline-block bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-bold px-6 py-2.5 rounded-lg transition-colors">
+              Complete Profile →
+            </Link>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-24 rounded-3xl border border-dashed border-slate-700 bg-slate-900/30">
+            <Briefcase className="w-12 h-12 text-slate-600 mb-4" />
+            <h3 className="text-lg font-bold text-white mb-1">No eligible drives yet</h3>
+            <p className="text-slate-400 text-sm max-w-xs text-center">
+              No active drives match your branch, batch year, and CGPA right now. Check back soon.
+            </p>
+          </div>
+        )
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {eligible.map((drive) => {

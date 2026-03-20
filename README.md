@@ -122,6 +122,19 @@ Visit `http://localhost:3000`
 
 ---
 
+## ✅ Pre-Deploy Checklist
+- □ `npx tsc --noEmit` → 0 errors
+- □ `npm run test` → all pass
+- □ `npm run lint` → 0 warnings
+- □ Supabase: verify RLS policies (`scripts/verify-rls.ts`)
+- □ Supabase: verify indexes (`pg_indexes`)
+- □ Test student login: no `college_id null` errors in Vercel logs
+- □ Test drive creation: verify `public.drives.college_id` is set
+- □ Test ranking trigger: wait for cron, verify rankings appear
+- □ Test sandbox: submit JD, verify scores and card feedback appear
+
+---
+
 ## 🤝 Contributing
 Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting pull requests.
 

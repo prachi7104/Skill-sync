@@ -69,7 +69,9 @@ export default function QuickSandbox() {
             setDrives(list);
             setDrivesLoaded(true);
         } catch {
-            setDrives([]); setDrivesLoaded(true);
+            setDrives([]);
+            setDrivesLoaded(true);
+            // Don't crash — just show "No active drives" empty state
         } finally { setDrivesLoading(false); }
     }, [drivesLoaded]);
 

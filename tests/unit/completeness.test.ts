@@ -255,3 +255,59 @@ describe("computeCompleteness", () => {
     expect(shouldRedirect).toBe(true);
   });
 });
+
+describe("completeness gate required fields", () => {
+  function requiredFieldsReady(profile: {
+    sapId?: string | null;
+    rollNo?: string | null;
+    tenthPercentage?: number | null;
+    twelfthPercentage?: number | null;
+  }): { ok: boolean; missing: string[] } {
+    const missing: string[] = [];
+    if (!profile.sapId) missing.push("sapId");
+    if (!profile.rollNo) missing.push("rollNo");
+    if (!(typeof profile.tenthPercentage === "number" && profile.tenthPercentage > 0)) {
+      missing.push("tenthPercentage");
+    }
+    if (!(typeof profile.twelfthPercentage === "number" && profile.twelfthPercentage > 0)) {
+      missing.push("twelfthPercentage");
+    }
+    return { ok: missing.length === 0, missing };
+  }
+
+  it("flags profile as incomplete when sapId is missing", () => {
+    const result = requiredFieldsReady({
+      sapId: null,
+      rollNo: "R2142233333",
+      tenthPercentage: 88,
+      twelfthPercentage: 90,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.missing).toContain("sapId");
+  });
+
+  it("flags profile as incomplete when rollNo is missing", () => {
+    const result = requiredFieldsReady({
+      sapId: "500126666",
+      rollNo: null,
+      tenthPercentage: 88,
+      twelfthPercentage: 90,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.missing).toContain("rollNo");
+  });
+
+  it("passes required field gate when sapId and rollNo are present", () => {
+    const result = requiredFieldsReady({
+      sapId: "500126666",
+      rollNo: "R2142233333",
+      tenthPercentage: 88,
+      twelfthPercentage: 90,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.missing).toHaveLength(0);
+  });
+});
