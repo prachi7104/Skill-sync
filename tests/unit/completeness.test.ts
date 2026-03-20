@@ -44,28 +44,28 @@ describe("computeCompleteness", () => {
       name: "John Doe",
       email: "john@example.com",
       skills: [
-        { id: "1", name: "Python", studentId: "" },
-        { id: "2", name: "React", studentId: "" },
-        { id: "3", name: "Node.js", studentId: "" },
-        { id: "4", name: "PostgreSQL", studentId: "" },
-        { id: "5", name: "Docker", studentId: "" },
+        { name: "Python", proficiency: 3 as const },
+        { name: "React", proficiency: 3 as const },
+        { name: "Node.js", proficiency: 3 as const },
+        { name: "PostgreSQL", proficiency: 3 as const },
+        { name: "Docker", proficiency: 3 as const },
       ],
       projects: [
-        { id: "1", title: "Project 1", studentId: "", description: null, link: null, createdAt: new Date() },
-        { id: "2", title: "Project 2", studentId: "", description: null, link: null, createdAt: new Date() },
+        { title: "Project 1", description: "Built with React", techStack: ["React"], url: "http://example.com" },
+        { title: "Project 2", description: "Built with Node", techStack: ["Node"], url: "http://example.com" },
       ],
       workExperience: [
-        { id: "1", title: "Intern", studentId: "", company: "Tech Co", startDate: new Date(), endDate: new Date(), description: null },
+        { company: "Tech Co", role: "Intern", description: "Worked on React", startDate: "2024-01" },
       ],
       branch: "Computer Science",
       batchYear: 2024,
       tenthPercentage: 95,
       twelfthPercentage: 92,
       certifications: [
-        { id: "1", name: "AWS Certified", studentId: "", issuedAt: new Date(), expiresAt: null },
+        { title: "AWS Certified", issuer: "Amazon", dateIssued: "2024-01" },
       ],
       codingProfiles: [
-        { id: "1", platform: "LeetCode", profileUrl: "http://example.com", studentId: "", createdAt: new Date() },
+        { platform: "LeetCode", username: "jdoe", url: "http://example.com" },
       ],
     };
 
@@ -92,25 +92,25 @@ describe("computeCompleteness", () => {
       name: "Jane Doe",
       email: "jane@example.com",
       skills: [
-        { id: "1", name: "Python", studentId: "" },
-        { id: "2", name: "React", studentId: "" },
-        { id: "3", name: "Node.js", studentId: "" },
-        { id: "4", name: "SQL", studentId: "" },
-        { id: "5", name: "Docker", studentId: "" },
+        { name: "Python", proficiency: 3 as const },
+        { name: "React", proficiency: 3 as const },
+        { name: "Node.js", proficiency: 3 as const },
+        { name: "SQL", proficiency: 3 as const },
+        { name: "Docker", proficiency: 3 as const },
       ],
       projects: [
-        { id: "1", title: "Project 1", studentId: "", description: null, link: null, createdAt: new Date() },
-        { id: "2", title: "Project 2", studentId: "", description: null, link: null, createdAt: new Date() },
+        { title: "Project 1", description: "Built with React", techStack: ["React"] },
+        { title: "Project 2", description: "Built with Node", techStack: ["Node"] },
       ],
       workExperience: [
-        { id: "1", title: "Intern", studentId: "", company: "Company", startDate: new Date(), endDate: new Date(), description: null },
+        { company: "Company", role: "Intern", description: "Internship", startDate: "2024-01" },
       ],
       branch: "Computer Science",
       batchYear: 2024,
       tenthPercentage: 90,
       twelfthPercentage: 88,
-      certifications: [{ id: "1", name: "Cert", studentId: "", issuedAt: new Date(), expiresAt: null }],
-      codingProfiles: [{ id: "1", platform: "GitHub", profileUrl: "http://example.com", studentId: "", createdAt: new Date() }],
+      certifications: [{ title: "Cert", issuer: "Org", dateIssued: "2024-01" }],
+      codingProfiles: [{ platform: "GitHub", username: "jane", url: "http://example.com" }],
       // sapId is missing from profile
     };
 
@@ -132,22 +132,21 @@ describe("computeCompleteness", () => {
       name: "Alex",
       email: "alex@example.com",
       skills: [
-        { id: "1", name: "Python", studentId: "" },
-        { id: "2", name: "Kotlin", studentId: "" },
-        { id: "3", name: "Go", studentId: "" },
-        { id: "4", name: "Rust", studentId: "" },
-        { id: "5", name: "Java", studentId: "" },
+        { name: "Python", proficiency: 3 as const },
+        { name: "Kotlin", proficiency: 3 as const },
+        { name: "Go", proficiency: 3 as const },
+        { name: "Rust", proficiency: 3 as const },
+        { name: "Java", proficiency: 3 as const },
       ],
       projects: [
-        { id: "1", title: "Project 1", studentId: "", description: null, link: null, createdAt: new Date() },
-        { id: "2", title: "Project 2", studentId: "", description: null, link: null, createdAt: new Date() },
+        { title: "Project 1", description: "React", techStack: ["React"] },
+        { title: "Project 2", description: "Node", techStack: ["Node"] },
       ],
       workExperience: [
-        { id: "1", title: "Developer", studentId: "", company: "Tech", startDate: new Date(), endDate: new Date(), description: null },
+        { company: "Tech", role: "Developer", description: "Development", startDate: "2024-01" },
       ],
-      // Missing: branch, batchYear, tenthPercentage, twelfthPercentage
-      certifications: [{ id: "1", name: "Cert", studentId: "", issuedAt: new Date(), expiresAt: null }],
-      codingProfiles: [{ id: "1", platform: "GitHub", profileUrl: "http://example.com", studentId: "", createdAt: new Date() }],
+      certifications: [{ title: "Cert", issuer: "Org" }],
+      codingProfiles: [{ platform: "GitHub", username: "alex" }],
     };
 
     const result = computeCompleteness(noAcademicsProfile);
@@ -167,11 +166,11 @@ describe("computeCompleteness", () => {
       email: "bob@example.com",
       // No skills
       projects: [
-        { id: "1", title: "Project", studentId: "", description: null, link: null, createdAt: new Date() },
-        { id: "2", title: "Project 2", studentId: "", description: null, link: null, createdAt: new Date() },
+        { title: "Project", description: "React", techStack: ["React"] },
+        { title: "Project 2", description: "Node", techStack: ["Node"] },
       ],
       workExperience: [
-        { id: "1", title: "Dev", studentId: "", company: "Co", startDate: new Date(), endDate: new Date(), description: null },
+        { company: "Co", role: "Intern", description: "Dev", startDate: "2024-01" },
       ],
       branch: "CS",
       batchYear: 2024,
@@ -182,9 +181,9 @@ describe("computeCompleteness", () => {
     const withSkillsProfile = {
       ...noSkillsProfile,
       skills: [
-        { id: "1", name: "Skill1", studentId: "" },
-        { id: "2", name: "Skill2", studentId: "" },
-        { id: "3", name: "Skill3", studentId: "" },
+        { name: "Skill1", proficiency: 1 as const },
+        { name: "Skill2", proficiency: 1 as const },
+        { name: "Skill3", proficiency: 1 as const },
       ],
     };
 
@@ -192,8 +191,8 @@ describe("computeCompleteness", () => {
     const withSkillsResult = computeCompleteness(withSkillsProfile);
 
     expect(withSkillsResult.score).toBeGreaterThan(noSkillsResult.score);
-    expect(noSkillsResult.breakdown.skills).toBe(12); // 3 skills * 4pts = 12
-    expect(withSkillsResult.breakdown.skills).toBe(12); // Same: 3 skills = 12pts (< 5 needed for 20)
+    expect(noSkillsResult.breakdown.skills).toBe(0); // No skills = 0pts
+    expect(withSkillsResult.breakdown.skills).toBe(12); // 3 skills * 4pts = 12pts
   });
 
   // ────────────────────────────────────────────────────────────────────────────
@@ -208,28 +207,28 @@ describe("computeCompleteness", () => {
       name: "Charlie",
       email: "charlie@example.com",
       skills: [
-        { id: "1", name: "Java", studentId: "" },
-        { id: "2", name: "Spring", studentId: "" },
-        { id: "3", name: "SQL", studentId: "" },
-        { id: "4", name: "Docker", studentId: "" },
-        { id: "5", name: "Kubernetes", studentId: "" },
+        { name: "Java", proficiency: 5 as const },
+        { name: "Spring", proficiency: 5 as const },
+        { name: "SQL", proficiency: 5 as const },
+        { name: "Docker", proficiency: 5 as const },
+        { name: "Kubernetes", proficiency: 5 as const },
       ],
       projects: [
-        { id: "1", title: "Microservices", studentId: "", description: null, link: null, createdAt: new Date() },
-        { id: "2", title: "API", studentId: "", description: null, link: null, createdAt: new Date() },
+        { title: "Microservices", description: "Java backend", techStack: ["Java"] },
+        { title: "API", description: "Spring boot", techStack: ["Spring"] },
       ],
       workExperience: [
-        { id: "1", title: "Backend Engineer", studentId: "", company: "Google", startDate: new Date(), endDate: new Date(), description: null },
+        { company: "Google", role: "Backend Engineer", description: "Scaling things", startDate: "2024-01" },
       ],
       branch: "Computer Science",
       batchYear: 2022,
       tenthPercentage: 98,
       twelfthPercentage: 96,
       certifications: [
-        { id: "1", name: "AWS Solutions Architect", studentId: "", issuedAt: new Date(), expiresAt: null },
+        { title: "AWS Solutions Architect", issuer: "Amazon" },
       ],
       codingProfiles: [
-        { id: "1", platform: "GitHub", profileUrl: "http://github.com/charlie", studentId: "", createdAt: new Date() },
+        { platform: "GitHub", username: "charlie", url: "http://github.com/charlie" },
       ],
     };
 
@@ -246,7 +245,7 @@ describe("computeCompleteness", () => {
     const incompleteProfile = {
       name: "Dana",
       email: "dana@example.com",
-      skills: [{ id: "1", name: "Python", studentId: "" }], // Only 1 skill = 4 pts
+      skills: [{ name: "Python", proficiency: 1 as const }], // Only 1 skill = 4 ptss
       projects: [], // No projects = 0 pts
       // Missing everything else
     };

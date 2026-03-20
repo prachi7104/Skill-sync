@@ -41,10 +41,10 @@ type SessionRow = {
   academic_year: string | null;
   status: "draft" | "review" | "published";
   total_students: number;
-  alpha_count: number;
-  beta_count: number;
-  gamma_count: number;
-  unmatched_count: number;
+  alpha_count?: number;
+  beta_count?: number;
+  gamma_count?: number;
+  unmatched_count?: number;
 };
 
 type ResultRow = {
@@ -457,7 +457,7 @@ export default function AdminAmcatPage() {
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {session.total_students} students | A:{session.alpha_count} B:{session.beta_count} G:{session.gamma_count}
+                        {session.total_students} students
                       </p>
                     </button>
                   ))
@@ -545,7 +545,7 @@ export default function AdminAmcatPage() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
-                Distribution: {selectedSession?.alpha_count ?? 0} Alpha | {selectedSession?.beta_count ?? 0} Beta | {selectedSession?.gamma_count ?? 0} Gamma
+                Distribution: {summary.linked} linked | {summary.unmatched} unmatched
               </p>
             </CardContent>
           </Card>

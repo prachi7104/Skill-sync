@@ -54,8 +54,8 @@ export async function GET(req: NextRequest) {
         ce.helpful_count,
         ce.batch_year,
         ce.category_snapshot,
-        ce.student_name,
-        ce.student_email,
+        NULL::text AS student_name,
+        NULL::text AS student_email,
         ce.created_at,
         ce.updated_at,
         ce.published_at,
@@ -98,13 +98,13 @@ export async function POST(req: NextRequest) {
         role_title, drive_type, outcome, interview_process, tips,
         difficulty, would_recommend, show_name, is_admin_posted,
         batch_year, category_snapshot, status, published_at,
-        student_name, student_email, ai_screen_score, ai_screen_passed, ai_screened_at
+        ai_screen_score, ai_screen_passed, ai_screened_at
       ) VALUES (
         ${user.collegeId}, NULL, ${data.companyName}, ${normalizeCompanyName(data.companyName)},
         ${data.roleTitle ?? null}, ${data.driveType ?? "placement"}, ${data.outcome ?? "not_disclosed"}, ${data.interviewProcess ?? null}, ${data.tips ?? null},
         ${data.difficulty ?? 3}, ${data.wouldRecommend ?? null}, false, true,
         ${data.batchYear ?? null}, ${data.category ?? null}, 'published', NOW(),
-        'Anonymous', null, 1, true, NOW()
+        1, true, NOW()
       )
     `);
 

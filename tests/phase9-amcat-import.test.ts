@@ -163,7 +163,7 @@ describe("AMCAT CSV Parsing & Score Computation", () => {
     const total = computeAmcatTotal(student, DEFAULT_WEIGHTS);
 
     // Expected: 90*0.50 + 85*0.20 + 75*0.10 + 80*0.10 + 70*0.10 = 45 + 17 + 7.5 + 8 + 7 = 84.5
-    expect(total).toBeCloseTo(84.5, 1);
+    expect(total).toBe(84.5);
   });
 
   it("should assign categories based on computed scores", () => {
@@ -371,11 +371,11 @@ describe("Ranking Filters by AMCAT Category", () => {
     const students = [
       { id: "s1", name: "Alice", category: "alpha", score: 90 },
       { id: "s2", name: "Bob", category: "alpha", score: 85 },
-      { id: "s3", name: "Charlie", category: "beta", score: 92 }, // High but excluded
+      { id: "s3", name: "Charlie", category: "beta", score: 92 }, // High but excluded if drive is alpha-only
       { id: "s4", name: "Diana", category: "alpha", score: 88 },
     ];
 
-    const drive = { eligibleCategories: ["alpha", "beta"] };
+    const drive = { eligibleCategories: ["alpha"] };
 
     const eligible = students.filter((s) =>
       drive.eligibleCategories.includes(s.category)
@@ -387,7 +387,7 @@ describe("Ranking Filters by AMCAT Category", () => {
     expect(ranked[0].id).toBe("s1"); // Alice: 90
     expect(ranked[1].id).toBe("s4"); // Diana: 88
     expect(ranked[2].id).toBe("s2"); // Bob: 85
-    expect(ranked[3].id).toBe("s3"); // Charlie: 92 (but eligible as beta)
+    expect(ranked.map(s => s.id)).not.toContain("s3"); // Charlie: 92 (excluded because category beta)
   });
 
   it("should handle no eligible students gracefully", () => {
@@ -469,10 +469,10 @@ describe("End-to-End AMCAT Import Flow", () => {
         "Present",
         "75",
         "35",
-        "40",
-        "45",
-        "42",
-        "38",
+        "25",
+        "28",
+        "32",
+        "30",
       ],
     ];
 

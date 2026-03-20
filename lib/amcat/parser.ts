@@ -108,21 +108,27 @@ const COLUMN_MAP: Record<string, keyof AmcatRowRaw> = {
   "computer science": "cs_score",
   "cs(score)": "cs_score",
   "cs score": "cs_score",
+  "cs_score": "cs_score",
   "computer programming(score)": "cp_score",
   "computer programming score": "cp_score",
   "computer programming": "cp_score",
   "cp(score)": "cp_score",
   "cp score": "cp_score",
+  "cp_score": "cp_score",
   "automata(score)": "automata_score",
   "automata score": "automata_score",
   "automata": "automata_score",
+  "automata_score": "automata_score",
   "automata fix(score)": "automata_fix_score",
   "automata fix score": "automata_fix_score",
   "automata fix": "automata_fix_score",
+  "automata_fix": "automata_fix_score",
+  "automata_fix_score": "automata_fix_score",
   "autofix": "automata_fix_score",
   "quant(score)": "quant_score",
   "quant score": "quant_score",
   "quant": "quant_score",
+  "quant_score": "quant_score",
   "quantitative(score)": "quant_score",
   "quantitative": "quant_score",
   "attendance %": "attendance_pct",
@@ -135,7 +141,7 @@ const COLUMN_MAP: Record<string, keyof AmcatRowRaw> = {
 };
 
 function normalizeHeader(header: string): string {
-  return header.toLowerCase().trim().replace(/\s+/g, " ");
+  return header.toLowerCase().trim().replace(/[\s_]+/g, " ");
 }
 
 function parseCategory(value: unknown): "alpha" | "beta" | "gamma" | null {

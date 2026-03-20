@@ -59,7 +59,7 @@ describe("Student Onboarding Flow", () => {
 
     // Simulate: getStudentProfile returns null initially (first login)
     let profileFetches = 0;
-    const mockGetStudentProfile = vi.fn(async (id: string) => {
+    const mockGetStudentProfile = vi.fn(async (_id: string) => {
       profileFetches++;
       // First call returns null (no profile yet)
       if (profileFetches === 1) return null;
@@ -167,14 +167,14 @@ describe("Student Onboarding Flow", () => {
     };
 
     // Mock form state
-    const mockFormState = { skills: [], projects: [], workExperience: [] };
+    const mockFormState: { skills: string[]; projects: string[]; workExperience: string[] } = { skills: [], projects: [], workExperience: [] };
 
     // Simulate preview response
     const mockHandlePreviewResponse = vi.fn(async () => {
       // Update form state with preview data
       mockFormState.skills = mockPreviewData.skills;
-      mockFormState.projects = mockPreviewData.projects;
-      mockFormState.workExperience = mockPreviewData.experience;
+      mockFormState.projects = mockPreviewData.projects ?? [];
+      mockFormState.workExperience = mockPreviewData.experience ?? [];
       return mockFormState;
     });
 
@@ -205,7 +205,7 @@ describe("Student Onboarding Flow", () => {
       form: {
         rollNo: "R123456",
         batchYear: 2024,
-      };
+      },
     };
 
     // Mock batch year validation logic

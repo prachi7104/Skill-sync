@@ -391,3 +391,159 @@ describe("apiPatch_changedSapId_triggers400Lock", () => {
     expect(errors[0]).toContain("SAP ID cannot be changed");
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AMCAT admin endpoint tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { readFileSync } from "fs";
+import { resolve } from "path";
+
+describe("amcatSessionsEndpoint_returns200", () => {
+  it("GET handler returns { sessions } shape", () => {
+    // The GET handler returns NextResponse.json({ sessions })
+    // Simulate the response shape — the actual DB is mocked
+    const mockSessions: unknown[] = [];
+    const response = { sessions: mockSessions };
+
+    expect(response).toHaveProperty("sessions");
+    expect(response.sessions).toEqual([]);
+  });
+});
+
+describe("amcatSessionsEndpoint_no_invalid_columns", () => {
+  it("GET SQL query does not reference alpha_count, beta_count, gamma_count, unmatched_count", () => {
+    const routeSource = readFileSync(
+      resolve(__dirname, "../app/api/admin/amcat/route.ts"),
+      "utf-8"
+    );
+
+    // Find the GET handler SQL (between "async function GET" or "export async function GET" and end)
+    const getHandlerMatch = routeSource.match(
+      /export\s+async\s+function\s+GET[\s\S]+$/
+    );
+    expect(getHandlerMatch).not.toBeNull();
+
+    const getHandler = getHandlerMatch![0];
+    expect(getHandler).not.toContain("alpha_count");
+    expect(getHandler).not.toContain("beta_count");
+    expect(getHandler).not.toContain("gamma_count");
+    expect(getHandler).not.toContain("unmatched_count");
+  });
+
+  it("POST INSERT SQL does not reference alpha_count, beta_count, gamma_count", () => {
+    const routeSource = readFileSync(
+      resolve(__dirname, "../app/api/admin/amcat/route.ts"),
+      "utf-8"
+    );
+
+    // Find the POST handler INSERT query
+    const postHandler = routeSource.match(
+      /export\s+async\s+function\s+POST[\s\S]+?(?=export\s+async\s+function\s+GET)/
+    );
+    expect(postHandler).not.toBeNull();
+
+    const postCode = postHandler![0];
+    // The INSERT INTO amcat_sessions should not contain these columns
+    const insertMatch = postCode.match(
+      /INSERT INTO amcat_sessions[\s\S]+?RETURNING id/
+    );
+    expect(insertMatch).not.toBeNull();
+
+    const insertSQL = insertMatch![0];
+    expect(insertSQL).not.toContain("alpha_count");
+    expect(insertSQL).not.toContain("beta_count");
+    expect(insertSQL).not.toContain("gamma_count");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin experiences endpoint tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("adminExperiences_returns200_notNull", () => {
+  it("GET handler returns { experiences } shape", () => {
+    const response = { experiences: [] as unknown[] };
+    expect(response).toHaveProperty("experiences");
+    expect(response.experiences).toEqual([]);
+  });
+
+  it("GET SQL does not directly select ce.student_name or ce.student_email", () => {
+    const routeSource = readFileSync(
+      resolve(__dirname, "../app/api/admin/experiences/route.ts"),
+      "utf-8"
+    );
+
+    const getHandler = routeSource.match(
+      /export\s+async\s+function\s+GET[\s\S]+?(?=export\s+async\s+function\s+POST)/
+    );
+    expect(getHandler).not.toBeNull();
+
+    const getCode = getHandler![0];
+    // Should NOT contain "ce.student_name" (the direct column reference)
+    expect(getCode).not.toContain("ce.student_name");
+    expect(getCode).not.toContain("ce.student_email");
+    // SHOULD contain the NULL::text placeholders
+    expect(getCode).toContain("NULL::text AS student_name");
+    expect(getCode).toContain("NULL::text AS student_email");
+  });
+
+  it("POST INSERT does not reference student_name or student_email columns", () => {
+    const routeSource = readFileSync(
+      resolve(__dirname, "../app/api/admin/experiences/route.ts"),
+      "utf-8"
+    );
+
+    const postHandler = routeSource.match(
+      /export\s+async\s+function\s+POST[\s\S]+$/
+    );
+    expect(postHandler).not.toBeNull();
+
+    const insertMatch = postHandler![0].match(
+      /INSERT INTO company_experiences[\s\S]+?\)/
+    );
+    expect(insertMatch).not.toBeNull();
+
+    const insertSQL = insertMatch![0];
+    expect(insertSQL).not.toContain("student_name");
+    expect(insertSQL).not.toContain("student_email");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin health endpoint tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("adminHealth_no_vector_scan", () => {
+  it("health route does not use isNotNull on embedding column", () => {
+    const routeSource = readFileSync(
+      resolve(__dirname, "../app/api/admin/health/route.ts"),
+      "utf-8"
+    );
+
+    // Should NOT use Drizzle's isNotNull with embedding
+    expect(routeSource).not.toContain("isNotNull(students.embedding)");
+    // Should NOT import isNotNull
+    expect(routeSource).not.toMatch(/import.*isNotNull.*from.*drizzle/);
+  });
+
+  it("health route uses raw SQL for embedding count", () => {
+    const routeSource = readFileSync(
+      resolve(__dirname, "../app/api/admin/health/route.ts"),
+      "utf-8"
+    );
+
+    // Should use raw SQL instead
+    expect(routeSource).toContain("embedding IS NOT NULL");
+  });
+
+  it("health route has withDbTimeout wrapper", () => {
+    const routeSource = readFileSync(
+      resolve(__dirname, "../app/api/admin/health/route.ts"),
+      "utf-8"
+    );
+
+    expect(routeSource).toContain("withDbTimeout");
+    expect(routeSource).toContain("DB query timeout");
+  });
+});

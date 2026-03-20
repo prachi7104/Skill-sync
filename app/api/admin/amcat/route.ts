@@ -162,10 +162,7 @@ export async function POST(req: NextRequest) {
       status,
       score_weights,
       category_thresholds,
-      total_students,
-      alpha_count,
-      beta_count,
-      gamma_count
+      total_students
     ) VALUES (
       ${session.user.collegeId},
       ${session.user.id},
@@ -176,10 +173,7 @@ export async function POST(req: NextRequest) {
       'draft',
       ${JSON.stringify(DEFAULT_WEIGHTS)}::jsonb,
       ${JSON.stringify(DEFAULT_THRESHOLDS)}::jsonb,
-      ${distribution.total},
-      ${distribution.alpha},
-      ${distribution.beta},
-      ${distribution.gamma}
+      ${distribution.total}
     )
     RETURNING id
   `) as unknown as Array<{ id: string }>;
@@ -234,7 +228,7 @@ export async function POST(req: NextRequest) {
 
   await db.execute(sql`
     UPDATE amcat_sessions
-    SET unmatched_count = ${unmatchedCount}, updated_at = NOW()
+    SET updated_at = NOW()
     WHERE id = ${sessionId}
   `);
 
@@ -341,10 +335,6 @@ export async function GET(_req: NextRequest) {
       s.academic_year,
       s.status,
       s.total_students,
-      s.alpha_count,
-      s.beta_count,
-      s.gamma_count,
-      s.unmatched_count,
       s.score_weights,
       s.category_thresholds,
       s.published_at,
