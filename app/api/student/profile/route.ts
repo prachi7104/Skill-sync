@@ -194,25 +194,20 @@ export async function PATCH(req: NextRequest) {
         const shouldQueueEmbedding = hasSignalChange || isFirstTimeComplete;
 
         if (shouldQueueEmbedding && completeness >= 50) {
-            const [existingJob] = await db
-                .select({ id: jobs.id })
-                .from(jobs)
-                .where(
-                    and(
-                        eq(jobs.type, "generate_embedding"),
-                        sql`${jobs.status} IN ('pending', 'processing')`,
-                        sql`${jobs.payload}->>'targetType' = 'student'`,
-                        sql`${jobs.payload}->>'targetId' = ${user.id}`,
-                    ),
-                )
-                .limit(1);
+            const existing = await db.query.jobs.findFirst({
+                where: and(
+                    eq(jobs.type, "generate_embedding"),
+                    eq(jobs.status, "pending"),
+                    sql`${jobs.payload}->>'targetId' = ${user.id}`,
+                ),
+                columns: { id: true },
+            });
 
-            if (!existingJob) {
+            if (!existing) {
                 await db.insert(jobs).values({
                     type: "generate_embedding",
                     payload: { targetType: "student", targetId: user.id },
-                    priority: 7,
-                    status: "pending",
+                    priority: 6,
                 });
 
                 logger.info("[Profile PATCH] Queued embedding job", {
