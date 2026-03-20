@@ -544,6 +544,11 @@ export const rankings = pgTable("rankings", {
     .notNull()
     .references(() => students.id, { onDelete: "cascade" }),
 
+  /** College this ranking belongs to. Matches drive.collegeId. */
+  collegeId: uuid("college_id")
+    .notNull()
+    .references(() => colleges.id, { onDelete: "cascade" }),
+
   // ── Scores ────────────────────────────────────────────────────────────────
 
   /**

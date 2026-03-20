@@ -576,6 +576,7 @@ export async function computeRanking(
       const rankingRows = rankedWithPositions.map((r) => ({
         driveId,
         studentId: r.studentId,
+        collegeId: drive.collegeId,
         matchScore: r.scoring.matchScore,
         semanticScore: r.scoring.semanticScore,
         structuredScore: r.scoring.structuredScore,
