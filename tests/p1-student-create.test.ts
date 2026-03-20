@@ -537,13 +537,13 @@ describe("adminHealth_no_vector_scan", () => {
     expect(routeSource).toContain("embedding IS NOT NULL");
   });
 
-  it("health route has withDbTimeout wrapper", () => {
+  it("health route has withTimeout wrapper", () => {
     const routeSource = readFileSync(
       resolve(__dirname, "../app/api/admin/health/route.ts"),
       "utf-8"
     );
 
-    expect(routeSource).toContain("withDbTimeout");
-    expect(routeSource).toContain("DB query timeout");
+    expect(routeSource).toContain("withTimeout");
+    expect(routeSource).toContain("timeout_");
   });
 });

@@ -77,7 +77,6 @@ describe("Phase 6: Drive Sync & Creation Pipeline", () => {
     const collegeId = "college-1";
     const admin = { id: "admin-1", collegeId, role: "admin" };
     const faculty1 = { id: "faculty-1", collegeId, role: "faculty" };
-    const faculty2 = { id: "faculty-2", collegeId, role: "faculty" };
 
     const drives = [
       { id: "d1", createdBy: "faculty-1", collegeId },
@@ -99,9 +98,6 @@ describe("Phase 6: Drive Sync & Creation Pipeline", () => {
 
   it("Test 6: rankingUsesEnhancedJdSkills", () => {
     // Mock extractJDRequiredSkills and computeSkillOverlap behavior
-    const parsedJd = { requiredSkills: ["Python", "React"] };
-    const studentSkills = ["Python"];
-    
     // In computeRanking.ts, it uses extractStudentSkillNames and computeSkillOverlap
     const { matchedSkills, missingSkills } = {
       matchedSkills: ["Python"],
@@ -113,9 +109,6 @@ describe("Phase 6: Drive Sync & Creation Pipeline", () => {
   });
 
   it("Test 7: studentWithoutEmbedding_getsAtsOnlyScore", () => {
-    const student = { id: "s1", skills: ["Python"], embedding: null };
-    const requiredSkills = ["Python", "React"];
-    
     // Mock the logic in computeRanking.ts for !studentEmbedding
     const overlapRatio = 0.5; // 1/2
     const atsOnlyScore = overlapRatio * 30; // 15

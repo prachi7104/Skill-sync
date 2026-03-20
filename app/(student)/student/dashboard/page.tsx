@@ -41,19 +41,11 @@ export default function StudentDashboard() {
 
     useEffect(() => {
         if (!isLoading && student) {
-            const shouldRedirect =
-                !student.sapId ||
-                !student.rollNo ||
-                !student.resumeUrl ||
-                !student.branch ||
-                student.batchYear === null ||
-                student.batchYear === undefined ||
-                student.cgpa === null ||
-                student.cgpa === undefined ||
-                !Array.isArray(student.skills) ||
-                student.skills.length === 0 ||
-                !Array.isArray(student.projects) ||
-                student.projects.length === 0;
+            // Only redirect if the student has truly never started onboarding
+            // (no SAP ID AND no rollNo AND no resume — they haven't done anything)
+            // A student who finished onboarding but skipped some fields should see the dashboard
+            // with a "complete your profile" banner, not get bounced back
+            const shouldRedirect = !student.sapId && !student.rollNo && !student.resumeUrl;
 
             if (shouldRedirect) {
                 router.push("/student/onboarding");

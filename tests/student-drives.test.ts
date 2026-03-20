@@ -15,7 +15,7 @@ describe("studentDrives_showsOnlyCollegeDrives", () => {
   function filterDrivesByCollegeRLS(
     drives: Array<{ id: string; collegeId: string; company: string }>,
     studentCollegeId: string,
-    userId: string,
+    _userId: string,
     userRole: "student" | "admin"
   ) {
     return drives.filter((drive) => {
@@ -427,7 +427,7 @@ describe("sandboxDrives_fetchError_showsEmptyNotice", () => {
       json: async () => {
         throw new Error("Invalid JSON");
       },
-    } as Response);
+    } as unknown as Response);
 
     let drives: DriveOption[] = [];
     let drivesLoaded = false;

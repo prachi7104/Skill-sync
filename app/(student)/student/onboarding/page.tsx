@@ -737,12 +737,22 @@ export default function OnboardingPage() {
   }
 
   async function handleFinish() {
+    // 1. Save the final step
     const patch = buildPatch(activeStep, form);
     await fetch("/api/student/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(patch),
     }).catch(() => {});
+
+    // 2. Force Next.js to re-run the server layout and re-fetch initialStudent
+    //    Without this, StudentProvider uses stale data → dashboard redirects back
+    router.refresh();
+
+    // 3. Wait for the refresh to propagate before navigating
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    // 4. Navigate — now StudentProvider will get fresh data from the server
     router.push("/student/dashboard");
   }
 

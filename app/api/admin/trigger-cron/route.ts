@@ -1,108 +1,42 @@
 import "server-only";
+export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/helpers";
+import { CRON_SECRET } from "@/lib/env";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
-const CRON_SECRET = process.env.CRON_SECRET;
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const CRON_ROUTES: Record<string, string> = {
+  resumes: "/api/cron/process-resumes",
+  embeddings: "/api/cron/process-embeddings",
+  "jd-enhancement": "/api/cron/process-jd-enhancement",
+  rankings: "/api/cron/process-rankings",
+  cleanup: "/api/cron/nightly-cleanup",
+};
 
-/**
- * POST /api/admin/trigger-cron
- *
- * Admin-only manual trigger for cron jobs.
- * Internally calls the corresponding cron route with the CRON_SECRET header.
- *
- * Body:
- * {
- *   type: "resumes" | "embeddings" | "jd-enhancement" | "rankings"
- * }
- *
- * Returns the cron route's response.
- */
 export async function POST(req: NextRequest) {
   try {
     await requireRole(["admin"]);
+    const body = await req.json() as { type?: string };
+    const path = body.type ? CRON_ROUTES[body.type] : null;
 
-    if (!CRON_SECRET) {
+    if (!path) {
       return NextResponse.json(
-        { error: "CRON_SECRET not configured" },
-        { status: 500 },
+        { error: `Unknown cron type: "${body.type}". Valid: ${Object.keys(CRON_ROUTES).join(", ")}` },
+        { status: 400 }
       );
     }
 
-    const body = await req.json();
-    const { type } = body;
+    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+    const response = await fetch(`${baseUrl}${path}`, {
+      headers: { Authorization: `Bearer ${CRON_SECRET}` },
+      signal: AbortSignal.timeout(55000),
+    });
 
-    if (!type || !["resumes", "embeddings", "jd-enhancement", "rankings"].includes(type)) {
-      return NextResponse.json(
-        { error: "Invalid cron type. Must be one of: resumes, embeddings, jd-enhancement, rankings" },
-        { status: 400 },
-      );
-    }
-
-    // Map type to cron route
-    const cronRouteMap: Record<string, string> = {
-      resumes: "/api/cron/process-resumes",
-      embeddings: "/api/cron/process-embeddings",
-      "jd-enhancement": "/api/cron/process-jd-enhancement",
-      rankings: "/api/cron/process-rankings",
-    };
-
-    const cronRoute = cronRouteMap[type];
-    const cronUrl = new URL(cronRoute, BASE_URL);
-
-    // Call the cron route with the secret header
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 55000); // 55 second timeout
-
-    try {
-      const response = await fetch(cronUrl.toString(), {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${CRON_SECRET}`,
-        },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error(`[Cron trigger] ${type} failed:`, errorData);
-        return NextResponse.json(
-          { error: `Cron job failed: ${errorData}` },
-          { status: response.status },
-        );
-      }
-
-      const data = await response.json();
-      return NextResponse.json(data, { status: 200 });
-    } catch (error: any) {
-      clearTimeout(timeoutId);
-      if (error.name === "AbortError") {
-        return NextResponse.json(
-          { error: "Cron job timeout (55 seconds exceeded)" },
-          { status: 504 },
-        );
-      }
-      throw error;
-    }
+    const data = await response.json().catch(() => ({}));
+    return NextResponse.json({ success: response.ok, status: response.status, data });
   } catch (err: any) {
     if (isRedirectError(err)) throw err;
-    const message = err?.message ?? "Internal server error";
-
-    if (message.includes("Unauthorized")) {
-      return NextResponse.json({ error: message }, { status: 401 });
-    }
-    if (message.includes("Forbidden")) {
-      return NextResponse.json({ error: message }, { status: 403 });
-    }
-
-    console.error("[POST /api/admin/trigger-cron]", err);
-    return NextResponse.json(
-      { error: "Failed to trigger cron job" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

@@ -14,11 +14,11 @@ type User = {
 
 function createDrive(user: User, payload: DriveInput) {
   if (!user.collegeId) {
-    return { status: 403, message: "Your account must be associated with a college to create drives" };
+    return { status: 403 as const, message: "Your account must be associated with a college to create drives" };
   }
 
   return {
-    status: 201,
+    status: 201 as const,
     drive: {
       ...payload,
       createdBy: user.id,
