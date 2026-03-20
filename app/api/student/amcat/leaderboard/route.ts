@@ -19,17 +19,27 @@ export async function GET(req: NextRequest) {
 
     const [latestSession] = await db.execute(sql`
       SELECT
-        id,
-        session_name,
-        test_date,
-        total_students,
-        alpha_count,
-        beta_count,
-        gamma_count
-      FROM amcat_sessions
-      WHERE college_id = ${user.collegeId}
-        AND status = 'published'
-      ORDER BY published_at DESC
+        s.id,
+        s.session_name,
+        s.test_date,
+        s.batch_year,
+        s.academic_year,
+        s.status,
+        s.total_students,
+        s.score_weights,
+        s.category_thresholds,
+        s.published_at,
+        s.created_at,
+        COUNT(CASE WHEN r.category = 'alpha' THEN 1 END)::int AS alpha_count,
+        COUNT(CASE WHEN r.category = 'beta'  THEN 1 END)::int AS beta_count,
+        COUNT(CASE WHEN r.category = 'gamma' THEN 1 END)::int AS gamma_count,
+        COUNT(r.id)::int AS matched_count
+      FROM amcat_sessions s
+      LEFT JOIN amcat_results r ON r.session_id = s.id
+      WHERE s.college_id = ${user.collegeId}
+        AND s.status = 'published'
+      GROUP BY s.id
+      ORDER BY s.created_at DESC
       LIMIT 1
     `) as unknown as Array<Record<string, unknown>>;
 
@@ -41,17 +51,28 @@ export async function GET(req: NextRequest) {
 
     const [sessionRow] = await db.execute(sql`
       SELECT
-        id,
-        session_name,
-        test_date,
-        total_students,
-        alpha_count,
-        beta_count,
-        gamma_count
-      FROM amcat_sessions
-      WHERE id = ${targetSessionId}
-        AND college_id = ${user.collegeId}
-        AND status = 'published'
+        s.id,
+        s.session_name,
+        s.test_date,
+        s.batch_year,
+        s.academic_year,
+        s.status,
+        s.total_students,
+        s.score_weights,
+        s.category_thresholds,
+        s.published_at,
+        s.created_at,
+        COUNT(CASE WHEN r.category = 'alpha' THEN 1 END)::int AS alpha_count,
+        COUNT(CASE WHEN r.category = 'beta'  THEN 1 END)::int AS beta_count,
+        COUNT(CASE WHEN r.category = 'gamma' THEN 1 END)::int AS gamma_count,
+        COUNT(r.id)::int AS matched_count
+      FROM amcat_sessions s
+      LEFT JOIN amcat_results r ON r.session_id = s.id
+      WHERE s.id = ${targetSessionId}
+        AND s.college_id = ${user.collegeId}
+        AND s.status = 'published'
+      GROUP BY s.id
+      ORDER BY s.created_at DESC
       LIMIT 1
     `) as unknown as Array<Record<string, unknown>>;
 

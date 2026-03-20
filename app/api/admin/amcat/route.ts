@@ -339,10 +339,14 @@ export async function GET(_req: NextRequest) {
       s.category_thresholds,
       s.published_at,
       s.created_at,
-      u.name AS uploaded_by_name
+      COUNT(CASE WHEN r.category = 'alpha' THEN 1 END)::int AS alpha_count,
+      COUNT(CASE WHEN r.category = 'beta'  THEN 1 END)::int AS beta_count,
+      COUNT(CASE WHEN r.category = 'gamma' THEN 1 END)::int AS gamma_count,
+      COUNT(r.id)::int AS matched_count
     FROM amcat_sessions s
-    LEFT JOIN users u ON u.id = s.uploaded_by
+    LEFT JOIN amcat_results r ON r.session_id = s.id
     WHERE s.college_id = ${session.user.collegeId}
+    GROUP BY s.id
     ORDER BY s.created_at DESC
   `);
 

@@ -412,7 +412,7 @@ describe("amcatSessionsEndpoint_returns200", () => {
 });
 
 describe("amcatSessionsEndpoint_no_invalid_columns", () => {
-  it("GET SQL query does not reference alpha_count, beta_count, gamma_count, unmatched_count", () => {
+  it("GET SQL query does not reference direct session category columns", () => {
     const routeSource = readFileSync(
       resolve(__dirname, "../app/api/admin/amcat/route.ts"),
       "utf-8"
@@ -425,10 +425,10 @@ describe("amcatSessionsEndpoint_no_invalid_columns", () => {
     expect(getHandlerMatch).not.toBeNull();
 
     const getHandler = getHandlerMatch![0];
-    expect(getHandler).not.toContain("alpha_count");
-    expect(getHandler).not.toContain("beta_count");
-    expect(getHandler).not.toContain("gamma_count");
-    expect(getHandler).not.toContain("unmatched_count");
+    expect(getHandler).not.toContain("s.alpha_count");
+    expect(getHandler).not.toContain("s.beta_count");
+    expect(getHandler).not.toContain("s.gamma_count");
+    expect(getHandler).not.toContain("s.unmatched_count");
   });
 
   it("POST INSERT SQL does not reference alpha_count, beta_count, gamma_count", () => {

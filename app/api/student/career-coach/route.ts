@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
 import { getRouter } from "@/lib/antigravity/instance";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { getCurrentUser, getStudentProfile, requireStudentProfile } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import type { ParsedJD } from "@/lib/db/schema";
 import { drives, users } from "@/lib/db/schema";
@@ -12,6 +12,11 @@ import { getRedis } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
 
 function isDriveEligibleForStudent(drive: {
   minCgpa: number | null;
@@ -142,5 +147,77 @@ Return ONLY valid JSON:
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return NextResponse.json({ error: "Failed to build career coach" }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json().catch(() => null) as {
+      message?: string;
+      history?: ChatMessage[];
+    } | null;
+
+    const message = body?.message?.trim();
+    if (!message) {
+      return NextResponse.json({ error: "Message is required" }, { status: 400 });
+    }
+
+    const user = await getCurrentUser();
+    if (!user || user.role !== "student") {
+      return NextResponse.json({ error: "Student access required" }, { status: 403 });
+    }
+
+    const profile = await getStudentProfile(user.id);
+    if (!profile) {
+      return NextResponse.json({ error: "Complete onboarding first" }, { status: 403 });
+    }
+
+    const history = (Array.isArray(body?.history) ? body?.history : [])
+      .filter((item): item is ChatMessage => (
+        (item?.role === "user" || item?.role === "assistant") && typeof item?.content === "string" && item.content.trim().length > 0
+      ))
+      .slice(-8);
+
+    const studentSkills = profile.skills ?? [];
+    const systemPrompt = `You are SkillSync Career Advisor, a concise and actionable mentor for a student.
+
+Student context:
+- Branch: ${profile.branch ?? "Unknown"}
+- Batch year: ${profile.batchYear ?? "Unknown"}
+- Category: ${profile.category ?? "Unknown"}
+- CGPA: ${profile.cgpa ?? "Unknown"}
+- Skills: ${studentSkills.map((skill) => skill.name).slice(0, 20).join(", ") || "None listed"}
+
+Guidelines:
+- Keep responses practical and specific to the student profile.
+- Prioritize drive eligibility, ranking improvement, and skill roadmap advice.
+- Use short paragraphs and bullet points when useful.
+- If information is missing, state assumptions clearly.`;
+
+    const conversation = [
+      ...history.map((item) => `${item.role === "assistant" ? "Assistant" : "User"}: ${item.content}`),
+      `User: ${message}`,
+    ].join("\n");
+
+    const prompt = `${systemPrompt}\n\nConversation:\n${conversation}\nAssistant:`;
+
+    const router = getRouter();
+    const result = await router.execute("sandbox", prompt, {
+      maxTokens: 500,
+      temperature: 0.4,
+    });
+
+    if (!result.success || !result.data) {
+      return NextResponse.json({ error: "Career advisor temporarily unavailable" }, { status: 503 });
+    }
+
+    const reply = typeof result.data === "string"
+      ? result.data.trim()
+      : JSON.stringify(result.data);
+
+    return NextResponse.json({ reply, role: "assistant" });
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    return NextResponse.json({ error: "Failed to get career advice" }, { status: 500 });
   }
 }
