@@ -31,10 +31,12 @@ export default async function StudentLayout({
 
     if (!profile) {
         try {
-            await db.insert(students).values({
-                id: user.id,
-                collegeId: user.collegeId ?? undefined,
-            }).onConflictDoNothing();
+            if (user.collegeId) {
+                await db.insert(students).values({
+                    id: user.id,
+                    collegeId: user.collegeId,
+                }).onConflictDoNothing();
+            }
 
             // Backfill SAP ID if missing (derived from Microsoft email)
             const freshProfile = await getStudentProfile(user.id);

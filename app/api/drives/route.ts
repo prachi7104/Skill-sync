@@ -5,6 +5,7 @@ import { requireRole, requireStudentProfile } from "@/lib/auth/helpers";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { isRedirectError } from "next/dist/client/components/redirect";
+import { expandBranches } from "@/lib/constants/branches";
 
 // ── Zod Schema for drive creation ───────────────────────────────────────────
 
@@ -174,7 +175,7 @@ export async function GET(_req: NextRequest) {
       const branches = drive.eligibleBranches as string[] | null;
       if (branches && branches.length > 0) {
         if (!profile.branch) return false;
-        const normalizedBranches = branches.map((b) => b.toLowerCase().trim());
+        const normalizedBranches = expandBranches(branches).map((b) => b.toLowerCase().trim());
         if (!normalizedBranches.includes(profile.branch.toLowerCase().trim())) return false;
       }
 

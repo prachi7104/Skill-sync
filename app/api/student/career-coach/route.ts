@@ -9,6 +9,7 @@ import type { ParsedJD } from "@/lib/db/schema";
 import { drives, users } from "@/lib/db/schema";
 import { buildSkillGapFrequency, extractRequiredSkills } from "@/lib/phase8-10";
 import { getRedis } from "@/lib/redis";
+import { expandBranches } from "@/lib/constants/branches";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -33,7 +34,9 @@ function isDriveEligibleForStudent(drive: {
     if (profile.cgpa === null || profile.cgpa === undefined || profile.cgpa < drive.minCgpa) return false;
   }
   if (drive.eligibleBranches?.length) {
-    if (!profile.branch || !drive.eligibleBranches.includes(profile.branch)) return false;
+    if (!profile.branch) return false;
+    const expanded = expandBranches(drive.eligibleBranches).map((b) => b.toLowerCase().trim());
+    if (!expanded.includes(profile.branch.toLowerCase().trim())) return false;
   }
   if (drive.eligibleBatchYears?.length) {
     if (profile.batchYear === null || profile.batchYear === undefined || !drive.eligibleBatchYears.includes(profile.batchYear)) return false;

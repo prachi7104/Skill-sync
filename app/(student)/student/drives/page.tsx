@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { format } from "date-fns";
 import { Briefcase, MapPin, IndianRupee, Award, ChevronRight, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { expandBranches } from "@/lib/constants/branches";
 
 export default async function StudentDrivesPage() {
   const { user, profile } = await requireStudentProfile();
@@ -25,8 +26,8 @@ export default async function StudentDrivesPage() {
     const branches = drive.eligibleBranches as string[] | null;
     if (branches && branches.length > 0) {
       if (!profile.branch) return false;
-      const normalized = branches.map((b) => b.toLowerCase().trim());
-      if (!normalized.includes(profile.branch.toLowerCase().trim())) return false;
+      const expanded = expandBranches(branches).map((b) => b.toLowerCase().trim());
+      if (!expanded.includes(profile.branch.toLowerCase().trim())) return false;
     }
     const batchYears = drive.eligibleBatchYears as number[] | null;
     if (batchYears && batchYears.length > 0) {

@@ -25,6 +25,7 @@
 import "server-only";
 
 import { cosineSimilarity } from "@/lib/embeddings";
+import { expandBranches } from "@/lib/constants/branches";
 
 // ── Scoring weights (locked) ────────────────────────────────────────────────
 const SEMANTIC_WEIGHT = 0.7;
@@ -107,7 +108,7 @@ export function checkEligibility(
     if (!student.branch) {
       return { isEligible: false, reason: "Branch not available" };
     }
-    const normalizedBranches = criteria.eligibleBranches.map((b) =>
+    const normalizedBranches = expandBranches(criteria.eligibleBranches).map((b) =>
       b.toLowerCase().trim(),
     );
     if (!normalizedBranches.includes(student.branch.toLowerCase().trim())) {

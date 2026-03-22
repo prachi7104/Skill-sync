@@ -5,6 +5,7 @@ import { isRedirectError } from "next/dist/client/components/redirect";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, students, users } from "@/lib/db/schema";
+import { expandBranches } from "@/lib/constants/branches";
 
 type DriveRow = {
   id: string;
@@ -27,7 +28,9 @@ function isStudentEligibleForDrive(drive: DriveRow, student: {
     if (student.cgpa === null || student.cgpa === undefined || student.cgpa < drive.minCgpa) return false;
   }
   if (drive.eligibleBranches?.length) {
-    if (!student.branch || !drive.eligibleBranches.includes(student.branch)) return false;
+    if (!student.branch) return false;
+    const expanded = expandBranches(drive.eligibleBranches).map((b) => b.toLowerCase().trim());
+    if (!expanded.includes(student.branch.toLowerCase().trim())) return false;
   }
   if (drive.eligibleBatchYears?.length) {
     if (student.batchYear === null || student.batchYear === undefined || !drive.eligibleBatchYears.includes(student.batchYear)) return false;

@@ -6,6 +6,7 @@ import { isRedirectError } from "next/dist/client/components/redirect";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, students } from "@/lib/db/schema";
+import { expandBranches } from "@/lib/constants/branches";
 
 const querySchema = z.object({
   driveId: z.string().uuid(),
@@ -52,7 +53,8 @@ export async function GET(req: NextRequest) {
       const branches = drive.eligibleBranches as string[] | null;
       if (branches?.length) {
         if (!candidate.branch) return false;
-        if (!branches.map((v) => v.toLowerCase()).includes(candidate.branch.toLowerCase())) return false;
+        const expandedBranches = expandBranches(branches).map((v) => v.toLowerCase().trim());
+        if (!expandedBranches.includes(candidate.branch.toLowerCase().trim())) return false;
       }
 
       const years = drive.eligibleBatchYears as number[] | null;
