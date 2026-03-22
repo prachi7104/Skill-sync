@@ -502,6 +502,14 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
     maxLatency: 20000,
     description: "Generate structured resume feedback cards for sandbox",
   },
+
+  career_advice: {
+    priority: ["groq_llama_4_scout", "groq_qwen_32b", "groq_llama_3_3_70b", "gemini_2_0_flash"],
+    requiresLongContext: false,
+    requiresStructured: true,
+    maxLatency: 25000,
+    description: "Generate personalized career roadmap and upskilling advice for students",
+  },
 };
 
 // ============================================================================

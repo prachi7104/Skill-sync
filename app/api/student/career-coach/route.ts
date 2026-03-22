@@ -78,7 +78,11 @@ export async function GET() {
     const eligibleDrives = availableDrives.filter((drive) => isDriveEligibleForStudent(drive, profile)).slice(0, 5);
 
     if (eligibleDrives.length === 0) {
-      return NextResponse.json({ message: "No active drives to analyze against. Check back when drives are posted." });
+      return NextResponse.json({
+        message: "No active drives match your current profile.",
+        suggestion: "Complete your profile (CGPA, branch, batch year) to see eligible drives. Your Career Advisor will activate once drives are available.",
+        retryable: false,
+      });
     }
 
     const studentSkills = profile.skills ?? [];
@@ -122,9 +126,13 @@ Return ONLY valid JSON:
   "amcat_tip": "if category is not alpha, what specific AMCAT section to focus on"
 }`;
 
-    const result = await router.execute("sandbox", prompt, { maxTokens: 800, temperature: 0.3, responseFormat: "json" });
+    const result = await router.execute("career_advice", prompt, { maxTokens: 800, temperature: 0.3, responseFormat: "json" });
     if (!result.success || !result.data) {
-      return NextResponse.json({ error: "Career coach temporarily unavailable" }, { status: 503 });
+      console.error("[career-coach] AI call failed:", result.error);
+      return NextResponse.json({
+        error: "Career advisor is processing your request. Try again in a moment.",
+        retryable: true,
+      }, { status: 503 });
     }
 
     const parsed = typeof result.data === "string"
@@ -205,7 +213,7 @@ Guidelines:
     const prompt = `${systemPrompt}\n\nConversation:\n${conversation}\nAssistant:`;
 
     const router = getRouter();
-    const result = await router.execute("sandbox", prompt, {
+    const result = await router.execute("career_advice", prompt, {
       maxTokens: 500,
       temperature: 0.4,
     });

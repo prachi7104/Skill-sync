@@ -137,7 +137,7 @@ describe("Phase 4 - Career Advisor multi-turn", () => {
   });
 
   it("UI shows typing indicator while loading", async () => {
-    let resolveFetch: ((value: Response) => void) | null = null;
+    let resolveFetch!: (value: Response) => void;
     global.fetch = vi.fn().mockImplementation(
       () => new Promise<Response>((resolve) => {
         resolveFetch = resolve;
@@ -151,7 +151,7 @@ describe("Phase 4 - Career Advisor multi-turn", () => {
 
     expect(screen.getByTestId("typing-indicator")).toBeInTheDocument();
 
-    resolveFetch?.(
+    resolveFetch(
       new Response(JSON.stringify({ reply: "Practice aptitude + core CS." }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
