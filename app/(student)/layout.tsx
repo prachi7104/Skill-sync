@@ -10,6 +10,17 @@ import { eq } from "drizzle-orm";
 import StudentSidebarNav from "@/components/student/student-sidebar-nav";
 import OnboardingBanner from "@/components/student/onboarding-banner";
 
+function deriveSapFromEmail(email: string): string | null {
+    if (!email.toLowerCase().includes("stu.upes.ac.in")) return null;
+    const username = email.split("@")[0].toLowerCase();
+    const match = username.match(/\.(\d+)$/);
+    if (!match) return null;
+    const digits = match[1];
+    const padded = digits.padStart(6, "0");
+    const prefix = digits.length >= 6 ? "500" : "590";
+    return prefix + padded;
+}
+
 export default async function StudentLayout({
     children,
 }: {
@@ -19,51 +30,44 @@ export default async function StudentLayout({
     let profile = await getStudentProfile(user.id);
 
     if (!profile) {
-        if (!user.collegeId) {
-            console.error("[StudentLayout] Cannot create student profile: user has no collegeId");
-        } else {
-            try {
-                await db.insert(students).values({ 
-                  id: user.id,
-                  collegeId: user.collegeId,
-                }).onConflictDoNothing();
-                profile = await getStudentProfile(user.id);
-            } catch (e) {
-                console.error("[StudentLayout] Failed to auto-create profile:", e);
-            }
-        }
-    }
+        try {
+            await db.insert(students).values({
+                id: user.id,
+                collegeId: user.collegeId ?? undefined,
+            }).onConflictDoNothing();
 
-    // Derive and store SAP ID if not set
-    if (profile && !profile.sapId) {
-        const { deriveSapFromEmailPublic } = await import("@/lib/auth/derive-sap");
-        const derivedSap = deriveSapFromEmailPublic(user.email);
-        if (derivedSap) {
-            await db.update(students)
-                .set({ sapId: derivedSap, updatedAt: new Date() })
-                .where(eq(students.id, user.id))
-                .catch(() => {});  // non-fatal
-            // Refresh profile to include sapId
+            // Backfill SAP ID if missing (derived from Microsoft email)
+            const freshProfile = await getStudentProfile(user.id);
+            if (freshProfile && !freshProfile.sapId && user.email) {
+                const sapId = deriveSapFromEmail(user.email);
+                if (sapId) {
+                    await db.update(students)
+                        .set({ sapId, updatedAt: new Date() })
+                        .where(eq(students.id, user.id))
+                        .catch(() => {});
+                }
+            }
+
             profile = await getStudentProfile(user.id);
+        } catch (e) {
+            console.error("[StudentLayout] Failed to auto-create profile:", e);
         }
     }
 
     if (!profile) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-                <div className="text-center max-w-md space-y-4 p-8">
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-8">
+                <div className="text-center space-y-4 max-w-md">
                     <div className="text-4xl">⚠️</div>
-                    <h1 className="text-xl font-bold text-white">Profile Setup Required</h1>
+                    <h1 className="text-xl font-bold text-white">Account Setup Required</h1>
                     <p className="text-slate-400 text-sm">
-                        Your account exists but your student profile couldn&apos;t be created.
-                        This usually means your college hasn&apos;t been configured yet.
+                        Your student profile could not be created. Your college may not be configured yet.
+                        Please contact your placement coordinator.
                     </p>
-                    <p className="text-xs text-slate-600 font-mono">
-                        Error: college_id is null — contact your placement coordinator
+                    <p className="text-xs font-mono text-slate-600">
+                        Error: college_id is null — admin action required
                     </p>
-                    <div className="pt-4">
-                        <SignOutButton />
-                    </div>
+                    <SignOutButton />
                 </div>
             </div>
         );
