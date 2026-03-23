@@ -21,6 +21,7 @@ import { Plus, MapPin, IndianRupee, Calendar, ExternalLink, Users } from "lucide
 import { getCompanyColor } from "@/lib/utils/company-color";
 import { TriggerRankingButton } from "@/components/faculty/trigger-ranking-button";
 import { cn } from "@/lib/utils";
+import { DriveActionButtons } from "./drive-action-buttons";
 
 export default async function AdminDrivesPage({ searchParams }: { searchParams: { page?: string } }) {
   await requireRole(["admin"]);
@@ -279,16 +280,19 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
                 </CardContent>
 
                 <CardFooter className="pt-0 flex items-center justify-between gap-4">
-                  <Link
-                    href={`/admin/drives/${drive.id}/rankings`}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-                  >
-                    View Rankings <ExternalLink className="h-3 w-3" />
-                  </Link>
-                  <TriggerRankingButton 
-                    driveId={drive.id} 
-                    initialStatus={status as any} 
-                    jdReady={!!drive.parsedJd} 
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={`/admin/drives/${drive.id}/rankings`}
+                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                    >
+                      View Rankings <ExternalLink className="h-3 w-3" />
+                    </Link>
+                    <DriveActionButtons driveId={drive.id} isActive={drive.isActive} />
+                  </div>
+                  <TriggerRankingButton
+                    driveId={drive.id}
+                    initialStatus={status as any}
+                    jdReady={!!drive.parsedJd}
                   />
                 </CardFooter>
               </Card>

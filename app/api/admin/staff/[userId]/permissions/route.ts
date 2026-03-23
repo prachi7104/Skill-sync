@@ -86,17 +86,32 @@ export async function PUT(
     // Always include sandbox_access
     const finalComponents = [...new Set([...grantedComponents as string[], "sandbox_access"])];
 
-    await db.execute(sql`
-        UPDATE staff_profiles
-        SET
-            granted_components = ${finalComponents}::staff_component[],
-            department = COALESCE(${department ?? null}, department),
-            designation = COALESCE(${designation ?? null}, designation),
-            is_active = COALESCE(${isActive ?? null}, is_active),
-            updated_at = NOW()
-        WHERE user_id = ${params.userId}
-        AND college_id = ${session.user.collegeId}
-    `);
+    if (finalComponents.length > 0) {
+        const castParts = finalComponents.map((c) => sql`${c}::staff_component`);
+        await db.execute(sql`
+            UPDATE staff_profiles
+            SET
+                granted_components = ARRAY[${sql.join(castParts, sql`, `)}],
+                department = COALESCE(${department ?? null}, department),
+                designation = COALESCE(${designation ?? null}, designation),
+                is_active = COALESCE(${isActive ?? null}::boolean, is_active),
+                updated_at = NOW()
+            WHERE user_id = ${params.userId}
+            AND college_id = ${session.user.collegeId}
+        `);
+    } else {
+        await db.execute(sql`
+            UPDATE staff_profiles
+            SET
+                granted_components = ARRAY(SELECT NULL::staff_component WHERE FALSE),
+                department = COALESCE(${department ?? null}, department),
+                designation = COALESCE(${designation ?? null}, designation),
+                is_active = COALESCE(${isActive ?? null}::boolean, is_active),
+                updated_at = NOW()
+            WHERE user_id = ${params.userId}
+            AND college_id = ${session.user.collegeId}
+        `);
+    }
 
     // Invalidate Redis permission cache (fail-open — matches lib/redis.ts pattern)
     const redis = getRedis();

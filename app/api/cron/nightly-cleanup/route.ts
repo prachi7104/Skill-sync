@@ -35,9 +35,20 @@ export async function GET(req: NextRequest) {
     // Clean up completed/failed jobs older than 7 days
     await db.execute(sql`DELETE FROM jobs WHERE status IN ('completed','failed') AND updated_at < NOW() - INTERVAL '7 days'`);
 
+    // Auto-deactivate drives past their deadline
+    const expired = await db.execute(sql`
+      UPDATE drives
+      SET is_active = false, updated_at = NOW()
+      WHERE is_active = true
+        AND deadline IS NOT NULL
+        AND deadline < NOW()
+      RETURNING id
+    `);
+
     return NextResponse.json({ 
       stuck: stuck.length, 
       deleted: deleted.length,
+      deactivatedDrives: (expired as unknown as Array<{ id: string }>).length,
       timestamp: new Date().toISOString()
     });
   } catch (err: unknown) {
