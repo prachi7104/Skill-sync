@@ -15,82 +15,42 @@ async function testRedisConnection(): Promise<boolean> {
   try { await redis.ping(); return true; } catch { return false; }
 }
 
-// Wraps a promise with a timeout. Returns the promise or rejects after ms.
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error(`timeout_${ms}ms`)), ms);
-    promise.then(v => { clearTimeout(t); resolve(v); }, e => { clearTimeout(t); reject(e); });
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise((res, rej) => {
+    const t = setTimeout(() => rej(new Error(`timeout_${ms}ms`)), ms);
+    p.then(v => { clearTimeout(t); res(v); }, e => { clearTimeout(t); rej(e); });
   });
 }
 
-// Safely extract a count from a Promise.allSettled result
-function safeCount(result: PromiseSettledResult<unknown>): number {
-  if (result.status === "rejected") return -1;
-  const rows = result.value as Array<{ count?: number }>;
-  return rows?.[0]?.count ?? 0;
+function safeCount(r: PromiseSettledResult<unknown>): number {
+  if (r.status === "rejected") return -1;
+  return (r.value as Array<{ count: number }>)?.[0]?.count ?? 0;
 }
 
 export async function GET() {
   try {
     await requireRole(["admin"]);
-
-    const QUERY_TIMEOUT = 12000; // 12 seconds per query
+    const MS = 12000;
+    const q = (rawSql: ReturnType<typeof sql>) => withTimeout(db.execute(rawSql), MS);
 
     const results = await Promise.allSettled([
-      // [0] total students
-      withTimeout(
-        db.execute(sql`SELECT count(*)::int as count FROM students`),
-        QUERY_TIMEOUT
-      ),
-      // [1] onboarded (completeness >= 80)
-      withTimeout(
-        db.execute(sql`SELECT count(*)::int as count FROM students WHERE profile_completeness >= 80`),
-        QUERY_TIMEOUT
-      ),
-      // [2] with embedding
-      withTimeout(
-        db.execute(sql`SELECT count(*)::int as count FROM students WHERE embedding IS NOT NULL`),
-        QUERY_TIMEOUT
-      ),
-      // [3] total drives
-      withTimeout(
-        db.execute(sql`SELECT count(*)::int as count FROM drives`),
-        QUERY_TIMEOUT
-      ),
-      // [4] ranked drives
-      withTimeout(
-        db.execute(sql`SELECT count(*)::int as count FROM drives WHERE ranking_status = 'completed'`),
-        QUERY_TIMEOUT
-      ),
-      // [5] pending jobs — uses explicit enum cast to hit the index
-      withTimeout(
-        db.execute(sql`SELECT count(*)::int as count FROM jobs WHERE status = 'pending'::job_status`),
-        QUERY_TIMEOUT
-      ),
-      // [6] failed jobs — explicit enum cast
-      withTimeout(
-        db.execute(sql`SELECT count(*)::int as count FROM jobs WHERE status = 'failed'::job_status`),
-        QUERY_TIMEOUT
-      ),
-      // [7] completed in last 24h
-      withTimeout(
-        db.execute(sql`SELECT count(*)::int as count FROM jobs WHERE status = 'completed'::job_status AND updated_at > NOW() - INTERVAL '24 hours'`),
-        QUERY_TIMEOUT
-      ),
-      // [8] redis
+      q(sql`SELECT count(*)::int as count FROM students`),
+      q(sql`SELECT count(*)::int as count FROM students WHERE profile_completeness >= 80`),
+      q(sql`SELECT count(*)::int as count FROM students WHERE embedding IS NOT NULL`),
+      q(sql`SELECT count(*)::int as count FROM drives`),
+      q(sql`SELECT count(*)::int as count FROM drives WHERE ranking_status = 'completed'`),
+      q(sql`SELECT count(*)::int as count FROM jobs WHERE status = 'pending'::job_status`),
+      q(sql`SELECT count(*)::int as count FROM jobs WHERE status = 'failed'::job_status`),
+      q(sql`SELECT count(*)::int as count FROM jobs WHERE status = 'completed'::job_status AND updated_at > NOW() - INTERVAL '24 hours'`),
       withTimeout(testRedisConnection(), 3000),
     ]);
 
-    // Log any failures for debugging (not returned to client)
     results.forEach((r, i) => {
-      if (r.status === "rejected") {
-        console.warn(`[health] Query ${i} failed:`, (r.reason as { message?: string })?.message ?? r.reason);
-      }
+      if (r.status === "rejected")
+        console.warn(`[health] query[${i}] failed:`, (r.reason as { message?: string })?.message ?? r.reason);
     });
 
-    const redisResult = results[8];
-    const redisOk = redisResult.status === "fulfilled" ? (redisResult.value as boolean) : false;
-
+    const redisR = results[8];
     return NextResponse.json({
       totalStudents: safeCount(results[0]),
       studentsOnboarded: safeCount(results[1]),
@@ -100,14 +60,12 @@ export async function GET() {
       jobsPending: safeCount(results[5]),
       jobsFailed: safeCount(results[6]),
       jobsCompletedToday: safeCount(results[7]),
-      redisOk,
-      // -1 means that specific query timed out — UI should show "—" not a number
+      redisOk: redisR.status === "fulfilled" ? (redisR.value as boolean) : false,
       timestamp: new Date().toISOString(),
-    }, { status: 200 });
-
+    });
   } catch (err: any) {
     if (isRedirectError(err)) throw err;
     console.error("[GET /api/admin/health]", err);
-    return NextResponse.json({ error: err.message ?? "Failed" }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
