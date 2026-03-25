@@ -544,6 +544,6 @@ describe("adminHealth_no_vector_scan", () => {
     );
 
     expect(routeSource).toContain("withTimeout");
-    expect(routeSource).toContain("timeout_");
+    expect(routeSource).toContain('new Error("timeout")');
   });
 });

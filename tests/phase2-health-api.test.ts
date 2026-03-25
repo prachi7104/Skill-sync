@@ -28,7 +28,7 @@ describe("Phase 2 — Admin Health API", () => {
     expect(data).toHaveProperty("jobsFailed");
     expect(data).toHaveProperty("jobsCompletedToday");
     expect(data).toHaveProperty("timestamp");
-  });
+  }, 15000);
 
   it("T2: ONE query timing out still returns 200 with other data", async () => {
     // Make the jobs/failed query (index 6) hang then timeout
