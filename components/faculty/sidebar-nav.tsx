@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FolderOpen, Plus, Settings, LibraryBig } from "lucide-react";
+import { LayoutDashboard, FolderOpen, Settings, LibraryBig, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/faculty", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/faculty/drives", label: "My Drives", icon: FolderOpen },
-  { href: "/faculty/drives/new", label: "New Drive", icon: Plus },
+  { href: "/faculty/drives", label: "Drives", icon: FolderOpen },
+  { href: "/faculty/students", label: "Students", icon: Users },
   { href: "/faculty/resources", label: "Resources", icon: LibraryBig },
   { href: "/faculty/settings", label: "Settings", icon: Settings },
 ];

@@ -40,7 +40,7 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
       packageOffered: drives.packageOffered,
       deadline: drives.deadline,
       isActive: drives.isActive,
-      createdBy: drives.createdBy,
+      collegeId: drives.collegeId,
     })
     .from(drives)
     .where(eq(drives.id, driveId))
@@ -50,8 +50,8 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
     notFound();
   }
 
-  // Ownership: faculty must own drive, admin bypasses
-  if (user.role === "faculty" && drive.createdBy !== user.id) {
+  // Scope: faculty can view rankings for drives within their college.
+  if (user.collegeId && drive.collegeId !== user.collegeId) {
     notFound();
   }
 

@@ -14,7 +14,7 @@ import { isRedirectError } from "next/dist/client/components/redirect";
  * Faculty/Admin endpoint: returns the complete ranked list for a drive.
  *
  * Authorization:
- *  - faculty: only drives they created
+ *  - faculty: drives within their college
  *  - admin: any drive
  *
  * Response shape:
@@ -59,7 +59,7 @@ export async function GET(
         id: drives.id,
         company: drives.company,
         roleTitle: drives.roleTitle,
-        createdBy: drives.createdBy,
+        collegeId: drives.collegeId,
       })
       .from(drives)
       .where(eq(drives.id, driveId))
@@ -72,10 +72,10 @@ export async function GET(
       );
     }
 
-    // ── Ownership check: faculty must own the drive, admin bypasses ──────
-    if (user.role === "faculty" && drive.createdBy !== user.id) {
+    // ── College scope check for faculty/admin ─────────────────────────────
+    if (user.collegeId && drive.collegeId !== user.collegeId) {
       return NextResponse.json(
-        { error: "Forbidden: you do not own this drive" },
+        { error: "Forbidden: drive not in your college" },
         { status: 403 },
       );
     }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { drives, jobs, students, rankings, seasons } from "@/lib/db/schema";
-import { requireRole, requireStudentProfile } from "@/lib/auth/helpers";
+import { hasComponent, requireRole, requireStudentProfile } from "@/lib/auth/helpers";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { isRedirectError } from "next/dist/client/components/redirect";
@@ -35,6 +35,16 @@ const createDriveSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const user = await requireRole(["faculty", "admin"]);
+
+    if (user.role === "faculty") {
+      const permitted = await hasComponent("drive_management");
+      if (!permitted) {
+        return NextResponse.json(
+          { message: "Permission denied: drive_management required" },
+          { status: 403 }
+        );
+      }
+    }
 
     if (!user.collegeId) {
       return NextResponse.json(
@@ -136,12 +146,13 @@ export async function GET(_req: NextRequest) {
     }
 
     if (!isStudent) {
-      // Faculty/Admin: return drives they created, ordered by newest first
+      // Faculty/Admin: return all drives in their college, ordered by newest first
+      if (!user!.collegeId) {
+        return NextResponse.json({ drives: [] });
+      }
+
       const result = await db.query.drives.findMany({
-        where: 
-          user!.role === "admin" && user!.collegeId
-            ? eq(drives.collegeId, user!.collegeId)
-            : eq(drives.createdBy, user!.id),
+        where: eq(drives.collegeId, user!.collegeId),
         orderBy: (drives, { desc }) => [desc(drives.createdAt)],
       });
 

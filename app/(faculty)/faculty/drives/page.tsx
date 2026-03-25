@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { requireRole } from "@/lib/auth/helpers";
+import { hasComponent, requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, rankings, jobs } from "@/lib/db/schema";
 import { eq, count, avg, sql, and, inArray, desc } from "drizzle-orm";
@@ -11,19 +11,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, MapPin, IndianRupee, Calendar, ExternalLink } from "lucide-react";
 import { getCompanyColor } from "@/lib/utils/company-color";
-import { TriggerRankingButton } from "@/components/faculty/trigger-ranking-button";
 import { DriveConflictsButton } from "@/components/faculty/drive-conflicts-button";
 import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
 
 export default async function FacultyDrivesPage({ searchParams }: { searchParams: { page?: string } }) {
   const user = await requireRole(["faculty", "admin"]);
+  const canCreateDrive = await hasComponent("drive_management");
 
   const page = Number(searchParams?.page ?? 1);
   const pageSize = 20;
   const offset = (page - 1) * pageSize;
 
-  // Fetch all drives for this faculty
+  // Fetch all drives for this college
   const facultyDrives = await db
     .select({
       id: drives.id,
@@ -37,11 +37,7 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
       createdAt: drives.createdAt,
     })
     .from(drives)
-    .where(
-      user.role === "admin" && user.collegeId
-        ? eq(drives.collegeId, user.collegeId)
-        : eq(drives.createdBy, user.id)
-    )
+    .where(eq(drives.collegeId, user.collegeId!))
     .orderBy(desc(drives.createdAt))
     .limit(pageSize)
     .offset(offset);
@@ -49,11 +45,7 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
   const [{ total: totalDrives }] = await db
     .select({ total: sql<number>`count(*)::int` })
     .from(drives)
-    .where(
-      user.role === "admin" && user.collegeId
-        ? eq(drives.collegeId, user.collegeId)
-        : eq(drives.createdBy, user.id)
-    );
+    .where(eq(drives.collegeId, user.collegeId!));
 
   const driveIds = facultyDrives.map((d) => d.id);
 
@@ -94,18 +86,20 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">My Drives</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Drives</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Managing {totalDrives} total placement drives
           </p>
         </div>
         <div className="flex items-center gap-3">
           <DriveConflictsButton />
-          <Button asChild className="gap-2 bg-indigo-600 hover:bg-indigo-700">
-            <Link href="/faculty/drives/new">
-              <Plus className="h-4 w-4" /> Create Drive
-            </Link>
-          </Button>
+          {canCreateDrive && (
+            <Button asChild className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+              <Link href="/faculty/drives/new">
+                <Plus className="h-4 w-4" /> Create Drive
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -113,9 +107,11 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
       {facultyDrives.length === 0 ? (
         <div className="py-20 text-center border-2 border-dashed rounded-xl">
           <p className="text-muted-foreground">No drives created yet.</p>
-          <Button asChild variant="link" className="text-indigo-400 mt-2">
-            <Link href="/faculty/drives/new">Create your first drive &rarr;</Link>
-          </Button>
+          {canCreateDrive && (
+            <Button asChild variant="link" className="text-indigo-400 mt-2">
+              <Link href="/faculty/drives/new">Create your first drive &rarr;</Link>
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -212,11 +208,9 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
                   >
                     View Rankings <ExternalLink className="h-3 w-3" />
                   </Link>
-                  <TriggerRankingButton 
-                    driveId={drive.id} 
-                    initialStatus={status as any} 
-                    jdReady={!!drive.parsedJd}
-                  />
+                  <Badge variant="outline" className={cn("rounded px-1.5 py-0 text-[10px] font-bold tracking-wider", config.className)}>
+                    {config.label}
+                  </Badge>
                 </CardFooter>
               </Card>
             );

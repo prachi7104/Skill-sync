@@ -10,7 +10,7 @@ import { isRedirectError } from "next/dist/client/components/redirect";
  * POST /api/drives/[driveId]/rank
  *
  * Queues a rank_students background job for a specific drive.
- * Only faculty and admin users can invoke this.
+ * Only admin users can invoke this.
  *
  * Phase 5.5 guardrails:
  *   - Faculty can only rank drives that have NOT been ranked yet.
@@ -21,8 +21,8 @@ export async function POST(
   { params }: { params: { driveId: string } },
 ) {
   try {
-    // Auth: faculty or admin only
-    const user = await requireRole(["faculty", "admin"]);
+    // Auth: admin only
+    await requireRole(["admin"]);
 
     const { driveId } = params;
 
@@ -39,8 +39,8 @@ export async function POST(
       return NextResponse.json(err.toJSON(), { status: err.status });
     }
 
-    // Phase 5.5: Block re-ranking unless admin
-    await enforceRankingGeneration(driveId, user.role as "faculty" | "admin");
+    // Keep guardrail contract explicit (admin-only trigger route).
+    await enforceRankingGeneration(driveId, "admin");
 
     // Ensure JD enhancement has completed before queuing ranking
     const [driveCheck] = await db
