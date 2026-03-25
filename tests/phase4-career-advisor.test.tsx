@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 
 async function loadPostRoute(options?: {
   user?: { id: string; role: "student" | "admin" | "faculty" } | null;
@@ -116,9 +116,19 @@ describe("Phase 4 - Career Advisor multi-turn", () => {
     expect(prompt).toContain("User: final-question");
   });
 
-  it("UI quick chip sends message on click", async () => {
+  it("UI renders roadmap from GET payload", async () => {
     global.fetch = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ reply: "Try Python + DSA next." }), {
+      new Response(JSON.stringify({
+        summary: "**Strong** trajectory for product roles",
+        priority_skills: [{
+          skill: "PyTorch",
+          why_critical: "**Critical** for target drives",
+          resource: { type: "YouTube", name: "PyTorch Tutorials", url_description: "PyTorch beginner" },
+          week_start: 1,
+          hours_needed: 12,
+        }],
+        generatedAt: new Date().toISOString(),
+      }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       })
@@ -127,37 +137,24 @@ describe("Phase 4 - Career Advisor multi-turn", () => {
     const { default: CareerCoachPage } = await import("@/app/(student)/student/career-coach/page");
     render(<CareerCoachPage />);
 
-    const chip = screen.getByRole("button", { name: "What drives am I eligible for?" });
-    fireEvent.click(chip);
-
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
-
-    const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
-    expect(body.message).toBe("What drives am I eligible for?");
+    await waitFor(() => expect(screen.getByText("Career Advisor")).toBeInTheDocument());
+    expect(screen.getByText("PyTorch")).toBeInTheDocument();
+    expect(screen.queryByText("**Critical**")).not.toBeInTheDocument();
+    expect(screen.getByText(/Critical for target drives/i)).toBeInTheDocument();
   });
 
-  it("UI shows typing indicator while loading", async () => {
-    let resolveFetch!: (value: Response) => void;
-    global.fetch = vi.fn().mockImplementation(
-      () => new Promise<Response>((resolve) => {
-        resolveFetch = resolve;
+  it("UI shows error state for no active drives", async () => {
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ message: "No active drives" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
       })
     ) as any;
 
     const { default: CareerCoachPage } = await import("@/app/(student)/student/career-coach/page");
     render(<CareerCoachPage />);
 
-    fireEvent.click(screen.getByRole("button", { name: "How can I improve my ranking?" }));
-
-    expect(screen.getByTestId("typing-indicator")).toBeInTheDocument();
-
-    resolveFetch(
-      new Response(JSON.stringify({ reply: "Practice aptitude + core CS." }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      })
-    );
-
-    await waitFor(() => expect(screen.queryByTestId("typing-indicator")).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("No drives to analyze")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 });

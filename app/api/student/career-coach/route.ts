@@ -47,13 +47,18 @@ function isDriveEligibleForStudent(drive: {
   return true;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const { user, profile } = await requireStudentProfile();
     const redis = getRedis();
     const cacheKey = `career_coach:${user.id}`;
+    const refresh = new URL(req.url).searchParams.get("refresh") === "1";
 
-    if (redis) {
+    if (redis && refresh) {
+      await redis.del(cacheKey).catch(() => undefined);
+    }
+
+    if (redis && !refresh) {
       const cached = await redis.get<string>(cacheKey);
       if (cached) {
         return NextResponse.json({ cached: true, ...JSON.parse(cached) });
