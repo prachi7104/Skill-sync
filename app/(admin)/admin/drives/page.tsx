@@ -122,9 +122,8 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
             {totalRanked} students ranked
           </p>
         </div>
-        {/* Admin can create drives — reuse faculty create page but return to admin drives after creation */}
         <Button asChild className="gap-2 bg-indigo-600 hover:bg-indigo-700">
-          <Link href="/faculty/drives/new?returnTo=/admin/drives">
+          <Link href="/admin/drives/new">
             <Plus className="h-4 w-4" /> Create Drive
           </Link>
         </Button>
@@ -150,7 +149,7 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
         <div className="py-20 text-center border-2 border-dashed rounded-xl">
           <p className="text-muted-foreground">No drives created yet.</p>
           <Button asChild variant="link" className="text-indigo-600 mt-2">
-            <Link href="/faculty/drives/new">Create your first drive &rarr;</Link>
+            <Link href="/admin/drives/new">Create your first drive &rarr;</Link>
           </Button>
         </div>
       ) : (

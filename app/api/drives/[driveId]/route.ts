@@ -38,7 +38,11 @@ export async function DELETE(
     return NextResponse.json({ success: true, deletedDriveId: driveId });
   } catch (err: any) {
     if (isRedirectError(err)) throw err;
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const message = err?.message ?? "Internal server error";
+    if (message.includes("Unauthorized") || message.includes("Forbidden")) {
+      return NextResponse.json({ error: message }, { status: 403 });
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
