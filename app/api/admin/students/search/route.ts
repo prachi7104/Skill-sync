@@ -14,16 +14,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user to verify they are admin and get collegeId
+    // Get user to verify they are admin/faculty and get collegeId
     const userRow = await db
       .select({ role: users.role, collegeId: users.collegeId })
       .from(users)
       .where(eq(users.id, session.user.id))
       .limit(1);
 
-    if (!userRow.length || userRow[0]?.role !== "admin") {
+    if (!userRow.length || !["admin", "faculty"].includes(userRow[0]?.role ?? "")) {
       return NextResponse.json(
-        { error: "Admin access required" },
+        { error: "Admin or Faculty access required" },
         { status: 403 }
       );
     }
