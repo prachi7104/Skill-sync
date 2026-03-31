@@ -10,6 +10,9 @@ export default defineConfig({
     test: {
         environment: 'jsdom',
         globals: true,
+        include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
+        exclude: ['**/node_modules/**', '**/.next/**', '**/coverage/**'],
+        testTimeout: 10000,
         setupFiles: './tests/setup.ts',
         alias: {
             '@': path.resolve(__dirname, './'),

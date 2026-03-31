@@ -485,14 +485,14 @@ const TECHNOLOGY_CAPABILITY_MAP: Record<string, CapabilityMapping[]> = {
         { skill: "Natural Language Processing", confidence: 90, inference: "LLMs are used for NLP tasks" },
         { skill: "Artificial Intelligence", confidence: 85, inference: "LLMs are a subset of AI" },
     ],
-    // Anthropic Claude
-    "claude": [
-        { skill: "Large Language Models", confidence: 90, inference: "Claude is Anthropic's LLM" },
-        { skill: "Generative AI", confidence: 90, inference: "Claude is a generative AI model" },
-        { skill: "Natural Language Processing", confidence: 85, inference: "Claude handles NLP tasks" },
+    // Anthropic models
+    "anthropic model": [
+        { skill: "Large Language Models", confidence: 90, inference: "Anthropic models are large language models" },
+        { skill: "Generative AI", confidence: 90, inference: "Anthropic models are generative AI systems" },
+        { skill: "Natural Language Processing", confidence: 85, inference: "Anthropic models handle NLP tasks" },
     ],
     "anthropic": [
-        { skill: "Large Language Models", confidence: 90, inference: "Anthropic builds Claude LLMs" },
+        { skill: "Large Language Models", confidence: 90, inference: "Anthropic builds large language models" },
         { skill: "Generative AI", confidence: 90, inference: "Anthropic is a generative AI company" },
         { skill: "Artificial Intelligence", confidence: 85, inference: "Anthropic is an AI safety company" },
     ],

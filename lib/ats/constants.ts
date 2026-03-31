@@ -48,7 +48,7 @@ export const TECH_STACK_CLUSTERS: Record<string, string[]> = {
         "email marketing", "drip campaigns"
     ],
     "AI/LLM Engineering": [
-        "LLM", "GPT", "OpenAI", "ChatGPT API", "Claude", "Gemini API",
+        "LLM", "GPT", "OpenAI", "ChatGPT API", "Anthropic API", "Gemini API",
         "LangChain", "RAG", "vector database", "prompt engineering",
         "HuggingFace", "Whisper", "OCR", "LLM inference", "embeddings",
         "fine-tuning", "RLHF", "AI pipeline", "document parsing", "LLM integration",
