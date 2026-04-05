@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
-import { requireRole } from "@/lib/auth/helpers";
-import { isRedirectError } from "next/dist/client/components/redirect";
+import { ApiAuthError, requireApiRole } from "@/lib/auth/api-guards";
 
 export const maxDuration = 10;
 
@@ -13,11 +12,13 @@ cloudinary.config({
 
 export async function GET() {
   try {
-    await requireRole(["admin"]);
+    await requireApiRole(["admin"]);
     const result = await cloudinary.api.ping();
     return NextResponse.json({ status: "ok", result });
   } catch (error: any) {
-    if (isRedirectError(error)) throw error;
+    if (error instanceof ApiAuthError) {
+      return NextResponse.json({ status: "error", error: error.message }, { status: error.status });
+    }
     return NextResponse.json({ status: "error", error: error.message }, { status: 500 });
   }
 }

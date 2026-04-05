@@ -1,12 +1,11 @@
 import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth/helpers";
+import { ApiAuthError, requireApiRole } from "@/lib/auth/api-guards";
 import { db } from "@/lib/db";
 import { rankings, drives } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { enforceProfileGate, enforceRankingsExist, GuardrailViolation } from "@/lib/guardrails";
-import { isRedirectError } from "next/dist/client/components/redirect";
 
 /**
  * GET /api/drives/[driveId]/rankings/me
@@ -37,7 +36,7 @@ export async function GET(
   { params }: { params: { driveId: string } },
 ) {
   try {
-    const user = await requireRole(["student"]);
+    const user = await requireApiRole(["student"]);
     const { driveId } = params;
 
     // ── Validate driveId format ──────────────────────────────────────────
@@ -135,8 +134,11 @@ export async function GET(
     );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
-    if (isRedirectError(err)) throw err;
     console.error("[GET /api/drives/[driveId]/rankings/me]", err);
+
+    if (err instanceof ApiAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
 
     const message = err?.message ?? "Internal server error";
 
