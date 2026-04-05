@@ -82,6 +82,16 @@ export default withAuth(
             return logResponse(NextResponse.next());
         }
 
+        if (path.startsWith("/api/drives")) {
+            if (role !== "student" && role !== "faculty" && role !== "admin") {
+                return logResponse(
+                    NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+                    "unauthorized role accessing /api/drives"
+                );
+            }
+            return logResponse(NextResponse.next());
+        }
+
         // Default: allow
         return logResponse(NextResponse.next());
     },
