@@ -567,6 +567,25 @@ function normalizeDate(dateStr: string | undefined | null): string {
     return ""; // Fallback to empty if unparseable
 }
 
+function norm(value: string | null | undefined): string {
+    return (value ?? "").trim().toLowerCase();
+}
+
+function uniqueByKey<T>(items: T[], getKey: (item: T) => string): T[] {
+    const seen = new Set<string>();
+    const result: T[] = [];
+
+    for (const item of items) {
+        const key = getKey(item);
+        if (!key) continue;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        result.push(item);
+    }
+
+    return result;
+}
+
 export function mapParsedResumeToProfile(parsed: ParsedResumeData): {
     phone: string | null;
     linkedin: string | null;
@@ -582,20 +601,30 @@ export function mapParsedResumeToProfile(parsed: ParsedResumeData): {
     twelfthPercentage: number | null;
     cgpa: number | null;
 } {
-    const skills = parsed.skills.map(s => ({
-        name: s.name.trim(),
-        proficiency: 3 as const,
-    }));
+    const skills = uniqueByKey(
+        parsed.skills
+            .map(s => ({
+                name: (s.name || "").trim(),
+                proficiency: 3 as const,
+            }))
+            .filter((s) => s.name.length > 0),
+        (s) => norm(s.name),
+    );
 
-    const projects = parsed.projects.map(p => ({
-        title: p.title,
-        description: p.description || "",
-        techStack: p.tech_stack || [],
-        url: p.link,
-        startDate: normalizeDate(p.date), // Projects usually have a single date string
-    }));
+    const projects = uniqueByKey(
+        parsed.projects
+            .map(p => ({
+                title: (p.title || "").trim(),
+                description: (p.description || "").trim(),
+                techStack: uniqueByKey((p.tech_stack || []).map((t) => (t || "").trim()).filter(Boolean), (t) => norm(t)),
+                url: p.link && p.link.trim().length > 0 ? p.link.trim() : undefined,
+                startDate: normalizeDate(p.date), // Projects usually have a single date string
+            }))
+            .filter((p) => p.title.length > 0),
+        (p) => `${norm(p.title)}|${norm(p.description)}`,
+    );
 
-    const workExperience = parsed.experience.map(exp => {
+    const workExperience = uniqueByKey(parsed.experience.map(exp => {
         // Handle "Jan 2022 - Present" or "2020-2021" formats
         let start = "";
         let end = "";
@@ -609,54 +638,80 @@ export function mapParsedResumeToProfile(parsed: ParsedResumeData): {
         }
 
         return {
-            company: exp.company,
-            role: exp.role,
+            company: (exp.company || "").trim(),
+            role: (exp.role || "").trim(),
             description: typeof exp.description === "string"
-                ? exp.description
+                ? exp.description.trim()
                 : Array.isArray(exp.description)
-                    ? (exp.description as string[]).join(" ")
+                    ? (exp.description as string[]).join(" ").trim()
                     : "",
             startDate: start,
             endDate: end || undefined,
             location: undefined,
         };
-    });
+    }).filter((w) => w.company.length > 0 && w.role.length > 0),
+    (w) => `${norm(w.company)}|${norm(w.role)}|${norm(w.description)}|${norm(w.startDate)}`,
+    );
 
-    const codingProfiles = parsed.coding_profiles.map(cp => {
-        const url = cp.profile_url || "";
-        const parts = url.split("/");
-        const username = parts[parts.length - 1] || parts[parts.length - 2] || "";
-        return {
-            platform: cp.platform,
-            username,
-            rating: cp.rating_or_score ? parseInt(cp.rating_or_score) || undefined : undefined,
-            url: url || undefined,
-        };
-    });
+    const codingProfiles = uniqueByKey(
+        parsed.coding_profiles
+            .map(cp => {
+                const url = (cp.profile_url || "").trim();
+                const segments = url.split("/").filter(Boolean);
+                const usernameFromUrl = segments[segments.length - 1] || "";
+                const username = (usernameFromUrl || cp.platform || "coding-profile").trim();
+                const platform = (cp.platform || "Coding Profile").trim();
+                return {
+                    platform,
+                    username,
+                    rating: cp.rating_or_score ? parseInt(cp.rating_or_score) || undefined : undefined,
+                    url: url || undefined,
+                };
+            })
+            .filter((c) => c.platform.length > 0 && c.username.length > 0),
+        (c) => `${norm(c.platform)}|${norm(c.username)}|${norm(c.url)}`,
+    );
 
-    const certifications = parsed.certifications.map(c => ({
-        title: c.certification_name || "",
-        issuer: c.issuer || "",
-        url: c.verification_link,
-        // No date field in interface currently, but if added later:
-        // dateIssued: normalizeDate(c.date) 
-    }));
+    const certifications = uniqueByKey(
+        parsed.certifications
+            .map(c => ({
+                title: (c.certification_name || "").trim(),
+                issuer: (c.issuer || "").trim(),
+                url: c.verification_link && c.verification_link.trim().length > 0 ? c.verification_link.trim() : undefined,
+            }))
+            .filter((c) => c.title.length > 0),
+        (c) => `${norm(c.title)}|${norm(c.issuer)}`,
+    );
 
-    const researchPapers = parsed.research_papers.map(r => ({
-        title: r.title,
-        abstract: r.field,
-        url: r.paper_link,
-    }));
+    const researchPapers = uniqueByKey(
+        parsed.research_papers
+            .map(r => ({
+                title: (r.title || "").trim(),
+                abstract: r.field?.trim() || undefined,
+                url: r.paper_link && r.paper_link.trim().length > 0 ? r.paper_link.trim() : undefined,
+            }))
+            .filter((r) => r.title.length > 0),
+        (r) => norm(r.title),
+    );
 
-    const achievements = parsed.achievements.map(a => {
-        if (typeof a === "string") return { title: a, description: undefined };
-        return {
-            title: a.title,
-            description: a.description,
-            issuer: a.issuer,
-            date: normalizeDate(a.date)
-        };
-    });
+    const achievements = uniqueByKey(
+        parsed.achievements
+            .map(a => {
+                return {
+                    title: (a.title || "").trim(),
+                    description: a.description?.trim() || undefined,
+                    issuer: a.issuer?.trim() || undefined,
+                    date: normalizeDate(a.date),
+                };
+            })
+            .filter((a) => a.title.length > 0),
+        (a) => `${norm(a.title)}|${norm(a.issuer)}|${norm(a.description)}`,
+    );
+
+    const softSkills = uniqueByKey(
+        (parsed.soft_skills || []).map((s) => (s || "").trim()).filter(Boolean),
+        (s) => norm(s),
+    );
 
     // Extract academic scores (unchanged)
     let tenthPercentage: number | null = null;
@@ -689,7 +744,7 @@ export function mapParsedResumeToProfile(parsed: ParsedResumeData): {
         linkedin: parsed.linkedin_url,
         skills, projects, workExperience, codingProfiles,
         certifications, researchPapers, achievements,
-        softSkills: parsed.soft_skills,
+        softSkills,
         tenthPercentage, twelfthPercentage, cgpa,
     };
 }

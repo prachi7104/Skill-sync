@@ -118,12 +118,16 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
             });
-            if (!res.ok) throw new Error();
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(payload?.error || payload?.message || "Database sync failed.");
+            }
             toast.success("Profile synced with master database.");
             setIsEditing(false);
             router.refresh();
-        } catch {
-            toast.error("Database sync failed.");
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Database sync failed.";
+            toast.error(message);
         } finally {
             setIsLoading(false);
         }
@@ -153,7 +157,21 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
             const response = await fetch("/api/student/profile/merge", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mode: "replace" }),
+                body: JSON.stringify({
+                    mode: "replace",
+                    sections: {
+                        skills: true,
+                        projects: true,
+                        workExperience: true,
+                        certifications: true,
+                        codingProfiles: true,
+                        researchPapers: true,
+                        achievements: true,
+                        softSkills: true,
+                        contact: true,
+                        academics: false,
+                    },
+                }),
             });
 
             const payload = await response.json().catch(() => ({}));
@@ -161,7 +179,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                 throw new Error(payload?.message || "Failed to sync profile from resume");
             }
 
-            toast.success("Profile replaced with your latest resume details.");
+            toast.success("Profile replaced from your latest resume. Academic roots were kept unchanged.");
             router.refresh();
         } catch (error) {
             const message = error instanceof Error ? error.message : "Failed to sync profile from resume";
@@ -480,8 +498,9 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                     {linkFields.map((field, idx) => (
                                         <div key={field.id} className="p-4 bg-slate-950/50 border border-slate-800 rounded-2xl relative space-y-3">
                                             <button type="button" onClick={() => removeLink(idx)} className="absolute top-3 right-3 text-rose-500"><Trash2 className="w-4 h-4" /></button>
-                                            <FormField control={form.control} name={`codingProfiles.${idx}.platform`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="Platform" {...field}/></FormControl></FormItem>} />
-                                            <FormField control={form.control} name={`codingProfiles.${idx}.url`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="URL" {...field}/></FormControl></FormItem>} />
+                                            <FormField control={form.control} name={`codingProfiles.${idx}.platform`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="Platform" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                            <FormField control={form.control} name={`codingProfiles.${idx}.username`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="Username" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
+                                            <FormField control={form.control} name={`codingProfiles.${idx}.url`} render={({field}) => <FormItem><FormControl><Input className={inputClass} placeholder="URL (optional)" {...field} value={field.value ?? ""}/></FormControl></FormItem>} />
                                         </div>
                                     ))}
                                 </div>
