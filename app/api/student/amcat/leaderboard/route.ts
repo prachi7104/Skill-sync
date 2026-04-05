@@ -16,6 +16,8 @@ export async function GET(req: NextRequest) {
 
     const url = new URL(req.url);
     const sessionId = url.searchParams.get("sessionId");
+    const branchParam = (url.searchParams.get("branch") ?? "").trim();
+    const hasBranchFilter = branchParam.length > 0 && branchParam.toLowerCase() !== "all";
 
     const [latestSession] = await db.execute(sql`
       SELECT
@@ -81,31 +83,65 @@ export async function GET(req: NextRequest) {
     }
 
     const top50 = await db.execute(sql`
+      WITH ranked AS (
+        SELECT
+          full_name,
+          branch,
+          computed_total,
+          final_category,
+          ROW_NUMBER() OVER (ORDER BY computed_total DESC, rank_in_session ASC) AS rank
+        FROM amcat_results
+        WHERE session_id = ${targetSessionId}
+          AND college_id = ${user.collegeId}
+          AND COALESCE(status, '') != 'Absent'
+          ${hasBranchFilter ? sql`AND branch = ${branchParam}` : sql``}
+      )
       SELECT
-        rank_in_session AS rank,
+        rank,
         full_name AS name,
         branch,
         computed_total AS score,
         final_category AS category
-      FROM amcat_results
-      WHERE session_id = ${targetSessionId}
-        AND college_id = ${user.collegeId}
-        AND COALESCE(status, '') != 'Absent'
-      ORDER BY rank_in_session ASC
+      FROM ranked
+      ORDER BY rank ASC
       LIMIT 50
     `);
 
     const [myRank] = await db.execute(sql`
+      WITH ranked AS (
+        SELECT
+          student_id,
+          ROW_NUMBER() OVER (ORDER BY computed_total DESC, rank_in_session ASC) AS rank,
+          computed_total AS score,
+          final_category AS category
+        FROM amcat_results
+        WHERE session_id = ${targetSessionId}
+          AND college_id = ${user.collegeId}
+          AND COALESCE(status, '') != 'Absent'
+          ${hasBranchFilter ? sql`AND branch = ${branchParam}` : sql``}
+      )
       SELECT
-        rank_in_session AS rank,
-        computed_total AS score,
-        final_category AS category
+        rank,
+        score,
+        category
+      FROM ranked
+      WHERE student_id = ${user.id}
+      LIMIT 1
+    `) as unknown as Array<Record<string, unknown>>;
+
+    const branchRows = await db.execute(sql`
+      SELECT DISTINCT branch
       FROM amcat_results
       WHERE session_id = ${targetSessionId}
         AND college_id = ${user.collegeId}
-        AND student_id = ${user.id}
-      LIMIT 1
-    `) as unknown as Array<Record<string, unknown>>;
+        AND branch IS NOT NULL
+        AND btrim(branch) <> ''
+      ORDER BY branch ASC
+    `) as unknown as Array<{ branch: string | null }>;
+
+    const branches = branchRows
+      .map((row) => (typeof row.branch === "string" ? row.branch : ""))
+      .filter((branch) => branch.length > 0);
 
     const sessions = await db.execute(sql`
       SELECT
@@ -123,6 +159,8 @@ export async function GET(req: NextRequest) {
       hasData: true,
       session: sessionRow,
       sessions,
+      branches,
+      appliedBranch: hasBranchFilter ? branchParam : "all",
       top50,
       myRank: myRank ?? null,
       isInTop50: myRank ? Number(myRank.rank) <= 50 : false,

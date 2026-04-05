@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/table";
 import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
-import { AlertCircle, Check, RefreshCw, UploadCloud } from "lucide-react";
+import { AlertCircle, Check, RefreshCw, Trash2, UploadCloud } from "lucide-react";
 
 type SessionRow = {
   id: string;
@@ -72,6 +72,12 @@ type Summary = {
   overridden: number;
 };
 
+type ApiResponse = {
+  error?: string;
+  message?: string;
+  [key: string]: unknown;
+};
+
 type SortBy = "rank" | "total" | "name";
 type SortDir = "asc" | "desc";
 
@@ -93,6 +99,23 @@ function categoryClass(category: string) {
   if (category === "alpha") return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
   if (category === "beta") return "bg-amber-500/10 text-amber-400 border-amber-500/30";
   return "bg-rose-500/10 text-rose-400 border-rose-500/30";
+}
+
+async function safeReadJson(res: Response): Promise<ApiResponse> {
+  const raw = await res.text();
+  if (!raw.trim()) return {};
+
+  try {
+    return JSON.parse(raw) as ApiResponse;
+  } catch {
+    return { error: raw.trim() };
+  }
+}
+
+function getApiError(data: ApiResponse, fallback: string): string {
+  if (typeof data.error === "string" && data.error.trim()) return data.error;
+  if (typeof data.message === "string" && data.message.trim()) return data.message;
+  return fallback;
 }
 
 export default function AdminAmcatPage() {
@@ -131,6 +154,8 @@ export default function AdminAmcatPage() {
 
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [pendingOverride, setPendingOverride] = useState<{
@@ -167,10 +192,10 @@ export default function AdminAmcatPage() {
     setSessionsError(null);
     try {
       const res = await fetch("/api/admin/amcat");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to load sessions");
+      const data = await safeReadJson(res);
+      if (!res.ok) throw new Error(getApiError(data, "Failed to load sessions"));
 
-      const fetched = (data.sessions ?? []) as SessionRow[];
+      const fetched = Array.isArray(data.sessions) ? (data.sessions as SessionRow[]) : [];
       setSessions(fetched);
 
       if (!selectedSessionId && fetched.length > 0) {
@@ -196,13 +221,24 @@ export default function AdminAmcatPage() {
       if (sapSearch.trim()) params.set("sap", sapSearch.trim());
 
       const res = await fetch(`/api/admin/amcat/${sessionId}?${params.toString()}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to load results");
+      const data = await safeReadJson(res);
+      if (!res.ok) throw new Error(getApiError(data, "Failed to load results"));
 
-      setResults((data.results ?? []) as ResultRow[]);
-      setResultsTotal(data.total ?? 0);
-      setSummary(data.summary ?? { linked: 0, unmatched: 0, overridden: 0 });
-      setSelectedSession(data.session as SessionRow);
+      const nextResults = Array.isArray(data.results) ? (data.results as ResultRow[]) : [];
+      const nextTotal = typeof data.total === "number" ? data.total : 0;
+      const nextSummary = data.summary && typeof data.summary === "object"
+        ? (data.summary as Summary)
+        : { linked: 0, unmatched: 0, overridden: 0 };
+      const nextSession = data.session && typeof data.session === "object"
+        ? (data.session as SessionRow)
+        : null;
+
+      setResults(nextResults);
+      setResultsTotal(nextTotal);
+      setSummary(nextSummary);
+      if (nextSession) {
+        setSelectedSession(nextSession);
+      }
     } catch (error) {
       setFeedbackError(error instanceof Error ? error.message : "Failed to load results");
     } finally {
@@ -238,9 +274,9 @@ export default function AdminAmcatPage() {
       if (academicYear) form.append("academic_year", academicYear);
 
       const res = await fetch("/api/admin/amcat", { method: "POST", body: form });
-      const data = await res.json();
+      const data = await safeReadJson(res);
 
-      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      if (!res.ok) throw new Error(getApiError(data, "Upload failed"));
 
       setFeedbackSuccess("AMCAT file uploaded successfully");
       setSessionName("");
@@ -250,10 +286,11 @@ export default function AdminAmcatPage() {
       setUploadFile(null);
 
       await fetchSessions();
-      if (data.sessionId) {
-        setSelectedSessionId(data.sessionId);
+      const sessionId = typeof data.sessionId === "string" ? data.sessionId : null;
+      if (sessionId) {
+        setSelectedSessionId(sessionId);
         setResultsPage(1);
-        await fetchSessionResults(data.sessionId, 1);
+        await fetchSessionResults(sessionId, 1);
       }
     } catch (error) {
       setFeedbackError(error instanceof Error ? error.message : "Upload failed");
@@ -290,10 +327,12 @@ export default function AdminAmcatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Recalculate failed");
+      const data = await safeReadJson(res);
+      if (!res.ok) throw new Error(getApiError(data, "Recalculate failed"));
 
-      setFeedbackSuccess(data.message ?? "Recalculation completed");
+      setFeedbackSuccess(
+        typeof data.message === "string" && data.message.trim() ? data.message : "Recalculation completed",
+      );
       await fetchSessions();
       await fetchSessionResults(selectedSessionId, resultsPage);
     } catch (error) {
@@ -318,8 +357,8 @@ export default function AdminAmcatPage() {
           overrideNote: overrideNote || "Updated from review table",
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Override update failed");
+      const data = await safeReadJson(res);
+      if (!res.ok) throw new Error(getApiError(data, "Override update failed"));
 
       await fetchSessionResults(selectedSessionId, resultsPage);
       await fetchSessions();
@@ -340,10 +379,12 @@ export default function AdminAmcatPage() {
 
     try {
       const res = await fetch(`/api/admin/amcat/${selectedSessionId}/publish`, { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Publish failed");
+      const data = await safeReadJson(res);
+      if (!res.ok) throw new Error(getApiError(data, "Publish failed"));
 
-      setFeedbackSuccess(data.message ?? "Published");
+      setFeedbackSuccess(
+        typeof data.message === "string" && data.message.trim() ? data.message : "Published",
+      );
       setPublishOpen(false);
       await fetchSessions();
       await fetchSessionResults(selectedSessionId, resultsPage);
@@ -351,6 +392,34 @@ export default function AdminAmcatPage() {
       setFeedbackError(error instanceof Error ? error.message : "Publish failed");
     } finally {
       setPublishing(false);
+    }
+  }
+
+  async function handleDeleteAllSessions() {
+    setDeletingAll(true);
+    setFeedbackError(null);
+    setFeedbackSuccess(null);
+
+    try {
+      const res = await fetch("/api/admin/amcat", { method: "DELETE" });
+      const data = await safeReadJson(res);
+      if (!res.ok) throw new Error(getApiError(data, "Failed to delete sessions"));
+
+      const deletedCount = typeof data.deletedSessions === "number" ? data.deletedSessions : 0;
+
+      setSessions([]);
+      setSelectedSessionId(null);
+      setSelectedSession(null);
+      setResults([]);
+      setResultsTotal(0);
+      setResultsPage(1);
+      setSummary({ linked: 0, unmatched: 0, overridden: 0 });
+      setDeleteAllOpen(false);
+      setFeedbackSuccess(`Deleted ${deletedCount} AMCAT session(s)`);
+    } catch (error) {
+      setFeedbackError(error instanceof Error ? error.message : "Failed to delete sessions");
+    } finally {
+      setDeletingAll(false);
     }
   }
 
@@ -429,7 +498,19 @@ export default function AdminAmcatPage() {
             </Button>
 
             <div className="pt-4 border-t">
-              <p className="text-sm font-semibold mb-2">Past Sessions</p>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold">Past Sessions</p>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={sessionsLoading || sessions.length === 0 || deletingAll}
+                  onClick={() => setDeleteAllOpen(true)}
+                  className="gap-1"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete All
+                </Button>
+              </div>
               <div className="space-y-2 max-h-[280px] overflow-auto pr-1">
                 {sessionsLoading ? (
                   <p className="text-sm text-muted-foreground">Loading sessions...</p>
@@ -782,6 +863,26 @@ export default function AdminAmcatPage() {
               }}
             >
               {overrideSaving ? "Saving..." : "Apply Override"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete All AMCAT Sessions</DialogTitle>
+            <DialogDescription>
+              This will permanently delete all AMCAT sessions and results for your college.
+              Published student categories will remain unchanged until you republish a new session.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setDeleteAllOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleDeleteAllSessions} disabled={deletingAll}>
+              {deletingAll ? "Deleting..." : "Delete All Sessions"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -360,3 +360,35 @@ export async function GET(_req: NextRequest) {
     );
   }
 }
+
+export async function DELETE(_req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    const allowed = await hasAmcatManagementPermission(session);
+    if (!allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (!session?.user?.collegeId) {
+      return NextResponse.json({ error: "Missing college context" }, { status: 401 });
+    }
+
+    const deletedSessions = await db.execute(sql`
+      DELETE FROM amcat_sessions
+      WHERE college_id = ${session.user.collegeId}
+      RETURNING id
+    `) as unknown as Array<{ id: string }>;
+
+    return NextResponse.json({
+      success: true,
+      deletedSessions: deletedSessions.length,
+      message: `Deleted ${deletedSessions.length} AMCAT session(s)`,
+    });
+  } catch (err: any) {
+    console.error("[DELETE /api/admin/amcat]", err);
+    return NextResponse.json(
+      { error: "Failed to delete AMCAT sessions" },
+      { status: 500 },
+    );
+  }
+}

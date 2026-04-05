@@ -40,6 +40,19 @@ type LeaderboardRow = {
   category: "alpha" | "beta" | "gamma";
 };
 
+type LeaderboardApiResponse = {
+  hasData?: boolean;
+  error?: string;
+  message?: string;
+  session?: LeaderboardSession;
+  sessions?: LeaderboardSession[];
+  branches?: string[];
+  appliedBranch?: string;
+  top50?: LeaderboardRow[];
+  myRank?: MyRank;
+  isInTop50?: boolean;
+};
+
 type MyRank = {
   rank: number;
   score: number;
@@ -61,31 +74,65 @@ export default function StudentLeaderboardPage() {
   const [myRank, setMyRank] = useState<MyRank>(null);
   const [isInTop50, setIsInTop50] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string>("");
+  const [branches, setBranches] = useState<string[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
 
-  async function fetchLeaderboard(sessionId?: string) {
+  async function safeReadJson(res: Response): Promise<LeaderboardApiResponse> {
+    const raw = await res.text();
+    if (!raw.trim()) return {};
+
+    try {
+      return JSON.parse(raw) as LeaderboardApiResponse;
+    } catch {
+      return { error: raw.trim() };
+    }
+  }
+
+  function getApiError(data: LeaderboardApiResponse, fallback: string): string {
+    if (typeof data.error === "string" && data.error.trim()) return data.error;
+    if (typeof data.message === "string" && data.message.trim()) return data.message;
+    return fallback;
+  }
+
+  async function fetchLeaderboard(sessionId?: string, branch: string = "all") {
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
       if (sessionId) params.set("sessionId", sessionId);
+      if (branch !== "all") params.set("branch", branch);
 
       const res = await fetch(`/api/student/amcat/leaderboard?${params.toString()}`);
-      const data = await res.json();
+      const data = await safeReadJson(res);
 
-      if (!res.ok) throw new Error(data.error ?? "Failed to load leaderboard");
+      if (!res.ok) throw new Error(getApiError(data, "Failed to load leaderboard"));
       if (!data.hasData) {
         setHasData(false);
+        setTop50([]);
+        setMyRank(null);
+        setBranches([]);
         return;
       }
 
+      const sessionData = data.session ?? null;
+      if (!sessionData) {
+        setHasData(false);
+        setTop50([]);
+        setMyRank(null);
+        setBranches([]);
+        throw new Error("Invalid leaderboard response");
+      }
+
       setHasData(true);
-      setSession(data.session as LeaderboardSession);
+      setSession(sessionData);
       setSessions((data.sessions ?? []) as LeaderboardSession[]);
       setTop50((data.top50 ?? []) as LeaderboardRow[]);
       setMyRank((data.myRank ?? null) as MyRank);
       setIsInTop50(Boolean(data.isInTop50));
-      setSelectedSessionId(String((data.session as LeaderboardSession).id));
+      setBranches((data.branches ?? []).filter((item) => typeof item === "string" && item.trim().length > 0));
+      setSelectedSessionId(String(sessionData.id));
+      setSelectedBranch(typeof data.appliedBranch === "string" && data.appliedBranch.trim() ? data.appliedBranch : "all");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load leaderboard");
     } finally {
@@ -94,7 +141,7 @@ export default function StudentLeaderboardPage() {
   }
 
   useEffect(() => {
-    fetchLeaderboard();
+    fetchLeaderboard(undefined, "all");
   }, []);
 
   const stats = useMemo(() => ({
@@ -140,7 +187,8 @@ export default function StudentLeaderboardPage() {
             value={selectedSessionId}
             onValueChange={(value) => {
               setSelectedSessionId(value);
-              fetchLeaderboard(value);
+              setSelectedBranch("all");
+              fetchLeaderboard(value, "all");
             }}
             disabled={!hasData || loading}
           >
@@ -151,6 +199,27 @@ export default function StudentLeaderboardPage() {
               {sessions.map((sessionRow) => (
                 <SelectItem key={sessionRow.id} value={sessionRow.id}>
                   {sessionRow.session_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={selectedBranch}
+            onValueChange={(value) => {
+              setSelectedBranch(value);
+              fetchLeaderboard(selectedSessionId || undefined, value);
+            }}
+            disabled={!hasData || loading || branches.length === 0}
+          >
+            <SelectTrigger className="w-[180px] bg-slate-900 border-white/10 text-white">
+              <SelectValue placeholder="All branches" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All branches</SelectItem>
+              {branches.map((branch) => (
+                <SelectItem key={branch} value={branch}>
+                  {branch}
                 </SelectItem>
               ))}
             </SelectContent>

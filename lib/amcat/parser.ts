@@ -1,7 +1,5 @@
 import "server-only";
 
-import { normalizeBranch } from "@/lib/constants/branches";
-
 export interface AmcatRowRaw {
   email: string | null;
   sap_id: string;
@@ -18,6 +16,10 @@ export interface AmcatRowRaw {
   quant_score: number | null;
   csv_total: number | null;
   csv_category: "alpha" | "beta" | "gamma" | null;
+}
+
+function sanitizeBranch(branch: string): string {
+  return branch.replace(/\s+/g, " ").trim();
 }
 
 export interface AmcatScoreWeights {
@@ -257,7 +259,7 @@ export function parseAmcatRows(
       sap_id: sapStr,
       full_name: obj.full_name ?? "Unknown",
       course: obj.course ?? null,
-      branch: obj.branch ? normalizeBranch(obj.branch) : null,
+      branch: obj.branch ? sanitizeBranch(obj.branch) : null,
       programme_name: obj.programme_name ?? null,
       status: obj.status ?? null,
       attendance_pct: obj.attendance_pct ?? null,

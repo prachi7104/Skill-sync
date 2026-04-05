@@ -14,6 +14,7 @@ describe("AMCAT parser - absent row handling", () => {
     const { data } = parseAmcatRows(headers, rows);
     expect(data.length).toBe(1);
     expect(data[0].status).toBe("Absent");
+    expect(data[0].branch).toBe("AIML");
     expect(data[0].csv_total).toBe(-1);
     expect(data[0].automata_score).toBeNull();
   });

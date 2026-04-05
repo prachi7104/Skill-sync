@@ -78,6 +78,7 @@ describe("Phase 3 AMCAT API integration behavior", () => {
         { rank: 1, name: "Top Student", branch: "CSE", score: 95, category: "alpha" },
       ] as never)
       .mockResolvedValueOnce([{ rank: 74, score: 51, category: "beta" }] as never)
+      .mockResolvedValueOnce([{ branch: "CSE" }, { branch: "AIML" }] as never)
       .mockResolvedValueOnce([
         { id: "session-1", session_name: "AMCAT Oct 2025", batch_year: 2026 },
       ] as never);
@@ -91,7 +92,7 @@ describe("Phase 3 AMCAT API integration behavior", () => {
     expect(body.top50).toHaveLength(1);
     expect(body.myRank.rank).toBe(74);
     expect(body.isInTop50).toBe(false);
-    expect(executeMock).toHaveBeenCalledTimes(5);
+    expect(executeMock).toHaveBeenCalledTimes(6);
   });
 
   it("POST /api/admin/amcat/[sessionId]/publish should reject when permission missing", async () => {

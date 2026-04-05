@@ -75,4 +75,19 @@ describe("Phase 4 — AMCAT leaderboard", () => {
 
     expect(res.status).toBe(200);
   });
+
+  it("DELETE /api/admin/amcat removes all sessions for college", async () => {
+    mockExecute.mockResolvedValue([
+      { id: "session-1" },
+      { id: "session-2" },
+    ]);
+
+    const { DELETE } = await import("@/app/api/admin/amcat/route");
+    const res = await DELETE({} as any);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.deletedSessions).toBe(2);
+  });
 });
