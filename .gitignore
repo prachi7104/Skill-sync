@@ -61,5 +61,8 @@ all_tsx_files.txt
 clean.js
 debug_amcat.ts
 
+# local sensitive data files
+/lib/amcat/Final_Report_AMCAT_1_2027.xlsx
+
 # database
 /drizzle/

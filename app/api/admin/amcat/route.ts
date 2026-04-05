@@ -65,6 +65,32 @@ function parseCSV(text: string): { headers: string[]; rows: unknown[][] } {
   return { headers, rows };
 }
 
+function chunkByJsonSize<T>(rows: T[], maxBytes: number): T[][] {
+  if (rows.length === 0) return [];
+
+  const chunks: T[][] = [];
+  let current: T[] = [];
+  let currentBytes = 2; // []
+
+  for (const row of rows) {
+    const rowBytes = Buffer.byteLength(JSON.stringify(row), "utf8");
+    const nextBytes = current.length === 0 ? currentBytes + rowBytes : currentBytes + rowBytes + 1;
+
+    if (current.length > 0 && nextBytes > maxBytes) {
+      chunks.push(current);
+      current = [row];
+      currentBytes = 2 + rowBytes;
+      continue;
+    }
+
+    current.push(row);
+    currentBytes = nextBytes;
+  }
+
+  if (current.length > 0) chunks.push(current);
+  return chunks;
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   const allowed = await hasAmcatManagementPermission(session);
@@ -232,23 +258,31 @@ export async function POST(req: NextRequest) {
     WHERE id = ${sessionId}
   `);
 
-  // Keep row expressions under PostgreSQL limits for wide multi-row VALUES inserts.
-  const chunkSize = 50;
-  for (let i = 0; i < matchResults.length; i += chunkSize) {
-    const chunk = matchResults.slice(i, i + chunkSize);
+  const resultPayload = matchResults.map((row) => ({
+    sap_id: row.sap_id,
+    student_id: row.studentId,
+    full_name: row.full_name,
+    course: row.course,
+    branch: row.branch,
+    programme_name: row.programme_name,
+    status: row.status,
+    attendance_pct: row.attendance_pct,
+    cs_score: row.cs_score,
+    cp_score: row.cp_score,
+    automata_score: row.automata_score,
+    automata_fix_score: row.automata_fix_score,
+    quant_score: row.quant_score,
+    csv_total: row.csv_total,
+    csv_category: row.csv_category,
+    computed_total: row.computed_total,
+    computed_category: row.computed_category,
+    final_category: row.final_category,
+    rank_in_session: row.rank_in_session,
+  }));
 
-    const values = chunk.map((row) => {
-      return sql`(
-        ${sessionId}, ${session.user.collegeId}, ${row.sap_id}, ${row.studentId},
-        ${row.full_name}, ${row.course}, ${row.branch}, ${row.programme_name},
-        ${row.status}, ${row.attendance_pct},
-        ${row.cs_score}, ${row.cp_score}, ${row.automata_score}, ${row.automata_fix_score}, ${row.quant_score},
-        ${row.csv_total}, ${row.csv_category}::batch_category,
-        ${row.computed_total}, ${row.computed_category}::batch_category,
-        ${row.final_category}::batch_category, ${row.rank_in_session}
-      )`;
-    });
-
+  // Use jsonb_to_recordset to avoid PostgreSQL row-expression limits on wide inserts.
+  const resultChunks = chunkByJsonSize(resultPayload, 2_000_000);
+  for (const chunk of resultChunks) {
     await db.execute(sql`
       INSERT INTO amcat_results (
         session_id,
@@ -272,30 +306,113 @@ export async function POST(req: NextRequest) {
         computed_category,
         final_category,
         rank_in_session
-      ) VALUES ${sql.join(values, sql`,`)}
+      )
+      SELECT
+        ${sessionId}::uuid,
+        ${session.user.collegeId}::uuid,
+        r.sap_id,
+        r.student_id,
+        r.full_name,
+        r.course,
+        r.branch,
+        r.programme_name,
+        r.status,
+        r.attendance_pct,
+        r.cs_score,
+        r.cp_score,
+        r.automata_score,
+        r.automata_fix_score,
+        r.quant_score,
+        r.csv_total,
+        r.csv_category::batch_category,
+        r.computed_total,
+        r.computed_category::batch_category,
+        r.final_category::batch_category,
+        r.rank_in_session
+      FROM jsonb_to_recordset(${JSON.stringify(chunk)}::jsonb) AS r(
+        sap_id text,
+        student_id uuid,
+        full_name text,
+        course text,
+        branch text,
+        programme_name text,
+        status text,
+        attendance_pct real,
+        cs_score real,
+        cp_score real,
+        automata_score real,
+        automata_fix_score real,
+        quant_score real,
+        csv_total real,
+        csv_category text,
+        computed_total real,
+        computed_category text,
+        final_category text,
+        rank_in_session integer
+      )
       ON CONFLICT (session_id, sap_id) DO NOTHING
     `);
   }
 
-  for (const row of matchResults.filter((item) => !item.studentId)) {
-    await db.execute(sql`
-      INSERT INTO student_roster (college_id, sap_id, email, full_name, course, branch, batch_year, imported_from)
-      VALUES (
-        ${session.user.collegeId},
-        ${row.sap_id},
-        ${row.email ?? null},
-        ${row.full_name},
-        ${row.course ?? null},
-        ${row.branch ?? null},
-        ${null},
-        'amcat'
-      )
-      ON CONFLICT (college_id, sap_id) DO UPDATE SET
-        full_name = EXCLUDED.full_name,
-        course = COALESCE(student_roster.course, EXCLUDED.course),
-        branch = COALESCE(student_roster.branch, EXCLUDED.branch),
-        email = COALESCE(student_roster.email, EXCLUDED.email)
-    `).catch(() => {});
+  const rosterPayload = matchResults
+    .filter((item) => !item.studentId)
+    .map((row) => ({
+      sap_id: row.sap_id,
+      email: row.email ?? null,
+      full_name: row.full_name,
+      course: row.course ?? null,
+      branch: row.branch ?? null,
+    }));
+
+  const rosterChunks = chunkByJsonSize(rosterPayload, 2_000_000);
+  for (const chunk of rosterChunks) {
+    try {
+      await db.execute(sql`
+        INSERT INTO student_roster (college_id, sap_id, email, full_name, course, branch, batch_year, imported_from)
+        SELECT
+          ${session.user.collegeId}::uuid,
+          r.sap_id,
+          r.email,
+          r.full_name,
+          r.course,
+          r.branch,
+          NULL::integer,
+          'amcat'
+        FROM jsonb_to_recordset(${JSON.stringify(chunk)}::jsonb) AS r(
+          sap_id text,
+          email text,
+          full_name text,
+          course text,
+          branch text
+        )
+        ON CONFLICT (college_id, sap_id) DO UPDATE SET
+          full_name = EXCLUDED.full_name,
+          course = COALESCE(student_roster.course, EXCLUDED.course),
+          branch = COALESCE(student_roster.branch, EXCLUDED.branch),
+          email = COALESCE(student_roster.email, EXCLUDED.email)
+      `);
+    } catch {
+      for (const row of chunk) {
+        await db.execute(sql`
+          INSERT INTO student_roster (college_id, sap_id, email, full_name, course, branch, batch_year, imported_from)
+          VALUES (
+            ${session.user.collegeId},
+            ${row.sap_id},
+            ${row.email},
+            ${row.full_name},
+            ${row.course},
+            ${row.branch},
+            ${null},
+            'amcat'
+          )
+          ON CONFLICT (college_id, sap_id) DO UPDATE SET
+            full_name = EXCLUDED.full_name,
+            course = COALESCE(student_roster.course, EXCLUDED.course),
+            branch = COALESCE(student_roster.branch, EXCLUDED.branch),
+            email = COALESCE(student_roster.email, EXCLUDED.email)
+        `).catch(() => {});
+      }
+    }
   }
 
   return NextResponse.json(
