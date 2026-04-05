@@ -338,7 +338,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                           onChange={() => toggleBranch(branch.value)}
                         />
                         <span className={cn("transition-colors", selectedBranches.includes(branch.value) ? "font-medium text-white" : "text-muted-foreground")}>
-                          {branch.value}
+                          {branch.label}
                         </span>
                       </label>
                     ))}

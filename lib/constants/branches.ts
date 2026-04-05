@@ -8,6 +8,7 @@ export const CSE_VARIANTS = [
     "CSE-Blockchain",
     "CSE-Fullstack",
     "CSE-IoT",
+    "CSE-GG",
 ] as const;
 
 export const BRANCH_NORMALIZE_MAP: Record<string, string> = {
@@ -42,18 +43,19 @@ export function expandBranches(branches: string[]): string[] {
 
 export const UPES_BRANCHES = [
     // All CSE Specializations
-    { value: "CSE-AIML", label: "CSE — AI & Machine Learning" },
-    { value: "CSE-DS", label: "CSE — Data Science" },
-    { value: "CSE-CCVT", label: "CSE — Cloud Computing" },
-    { value: "CSE-Cyber", label: "CSE — Cyber Security" },
-    { value: "CSE-Blockchain", label: "CSE — Blockchain" },
-    { value: "CSE-Fullstack", label: "CSE — Full Stack Development" },
-    { value: "CSE-IoT", label: "CSE — Internet of Things" },
+    { value: "CSE-AIML", label: "AIML" },
+    { value: "CSE-DS", label: "Data Science" },
+    { value: "CSE-CCVT", label: "CCVT" },
+    { value: "CSE-Cyber", label: "Cyber Security (CSF)" },
+    { value: "CSE-Blockchain", label: "Blockchain" },
+    { value: "CSE-Fullstack", label: "Full Stack" },
+    { value: "CSE-IoT", label: "IoT" },
+    { value: "CSE-GG", label: "GG" },
     // Other departments
-    { value: "IT", label: "Information Technology" },
-    { value: "ECE", label: "Electronics & Communication" },
-    { value: "EEE", label: "Electrical & Electronics" },
-    { value: "MCA", label: "Master of Computer Applications" },
+    { value: "IT", label: "IT" },
+    { value: "ECE", label: "ECE" },
+    { value: "EEE", label: "EEE" },
+    { value: "MCA", label: "MCA" },
 ] as const;
 
 // Kept for backward compatibility (existing drives may have "CSE")
