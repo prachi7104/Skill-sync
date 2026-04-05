@@ -13,9 +13,19 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { studentProfileSchema, type StudentProfileInput } from "@/lib/validations/student-profile";
 import { computeCompleteness } from "@/lib/profile/completeness";
+import { extractTextFromResume, cleanResumeText } from "@/lib/resume/text-extractor";
+import { toResumeDownloadUrl } from "@/lib/resume/download-url";
 
 interface StudentUser {
     name: string;
@@ -33,10 +43,20 @@ interface MetaFieldProps {
     highlight?: boolean;
 }
 
+const POLL_INTERVAL_MS = 2500;
+const POLL_TIMEOUT_MS = 120000;
+
+function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export default function ProfileView({ user, profile }: ProfileViewProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [isPollingParse, setIsPollingParse] = useState(false);
+    const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
+    const [isApplyingMerge, setIsApplyingMerge] = useState(false);
     const [softSkillInput, setSoftSkillInput] = useState("");
     const router = useRouter();
 
@@ -49,6 +69,10 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
     const initials = user.name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "ST";
     const currentYear = new Date().getFullYear();
     const batchYears = Array.from({ length: 6 }, (_, i) => currentYear - 1 + i);
+    const resumeDownloadUrl = profile.resumeUrl ? toResumeDownloadUrl(profile.resumeUrl) : null;
+    const resumeDownloadLabel = (profile.resumeMime || "").toLowerCase().includes("pdf")
+        ? "Download PDF"
+        : "Download Resume";
 
     const form = useForm<StudentProfileInput>({
         resolver: zodResolver(studentProfileSchema),
@@ -104,24 +128,134 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
         }
     };
 
+    const waitForParseJob = async (jobId: string): Promise<"completed" | "failed" | "timeout"> => {
+        const deadline = Date.now() + POLL_TIMEOUT_MS;
+
+        while (Date.now() < deadline) {
+            const response = await fetch(`/api/jobs/${jobId}`).catch(() => null);
+            if (response?.ok) {
+                const data = await response.json().catch(() => null);
+                const status = data?.status as string | undefined;
+                if (status === "completed") return "completed";
+                if (status === "failed") return "failed";
+            }
+
+            await sleep(POLL_INTERVAL_MS);
+        }
+
+        return "timeout";
+    };
+
+    const applyResumeSync = async (shouldUpdateProfile: boolean) => {
+        if (!shouldUpdateProfile) {
+            setMergeDialogOpen(false);
+            toast.success("New master resume saved. Profile details were kept unchanged.");
+            return;
+        }
+
+        setIsApplyingMerge(true);
+        try {
+            const response = await fetch("/api/student/profile/merge", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mode: "merge" }),
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(payload?.message || "Failed to sync profile from resume");
+            }
+
+            toast.success("Profile updated from your latest resume.");
+            setMergeDialogOpen(false);
+            router.refresh();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Failed to sync profile from resume";
+            toast.error(message);
+        } finally {
+            setIsApplyingMerge(false);
+        }
+    };
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (file.size > 2 * 1024 * 1024) return toast.error("Max file size is 2MB");
-        
+
+        const MAX_SIZE = 5 * 1024 * 1024;
+        const ALLOWED_TYPES = [
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ];
+
+        if (file.size > MAX_SIZE) {
+            toast.error("Max file size is 5MB");
+            e.currentTarget.value = "";
+            return;
+        }
+
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            toast.error("Only PDF and DOCX files are supported");
+            e.currentTarget.value = "";
+            return;
+        }
+
         setIsUploading(true);
-        const formData = new FormData();
-        formData.append("file", file);
+        setIsPollingParse(false);
+        setMergeDialogOpen(false);
 
         try {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("source", "profile_update");
+
+            try {
+                const extracted = await extractTextFromResume(file);
+                const cleaned = cleanResumeText(extracted);
+                if (cleaned.length >= 50) {
+                    formData.append("resumeText", cleaned);
+                }
+            } catch {
+                // Keep upload functional even if client-side extraction fails.
+            }
+
             const response = await fetch("/api/student/resume", { method: "POST", body: formData });
-            if (!response.ok) throw new Error();
-            toast.success("AI has synchronized your profile.");
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(payload?.error || payload?.message || "Upload failed");
+            }
+
+            toast.success("Resume uploaded. Parsing latest resume...");
             router.refresh();
-        } catch {
-            toast.error("Upload failed");
+
+            const jobId = typeof payload?.data?.jobId === "string" ? payload.data.jobId : null;
+            if (!jobId) {
+                toast.success("Resume uploaded successfully.");
+                return;
+            }
+
+            setIsPollingParse(true);
+            const status = await waitForParseJob(jobId);
+
+            if (status === "completed") {
+                setMergeDialogOpen(true);
+                toast.success("Resume parsed. Do you want to update your profile from this new resume?");
+                return;
+            }
+
+            if (status === "failed") {
+                toast.error("Resume parsing failed. You can still keep the uploaded file.");
+                return;
+            }
+
+            toast.error("Parsing is taking longer than expected. Please try syncing in a moment.");
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Upload failed. Please try again.";
+            toast.error(message);
         } finally {
             setIsUploading(false);
+            setIsPollingParse(false);
+            e.currentTarget.value = "";
         }
     };
 
@@ -374,14 +508,52 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                             
                             <div className="flex gap-3 w-full sm:w-auto">
                                 {isEditing ? (
-                                    <div className="relative w-full sm:w-auto">
-                                        <Input type="file" accept=".pdf,.docx" onChange={handleFileUpload} disabled={isUploading} className="absolute inset-0 opacity-0 cursor-pointer w-full" />
-                                        <button type="button" disabled={isUploading} className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2">
-                                            {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} {isUploading ? "Parsing..." : "Upload New"}
-                                        </button>
+                                    <div className="flex w-full flex-col gap-2 sm:w-auto">
+                                        <div className="relative w-full sm:w-auto">
+                                            <Input
+                                                type="file"
+                                                accept=".pdf,.docx"
+                                                onChange={handleFileUpload}
+                                                disabled={isUploading || isPollingParse || isApplyingMerge}
+                                                className="absolute inset-0 w-full cursor-pointer opacity-0"
+                                            />
+                                            <button
+                                                type="button"
+                                                disabled={isUploading || isPollingParse || isApplyingMerge}
+                                                className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                                            >
+                                                {(isUploading || isPollingParse)
+                                                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                                                    : <Upload className="w-4 h-4" />}
+                                                {isUploading
+                                                    ? "Uploading..."
+                                                    : isPollingParse
+                                                        ? "Parsing..."
+                                                        : "Upload New"}
+                                            </button>
+                                        </div>
+                                        {resumeDownloadUrl && (
+                                            <a
+                                                href={resumeDownloadUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm text-center"
+                                            >
+                                                {resumeDownloadLabel}
+                                            </a>
+                                        )}
                                     </div>
                                 ) : (
-                                    profile.resumeUrl && <a href={profile.resumeUrl} target="_blank" rel="noreferrer" className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm text-center">View PDF</a>
+                                    resumeDownloadUrl && (
+                                        <a
+                                            href={resumeDownloadUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-sm text-center"
+                                        >
+                                            {resumeDownloadLabel}
+                                        </a>
+                                    )
                                 )}
                             </div>
                         </div>
@@ -596,6 +768,36 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                     </div>
                 </div>
             </Form>
+
+            <Dialog open={mergeDialogOpen} onOpenChange={setMergeDialogOpen}>
+                <DialogContent className="border border-white/10 bg-slate-900 text-white sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>Update Profile From New Resume?</DialogTitle>
+                        <DialogDescription className="text-slate-400">
+                            Your new master resume is saved. Do you want us to update your profile details from it now?
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter className="gap-2 sm:justify-between sm:space-x-0">
+                        <button
+                            type="button"
+                            onClick={() => void applyResumeSync(false)}
+                            disabled={isApplyingMerge}
+                            className="rounded-xl border border-white/10 bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
+                        >
+                            No, Keep My Current Profile
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => void applyResumeSync(true)}
+                            disabled={isApplyingMerge}
+                            className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+                        >
+                            {isApplyingMerge ? "Updating..." : "Yes, Update My Profile"}
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -19,10 +19,59 @@ cloudinary.config({
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+function extractCloudinaryPublicId(fileUrl: string): string | null {
+    if (!fileUrl || !fileUrl.includes("/upload/")) return null;
+
+    const [withoutQuery] = fileUrl.split("?");
+    const [, uploadPath = ""] = withoutQuery.split("/upload/");
+    if (!uploadPath) return null;
+
+    let normalized = uploadPath;
+    if (normalized.startsWith("fl_attachment/")) {
+        normalized = normalized.slice("fl_attachment/".length);
+    }
+    normalized = normalized.replace(/^v\d+\//, "");
+    if (!normalized) return null;
+
+    const segments = normalized.split("/").filter(Boolean);
+    if (segments.length === 0) return null;
+
+    const fileName = segments[segments.length - 1];
+    segments[segments.length - 1] = fileName.replace(/\.[^/.]+$/, "");
+
+    return segments.join("/");
+}
+
+async function deleteCloudinaryRawByUrl(fileUrl: string): Promise<void> {
+    const publicId = extractCloudinaryPublicId(fileUrl);
+    if (!publicId) return;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await cloudinary.uploader.destroy(publicId, { resource_type: "raw", invalidate: true }) as any;
+    if (result?.result !== "ok" && result?.result !== "not found") {
+        throw new Error(`Cloudinary delete failed: ${result?.result ?? "unknown"}`);
+    }
+}
+
 export async function POST(req: NextRequest) {
     try {
         // 1. Auth Check
         const { user, profile } = await requireStudentProfile();
+        const previousResumeUrl = profile.resumeUrl;
+
+        if (
+            !process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
+            !process.env.CLOUDINARY_API_KEY ||
+            !process.env.CLOUDINARY_API_SECRET
+        ) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: "Cloudinary is not configured on the server. Please contact support.",
+                },
+                { status: 500 },
+            );
+        }
 
         // 2. Parse Form Data
         const formData = await req.formData();
@@ -36,8 +85,8 @@ export async function POST(req: NextRequest) {
         }
 
         // 3. Validation
-        // Max size: 2MB = 2 * 1024 * 1024 bytes
-        const MAX_SIZE = 2 * 1024 * 1024;
+        // Max size: 5MB
+        const MAX_SIZE = 5 * 1024 * 1024;
         const ALLOWED_TYPES = [
             "application/pdf",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
@@ -45,7 +94,7 @@ export async function POST(req: NextRequest) {
 
         if (file.size > MAX_SIZE) {
             return NextResponse.json(
-                { success: false, error: "File size exceeds 2MB limit" },
+                { success: false, error: "File size exceeds 5MB limit" },
                 { status: 400 }
             );
         }
@@ -144,9 +193,29 @@ export async function POST(req: NextRequest) {
             })
             .where(eq(students.id, user.id));
 
+        // Keep only the latest master resume in Cloudinary.
+        if (previousResumeUrl && previousResumeUrl !== resumeUrl) {
+            try {
+                await deleteCloudinaryRawByUrl(previousResumeUrl);
+                logger.info("[Resume API] Deleted previous master resume", {
+                    userId: user.id,
+                    previousResumeUrl,
+                });
+            } catch (deleteError) {
+                logger.warn("[Resume API] Could not delete previous master resume", {
+                    userId: user.id,
+                    previousResumeUrl,
+                    error: deleteError instanceof Error ? deleteError.message : String(deleteError),
+                });
+            }
+        }
+
         // 7. Enqueue AI parsing job for onboarding and low-completeness profiles.
         let jobId: string | null = null;
-        const shouldQueue = source === "onboarding" || (profile.profileCompleteness ?? 0) < 80;
+        const shouldQueue =
+            source === "onboarding" ||
+            source === "profile_update" ||
+            (profile.profileCompleteness ?? 0) < 80;
 
         // If onboarding flow or not yet complete, enqueue a parse job so the server
         // can attempt server-side extraction when client-side text is missing.

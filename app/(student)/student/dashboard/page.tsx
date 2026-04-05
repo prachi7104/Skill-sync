@@ -12,6 +12,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { toResumeDownloadUrl } from "@/lib/resume/download-url";
 
 type AmcatData = {
     hasAmcat: boolean;
@@ -147,6 +148,10 @@ export default function StudentDashboard() {
     const rankings = stats.rankingsCount ?? 0;
     const shortlisted = stats.shortlistedCount ?? 0;
     const sandboxUsageToday = stats.sandboxUsageToday ?? 0;
+    const resumeDownloadUrl = student.resumeUrl ? toResumeDownloadUrl(student.resumeUrl) : null;
+    const resumeActionLabel = (student.resumeMime || "").toLowerCase().includes("pdf")
+        ? "Download PDF"
+        : "Download Resume";
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 p-8 md:p-10 pb-32">
@@ -296,9 +301,9 @@ export default function StudentDashboard() {
                                     </p>
                                 </div>
                                 <div className="flex space-x-3">
-                                    <a href={student.resumeUrl} target="_blank" rel="noreferrer"
+                                    <a href={resumeDownloadUrl || "#"} target="_blank" rel="noreferrer"
                                        className="px-6 py-2.5 border border-white/10 bg-white/5 rounded-xl text-sm font-bold text-white hover:bg-white/10 transition-all">
-                                        View
+                                        {resumeActionLabel}
                                     </a>
                                     <Link href="/student/profile"
                                           className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)]">

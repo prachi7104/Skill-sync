@@ -40,3 +40,10 @@ export async function uploadRawFileToCloudinary({
 
   return { secureUrl: result.secure_url };
 }
+
+export function toCloudinaryAttachmentUrl(url: string): string {
+  if (!url) return url;
+  if (!url.includes("/upload/")) return url;
+  if (url.includes("/upload/fl_attachment/")) return url;
+  return url.replace("/upload/", "/upload/fl_attachment/");
+}
