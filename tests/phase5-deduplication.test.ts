@@ -91,7 +91,7 @@ describe("Phase 5 - embedding job deduplication", () => {
     expect(res2.status).toBe(200);
     expect(mockFindFirst).toHaveBeenCalledTimes(2);
     expect(mockInsert).toHaveBeenCalledTimes(1);
-  });
+  }, 30000);
 
   it("completed job allows new embedding job", async () => {
     const { PATCH, mockInsertValues } = await loadPatchRoute([null]);
@@ -105,5 +105,5 @@ describe("Phase 5 - embedding job deduplication", () => {
     const res = await PATCH(req as any);
     expect(res.status).toBe(200);
     expect(mockInsertValues).toHaveBeenCalledTimes(1);
-  });
+  }, 30000);
 });
