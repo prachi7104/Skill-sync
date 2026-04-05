@@ -33,10 +33,8 @@ export async function GET(
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (user.role === "admin") {
-        if (!user.collegeId || drive.collegeId !== user.collegeId) {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-        }
+    if (!user.collegeId || drive.collegeId !== user.collegeId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Build query conditions

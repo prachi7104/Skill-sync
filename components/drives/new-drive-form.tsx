@@ -93,7 +93,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
 
     const payload = {
       ...values,
-      deadline: values.deadline ? new Date(`${values.deadline}T23:59:59`).toISOString() : null,
+      deadline: values.deadline ? new Date(`${values.deadline}T23:59:59+05:30`).toISOString() : null,
       seasonId: values.seasonId || null,
       minCgpa: values.minCgpa === 0 || !values.minCgpa ? null : values.minCgpa,
       eligibleBranches: values.eligibleBranches?.length ? values.eligibleBranches : null,
