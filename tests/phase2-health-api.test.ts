@@ -2,16 +2,18 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock DB
 const mockExecute = vi.fn();
+const mockRequireRole = vi.fn();
 vi.mock("@/lib/db", () => ({ db: { execute: mockExecute } }));
 vi.mock("@/lib/redis", () => ({ getRedis: () => null }));
 vi.mock("@/lib/auth/helpers", () => ({
-  requireRole: vi.fn().mockResolvedValue({ id: "admin-1", role: "admin" }),
+  requireRole: mockRequireRole,
 }));
 
 describe("Phase 2 — Admin Health API", () => {
 
   beforeEach(() => {
     mockExecute.mockResolvedValue([{ count: 5 }]);
+    mockRequireRole.mockResolvedValue({ id: "admin-1", role: "admin", collegeId: "college-1" });
   });
 
   it("T1: returns 200 with all required fields", async () => {

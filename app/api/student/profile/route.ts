@@ -9,6 +9,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { studentProfileSchema } from "@/lib/validations/student-profile";
 import { computeCompleteness } from "@/lib/profile/completeness";
 import { processEmbeddingJobs } from "@/lib/workers/generate-embedding";
+import { normalizeBranch } from "@/lib/constants/branches";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 
@@ -122,7 +123,9 @@ export async function PATCH(req: NextRequest) {
             updateData.semester = validatedData.semester;
         }
         if (validatedData.branch !== undefined) {
-            updateData.branch = validatedData.branch;
+            updateData.branch = validatedData.branch
+                ? normalizeBranch(validatedData.branch)
+                : null;
         }
         if (validatedData.batchYear !== undefined) {
             updateData.batchYear = validatedData.batchYear;

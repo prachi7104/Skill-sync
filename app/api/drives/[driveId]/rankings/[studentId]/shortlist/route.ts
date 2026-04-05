@@ -15,7 +15,7 @@ export async function PATCH(
 
     // Verify ownership: drive must belong to user (or user is admin)
     const [drive] = await db
-        .select({ createdBy: drives.createdBy })
+        .select({ createdBy: drives.createdBy, collegeId: drives.collegeId })
         .from(drives)
         .where(eq(drives.id, driveId))
         .limit(1);
@@ -25,6 +25,10 @@ export async function PATCH(
     }
 
     if (user.role === "faculty" && drive.createdBy !== user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (user.role === "admin" && (!user.collegeId || drive.collegeId !== user.collegeId)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

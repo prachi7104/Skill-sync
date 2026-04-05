@@ -40,6 +40,7 @@ const ROLE_LINKS: Record<string, NavLink[]> = {
     { href: "/admin/health", label: "System Health", emoji: "⚡" },
     { href: "/admin/drives", label: "All Drives", emoji: "🎯" },
     { href: "/admin/users", label: "User Management", emoji: "👥" },
+    { href: "/admin/seasons", label: "Seasons", emoji: "🗓️" },
   ],
 };
 

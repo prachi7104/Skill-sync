@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, rankings, jobs } from "@/lib/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
 // Admin only. Permanently deletes a drive and associated rankings/jobs.
@@ -12,8 +12,12 @@ export async function DELETE(
   { params }: { params: { driveId: string } }
 ) {
   try {
-    await requireRole(["admin"]);
+    const user = await requireRole(["admin"]);
     const { driveId } = params;
+
+    if (!user.collegeId) {
+      return NextResponse.json({ error: "Admin account not linked to a college" }, { status: 403 });
+    }
 
     const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!driveId || !uuidRe.test(driveId)) {
@@ -23,7 +27,7 @@ export async function DELETE(
     const [drive] = await db
       .select({ id: drives.id, createdBy: drives.createdBy })
       .from(drives)
-      .where(eq(drives.id, driveId))
+      .where(and(eq(drives.id, driveId), eq(drives.collegeId, user.collegeId)))
       .limit(1);
 
     if (!drive) {
@@ -61,7 +65,7 @@ export async function PATCH(
     }
 
     const [drive] = await db
-      .select({ id: drives.id, createdBy: drives.createdBy })
+      .select({ id: drives.id, createdBy: drives.createdBy, collegeId: drives.collegeId })
       .from(drives)
       .where(eq(drives.id, driveId))
       .limit(1);
@@ -72,6 +76,15 @@ export async function PATCH(
 
     if (user.role === "faculty" && drive.createdBy !== user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (user.role === "admin") {
+      if (!user.collegeId) {
+        return NextResponse.json({ error: "Admin account not linked to a college" }, { status: 403 });
+      }
+      if (drive.collegeId !== user.collegeId) {
+        return NextResponse.json({ error: "Drive not found" }, { status: 404 });
+      }
     }
 
     const body = await req.json() as { isActive?: boolean; deadline?: string | null };

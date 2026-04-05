@@ -10,6 +10,23 @@ export const CSE_VARIANTS = [
     "CSE-IoT",
 ] as const;
 
+export const BRANCH_NORMALIZE_MAP: Record<string, string> = {
+    "aiml": "CSE-AIML",
+    "data science": "CSE-DS",
+    "ccvt": "CSE-CCVT",
+    "devops": "CSE-CCVT",
+    "full stack": "CSE-Fullstack",
+    "fullstack": "CSE-Fullstack",
+    "iot": "CSE-IoT",
+    "csf": "CSE-Cyber",
+    "bigdata": "CSE-DS",
+    "gg": "CSE-GG",
+};
+
+export function normalizeBranch(branch: string): string {
+    return BRANCH_NORMALIZE_MAP[branch.toLowerCase().trim()] ?? branch;
+}
+
 /**
  * Expands a list of eligible branches to include all sub-branches.
  * If "CSE" is in the list -> also includes CSE-AIML, CSE-DS, etc.

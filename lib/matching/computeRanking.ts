@@ -338,7 +338,7 @@ export async function computeRanking(
 ): Promise<RankingComputationResult> {
   const errors: string[] = [];
   const computeStart = Date.now();
-  let skippedNoEmbedding = 0;
+  const skippedNoEmbedding = 0;
 
   // eslint-disable-next-line no-console
   console.log(`[Ranking] Starting computation for drive ${driveId}`);

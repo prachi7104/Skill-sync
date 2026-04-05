@@ -3,6 +3,8 @@ import { v2 as cloudinary } from "cloudinary";
 import { requireRole } from "@/lib/auth/helpers";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
+export const maxDuration = 10;
+
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,

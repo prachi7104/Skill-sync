@@ -1,13 +1,23 @@
 export const dynamic = "force-dynamic";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
-import { students, drives, rankings, jobs, users } from "@/lib/db/schema";
+import { students, drives, jobs, users } from "@/lib/db/schema";
 import { eq, and, gte, isNotNull, isNull, sql, desc } from "drizzle-orm";
 import { format, formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 
 export default async function AdminMasterDashboard() {
-  await requireRole(["admin"]);
+  const user = await requireRole(["admin"]);
+  if (!user.collegeId) {
+    return (
+      <div className="max-w-4xl mx-auto p-8 md:p-10">
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 text-amber-200">
+          Admin account is not linked to a college. Dashboard metrics are unavailable.
+        </div>
+      </div>
+    );
+  }
+
   const now = new Date();
   const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -19,24 +29,34 @@ export default async function AdminMasterDashboard() {
     avgCompleteness,
     lowCompletenessStudents,
   ] = await Promise.all([
-    db.select({ c: sql<number>`count(*)::int` }).from(students),
-    db.select({ c: sql<number>`count(*)::int` }).from(students).where(isNotNull(students.embedding)),
-    db.select({ c: sql<number>`count(*)::int` }).from(students).where(isNull(students.resumeUrl)),
-    db.select({ avg: sql<number>`round(avg(profile_completeness))::int` }).from(students),
-    db.select({ c: sql<number>`count(*)::int` }).from(students).where(sql`profile_completeness < 40`),
+    db.select({ c: sql<number>`count(*)::int` }).from(students).where(eq(students.collegeId, user.collegeId)),
+    db.select({ c: sql<number>`count(*)::int` }).from(students).where(and(eq(students.collegeId, user.collegeId), isNotNull(students.embedding))),
+    db.select({ c: sql<number>`count(*)::int` }).from(students).where(and(eq(students.collegeId, user.collegeId), isNull(students.resumeUrl))),
+    db.select({ avg: sql<number>`round(avg(profile_completeness))::int` }).from(students).where(eq(students.collegeId, user.collegeId)),
+    db.select({ c: sql<number>`count(*)::int` }).from(students).where(and(eq(students.collegeId, user.collegeId), sql`profile_completeness < 40`)),
   ]);
 
   // ── Drive Stats ────────────────────────────────────────────────────────
   const [totalDrives, activeDrives, rankedDrives] = await Promise.all([
-    db.select({ c: sql<number>`count(*)::int` }).from(drives),
-    db.select({ c: sql<number>`count(*)::int` }).from(drives).where(eq(drives.isActive, true)),
-    db.select({ c: sql<number>`count(*)::int` }).from(drives).where(sql`ranking_status = 'completed'`),
+    db.select({ c: sql<number>`count(*)::int` }).from(drives).where(eq(drives.collegeId, user.collegeId)),
+    db.select({ c: sql<number>`count(*)::int` }).from(drives).where(and(eq(drives.collegeId, user.collegeId), eq(drives.isActive, true))),
+    db.select({ c: sql<number>`count(*)::int` }).from(drives).where(and(eq(drives.collegeId, user.collegeId), sql`ranking_status = 'completed'`)),
   ]);
 
   // ── Ranking Stats ─────────────────────────────────────────────────────
   const [totalRankings, avgMatchScore] = await Promise.all([
-    db.select({ c: sql<number>`count(*)::int` }).from(rankings),
-    db.select({ avg: sql<number>`round(avg(match_score))::int` }).from(rankings),
+    db.execute(sql`
+      SELECT COUNT(*)::int AS c
+      FROM rankings r
+      JOIN drives d ON d.id = r.drive_id
+      WHERE d.college_id = ${user.collegeId}
+    `) as unknown as Promise<Array<{ c: number }>>,
+    db.execute(sql`
+      SELECT ROUND(AVG(r.match_score))::int AS avg
+      FROM rankings r
+      JOIN drives d ON d.id = r.drive_id
+      WHERE d.college_id = ${user.collegeId}
+    `) as unknown as Promise<Array<{ avg: number | null }>>,
   ]);
 
   // ── Job Queue Health ──────────────────────────────────────────────────
@@ -58,6 +78,7 @@ export default async function AdminMasterDashboard() {
     })
     .from(drives)
     .leftJoin(users, eq(drives.createdBy, users.id))
+    .where(eq(drives.collegeId, user.collegeId))
     .orderBy(desc(drives.createdAt))
     .limit(5);
 
@@ -65,7 +86,7 @@ export default async function AdminMasterDashboard() {
   const [facultyCount] = await db
     .select({ c: sql<number>`count(*)::int` })
     .from(users)
-    .where(eq(users.role, "faculty"));
+    .where(and(eq(users.role, "faculty"), eq(users.collegeId, user.collegeId)));
 
   return (
     <div className="max-w-7xl mx-auto p-8 md:p-10 pb-32 space-y-10">

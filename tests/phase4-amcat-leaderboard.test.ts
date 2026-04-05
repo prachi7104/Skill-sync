@@ -45,8 +45,8 @@ describe("Phase 4 — AMCAT leaderboard", () => {
     const adminSource = fs.readFileSync("app/api/admin/amcat/route.ts", "utf-8");
     const studentSource = fs.readFileSync("app/api/student/amcat/leaderboard/route.ts", "utf-8");
 
-    expect(adminSource).toContain("COUNT(CASE WHEN r.category = 'alpha'");
-    expect(studentSource).toContain("COUNT(CASE WHEN r.category = 'alpha'");
+    expect(adminSource).toContain("COUNT(CASE WHEN r.final_category = 'alpha'");
+    expect(studentSource).toContain("COUNT(CASE WHEN r.final_category = 'alpha'");
   });
 
   it("GET /api/admin/amcat returns 200", async () => {

@@ -316,39 +316,47 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(_req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  const allowed = await hasAmcatManagementPermission(session);
-  if (!allowed) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    const session = await getServerSession(authOptions);
+    const allowed = await hasAmcatManagementPermission(session);
+    if (!allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (!session?.user?.collegeId) {
+      return NextResponse.json({ sessions: [] });
+    }
+
+    const sessions = await db.execute(sql`
+      SELECT
+        s.id,
+        s.session_name,
+        s.test_date,
+        s.batch_year,
+        s.academic_year,
+        s.status,
+        s.total_students,
+        s.score_weights,
+        s.category_thresholds,
+        s.published_at,
+        s.created_at,
+        COUNT(CASE WHEN r.final_category = 'alpha' THEN 1 END)::int AS alpha_count,
+        COUNT(CASE WHEN r.final_category = 'beta'  THEN 1 END)::int AS beta_count,
+        COUNT(CASE WHEN r.final_category = 'gamma' THEN 1 END)::int AS gamma_count,
+        COUNT(r.id)::int AS matched_count
+      FROM amcat_sessions s
+      LEFT JOIN amcat_results r ON r.session_id = s.id
+      WHERE s.college_id = ${session.user.collegeId}
+      GROUP BY s.id
+      ORDER BY s.created_at DESC
+    `);
+
+    return NextResponse.json({ sessions });
+  } catch (err: any) {
+    console.error("[GET /api/admin/amcat]", err);
+    return NextResponse.json(
+      { error: "Failed to load AMCAT sessions" },
+      { status: 500 },
+    );
   }
-
-  if (!session?.user?.collegeId) {
-    return NextResponse.json({ sessions: [] });
-  }
-
-  const sessions = await db.execute(sql`
-    SELECT
-      s.id,
-      s.session_name,
-      s.test_date,
-      s.batch_year,
-      s.academic_year,
-      s.status,
-      s.total_students,
-      s.score_weights,
-      s.category_thresholds,
-      s.published_at,
-      s.created_at,
-      COUNT(CASE WHEN r.category = 'alpha' THEN 1 END)::int AS alpha_count,
-      COUNT(CASE WHEN r.category = 'beta'  THEN 1 END)::int AS beta_count,
-      COUNT(CASE WHEN r.category = 'gamma' THEN 1 END)::int AS gamma_count,
-      COUNT(r.id)::int AS matched_count
-    FROM amcat_sessions s
-    LEFT JOIN amcat_results r ON r.session_id = s.id
-    WHERE s.college_id = ${session.user.collegeId}
-    GROUP BY s.id
-    ORDER BY s.created_at DESC
-  `);
-
-  return NextResponse.json({ sessions });
 }

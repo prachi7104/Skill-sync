@@ -13,6 +13,9 @@ type HealthData = {
   jobsFailed: number;
   jobsCompletedToday: number;
   redisOk: boolean;
+  degraded?: boolean;
+  failedChecks?: string[];
+  queryTimeoutMs?: number;
   timestamp: string;
 };
 
@@ -39,6 +42,24 @@ const EMPTY_JOBS: JobsHealthData = {
   lastActivity: null,
   avgLatencyMs: null,
 };
+
+function fallbackHealthData(): HealthData {
+  return {
+    totalStudents: -1,
+    studentsOnboarded: -1,
+    studentsWithEmbeddings: -1,
+    drivesCreated: -1,
+    drivesRanked: -1,
+    jobsPending: -1,
+    jobsFailed: -1,
+    jobsCompletedToday: -1,
+    redisOk: false,
+    degraded: true,
+    failedChecks: ["health_endpoint_unavailable"],
+    queryTimeoutMs: 0,
+    timestamp: new Date().toISOString(),
+  };
+}
 
 function displayCount(n: number | undefined | null): string {
   if (n === undefined || n === null || n === -1) return "—";
@@ -127,12 +148,14 @@ export default function AdminHealthPage() {
         fetch("/api/admin/health/cloudinary", { cache: "no-store" }),
       ]);
 
-      if (healthRes.status !== "fulfilled" || !healthRes.value.ok) {
+      let healthData: HealthData = health ?? fallbackHealthData();
+      if (healthRes.status === "fulfilled" && healthRes.value.ok) {
+        healthData = await healthRes.value.json() as HealthData;
+      } else {
         const status = healthRes.status === "fulfilled" ? healthRes.value.status : "network";
-        throw new Error(`Health API failed (${status})`);
+        setError(`Health metrics unavailable (${status}). Showing partial data.`);
       }
 
-      const healthData = await healthRes.value.json() as HealthData;
       const jobsData = jobsRes.status === "fulfilled" && jobsRes.value.ok
         ? await jobsRes.value.json()
         : EMPTY_JOBS;
@@ -145,6 +168,7 @@ export default function AdminHealthPage() {
       setCloudinary(cloudData);
     } catch (e) {
       setError((e as Error).message || "Failed to fetch health data");
+      setHealth((prev) => prev ?? fallbackHealthData());
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -193,13 +217,13 @@ export default function AdminHealthPage() {
     );
   }
 
-  if (error || !health) {
+  if (!health) {
     return (
       <div className="w-full max-w-6xl p-8">
         <h1 className="text-3xl font-black text-white">System Health</h1>
         <p className="mt-1 text-sm text-slate-400">Operational dashboard — live snapshot</p>
         <div className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-6 text-rose-300">
-          {error ?? "Health data unavailable"}
+          Health data unavailable
         </div>
       </div>
     );
@@ -221,6 +245,19 @@ export default function AdminHealthPage() {
           Refresh
         </button>
       </div>
+
+      {error && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+          {error}
+        </div>
+      )}
+
+      {health.degraded ? (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+          Partial health data: some checks failed within timeout
+          {health.failedChecks && health.failedChecks.length > 0 ? ` (${health.failedChecks.join(", ")})` : ""}.
+        </div>
+      ) : null}
 
       <section>
         <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-400">Core Metrics</h2>

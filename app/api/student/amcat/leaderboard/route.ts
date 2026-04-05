@@ -30,9 +30,9 @@ export async function GET(req: NextRequest) {
         s.category_thresholds,
         s.published_at,
         s.created_at,
-        COUNT(CASE WHEN r.category = 'alpha' THEN 1 END)::int AS alpha_count,
-        COUNT(CASE WHEN r.category = 'beta'  THEN 1 END)::int AS beta_count,
-        COUNT(CASE WHEN r.category = 'gamma' THEN 1 END)::int AS gamma_count,
+        COUNT(CASE WHEN r.final_category = 'alpha' THEN 1 END)::int AS alpha_count,
+        COUNT(CASE WHEN r.final_category = 'beta'  THEN 1 END)::int AS beta_count,
+        COUNT(CASE WHEN r.final_category = 'gamma' THEN 1 END)::int AS gamma_count,
         COUNT(r.id)::int AS matched_count
       FROM amcat_sessions s
       LEFT JOIN amcat_results r ON r.session_id = s.id
@@ -62,9 +62,9 @@ export async function GET(req: NextRequest) {
         s.category_thresholds,
         s.published_at,
         s.created_at,
-        COUNT(CASE WHEN r.category = 'alpha' THEN 1 END)::int AS alpha_count,
-        COUNT(CASE WHEN r.category = 'beta'  THEN 1 END)::int AS beta_count,
-        COUNT(CASE WHEN r.category = 'gamma' THEN 1 END)::int AS gamma_count,
+        COUNT(CASE WHEN r.final_category = 'alpha' THEN 1 END)::int AS alpha_count,
+        COUNT(CASE WHEN r.final_category = 'beta'  THEN 1 END)::int AS beta_count,
+        COUNT(CASE WHEN r.final_category = 'gamma' THEN 1 END)::int AS gamma_count,
         COUNT(r.id)::int AS matched_count
       FROM amcat_sessions s
       LEFT JOIN amcat_results r ON r.session_id = s.id

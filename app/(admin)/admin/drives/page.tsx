@@ -24,7 +24,11 @@ import { cn } from "@/lib/utils";
 import { DriveActionButtons } from "./drive-action-buttons";
 
 export default async function AdminDrivesPage({ searchParams }: { searchParams: { page?: string } }) {
-  await requireRole(["admin"]);
+  const user = await requireRole(["admin"]);
+
+  if (!user.collegeId) {
+    return <div className="p-8 text-rose-400">Account not linked to a college.</div>;
+  }
 
   const page = Number(searchParams?.page ?? 1);
   const pageSize = 20;
@@ -48,12 +52,20 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
     })
     .from(drives)
     .leftJoin(users, eq(drives.createdBy, users.id))
+    .where(eq(drives.collegeId, user.collegeId))
     .orderBy(desc(drives.createdAt))
     .limit(pageSize)
     .offset(offset);
 
-  const [{ total: totalDrives }] = await db.select({ total: sql<number>`count(*)::int` }).from(drives);
-  const [{ active: activeDrivesCount }] = await db.select({ active: sql<number>`count(*)::int` }).from(drives).where(eq(drives.isActive, true));
+  const [{ total: totalDrives }] = await db
+    .select({ total: sql<number>`count(*)::int` })
+    .from(drives)
+    .where(eq(drives.collegeId, user.collegeId));
+
+  const [{ active: activeDrivesCount }] = await db
+    .select({ active: sql<number>`count(*)::int` })
+    .from(drives)
+    .where(and(eq(drives.collegeId, user.collegeId), eq(drives.isActive, true)));
 
   const driveIds = allDrives.map((d) => d.id);
 

@@ -34,6 +34,9 @@ export async function GET() {
     }
 
     const collegeId = session.user.collegeId;
+    if (!collegeId) {
+        return NextResponse.json({ error: "Admin account not linked to a college" }, { status: 400 });
+    }
 
     const staff = await db
         .select({
@@ -47,7 +50,7 @@ export async function GET() {
         .where(
             and(
                 eq(users.role, "faculty"),
-                collegeId ? eq(users.collegeId, collegeId) : undefined,
+                eq(users.collegeId, collegeId),
             )
         );
 

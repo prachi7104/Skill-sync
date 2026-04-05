@@ -19,7 +19,7 @@ export async function GET(
   { params }: { params: { driveId: string } },
 ) {
   try {
-    await requireRole(["faculty", "admin"]);
+    const user = await requireRole(["faculty", "admin"]);
 
     const { driveId } = params;
 
@@ -29,13 +29,25 @@ export async function GET(
 
     // Get the ranking status directly from the drives table
     const [drive] = await db
-      .select({ ranking_status: sql<string>`${drives}.ranking_status` })
+      .select({
+        ranking_status: sql<string>`${drives}.ranking_status`,
+        createdBy: drives.createdBy,
+        collegeId: drives.collegeId,
+      })
       .from(drives)
       .where(eq(drives.id, driveId))
       .limit(1);
 
     if (!drive) {
       return NextResponse.json({ error: "Drive not found" }, { status: 404 });
+    }
+
+    if (user.role === "faculty" && drive.createdBy !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (user.role === "admin" && (!user.collegeId || drive.collegeId !== user.collegeId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     return NextResponse.json({ status: drive.ranking_status });

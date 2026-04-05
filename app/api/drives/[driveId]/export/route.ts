@@ -17,6 +17,7 @@ export async function GET(
     const [drive] = await db
         .select({
             createdBy: drives.createdBy,
+            collegeId: drives.collegeId,
             company: drives.company,
             roleTitle: drives.roleTitle
         })
@@ -30,6 +31,12 @@ export async function GET(
 
     if (user.role === "faculty" && drive.createdBy !== user.id) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (user.role === "admin") {
+        if (!user.collegeId || drive.collegeId !== user.collegeId) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
     }
 
     // Build query conditions

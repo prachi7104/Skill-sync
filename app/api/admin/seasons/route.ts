@@ -54,6 +54,12 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parsed.data;
+    const startsAtDate = data.startsAt ? new Date(data.startsAt) : null;
+    const endsAtDate = data.endsAt ? new Date(data.endsAt) : null;
+
+    if (startsAtDate && endsAtDate && startsAtDate > endsAtDate) {
+      return NextResponse.json({ message: "startsAt must be before endsAt" }, { status: 400 });
+    }
 
     if (data.isActive) {
       await db
@@ -68,8 +74,8 @@ export async function POST(req: NextRequest) {
         collegeId: user.collegeId,
         name: data.name,
         isActive: data.isActive,
-        startsAt: data.startsAt ? new Date(data.startsAt) : null,
-        endsAt: data.endsAt ? new Date(data.endsAt) : null,
+        startsAt: startsAtDate,
+        endsAt: endsAtDate,
       })
       .returning();
 

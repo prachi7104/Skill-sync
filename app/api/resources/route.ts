@@ -45,10 +45,17 @@ export async function GET(req: NextRequest) {
     if (user.role === "student") {
       whereParts.push(sql`r.status = 'published'`);
     } else if (user.role === "faculty") {
-      if (status === "draft" || status === "published" || status === "archived") {
-        whereParts.push(sql`r.status = ${status}`);
+      if (status === "draft") {
+        whereParts.push(sql`r.status = 'draft'`);
+        whereParts.push(sql`r.author_id = ${user.id}`);
+      } else if (status === "archived") {
+        whereParts.push(sql`r.status = 'archived'`);
+        whereParts.push(sql`r.author_id = ${user.id}`);
+      } else if (status === "published") {
+        whereParts.push(sql`r.status = 'published'`);
+      } else {
+        whereParts.push(sql`(r.status = 'published' OR r.author_id = ${user.id})`);
       }
-      whereParts.push(sql`(r.status = 'published' OR r.author_id = ${user.id})`);
     } else if (status === "draft" || status === "published" || status === "archived") {
       whereParts.push(sql`r.status = ${status}`);
     }
@@ -62,6 +69,7 @@ export async function GET(req: NextRequest) {
     const resources = await db.execute(sql`
       SELECT
         r.id,
+        r.author_id,
         r.section,
         r.category,
         r.title,
@@ -94,6 +102,7 @@ export async function GET(req: NextRequest) {
       resources,
       canCreate,
       viewerRole: user.role,
+      viewerId: user.id,
       categoryLabels: Object.fromEntries(resources.map((resource) => [resource.category as string, formatCategoryLabel(String(resource.category))])),
     });
   } catch (error) {

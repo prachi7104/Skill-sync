@@ -1,5 +1,7 @@
 import "server-only";
 
+import { normalizeBranch } from "@/lib/constants/branches";
+
 export interface AmcatRowRaw {
   email: string | null;
   sap_id: string;
@@ -88,6 +90,37 @@ export function validateWeights(weights: AmcatScoreWeights): { valid: boolean; r
   return { valid: true };
 }
 
+export function validateThresholds(
+  thresholds: AmcatCategoryThresholds,
+): { valid: boolean; reason?: string } {
+  const { alpha_min, beta_min, gamma_min } = thresholds;
+
+  if (
+    Number.isNaN(alpha_min) ||
+    Number.isNaN(beta_min) ||
+    Number.isNaN(gamma_min)
+  ) {
+    return { valid: false, reason: "Thresholds must be valid numbers" };
+  }
+
+  if (alpha_min < 0 || beta_min < 0 || gamma_min < 0) {
+    return { valid: false, reason: "Thresholds cannot be negative" };
+  }
+
+  if (alpha_min > 100 || beta_min > 100 || gamma_min > 100) {
+    return { valid: false, reason: "Thresholds cannot exceed 100" };
+  }
+
+  if (!(alpha_min >= beta_min && beta_min >= gamma_min)) {
+    return {
+      valid: false,
+      reason: "Threshold order must satisfy alpha_min >= beta_min >= gamma_min",
+    };
+  }
+
+  return { valid: true };
+}
+
 const COLUMN_MAP: Record<string, keyof AmcatRowRaw> = {
   "email id": "email",
   "email": "email",
@@ -133,6 +166,7 @@ const COLUMN_MAP: Record<string, keyof AmcatRowRaw> = {
   "quantitative": "quant_score",
   "attendance %": "attendance_pct",
   "attendance": "attendance_pct",
+  "attendance pct": "attendance_pct",
   "attendance percent": "attendance_pct",
   "status": "status",
   "total": "csv_total",
@@ -223,7 +257,7 @@ export function parseAmcatRows(
       sap_id: sapStr,
       full_name: obj.full_name ?? "Unknown",
       course: obj.course ?? null,
-      branch: obj.branch ?? null,
+      branch: obj.branch ? normalizeBranch(obj.branch) : null,
       programme_name: obj.programme_name ?? null,
       status: obj.status ?? null,
       attendance_pct: obj.attendance_pct ?? null,

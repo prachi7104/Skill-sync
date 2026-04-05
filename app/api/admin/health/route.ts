@@ -1,6 +1,6 @@
 import "server-only";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 10;
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
@@ -29,21 +29,40 @@ function safeCount(r: PromiseSettledResult<unknown>): number {
 
 export async function GET() {
   try {
-    await requireRole(["admin"]);
-    const Q = 12000;
+    const user = await requireRole(["admin"]);
+    if (!user.collegeId) {
+      return NextResponse.json({ error: "Admin account not linked to a college" }, { status: 400 });
+    }
+
+    const Q = 4000;
     const ex = (q: ReturnType<typeof sql>) => withTimeout(db.execute(q), Q);
+    const checkNames = [
+      "total_students",
+      "students_onboarded",
+      "students_with_embeddings",
+      "drives_created",
+      "drives_ranked",
+      "jobs_pending",
+      "jobs_failed",
+      "jobs_completed_today",
+      "redis_ping",
+    ] as const;
 
     const R = await Promise.allSettled([
-      ex(sql`SELECT count(*)::int as count FROM students`),
-      ex(sql`SELECT count(*)::int as count FROM students WHERE profile_completeness >= 80`),
-      ex(sql`SELECT count(*)::int as count FROM students WHERE embedding IS NOT NULL`),
-      ex(sql`SELECT count(*)::int as count FROM drives`),
-      ex(sql`SELECT count(*)::int as count FROM drives WHERE ranking_status = 'completed'`),
+      ex(sql`SELECT count(*)::int as count FROM students WHERE college_id = ${user.collegeId}`),
+      ex(sql`SELECT count(*)::int as count FROM students WHERE college_id = ${user.collegeId} AND profile_completeness >= 80`),
+      ex(sql`SELECT count(*)::int as count FROM students WHERE college_id = ${user.collegeId} AND embedding IS NOT NULL`),
+      ex(sql`SELECT count(*)::int as count FROM drives WHERE college_id = ${user.collegeId}`),
+      ex(sql`SELECT count(*)::int as count FROM drives WHERE college_id = ${user.collegeId} AND ranking_status = 'completed'`),
       ex(sql`SELECT count(*)::int as count FROM jobs WHERE status = 'pending'::job_status`),
       ex(sql`SELECT count(*)::int as count FROM jobs WHERE status = 'failed'::job_status`),
       ex(sql`SELECT count(*)::int as count FROM jobs WHERE status = 'completed'::job_status AND updated_at > NOW() - INTERVAL '24 hours'`),
       withTimeout(testRedis(), 3000),
     ]);
+
+    const failedChecks = R
+      .map((result, idx) => (result.status === "rejected" ? checkNames[idx] : null))
+      .filter(Boolean) as string[];
 
     R.forEach((r, i) => {
       if (r.status === "rejected")
@@ -61,6 +80,9 @@ export async function GET() {
       jobsFailed: safeCount(R[6]),
       jobsCompletedToday: safeCount(R[7]),
       redisOk: redis.status === "fulfilled" ? (redis.value as boolean) : false,
+      degraded: failedChecks.length > 0,
+      failedChecks,
+      queryTimeoutMs: Q,
       timestamp: new Date().toISOString(),
     });
   } catch (err: any) {

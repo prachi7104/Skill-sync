@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 export default function AdminSandboxPage() {
   const [prompt, setPrompt] = useState("");
   const [modelOverride, setModelOverride] = useState("");
+  const [taskType, setTaskType] = useState("career_advice");
+  const [diagnosticsOnly, setDiagnosticsOnly] = useState(false);
   const [result, setResult] = useState("");
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
   const [studentDailyLimit, setStudentDailyLimit] = useState("3");
@@ -33,7 +35,13 @@ export default function AdminSandboxPage() {
     const res = await fetch("/api/admin/sandbox", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, modelOverride, metadata: { source: "admin-page" } }),
+      body: JSON.stringify({
+        prompt,
+        modelOverride,
+        taskType,
+        diagnosticsOnly,
+        metadata: { source: "admin-page" },
+      }),
     });
     const json = await res.json();
     setResult(JSON.stringify(json, null, 2));
@@ -58,8 +66,29 @@ export default function AdminSandboxPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <Textarea rows={8} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Try an admin-side sandbox prompt" />
+            <div className="space-y-2">
+              <Label>Task Type</Label>
+              <select
+                value={taskType}
+                onChange={(e) => setTaskType(e.target.value)}
+                className="h-10 w-full rounded-md border border-slate-700 bg-slate-900 px-3 text-sm text-slate-100"
+              >
+                <option value="career_advice">career_advice</option>
+                <option value="enhance_jd">enhance_jd</option>
+                <option value="generate_questions">generate_questions</option>
+                <option value="sandbox_feedback">sandbox_feedback</option>
+              </select>
+            </div>
             <Input value={modelOverride} onChange={(e) => setModelOverride(e.target.value)} placeholder="Optional model override" />
-            <Button onClick={run}>Run Sandbox</Button>
+            <label className="flex items-center gap-2 text-sm text-slate-300">
+              <input
+                type="checkbox"
+                checked={diagnosticsOnly}
+                onChange={(e) => setDiagnosticsOnly(e.target.checked)}
+              />
+              Diagnostics-only mode (no model execution)
+            </label>
+            <Button onClick={run}>{diagnosticsOnly ? "Run Diagnostics" : "Run Sandbox"}</Button>
           </CardContent>
         </Card>
 

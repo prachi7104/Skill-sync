@@ -897,6 +897,7 @@ export const resources = pgTable("resources", {
   attachmentSizeKb: integer("attachment_size_kb"),
   tags: text("tags").array().notNull().default(sql`ARRAY[]::text[]`),
   companyName: varchar("company_name", { length: 255 }),
+  status: varchar("status", { length: 20 }).notNull().default("published"),
   viewCount: integer("view_count").notNull().default(0),
   helpfulCount: integer("helpful_count").notNull().default(0),
   isPublished: boolean("is_published").notNull().default(true),
@@ -912,16 +913,25 @@ export const resources = pgTable("resources", {
 export const amcatSessions = pgTable("amcat_sessions", {
   id: uuid("id").primaryKey().defaultRandom(),
   collegeId: uuid("college_id").notNull().references(() => colleges.id, { onDelete: "cascade" }),
-  name: varchar("name", { length: 255 }).notNull(),
+  sessionName: varchar("session_name", { length: 255 }).notNull(),
+  uploadedBy: uuid("uploaded_by").references(() => users.id, { onDelete: "set null" }),
+  testDate: timestamp("test_date", { withTimezone: true }),
+  batchYear: integer("batch_year"),
   academicYear: varchar("academic_year", { length: 20 }),
-  weights: jsonb("weights").notNull().default({}),
-  thresholds: jsonb("thresholds").notNull().default({}),
-  isPublished: boolean("is_published").notNull().default(false),
+  status: varchar("status", { length: 20 }).notNull().default("draft"),
+  scoreWeights: jsonb("score_weights").notNull().default({}),
+  categoryThresholds: jsonb("category_thresholds").notNull().default({}),
+  totalStudents: integer("total_students").notNull().default(0),
+  alphaCount: integer("alpha_count").notNull().default(0),
+  betaCount: integer("beta_count").notNull().default(0),
+  gammaCount: integer("gamma_count").notNull().default(0),
+  publishedBy: uuid("published_by").references(() => users.id, { onDelete: "set null" }),
   publishedAt: timestamp("published_at", { withTimezone: true }),
-  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => ({
+  collegeSessionNameUnq: unique().on(t.collegeId, t.sessionName),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Table: amcat_results
@@ -936,18 +946,31 @@ export const amcatResults = pgTable("amcat_results", {
   studentId: uuid("student_id").references(() => students.id, { onDelete: "set null" }),
   fullName: varchar("full_name", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }),
+  course: varchar("course", { length: 100 }),
+  branch: varchar("branch", { length: 100 }),
+  programmeName: varchar("programme_name", { length: 150 }),
+  status: varchar("status", { length: 50 }),
+  attendancePct: real("attendance_pct"),
   csScore: real("cs_score"),
   cpScore: real("cp_score"),
   automataScore: real("automata_score"),
   automataFixScore: real("automata_fix_score"),
   quantScore: real("quant_score"),
-  totalScore: real("total_score"),
-  category: batchCategoryEnum("category"),
+  csvTotal: real("csv_total"),
+  csvCategory: batchCategoryEnum("csv_category"),
+  computedTotal: real("computed_total"),
+  computedCategory: batchCategoryEnum("computed_category"),
+  finalCategory: batchCategoryEnum("final_category"),
   rankInSession: integer("rank_in_session"),
+  adminOverridden: boolean("admin_overridden").notNull().default(false),
+  overrideNote: text("override_note"),
+  isEdited: boolean("is_edited").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   sessionSapUnq: unique().on(t.sessionId, t.sapId),
+  sessionFinalCategoryIdx: index("idx_amcat_results_session_final_category").on(t.sessionId, t.finalCategory),
+  sessionRankIdx: index("idx_amcat_results_session_rank").on(t.sessionId, t.rankInSession),
 }));
 
 // ─────────────────────────────────────────────────────────────────────────────

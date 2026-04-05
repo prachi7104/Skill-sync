@@ -6,53 +6,55 @@ import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { hasAmcatManagementPermission } from "@/lib/amcat/permissions";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { sessionId: string } },
 ) {
-  const session = await getServerSession(authOptions);
-  const allowed = await hasAmcatManagementPermission(session);
-  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    const session = await getServerSession(authOptions);
+    const allowed = await hasAmcatManagementPermission(session);
+    if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  if (!session?.user?.collegeId) {
-    return NextResponse.json({ error: "Missing college context" }, { status: 401 });
-  }
+    if (!session?.user?.collegeId) {
+      return NextResponse.json({ error: "Missing college context" }, { status: 401 });
+    }
 
-  const url = new URL(req.url);
-  const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10));
-  const pageSize = 50;
-  const offset = (page - 1) * pageSize;
-  const filterCategory = url.searchParams.get("category");
-  const searchSap = url.searchParams.get("sap");
+    const url = new URL(req.url);
+    const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10));
+    const pageSize = 50;
+    const offset = (page - 1) * pageSize;
+    const filterCategory = url.searchParams.get("category");
+    const searchSap = url.searchParams.get("sap");
 
-  const whereParts = [
-    sql`r.session_id = ${params.sessionId}`,
-    sql`r.college_id = ${session.user.collegeId}`,
-  ];
+    const whereParts = [
+      sql`r.session_id = ${params.sessionId}`,
+      sql`r.college_id = ${session.user.collegeId}`,
+    ];
 
-  if (filterCategory && ["alpha", "beta", "gamma"].includes(filterCategory)) {
-    whereParts.push(sql`r.final_category = ${filterCategory}::batch_category`);
-  }
+    if (filterCategory && ["alpha", "beta", "gamma"].includes(filterCategory)) {
+      whereParts.push(sql`r.final_category = ${filterCategory}::batch_category`);
+    }
 
-  if (searchSap) {
-    whereParts.push(sql`r.sap_id ILIKE ${`%${searchSap}%`}`);
-  }
+    if (searchSap) {
+      whereParts.push(sql`r.sap_id ILIKE ${`%${searchSap}%`}`);
+    }
 
-  const whereClause = sql.join(whereParts, sql` AND `);
+    const whereClause = sql.join(whereParts, sql` AND `);
 
-  const [sessionData] = await db.execute(sql`
+    const [sessionData] = await db.execute(sql`
     SELECT *
     FROM amcat_sessions
     WHERE id = ${params.sessionId} AND college_id = ${session.user.collegeId}
     LIMIT 1
   `) as unknown as Array<Record<string, unknown>>;
 
-  if (!sessionData) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
-  }
+    if (!sessionData) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
 
-  const results = await db.execute(sql`
+    const results = await db.execute(sql`
     SELECT
       r.id,
       r.sap_id,
@@ -86,13 +88,13 @@ export async function GET(
     OFFSET ${offset}
   `);
 
-  const [{ total }] = await db.execute(sql`
+    const [{ total }] = await db.execute(sql`
     SELECT COUNT(*)::int AS total
     FROM amcat_results r
     WHERE ${whereClause}
   `) as unknown as Array<{ total: number }>;
 
-  const [summary] = await db.execute(sql`
+    const [summary] = await db.execute(sql`
     SELECT
       COUNT(*) FILTER (WHERE r.student_id IS NOT NULL)::int AS linked,
       COUNT(*) FILTER (WHERE r.student_id IS NULL)::int AS unmatched,
@@ -102,40 +104,46 @@ export async function GET(
       AND r.college_id = ${session.user.collegeId}
   `) as unknown as Array<{ linked: number; unmatched: number; overridden: number }>;
 
-  return NextResponse.json({
-    session: sessionData,
-    results,
-    total,
-    page,
-    pageSize,
-    summary,
-  });
+    return NextResponse.json({
+      session: sessionData,
+      results,
+      total,
+      page,
+      pageSize,
+      summary,
+    });
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    console.error("[GET /api/admin/amcat/[sessionId]]", error);
+    return NextResponse.json({ error: "Failed to load AMCAT session details" }, { status: 500 });
+  }
 }
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: { sessionId: string } },
 ) {
-  const session = await getServerSession(authOptions);
-  const allowed = await hasAmcatManagementPermission(session);
-  if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    const session = await getServerSession(authOptions);
+    const allowed = await hasAmcatManagementPermission(session);
+    if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  if (!session?.user?.collegeId) {
-    return NextResponse.json({ error: "Missing college context" }, { status: 401 });
-  }
+    if (!session?.user?.collegeId) {
+      return NextResponse.json({ error: "Missing college context" }, { status: 401 });
+    }
 
-  const body = await req.json();
-  const { resultId, finalCategory, overrideNote } = body as {
-    resultId?: string;
-    finalCategory?: "alpha" | "beta" | "gamma";
-    overrideNote?: string;
-  };
+    const body = await req.json();
+    const { resultId, finalCategory, overrideNote } = body as {
+      resultId?: string;
+      finalCategory?: "alpha" | "beta" | "gamma";
+      overrideNote?: string;
+    };
 
-  if (!resultId || !finalCategory || !["alpha", "beta", "gamma"].includes(finalCategory)) {
-    return NextResponse.json({ error: "resultId and valid finalCategory are required" }, { status: 400 });
-  }
+    if (!resultId || !finalCategory || !["alpha", "beta", "gamma"].includes(finalCategory)) {
+      return NextResponse.json({ error: "resultId and valid finalCategory are required" }, { status: 400 });
+    }
 
-  const [updated] = await db.execute(sql`
+    const [updated] = await db.execute(sql`
     UPDATE amcat_results
     SET
       final_category = ${finalCategory}::batch_category,
@@ -149,11 +157,11 @@ export async function PUT(
     RETURNING id
   `) as unknown as Array<{ id: string }>;
 
-  if (!updated) {
-    return NextResponse.json({ error: "Result not found" }, { status: 404 });
-  }
+    if (!updated) {
+      return NextResponse.json({ error: "Result not found" }, { status: 404 });
+    }
 
-  const [distribution] = await db.execute(sql`
+    const [distribution] = await db.execute(sql`
     SELECT
       COUNT(*) FILTER (WHERE final_category = 'alpha')::int AS alpha,
       COUNT(*) FILTER (WHERE final_category = 'beta')::int AS beta,
@@ -163,7 +171,7 @@ export async function PUT(
       AND college_id = ${session.user.collegeId}
   `) as unknown as Array<{ alpha: number; beta: number; gamma: number }>;
 
-  await db.execute(sql`
+    await db.execute(sql`
     UPDATE amcat_sessions
     SET
       alpha_count = ${distribution.alpha},
@@ -175,5 +183,10 @@ export async function PUT(
       AND college_id = ${session.user.collegeId}
   `);
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    console.error("[PUT /api/admin/amcat/[sessionId]]", error);
+    return NextResponse.json({ error: "Failed to update AMCAT result" }, { status: 500 });
+  }
 }

@@ -724,8 +724,8 @@ export default function AdminUsersPage() {
                               {cfg.label.toUpperCase()}
                             </Badge>
 
-                            {/* Password Reset — only for faculty/admin */}
-                            {(role === "faculty" || role === "admin") && (
+                            {/* Password Reset — faculty only */}
+                            {role === "faculty" && (
                               <div className="space-y-1.5 w-full sm:w-auto flex flex-col items-end">
                                 <form
                                   onSubmit={(e) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Download, Eye, Plus, Upload } from "lucide-react";
+import { Download, Eye, Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import MarkdownRenderer from "@/components/shared/markdown-renderer";
@@ -30,6 +30,7 @@ const CATEGORY_MAP = {
 
 type ResourceRow = {
   id: string;
+  author_id: string;
   section: "technical" | "softskills";
   category: string;
   title: string;
@@ -48,19 +49,44 @@ type ResourceRow = {
   author_name: string;
 };
 
+type CreateResourceForm = {
+  category: string;
+  title: string;
+  body: string;
+  tags: string;
+  companyName: string;
+  status: "draft" | "published";
+  file: File | null;
+};
+
+type EditResourceForm = {
+  section: "technical" | "softskills";
+  category: string;
+  title: string;
+  body: string;
+  tags: string;
+  companyName: string;
+  status: "draft" | "published" | "archived";
+};
+
 export default function ResourceLibrary() {
   const [section, setSection] = useState<"technical" | "softskills">("technical");
-  const [category, setCategory] = useState<string>(TECHNICAL_RESOURCE_CATEGORIES[0]);
+  const [category, setCategory] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [canCreate, setCanCreate] = useState(false);
   const [viewerRole, setViewerRole] = useState<"student" | "faculty" | "admin" | null>(null);
+  const [viewerId, setViewerId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published" | "archived">("all");
   const [selected, setSelected] = useState<ResourceRow | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({
+  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState<ResourceRow | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [form, setForm] = useState<CreateResourceForm>({
+    category: TECHNICAL_RESOURCE_CATEGORIES[0],
     title: "",
     body: "",
     tags: "",
@@ -68,26 +94,46 @@ export default function ResourceLibrary() {
     status: "published" as "draft" | "published",
     file: null as File | null,
   });
+  const [editForm, setEditForm] = useState<EditResourceForm>({
+    section: "technical" as "technical" | "softskills",
+    category: TECHNICAL_RESOURCE_CATEGORIES[0],
+    title: "",
+    body: "",
+    tags: "",
+    companyName: "",
+    status: "published" as "draft" | "published" | "archived",
+  });
 
   useEffect(() => {
-    setCategory(CATEGORY_MAP[section][0]);
+    setCategory("all");
+    setForm((current) => ({
+      ...current,
+      category: CATEGORY_MAP[section][0],
+    }));
   }, [section]);
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      const params = new URLSearchParams({ section, category });
+  async function refreshCurrentList(showLoading = false) {
+    if (showLoading) setLoading(true);
+    try {
+      const params = new URLSearchParams({ section });
+      if (category !== "all") params.set("category", category);
       if (search) params.set("q", search);
       if (statusFilter !== "all") params.set("status", statusFilter);
+
       const res = await fetch(`/api/resources?${params.toString()}`);
       const json = await res.json();
+
       setResources(json.resources ?? []);
       setCanCreate(Boolean(json.canCreate));
       setViewerRole((json.viewerRole ?? null) as "student" | "faculty" | "admin" | null);
-      setLoading(false);
+      setViewerId((json.viewerId as string | null) ?? null);
+    } finally {
+      if (showLoading) setLoading(false);
     }
+  }
 
-    load().catch(() => setLoading(false));
+  useEffect(() => {
+    refreshCurrentList(true).catch(() => setLoading(false));
   }, [category, search, section, statusFilter]);
 
   async function openResource(resource: ResourceRow) {
@@ -98,35 +144,118 @@ export default function ResourceLibrary() {
 
   async function createResource() {
     setSubmitting(true);
-    const body = new FormData();
-    body.append("section", section);
-    body.append("category", category);
-    body.append("title", form.title);
-    body.append("body", form.body);
-    body.append("bodyFormat", "markdown");
-    body.append("tags", form.tags);
-    body.append("companyName", form.companyName);
-    body.append("status", form.status);
-    if (form.file) body.append("file", form.file);
+    try {
+      const body = new FormData();
+      body.append("section", section);
+      body.append("category", form.category);
+      body.append("title", form.title);
+      body.append("body", form.body);
+      body.append("bodyFormat", "markdown");
+      body.append("tags", form.tags);
+      body.append("companyName", form.companyName);
+      body.append("status", form.status);
+      if (form.file) body.append("file", form.file);
 
-    const res = await fetch("/api/resources", { method: "POST", body });
+      const res = await fetch("/api/resources", { method: "POST", body });
+      const json = await res.json();
+
+      if (!res.ok) {
+        toast.error(json.error ?? "Failed to create resource");
+        return;
+      }
+
+      toast.success(form.status === "draft" ? "Resource saved as draft" : "Resource created");
+      setCreateOpen(false);
+      setForm({
+        category: CATEGORY_MAP[section][0],
+        title: "",
+        body: "",
+        tags: "",
+        companyName: "",
+        status: "published",
+        file: null,
+      });
+      await refreshCurrentList();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function startEdit(resource: ResourceRow) {
+    setEditing(resource);
+    setEditForm({
+      section: resource.section,
+      category: resource.category,
+      title: resource.title,
+      body: resource.body ?? "",
+      tags: (resource.tags ?? []).join(","),
+      companyName: resource.company_name ?? "",
+      status: resource.status ?? "published",
+    });
+    setEditOpen(true);
+  }
+
+  async function saveEdit() {
+    if (!editing) return;
+
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/resources/${editing.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          section: editForm.section,
+          category: editForm.category,
+          title: editForm.title,
+          body: editForm.body || null,
+          bodyFormat: "markdown",
+          tags: editForm.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+          companyName: editForm.companyName || null,
+          status: editForm.status,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error ?? "Failed to update resource");
+        return;
+      }
+
+      toast.success("Resource updated");
+      setEditOpen(false);
+      setEditing(null);
+      await refreshCurrentList();
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function deleteResource(resource: ResourceRow) {
+    const confirmed = window.confirm("Delete this resource permanently?");
+    if (!confirmed) return;
+
+    const res = await fetch(`/api/resources/${resource.id}`, { method: "DELETE" });
     const json = await res.json();
-    setSubmitting(false);
-
     if (!res.ok) {
-      toast.error(json.error ?? "Failed to create resource");
+      toast.error(json.error ?? "Failed to delete resource");
       return;
     }
 
-    toast.success(form.status === "draft" ? "Resource saved as draft" : "Resource created");
-    setCreateOpen(false);
-    setForm({ title: "", body: "", tags: "", companyName: "", status: "published", file: null });
-    const refresh = await fetch(`/api/resources?section=${section}&category=${category}`);
-    const refreshed = await refresh.json();
-    setResources(refreshed.resources ?? []);
+    toast.success("Resource deleted");
+    await refreshCurrentList();
+  }
+
+  function canManageResource(resource: ResourceRow) {
+    if (viewerRole === "admin") return true;
+    if (viewerRole !== "faculty") return false;
+    return Boolean(viewerId && resource.author_id === viewerId);
   }
 
   const sideCategories = useMemo(() => CATEGORY_MAP[section], [section]);
+  const editCategoryOptions = useMemo(() => CATEGORY_MAP[editForm.section], [editForm.section]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-8">
@@ -167,6 +296,16 @@ export default function ResourceLibrary() {
                 </div>
               ) : null}
               <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setCategory("all")}
+                  className={cn(
+                    "w-full rounded-xl px-4 py-3 text-left text-sm font-semibold",
+                    category === "all" ? "bg-indigo-600 text-white" : "bg-slate-950 text-slate-300 hover:bg-slate-800"
+                  )}
+                >
+                  All Categories
+                </button>
                 {sideCategories.map((item) => (
                   <button key={item} type="button" onClick={() => setCategory(item)} className={cn("w-full rounded-xl px-4 py-3 text-left text-sm font-semibold", category === item ? "bg-indigo-600 text-white" : "bg-slate-950 text-slate-300 hover:bg-slate-800")}>{formatCategoryLabel(item)}</button>
                 ))}
@@ -175,7 +314,7 @@ export default function ResourceLibrary() {
 
             <div className="space-y-4">
               {loading ? <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-8 text-sm text-slate-400">Loading resources...</div> : null}
-              {!loading && resources.length === 0 ? <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-8 text-sm text-slate-400">No resources found for this category yet.</div> : null}
+              {!loading && resources.length === 0 ? <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-8 text-sm text-slate-400">No resources found for this filter yet.</div> : null}
               {!loading ? resources.map((resource) => (
                 <article key={resource.id} className="rounded-2xl border border-white/5 bg-slate-900/60 p-5 transition-all hover:border-white/10">
                   <div className="flex items-start justify-between gap-4">
@@ -201,6 +340,16 @@ export default function ResourceLibrary() {
                       <Button variant="outline" className="border-white/10 bg-slate-950 text-slate-200 hover:bg-slate-800" onClick={() => openResource(resource)}>
                         Open
                       </Button>
+                      {canManageResource(resource) ? (
+                        <Button variant="outline" className="gap-1 border-white/10 bg-slate-950 text-slate-200 hover:bg-slate-800" onClick={() => startEdit(resource)}>
+                          <Pencil className="h-3 w-3" /> Edit
+                        </Button>
+                      ) : null}
+                      {canManageResource(resource) ? (
+                        <Button variant="outline" className="gap-1 border-rose-500/40 bg-rose-900/20 text-rose-300 hover:bg-rose-900/30" onClick={() => deleteResource(resource)}>
+                          <Trash2 className="h-3 w-3" /> Delete
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
                   <div className="mt-3 flex items-center gap-4 border-t border-white/5 pt-3">
@@ -240,6 +389,18 @@ export default function ResourceLibrary() {
           </DialogHeader>
           <div className="grid gap-4">
             <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <select
+                  value={form.category}
+                  onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
+                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                >
+                  {CATEGORY_MAP[section].map((option) => (
+                    <option key={option} value={option}>{formatCategoryLabel(option)}</option>
+                  ))}
+                </select>
+              </div>
               <div className="space-y-2">
                 <Label>Title</Label>
                 <Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
@@ -284,6 +445,85 @@ export default function ResourceLibrary() {
           <DialogFooter>
             <Button variant="outline" className="border-white/10 bg-slate-900 text-slate-100" onClick={() => setCreateOpen(false)}>Cancel</Button>
             <Button onClick={createResource} disabled={submitting} className="bg-indigo-600 hover:bg-indigo-500">{submitting ? "Creating..." : "Create Resource"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editOpen} onOpenChange={(open) => {
+        setEditOpen(open);
+        if (!open) setEditing(null);
+      }}>
+        <DialogContent className="max-w-3xl border-white/10 bg-slate-950 text-slate-100">
+          <DialogHeader>
+            <DialogTitle>Edit Resource</DialogTitle>
+            <DialogDescription>Update content, category, and publish status.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Section</Label>
+                <select
+                  value={editForm.section}
+                  onChange={(event) => setEditForm((current) => ({
+                    ...current,
+                    section: event.target.value as "technical" | "softskills",
+                    category: CATEGORY_MAP[event.target.value as "technical" | "softskills"][0],
+                  }))}
+                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                >
+                  <option value="technical">Technical</option>
+                  <option value="softskills">Soft Skills</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <select
+                  value={editForm.category}
+                  onChange={(event) => setEditForm((current) => ({ ...current, category: event.target.value }))}
+                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                >
+                  {editCategoryOptions.map((option) => (
+                    <option key={option} value={option}>{formatCategoryLabel(option)}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Title</Label>
+                <Input value={editForm.title} onChange={(event) => setEditForm((current) => ({ ...current, title: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+              </div>
+              <div className="space-y-2">
+                <Label>Company Name (optional)</Label>
+                <Input value={editForm.companyName} onChange={(event) => setEditForm((current) => ({ ...current, companyName: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Markdown Content</Label>
+              <Textarea rows={10} value={editForm.body} onChange={(event) => setEditForm((current) => ({ ...current, body: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Tags</Label>
+                <Input value={editForm.tags} onChange={(event) => setEditForm((current) => ({ ...current, tags: event.target.value }))} placeholder="comma,separated,tags" className="border-white/10 bg-slate-900 text-slate-100" />
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <select
+                  value={editForm.status}
+                  onChange={(event) => setEditForm((current) => ({ ...current, status: event.target.value as "draft" | "published" | "archived" }))}
+                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                >
+                  <option value="published">Published</option>
+                  <option value="draft">Draft</option>
+                  {viewerRole === "admin" ? <option value="archived">Archived</option> : null}
+                </select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="border-white/10 bg-slate-900 text-slate-100" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={saveEdit} disabled={savingEdit} className="bg-indigo-600 hover:bg-indigo-500">{savingEdit ? "Saving..." : "Save Changes"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
