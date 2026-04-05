@@ -38,6 +38,7 @@ export default async function FacultyDashboardPage({
 }) {
     const user = await requireRole(["faculty", "admin"]);
     const selectedSeasonId = searchParams?.seasonId ?? "all";
+    const firstName = user.name?.trim().split(/\s+/)[0] || "Faculty";
 
     const seasonRows = user.collegeId
         ? await db.query.seasons.findMany({
@@ -50,7 +51,7 @@ export default async function FacultyDashboardPage({
     // YOUR EXACT BACKEND LOGIC
     const facultyDrives = await db.select({ id: drives.id, company: drives.company, roleTitle: drives.roleTitle, isActive: drives.isActive, createdAt: drives.createdAt, seasonId: drives.seasonId })
         .from(drives)
-        .where(eq(drives.createdBy, user.id))
+        .where(user.collegeId ? eq(drives.collegeId, user.collegeId) : eq(drives.createdBy, user.id))
         .orderBy(sql`${drives.createdAt} DESC`);
 
     const filteredDrives = selectedSeasonId === "all"
@@ -64,15 +65,21 @@ export default async function FacultyDashboardPage({
     const rankingCounts = new Map<string, { count: number; avgScore: number | null }>();
 
     if (driveIds.length > 0) {
-        const [rankStats] = await db.select({ total: count(), avg: avg(rankings.matchScore) }).from(rankings).where(inArray(rankings.driveId, driveIds));
+        const [rankStatsRows, jobCountRows, activityRows, perDrive] = await Promise.all([
+            db.select({ total: count(), avg: avg(rankings.matchScore) }).from(rankings).where(inArray(rankings.driveId, driveIds)),
+            db.select({ c: count() }).from(jobs).where(and(inArray(jobs.status, ["pending", "processing"]), sql`${jobs.payload}->>'driveId' = ANY(ARRAY[${sql.join(driveIds.map((id) => sql`${id}`), sql`, `)}]::text[])`)),
+            db.select({ id: jobs.id, type: jobs.type, status: jobs.status, updatedAt: jobs.updatedAt, payload: jobs.payload }).from(jobs).where(sql`${jobs.payload}->>'driveId' = ANY(ARRAY[${sql.join(driveIds.map((id) => sql`${id}`), sql`, `)}]::text[])`).orderBy(sql`${jobs.updatedAt} DESC`).limit(8),
+            db.select({ driveId: rankings.driveId, cnt: count(), avgScore: avg(rankings.matchScore) }).from(rankings).where(inArray(rankings.driveId, driveIds)).groupBy(rankings.driveId),
+        ]);
+
+        const [rankStats] = rankStatsRows;
+        const [jobCount] = jobCountRows;
+
         totalRanked = Number(rankStats?.total ?? 0);
         avgScore = rankStats?.avg ? Number(rankStats.avg).toFixed(1) : null;
-
-        const [jobCount] = await db.select({ c: count() }).from(jobs).where(and(inArray(jobs.status, ["pending", "processing"]), sql`${jobs.payload}->>'driveId' = ANY(ARRAY[${sql.join(driveIds.map((id) => sql`${id}`), sql`, `)}]::text[])`));
         pendingJobCount = Number(jobCount?.c ?? 0);
+        activityFeed = activityRows;
 
-        activityFeed = await db.select({ id: jobs.id, type: jobs.type, status: jobs.status, updatedAt: jobs.updatedAt, payload: jobs.payload }).from(jobs).where(sql`${jobs.payload}->>'driveId' = ANY(ARRAY[${sql.join(driveIds.map((id) => sql`${id}`), sql`, `)}]::text[])`).orderBy(sql`${jobs.updatedAt} DESC`).limit(8);
-        const perDrive = await db.select({ driveId: rankings.driveId, cnt: count(), avgScore: avg(rankings.matchScore) }).from(rankings).where(inArray(rankings.driveId, driveIds)).groupBy(rankings.driveId);
         perDrive.forEach((r) => rankingCounts.set(r.driveId, { count: Number(r.cnt), avgScore: r.avgScore ? Number(r.avgScore) : null }));
     }
 
@@ -80,7 +87,7 @@ export default async function FacultyDashboardPage({
         <div className="p-8 max-w-7xl w-full animate-in fade-in duration-500 min-h-screen">
             <header className="flex justify-between items-center mb-10">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight mb-1">Good morning, {user.name.split(" ")[0]}</h1>
+                    <h1 className="text-3xl font-bold text-white tracking-tight mb-1">Good morning, {firstName}</h1>
                     <p className="text-sm text-slate-500">Faculty Dashboard — UPES Placement Portal</p>
                 </div>
                 <div className="flex items-center gap-3">

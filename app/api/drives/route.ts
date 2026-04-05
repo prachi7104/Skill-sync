@@ -168,9 +168,13 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json({ drives: [] });
     }
 
-    // Fetch all active drives
+    if (!profile.collegeId) {
+      return NextResponse.json({ drives: [] });
+    }
+
+    // Fetch active drives for the student's college only
     const activeDrives = await db.query.drives.findMany({
-      where: eq(drives.isActive, true),
+      where: and(eq(drives.isActive, true), eq(drives.collegeId, profile.collegeId)),
       orderBy: (drives, { desc }) => [desc(drives.createdAt)],
     });
 

@@ -23,6 +23,8 @@ interface PageProps {
 export default async function FacultyDriveRankingsPage({ params }: PageProps) {
   const user = await requireRole(["faculty", "admin"]);
   const { driveId } = params;
+  const MAX_RANKINGS_ROWS = 2000;
+  const viewerRole: "faculty" | "admin" = user.role === "admin" ? "admin" : "faculty";
 
   // ── Validate UUID ──────────────────────────────────────────────────────
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -50,8 +52,8 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
     notFound();
   }
 
-  // Scope: faculty can view rankings for drives within their college.
-  if (user.collegeId && drive.collegeId !== user.collegeId) {
+  // Scope: both faculty/admin views are strictly college-scoped in this module.
+  if (!user.collegeId || drive.collegeId !== user.collegeId) {
     notFound();
   }
 
@@ -87,7 +89,7 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
   }
 
   // ── Fetch richer data ──────────────────────────────────────────────────
-  const rows = await db
+  const rowsRaw = await db
     .select({
       rankPosition: rankings.rankPosition,
       matchScore: rankings.matchScore,
@@ -111,7 +113,11 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
     .innerJoin(students, eq(rankings.studentId, students.id))
     .innerJoin(users, eq(students.id, users.id))
     .where(eq(rankings.driveId, driveId))
-    .orderBy(asc(rankings.rankPosition));
+    .orderBy(asc(rankings.rankPosition))
+    .limit(MAX_RANKINGS_ROWS + 1);
+
+  const isTruncated = rowsRaw.length > MAX_RANKINGS_ROWS;
+  const rows = isTruncated ? rowsRaw.slice(0, MAX_RANKINGS_ROWS) : rowsRaw;
 
   const eligibleRankings = rows.filter((r) => r.isEligible && r.matchScore > 0);
   const incompleteRankings = rows.filter(
@@ -233,7 +239,16 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
         }))}
         distribution={distribution}
         driveId={driveId}
+        viewerRole={viewerRole}
       />
+
+      {isTruncated && (
+        <Card className="border-amber-500/30 bg-amber-500/10">
+          <CardContent className="py-3 text-sm text-amber-200">
+            Showing the first {MAX_RANKINGS_ROWS} candidates for performance. Use CSV export for full data.
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-slate-800 bg-slate-900/40">
         <CardContent className="pt-6 space-y-6">

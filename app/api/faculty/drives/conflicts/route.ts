@@ -4,7 +4,7 @@ import { isRedirectError } from "next/dist/client/components/redirect";
 
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
-import { drives, students, users } from "@/lib/db/schema";
+import { drives, students } from "@/lib/db/schema";
 import { expandBranches } from "@/lib/constants/branches";
 
 type DriveRow = {
@@ -63,11 +63,8 @@ export async function GET() {
         eligibleCategories: drives.eligibleCategories,
       })
       .from(drives)
-      .innerJoin(users, eq(users.id, drives.createdBy))
       .where(
-        user.role === "faculty"
-          ? and(eq(drives.isActive, true), eq(drives.createdBy, user.id))
-          : and(eq(drives.isActive, true), eq(users.collegeId, user.collegeId)),
+        and(eq(drives.isActive, true), eq(drives.collegeId, user.collegeId)),
       )
       .orderBy(desc(drives.createdAt));
 
@@ -83,21 +80,37 @@ export async function GET() {
       .where(and(eq(students.collegeId, user.collegeId), sql`${students.profileCompleteness} >= 80`));
 
     const total = studentPool.length;
+    const eligibleSetByDrive = activeDriveRows.map((drive) => {
+      const eligibleIds = new Set<string>();
+      for (const student of studentPool) {
+        if (isStudentEligibleForDrive(drive as DriveRow, student)) {
+          eligibleIds.add(student.id);
+        }
+      }
+      return { drive: drive as DriveRow, eligibleIds };
+    });
+
     const conflicts: Array<{ drive1: DriveRow; drive2: DriveRow; overlapPercent: number; overlapCount: number }> = [];
 
-    for (let i = 0; i < activeDriveRows.length; i += 1) {
-      for (let j = i + 1; j < activeDriveRows.length; j += 1) {
-        const drive1 = activeDriveRows[i] as DriveRow;
-        const drive2 = activeDriveRows[j] as DriveRow;
+    for (let i = 0; i < eligibleSetByDrive.length; i += 1) {
+      for (let j = i + 1; j < eligibleSetByDrive.length; j += 1) {
+        const drive1 = eligibleSetByDrive[i].drive;
+        const drive2 = eligibleSetByDrive[j].drive;
 
         if (drive1.deadline && drive2.deadline) {
           const diff = Math.abs(new Date(drive1.deadline).getTime() - new Date(drive2.deadline).getTime());
           if (diff > 7 * 24 * 60 * 60 * 1000) continue;
         }
 
-        const overlapCount = studentPool.filter(
-          (student) => isStudentEligibleForDrive(drive1, student) && isStudentEligibleForDrive(drive2, student),
-        ).length;
+        const setA = eligibleSetByDrive[i].eligibleIds;
+        const setB = eligibleSetByDrive[j].eligibleIds;
+        const smaller = setA.size <= setB.size ? setA : setB;
+        const larger = setA.size <= setB.size ? setB : setA;
+
+        let overlapCount = 0;
+        for (const studentId of smaller) {
+          if (larger.has(studentId)) overlapCount += 1;
+        }
 
         if (overlapCount === 0) continue;
 

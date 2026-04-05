@@ -19,9 +19,25 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
   const user = await requireRole(["faculty", "admin"]);
   const canCreateDrive = await hasComponent("drive_management");
 
-  const page = Number(searchParams?.page ?? 1);
+  const pageValue = Number(searchParams?.page ?? 1);
+  const page = Number.isFinite(pageValue) && pageValue > 0 ? Math.floor(pageValue) : 1;
   const pageSize = 20;
   const offset = (page - 1) * pageSize;
+
+  if (!user.collegeId) {
+    return (
+      <div className="space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Drives</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Account is not linked to a college yet.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch all drives for this college
   const facultyDrives = await db

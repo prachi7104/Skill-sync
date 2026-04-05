@@ -45,6 +45,8 @@ export async function GET(
         conditions.push(eq(rankings.shortlisted, true));
     }
 
+    const MAX_EXPORT_ROWS = 5000;
+
     const rows = await db
         .select({
             rankPosition: rankings.rankPosition,
@@ -63,11 +65,15 @@ export async function GET(
         .innerJoin(students, eq(rankings.studentId, students.id))
         .innerJoin(users, eq(students.id, users.id))
         .where(and(...conditions))
-        .orderBy(asc(rankings.rankPosition));
+        .orderBy(asc(rankings.rankPosition))
+        .limit(MAX_EXPORT_ROWS + 1);
+
+    const isTruncated = rows.length > MAX_EXPORT_ROWS;
+    const exportRows = isTruncated ? rows.slice(0, MAX_EXPORT_ROWS) : rows;
 
     // Build CSV
     const header = "Rank,Name,SAP ID,Roll No,Branch,CGPA,Batch Year,Match Score %,Matched Skills,Missing Skills,Shortlisted";
-    const csvRows = rows.map((r) =>
+    const csvRows = exportRows.map((r) =>
         [
             r.rankPosition,
             r.studentName,
@@ -85,6 +91,10 @@ export async function GET(
             .join(",")
     );
 
+        if (isTruncated) {
+            csvRows.push(`"","","","","","","","","","","TRUNCATED: showing first ${MAX_EXPORT_ROWS} rows"`);
+        }
+
     const csv = [header, ...csvRows].join("\n");
     const filename = `rankings-${drive.company}-${drive.roleTitle}`
         .toLowerCase()
@@ -95,6 +105,7 @@ export async function GET(
         headers: {
             "Content-Type": "text/csv",
             "Content-Disposition": `attachment; filename="${filename}"`,
+            "X-Export-Truncated": isTruncated ? "true" : "false",
         },
     });
 }

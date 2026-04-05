@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, students } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { isRedirectError } from "next/dist/client/components/redirect";
+import { expandBranches } from "@/lib/constants/branches";
 
 export async function GET(
   _req: NextRequest,
@@ -12,24 +13,30 @@ export async function GET(
   try {
     const user = await requireRole(["faculty", "admin"]);
 
+    if (!user.collegeId) {
+      return NextResponse.json({ error: "No college associated with this account" }, { status: 400 });
+    }
+
     const [drive] = await db
       .select({
         id: drives.id,
+        createdBy: drives.createdBy,
+        collegeId: drives.collegeId,
         minCgpa: drives.minCgpa,
         eligibleBranches: drives.eligibleBranches,
         eligibleBatchYears: drives.eligibleBatchYears,
         eligibleCategories: drives.eligibleCategories,
       })
       .from(drives)
-      .where(eq(drives.id, params.driveId))
+      .where(and(eq(drives.id, params.driveId), eq(drives.collegeId, user.collegeId)))
       .limit(1);
 
     if (!drive) {
       return NextResponse.json({ error: "Drive not found" }, { status: 404 });
     }
 
-    if (!user.collegeId) {
-      return NextResponse.json({ error: "No college associated with this account" }, { status: 400 });
+    if (user.role === "faculty" && drive.createdBy !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const studentRows = await db
@@ -48,14 +55,18 @@ export async function GET(
     const eligibleBranches = (drive.eligibleBranches as string[] | null) ?? null;
     const eligibleBatchYears = (drive.eligibleBatchYears as number[] | null) ?? null;
     const eligibleCategories = (drive.eligibleCategories as string[] | null) ?? null;
+    const normalizedEligibleBranches =
+      eligibleBranches && eligibleBranches.length > 0
+        ? new Set(expandBranches(eligibleBranches).map((b) => b.toLowerCase().trim()))
+        : null;
 
     const eligible = studentRows.filter((s) => {
       if ((s.onboardingStep ?? 0) < 1) return false;
       if (drive.minCgpa != null && (s.cgpa == null || s.cgpa < drive.minCgpa)) return false;
 
-      if (eligibleBranches && eligibleBranches.length > 0) {
+      if (normalizedEligibleBranches && normalizedEligibleBranches.size > 0) {
         if (!s.branch) return false;
-        if (!eligibleBranches.map((b) => b.toLowerCase().trim()).includes(s.branch.toLowerCase().trim())) {
+        if (!normalizedEligibleBranches.has(s.branch.toLowerCase().trim())) {
           return false;
         }
       }

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { rankings, drives, students, users } from "@/lib/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, sql } from "drizzle-orm";
 import { enforceRankingsExist, GuardrailViolation } from "@/lib/guardrails";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
@@ -29,12 +29,20 @@ import { isRedirectError } from "next/dist/client/components/redirect";
  *  - No student user IDs
  */
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { driveId: string } },
 ) {
   try {
     const user = await requireRole(["faculty", "admin"]);
     const { driveId } = params;
+    const url = new URL(req.url);
+    const pageValue = Number(url.searchParams.get("page") ?? "1");
+    const pageSizeValue = Number(url.searchParams.get("pageSize") ?? "200");
+    const page = Number.isFinite(pageValue) && pageValue > 0 ? Math.floor(pageValue) : 1;
+    const pageSize = Number.isFinite(pageSizeValue)
+      ? Math.min(Math.max(Math.floor(pageSizeValue), 1), 1000)
+      : 200;
+    const offset = (page - 1) * pageSize;
 
     // ── Validate driveId format ──────────────────────────────────────────
     if (!driveId || typeof driveId !== "string") {
@@ -73,7 +81,7 @@ export async function GET(
     }
 
     // ── College scope check for faculty/admin ─────────────────────────────
-    if (user.collegeId && drive.collegeId !== user.collegeId) {
+    if (!user.collegeId || drive.collegeId !== user.collegeId) {
       return NextResponse.json(
         { error: "Forbidden: drive not in your college" },
         { status: 403 },
@@ -82,6 +90,11 @@ export async function GET(
 
     // ── Phase 5.5: Enforce rankings exist before querying ────────────────
     await enforceRankingsExist(driveId);
+
+    const [{ total }] = await db
+      .select({ total: sql<number>`count(*)::int` })
+      .from(rankings)
+      .where(eq(rankings.driveId, driveId));
 
     // ── Fetch rankings joined with student identity ──────────────────────
     const rows = await db
@@ -102,7 +115,9 @@ export async function GET(
       .innerJoin(students, eq(rankings.studentId, students.id))
       .innerJoin(users, eq(students.id, users.id))
       .where(eq(rankings.driveId, driveId))
-      .orderBy(asc(rankings.rankPosition));
+      .orderBy(asc(rankings.rankPosition))
+      .limit(pageSize)
+      .offset(offset);
 
     return NextResponse.json(
       {
@@ -124,6 +139,11 @@ export async function GET(
           shortExplanation: r.shortExplanation,
           detailedExplanation: r.detailedExplanation,
         })),
+        pagination: {
+          page,
+          pageSize,
+          total: Number(total ?? 0),
+        },
       },
       { status: 200 },
     );

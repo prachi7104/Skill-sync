@@ -83,7 +83,6 @@ export async function GET(req: NextRequest) {
         r.status,
         r.view_count,
         r.helpful_count,
-        r.is_published,
         r.created_at,
         r.updated_at,
         u.name AS author_name
@@ -182,13 +181,12 @@ export async function POST(req: NextRequest) {
       INSERT INTO resources (
         college_id, author_id, section, category, title,
         body, body_format, attachment_url, attachment_name, attachment_mime, attachment_size_kb,
-        tags, company_name, status, is_published
+        tags, company_name, status
       ) VALUES (
         ${user.collegeId}, ${user.id}, ${parsedBody.section}, ${parsedBody.category}, ${parsedBody.title},
         ${parsedBody.body ?? null}, ${parsedBody.bodyFormat ?? "markdown"}, ${attachmentUrl}, ${attachmentName}, ${attachmentMime}, ${attachmentSizeKb},
         ${parsedBody.tags ?? []}::text[], ${parsedBody.companyName ?? null},
-        ${user.role === "faculty" && parsedBody.status === "draft" ? "draft" : "published"},
-        ${user.role === "faculty" && parsedBody.status === "draft" ? false : true}
+        ${user.role === "faculty" && parsedBody.status === "draft" ? "draft" : "published"}
       ) RETURNING id
     `) as unknown as Array<{ id: string }>;
 

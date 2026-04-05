@@ -11,12 +11,29 @@ export default function FacultySettingsPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
 
+  function validatePasswordStrengthClient(password: string): string | null {
+    if (password.length < 8) return "Minimum 8 characters required";
+    if (!/[A-Z]/.test(password)) return "Must contain at least one uppercase letter";
+    if (!/[a-z]/.test(password)) return "Must contain at least one lowercase letter";
+    if (!/[0-9]/.test(password)) return "Must contain at least one number";
+    return null;
+  }
+
+  const passwordStrengthMessage = newPassword ? validatePasswordStrengthClient(newPassword) : null;
+
   async function handleChangePassword(e: FormEvent) {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
       setStatus("error");
       setMessage("New passwords do not match");
+      return;
+    }
+
+    const strengthError = validatePasswordStrengthClient(newPassword);
+    if (strengthError) {
+      setStatus("error");
+      setMessage(strengthError);
       return;
     }
 
@@ -71,6 +88,7 @@ export default function FacultySettingsPage() {
 
         <input
           type="password"
+          autoComplete="current-password"
           placeholder="Current password"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
@@ -79,14 +97,21 @@ export default function FacultySettingsPage() {
         />
         <input
           type="password"
+          autoComplete="new-password"
           placeholder="New password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           required
           className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
         />
+        {passwordStrengthMessage ? (
+          <p className="text-xs text-amber-400">{passwordStrengthMessage}</p>
+        ) : newPassword ? (
+          <p className="text-xs text-emerald-400">Strong password format looks good.</p>
+        ) : null}
         <input
           type="password"
+          autoComplete="new-password"
           placeholder="Confirm new password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}

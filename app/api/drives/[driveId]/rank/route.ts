@@ -22,7 +22,7 @@ export async function POST(
 ) {
   try {
     // Auth: admin only
-    await requireRole(["admin"]);
+    const user = await requireRole(["admin"]);
 
     const { driveId } = params;
 
@@ -39,15 +39,25 @@ export async function POST(
       return NextResponse.json(err.toJSON(), { status: err.status });
     }
 
+    // Ensure drive exists and is scoped to the admin's college
+    const [driveCheck] = await db
+      .select({ parsedJd: drives.parsedJd, collegeId: drives.collegeId })
+      .from(drives)
+      .where(eq(drives.id, driveId))
+      .limit(1);
+
+    if (!driveCheck) {
+      return NextResponse.json({ error: "Drive not found" }, { status: 404 });
+    }
+
+    if (!user.collegeId || driveCheck.collegeId !== user.collegeId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     // Keep guardrail contract explicit (admin-only trigger route).
     await enforceRankingGeneration(driveId, "admin");
 
     // Ensure JD enhancement has completed before queuing ranking
-    const [driveCheck] = await db
-      .select({ parsedJd: drives.parsedJd })
-      .from(drives)
-      .where(eq(drives.id, driveId))
-      .limit(1);
 
     const hasParsedJd =
       driveCheck?.parsedJd &&

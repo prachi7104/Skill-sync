@@ -53,9 +53,10 @@ interface RankingsTableProps {
     rankings: RankingData[];
     distribution: Array<{ label: string; count: number }>;
     driveId: string;
+    viewerRole: "faculty" | "admin";
 }
 
-export default function RankingsTable({ rankings, distribution, driveId }: RankingsTableProps) {
+export default function RankingsTable({ rankings, distribution, driveId, viewerRole }: RankingsTableProps) {
     // ── State ──────────────────────────────────────────────────────────────────
     const [nameSearch, setNameSearch] = useState("");
     const [branchFilter, setBranchFilter] = useState("all");
@@ -240,12 +241,14 @@ export default function RankingsTable({ rankings, distribution, driveId }: Ranki
                         ) : (
                             filtered.map((r) => {
                                 const isExpanded = expandedId === r.studentId;
-                                const isShortlisted = localShortlisted[r.studentId] !== undefined
-                                    ? localShortlisted[r.studentId] === true
-                                    : r.shortlisted === true;
-                                const isPassed = localShortlisted[r.studentId] !== undefined
-                                    ? localShortlisted[r.studentId] === false
-                                    : r.shortlisted === false;
+                                const currentShortlistState = localShortlisted[r.studentId] !== undefined
+                                    ? localShortlisted[r.studentId]
+                                    : r.shortlisted;
+                                const isShortlisted = currentShortlistState === true;
+                                const isPassed = currentShortlistState === false;
+                                const profileHref = viewerRole === "admin"
+                                    ? `/admin/students/${r.studentId}`
+                                    : `/faculty/students?q=${encodeURIComponent(r.sapId ?? r.studentName)}`;
 
                                 const score = r.matchScore;
 
@@ -330,7 +333,7 @@ export default function RankingsTable({ rankings, distribution, driveId }: Ranki
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            toggleShortlist(r.studentId, isShortlisted);
+                                                            toggleShortlist(r.studentId, currentShortlistState);
                                                         }}
                                                         className={cn(
                                                             "p-2 rounded-full transition-all duration-200 hover:scale-110 active:scale-95",
@@ -413,7 +416,7 @@ export default function RankingsTable({ rankings, distribution, driveId }: Ranki
                                                                 <div className="flex items-center gap-2">
                                                                     <Button
                                                                         size="sm"
-                                                                        onClick={() => toggleShortlist(r.studentId, isShortlisted)}
+                                                                        onClick={() => toggleShortlist(r.studentId, currentShortlistState)}
                                                                         className={cn(
                                                                             "h-9 px-4 font-bold shadow-sm transition-all",
                                                                             isShortlisted
@@ -428,7 +431,7 @@ export default function RankingsTable({ rankings, distribution, driveId }: Ranki
                                                                     <Button
                                                                         size="sm"
                                                                         variant="ghost"
-                                                                        onClick={() => passCandidate(r.studentId, isPassed)}
+                                                                        onClick={() => passCandidate(r.studentId, currentShortlistState)}
                                                                         className={cn(
                                                                             "h-9 px-4 font-semibold transition-all",
                                                                             isPassed ? "text-rose-600 bg-rose-50 hover:bg-rose-100" : "text-muted-foreground hover:text-rose-600 hover:bg-rose-50"
@@ -446,11 +449,11 @@ export default function RankingsTable({ rankings, distribution, driveId }: Ranki
                                                                     className="text-indigo-600 gap-1 font-bold"
                                                                 >
                                                                     <a
-                                                                        href={`/admin/students/${r.studentId}`}
+                                                                        href={profileHref}
                                                                         target="_blank"
                                                                         rel="noreferrer"
                                                                     >
-                                                                        <BookOpen className="h-4 w-4" /> Full Profile
+                                                                        <BookOpen className="h-4 w-4" /> {viewerRole === "admin" ? "Full Profile" : "Find in Students"}
                                                                     </a>
                                                                 </Button>
                                                             </div>

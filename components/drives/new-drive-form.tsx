@@ -93,7 +93,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
 
     const payload = {
       ...values,
-      deadline: values.deadline ? new Date(values.deadline).toISOString() : null,
+      deadline: values.deadline ? new Date(`${values.deadline}T23:59:59`).toISOString() : null,
       seasonId: values.seasonId || null,
       minCgpa: values.minCgpa === 0 || !values.minCgpa ? null : values.minCgpa,
       eligibleBranches: values.eligibleBranches?.length ? values.eligibleBranches : null,
@@ -268,6 +268,8 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
 
             {step === 2 && (
               <div className="space-y-8 animate-in fade-in duration-300">
+                {error && <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-700">{error}</div>}
+
                 <div className="space-y-3">
                   <Label htmlFor="rawJd" className="text-base font-semibold">Job Description *</Label>
                   <Textarea id="rawJd" {...register("rawJd")} rows={12} placeholder="Paste the full JD text here..." className="font-sans leading-relaxed" />
@@ -385,8 +387,6 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                     ))}
                   </div>
                 </div>
-
-                {error && <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-700">{error}</div>}
 
                 <div className="flex justify-between border-t pt-6">
                   <Button type="button" variant="ghost" onClick={() => setStep(1)} className="gap-2 text-slate-500 hover:text-slate-200">

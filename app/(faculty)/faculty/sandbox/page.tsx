@@ -9,18 +9,38 @@ import { Textarea } from "@/components/ui/textarea";
 export default function FacultySandboxPage() {
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const [running, setRunning] = useState(false);
 
   async function run() {
     setRunning(true);
-    const res = await fetch("/api/faculty/sandbox", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
-    });
-    const json = await res.json();
-    setResult(JSON.stringify(json, null, 2));
-    setRunning(false);
+    setError("");
+    try {
+      const res = await fetch("/api/faculty/sandbox", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, taskType: "career_advice", responseFormat: "text" }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        setResult("");
+        setError(json.message || "Sandbox request failed");
+        return;
+      }
+
+      const output = json.result;
+      if (typeof output === "string") {
+        setResult(output);
+      } else {
+        setResult(JSON.stringify(output, null, 2));
+      }
+    } catch {
+      setResult("");
+      setError("Sandbox request failed");
+    } finally {
+      setRunning(false);
+    }
   }
 
   return (
@@ -39,6 +59,7 @@ export default function FacultySandboxPage() {
           <CardTitle>Result</CardTitle>
         </CardHeader>
         <CardContent>
+          {error ? <p className="text-sm text-rose-400 mb-3">{error}</p> : null}
           <pre className="whitespace-pre-wrap text-sm text-slate-300">{result || "No result yet."}</pre>
         </CardContent>
       </Card>

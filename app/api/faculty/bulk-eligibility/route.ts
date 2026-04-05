@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
@@ -20,12 +20,18 @@ export async function GET(req: NextRequest) {
     const user = await requireRole(["faculty", "admin"]);
     const { searchParams } = new URL(req.url);
 
+    if (!user.collegeId) {
+      return NextResponse.json({ message: "College not found" }, { status: 400 });
+    }
+
     const parsed = querySchema.safeParse({ driveId: searchParams.get("driveId") });
     if (!parsed.success) {
       return NextResponse.json({ message: "driveId is required" }, { status: 400 });
     }
 
-    const drive = await db.query.drives.findFirst({ where: eq(drives.id, parsed.data.driveId) });
+    const drive = await db.query.drives.findFirst({
+      where: and(eq(drives.id, parsed.data.driveId), eq(drives.collegeId, user.collegeId)),
+    });
     if (!drive) {
       return NextResponse.json({ message: "Drive not found" }, { status: 404 });
     }
@@ -35,7 +41,7 @@ export async function GET(req: NextRequest) {
     }
 
     const pool = await db.query.students.findMany({
-      where: user.collegeId ? eq(students.collegeId, user.collegeId) : undefined,
+      where: eq(students.collegeId, user.collegeId),
       columns: {
         id: true,
         cgpa: true,

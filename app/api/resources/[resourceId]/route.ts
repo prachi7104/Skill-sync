@@ -119,7 +119,6 @@ export async function PATCH(
           tags = ${nextTags}::text[],
           company_name = ${payload.companyName === undefined ? resource.company_name : payload.companyName},
           status = ${nextStatus},
-          is_published = ${nextStatus === "published"},
           updated_at = NOW()
       WHERE id = ${params.resourceId}
         AND college_id = ${user.collegeId}

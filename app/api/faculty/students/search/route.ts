@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { students, users } from "@/lib/db/schema";
-import { eq, and, ilike, or } from "drizzle-orm";
+import { eq, and, ilike, or, count, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,8 @@ export async function GET(req: NextRequest) {
     const q = url.searchParams.get("q") || "";
     const branch = url.searchParams.get("branch") || "";
     const batchYear = url.searchParams.get("batchYear") || "";
-    const page = parseInt(url.searchParams.get("page") || "1", 10);
+    const pageValue = Number(url.searchParams.get("page") || "1");
+    const page = Number.isFinite(pageValue) && pageValue > 0 ? Math.floor(pageValue) : 1;
 
     const whereConditions: any[] = [eq(students.collegeId, user.collegeId)];
 
@@ -37,16 +38,21 @@ export async function GET(req: NextRequest) {
     }
 
     if (batchYear && batchYear !== "all") {
-      whereConditions.push(eq(students.batchYear, parseInt(batchYear, 10)));
+      const parsedBatchYear = Number(batchYear);
+      if (!Number.isInteger(parsedBatchYear)) {
+        return NextResponse.json({ error: "Invalid batchYear" }, { status: 400 });
+      }
+      whereConditions.push(eq(students.batchYear, parsedBatchYear));
     }
 
-    const countResult = await db
-      .select({ count: students.id })
+    const whereClause = whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions);
+
+    const [{ total }] = await db
+      .select({ total: count() })
       .from(students)
       .innerJoin(users, eq(students.id, users.id))
-      .where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions));
+      .where(whereClause);
 
-    const total = countResult.length;
     const offset = (page - 1) * 20;
 
     const results = await db
@@ -75,23 +81,19 @@ export async function GET(req: NextRequest) {
         researchPapers: students.researchPapers,
         achievements: students.achievements,
         softSkills: students.softSkills,
-        embedding: students.embedding,
+        hasEmbedding: sql<boolean>`${students.embedding} IS NOT NULL`.as("hasEmbedding"),
       })
       .from(students)
       .innerJoin(users, eq(students.id, users.id))
-      .where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions))
+      .where(whereClause)
       .orderBy(users.name)
       .limit(20)
       .offset(offset);
 
     return NextResponse.json(
       {
-        students: results.map((r) => ({
-          ...r,
-          hasEmbedding: r.embedding !== null,
-          embedding: undefined,
-        })),
-        total,
+        students: results,
+        total: Number(total ?? 0),
         page,
       },
       { status: 200 }

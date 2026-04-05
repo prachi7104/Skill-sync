@@ -900,7 +900,6 @@ export const resources = pgTable("resources", {
   status: varchar("status", { length: 20 }).notNull().default("published"),
   viewCount: integer("view_count").notNull().default(0),
   helpfulCount: integer("helpful_count").notNull().default(0),
-  isPublished: boolean("is_published").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
