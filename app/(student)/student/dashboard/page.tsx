@@ -26,6 +26,22 @@ type AmcatData = {
     quant_score?: number | null;
 };
 
+type LeaderboardPreviewRow = {
+    rank: number;
+    name: string;
+    branch: string | null;
+    score: number;
+    category: "alpha" | "beta" | "gamma";
+};
+
+type LeaderboardPreviewPayload = {
+    hasData?: boolean;
+    session?: {
+        session_name?: string;
+    };
+    top50?: LeaderboardPreviewRow[];
+};
+
 export default function StudentDashboard() {
     const { user, student, isLoading } = useStudent();
     const router = useRouter();
@@ -38,6 +54,8 @@ export default function StudentDashboard() {
         hasEmbedding: false,
     });
     const [amcat, setAmcat] = useState<AmcatData>({ hasAmcat: false });
+    const [leaderboardRows, setLeaderboardRows] = useState<LeaderboardPreviewRow[]>([]);
+    const [leaderboardSessionName, setLeaderboardSessionName] = useState<string>("");
 
     useEffect(() => {
         if (!isLoading && student) {
@@ -82,6 +100,33 @@ export default function StudentDashboard() {
         }
 
         if (student) fetchAmcat();
+    }, [student]);
+
+    useEffect(() => {
+        async function fetchLeaderboardPreview() {
+            try {
+                const res = await fetch("/api/student/amcat/leaderboard");
+                if (!res.ok) return;
+
+                const raw = await res.text();
+                if (!raw.trim()) return;
+
+                const data = JSON.parse(raw) as LeaderboardPreviewPayload;
+                if (!data.hasData || !Array.isArray(data.top50)) {
+                    setLeaderboardRows([]);
+                    setLeaderboardSessionName("");
+                    return;
+                }
+
+                setLeaderboardRows(data.top50.slice(0, 5));
+                setLeaderboardSessionName(typeof data.session?.session_name === "string" ? data.session.session_name : "");
+            } catch {
+                setLeaderboardRows([]);
+                setLeaderboardSessionName("");
+            }
+        }
+
+        if (student) fetchLeaderboardPreview();
     }, [student]);
 
     if (isLoading || !student || !user) {
@@ -159,7 +204,12 @@ export default function StudentDashboard() {
             {amcat.hasAmcat && (
                 <div className="bg-slate-900/60 rounded-2xl border border-white/5 p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-bold text-white">AMCAT Performance</h3>
+                        <div className="flex items-center gap-3">
+                            <h3 className="font-bold text-white">AMCAT Performance</h3>
+                            <Link href="/student/leaderboard" className="text-xs text-indigo-300 hover:text-indigo-200 font-semibold">
+                                View Leaderboard
+                            </Link>
+                        </div>
                         <CategoryBadge category={amcat.category || "gamma"} />
                     </div>
 
@@ -188,6 +238,36 @@ export default function StudentDashboard() {
                                     />
                                 </div>
                                 <span className="text-xs text-slate-300 w-8 text-right">{section.score}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {leaderboardRows.length > 0 && (
+                <div className="bg-slate-900/60 rounded-2xl border border-white/5 p-6">
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 className="font-bold text-white">AMCAT Leaderboard Snapshot</h3>
+                            {leaderboardSessionName && (
+                                <p className="text-xs text-slate-400 mt-1">{leaderboardSessionName}</p>
+                            )}
+                        </div>
+                        <Link href="/student/leaderboard" className="text-sm text-indigo-300 hover:text-indigo-200 font-semibold">
+                            Open Full Leaderboard
+                        </Link>
+                    </div>
+
+                    <div className="space-y-2">
+                        {leaderboardRows.map((row) => (
+                            <div key={`${row.rank}-${row.name}`} className="flex items-center gap-3 rounded-xl border border-white/5 bg-slate-950/40 px-3 py-2.5">
+                                <span className="w-12 text-sm font-bold text-white">#{row.rank}</span>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-semibold text-slate-100 truncate">{row.name}</p>
+                                    <p className="text-xs text-slate-500">{row.branch || "Branch N/A"}</p>
+                                </div>
+                                <span className="w-12 text-right text-sm font-semibold text-slate-200">{row.score}</span>
+                                <CategoryBadge category={row.category} />
                             </div>
                         ))}
                     </div>

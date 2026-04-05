@@ -131,6 +131,9 @@ export default function AdminAmcatPage() {
   const [resultsLoading, setResultsLoading] = useState(false);
   const [resultsPage, setResultsPage] = useState(1);
   const [resultsTotal, setResultsTotal] = useState(0);
+  const [leaderboardPreview, setLeaderboardPreview] = useState<ResultRow[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
   const pageSize = 50;
 
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -246,6 +249,24 @@ export default function AdminAmcatPage() {
     }
   }
 
+  async function fetchLeaderboardPreview(sessionId: string) {
+    setLeaderboardLoading(true);
+    setLeaderboardError(null);
+    try {
+      const res = await fetch(`/api/admin/amcat/${sessionId}?page=1`);
+      const data = await safeReadJson(res);
+      if (!res.ok) throw new Error(getApiError(data, "Failed to load leaderboard preview"));
+
+      const rows = Array.isArray(data.results) ? (data.results as ResultRow[]) : [];
+      setLeaderboardPreview(rows.slice(0, 10));
+    } catch (error) {
+      setLeaderboardPreview([]);
+      setLeaderboardError(error instanceof Error ? error.message : "Failed to load leaderboard preview");
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  }
+
   useEffect(() => {
     fetchSessions();
   }, []);
@@ -254,6 +275,15 @@ export default function AdminAmcatPage() {
     if (!selectedSessionId) return;
     fetchSessionResults(selectedSessionId, resultsPage);
   }, [selectedSessionId, resultsPage, categoryFilter]);
+
+  useEffect(() => {
+    if (!selectedSessionId) {
+      setLeaderboardPreview([]);
+      setLeaderboardError(null);
+      return;
+    }
+    fetchLeaderboardPreview(selectedSessionId);
+  }, [selectedSessionId]);
 
   async function handleUpload() {
     if (!uploadFile || !sessionName.trim()) {
@@ -335,6 +365,7 @@ export default function AdminAmcatPage() {
       );
       await fetchSessions();
       await fetchSessionResults(selectedSessionId, resultsPage);
+      await fetchLeaderboardPreview(selectedSessionId);
     } catch (error) {
       setFeedbackError(error instanceof Error ? error.message : "Recalculate failed");
     } finally {
@@ -362,6 +393,7 @@ export default function AdminAmcatPage() {
 
       await fetchSessionResults(selectedSessionId, resultsPage);
       await fetchSessions();
+      await fetchLeaderboardPreview(selectedSessionId);
       setFeedbackSuccess("Category override updated");
       setOverrideOpen(false);
       setPendingOverride(null);
@@ -388,6 +420,7 @@ export default function AdminAmcatPage() {
       setPublishOpen(false);
       await fetchSessions();
       await fetchSessionResults(selectedSessionId, resultsPage);
+      await fetchLeaderboardPreview(selectedSessionId);
     } catch (error) {
       setFeedbackError(error instanceof Error ? error.message : "Publish failed");
     } finally {
@@ -413,6 +446,8 @@ export default function AdminAmcatPage() {
       setResults([]);
       setResultsTotal(0);
       setResultsPage(1);
+      setLeaderboardPreview([]);
+      setLeaderboardError(null);
       setSummary({ linked: 0, unmatched: 0, overridden: 0 });
       setDeleteAllOpen(false);
       setFeedbackSuccess(`Deleted ${deletedCount} AMCAT session(s)`);
@@ -567,6 +602,51 @@ export default function AdminAmcatPage() {
                 </Button>
               </div>
             </CardHeader>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Leaderboard Preview</CardTitle>
+              <CardDescription>Top 10 performers from the selected session</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!selectedSessionId ? (
+                <p className="text-sm text-muted-foreground">Select a session to view leaderboard preview.</p>
+              ) : leaderboardLoading ? (
+                <p className="text-sm text-muted-foreground">Loading leaderboard preview...</p>
+              ) : leaderboardError ? (
+                <p className="text-sm text-rose-600">{leaderboardError}</p>
+              ) : leaderboardPreview.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No ranked students found for this session.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Rank</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Branch</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Category</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {leaderboardPreview.map((row) => (
+                      <TableRow key={`preview-${row.id}`}>
+                        <TableCell>#{row.rank_in_session}</TableCell>
+                        <TableCell>{row.full_name}</TableCell>
+                        <TableCell>{row.branch || "-"}</TableCell>
+                        <TableCell>{row.computed_total}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={categoryClass(row.final_category)}>
+                            {row.final_category}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
           </Card>
 
           <Card>
