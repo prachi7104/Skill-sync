@@ -9,6 +9,37 @@ import { sql } from "drizzle-orm";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+function parseCsvLine(line: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === "," && !inQuotes) {
+      result.push(current.trim());
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  result.push(current.trim());
+  return result;
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== "admin") {
@@ -27,8 +58,7 @@ export async function POST(req: NextRequest) {
   const lines = text.split(/\r?\n/).filter((line) => line.trim());
   if (lines.length < 2) return NextResponse.json({ error: "Empty CSV" }, { status: 400 });
 
-  const headers = lines[0]
-    .split(",")
+  const headers = parseCsvLine(lines[0])
     .map((header) => header.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_"));
 
   const getCol = (row: string[], name: string) => {
@@ -41,7 +71,7 @@ export async function POST(req: NextRequest) {
   let errors = 0;
 
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(",").map((col) => col.trim());
+    const cols = parseCsvLine(lines[i]);
     const sapId = getCol(cols, "sap_id");
     const name = getCol(cols, "name") || getCol(cols, "full_name");
     const email = getCol(cols, "email")?.toLowerCase();

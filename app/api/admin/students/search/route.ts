@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
 import { students, users } from "@/lib/db/schema";
-import { eq, and, ilike, or } from "drizzle-orm";
+import { eq, and, ilike, or, count } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -60,17 +60,21 @@ export async function GET(req: NextRequest) {
 
     // Batch year filter
     if (batchYear && batchYear !== "all") {
-      whereConditions.push(eq(students.batchYear, parseInt(batchYear, 10)));
+      const parsedBatchYear = Number(batchYear);
+      if (!Number.isInteger(parsedBatchYear)) {
+        return NextResponse.json({ error: "Invalid batchYear" }, { status: 400 });
+      }
+      whereConditions.push(eq(students.batchYear, parsedBatchYear));
     }
 
-    // Get total count
-    const countResult = await db
-      .select({ count: students.id })
+    const whereClause = whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions);
+
+    // Get total count (constant-size aggregate, not O(n) row load)
+    const [{ total }] = await db
+      .select({ total: count() })
       .from(students)
       .innerJoin(users, eq(students.id, users.id))
-      .where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions));
-
-    const total = countResult.length;
+      .where(whereClause);
 
     // Get paginated results
     const offset = (page - 1) * 20;
@@ -106,7 +110,7 @@ export async function GET(req: NextRequest) {
       })
       .from(students)
       .innerJoin(users, eq(students.id, users.id))
-      .where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions))
+      .where(whereClause)
       .orderBy(users.name)
       .limit(20)
       .offset(offset);
@@ -118,7 +122,7 @@ export async function GET(req: NextRequest) {
           hasEmbedding: r.embedding !== null,
           embedding: undefined, // Don't return the vector to client
         })),
-        total,
+        total: Number(total ?? 0),
         page,
       },
       { status: 200 }
