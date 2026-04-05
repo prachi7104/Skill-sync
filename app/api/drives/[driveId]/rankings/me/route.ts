@@ -63,6 +63,7 @@ export async function GET(
         id: drives.id,
         company: drives.company,
         roleTitle: drives.roleTitle,
+        collegeId: drives.collegeId,
       })
       .from(drives)
       .where(eq(drives.id, driveId))
@@ -72,6 +73,13 @@ export async function GET(
       return NextResponse.json(
         { error: "Drive not found" },
         { status: 404 },
+      );
+    }
+
+    if (!user.collegeId || drive.collegeId !== user.collegeId) {
+      return NextResponse.json(
+        { error: "Forbidden" },
+        { status: 403 },
       );
     }
 

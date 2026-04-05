@@ -12,8 +12,8 @@ cloudinary.config({
 });
 
 export async function GET() {
-  await requireRole(["admin"]);
   try {
+    await requireRole(["admin"]);
     const result = await cloudinary.api.ping();
     return NextResponse.json({ status: "ok", result });
   } catch (error: any) {

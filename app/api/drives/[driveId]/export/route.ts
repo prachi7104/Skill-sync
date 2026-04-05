@@ -4,6 +4,18 @@ import { db } from "@/lib/db";
 import { drives, rankings, students, users } from "@/lib/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 
+function sanitizeCsvCell(value: string): string {
+    const trimmed = value.trimStart();
+    if (!trimmed) return value;
+
+    const firstChar = trimmed.charAt(0);
+    if (firstChar === "=" || firstChar === "+" || firstChar === "-" || firstChar === "@") {
+        return `'${value}`;
+    }
+
+    return value;
+}
+
 export async function GET(
     req: Request,
     { params }: { params: { driveId: string } }
@@ -85,7 +97,10 @@ export async function GET(
             (r.missingSkills as string[]).join("|"),
             r.shortlisted === true ? "Yes" : r.shortlisted === false ? "No" : "",
         ]
-            .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+            .map((v) => {
+                const safe = sanitizeCsvCell(String(v));
+                return `"${safe.replace(/"/g, '""')}"`;
+            })
             .join(",")
     );
 
