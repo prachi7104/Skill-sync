@@ -153,7 +153,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
             const response = await fetch("/api/student/profile/merge", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mode: "merge" }),
+                body: JSON.stringify({ mode: "replace" }),
             });
 
             const payload = await response.json().catch(() => ({}));
@@ -161,7 +161,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                 throw new Error(payload?.message || "Failed to sync profile from resume");
             }
 
-            toast.success("Profile updated from your latest resume.");
+            toast.success("Profile replaced with your latest resume details.");
             router.refresh();
         } catch (error) {
             const message = error instanceof Error ? error.message : "Failed to sync profile from resume";
