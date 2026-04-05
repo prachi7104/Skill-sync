@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
       categoryLabels: Object.fromEntries(resources.map((resource) => [resource.category as string, formatCategoryLabel(String(resource.category))])),
     });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "Failed to load resources" }, { status: 500 });
   }
 }
@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, id: resource.id }, { status: 201 });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Validation failed", details: error.flatten().fieldErrors }, { status: 400 });
     }

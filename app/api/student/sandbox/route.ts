@@ -194,38 +194,22 @@ export async function POST(req: NextRequest) {
 
     const role = authUser.role;
 
+    if (role !== "student") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let profile: any = null;
-    if (role === "student") {
-      const [studentRow] = await db
-        .select()
-        .from(students)
-        .where(eq(students.id, authUser.id))
-        .limit(1);
+    const [studentRow] = await db
+      .select()
+      .from(students)
+      .where(eq(students.id, authUser.id))
+      .limit(1);
 
-      if (!studentRow) {
-        return NextResponse.json({ message: "Student profile not found" }, { status: 404 });
-      }
-      profile = studentRow;
-    } else {
-      // Faculty/admin can run JD sandbox without student embedding context.
-      profile = {
-        id: authUser.id,
-        skills: [],
-        projects: [],
-        workExperience: [],
-        certifications: [],
-        embedding: null,
-        cgpa: null,
-        branch: null,
-        batchYear: null,
-        category: null,
-        sandboxUsageToday: 0,
-        sandboxUsageMonth: 0,
-        sandboxResetDate: null,
-        sandboxMonthResetDate: null,
-      };
+    if (!studentRow) {
+      return NextResponse.json({ message: "Student profile not found" }, { status: 404 });
     }
+    profile = studentRow;
 
     // Fix: If embedding is missing or all-zeros (e.g. from legacy profile or failed job), generate it now
     if (role === "student" && !isValidEmbedding(profile.embedding as number[])) {
@@ -469,7 +453,7 @@ export async function POST(req: NextRequest) {
     });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     // Handle guardrail violations with proper status codes
     if (error instanceof GuardrailViolation) {
       return NextResponse.json(error.toJSON(), { status: error.status });

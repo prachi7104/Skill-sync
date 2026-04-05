@@ -91,7 +91,7 @@ export async function GET(
       withEmbedding,
     });
   } catch (error: unknown) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const message = error instanceof Error ? error.message : "Internal server error";
     if (message.includes("Unauthorized") || message.includes("Forbidden")) {
       return NextResponse.json({ error: message }, { status: 403 });

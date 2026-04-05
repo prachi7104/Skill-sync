@@ -113,7 +113,7 @@ export async function GET(
       summary,
     });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     console.error("[GET /api/admin/amcat/[sessionId]]", error);
     return NextResponse.json({ error: "Failed to load AMCAT session details" }, { status: 500 });
   }
@@ -185,7 +185,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     console.error("[PUT /api/admin/amcat/[sessionId]]", error);
     return NextResponse.json({ error: "Failed to update AMCAT result" }, { status: 500 });
   }

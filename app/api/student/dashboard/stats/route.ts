@@ -68,7 +68,7 @@ export async function GET() {
         });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-        if (isRedirectError(error)) throw error;
+        if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         if (error instanceof Error && (error.message.includes("Unauthorized") || error.message.includes("Forbidden"))) {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }

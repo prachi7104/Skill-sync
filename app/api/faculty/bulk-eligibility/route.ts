@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
       ineligibleStudents: Math.max(pool.length - eligible.length, 0),
     });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ message: "Failed to compute eligibility" }, { status: 500 });
   }
 }

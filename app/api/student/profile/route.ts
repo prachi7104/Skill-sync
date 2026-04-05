@@ -61,7 +61,7 @@ export async function GET() {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-        if (isRedirectError(error)) throw error;
+        if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         console.error("[API] Error in /api/student/profile:", error);
         return NextResponse.json({
             success: false,
@@ -231,7 +231,7 @@ export async function PATCH(req: NextRequest) {
         );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-        if (isRedirectError(error)) throw error;
+        if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         if (error instanceof z.ZodError) {
             return NextResponse.json(
                 { success: false, error: "Validation failed", errors: error.errors },

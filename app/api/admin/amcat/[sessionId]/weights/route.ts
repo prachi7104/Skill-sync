@@ -162,7 +162,7 @@ export async function POST(
       message: `Recomputed ${results.length} results`,
     });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     console.error("[POST /api/admin/amcat/[sessionId]/weights]", error);
     return NextResponse.json({ error: "Failed to recompute AMCAT session" }, { status: 500 });
   }

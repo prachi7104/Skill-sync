@@ -144,7 +144,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (err: any) {
-    if (isRedirectError(err)) throw err;
+    if (isRedirectError(err)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     console.error("[GET /api/admin/health]", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

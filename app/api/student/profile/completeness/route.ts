@@ -42,7 +42,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ success: false, error: "Failed to compute completeness" }, { status: 500 });
   }
 }

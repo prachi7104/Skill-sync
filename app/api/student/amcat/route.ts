@@ -54,7 +54,7 @@ export async function GET() {
 
     return NextResponse.json({ hasAmcat: true, ...result });
   } catch (error: unknown) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ hasAmcat: false, error: "Unable to fetch AMCAT data" }, { status: 500 });
   }
 }

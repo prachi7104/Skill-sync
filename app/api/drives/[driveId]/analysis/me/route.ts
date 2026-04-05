@@ -96,7 +96,7 @@ export async function GET(
       analysisGeneratedAt: row.analysisGeneratedAt,
     });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ message: "Failed to fetch analysis" }, { status: 500 });
   }
 }
@@ -164,7 +164,7 @@ export async function POST(
       analysisGeneratedAt: now.toISOString(),
     });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ message: "Failed to generate analysis" }, { status: 500 });
   }
 }

@@ -139,7 +139,7 @@ export async function POST(
     }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
-    if (isRedirectError(err)) throw err;
+    if (isRedirectError(err)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     console.error("[POST /api/drives/[driveId]/rank]", err);
 
     // Phase 5.5: Structured guardrail errors

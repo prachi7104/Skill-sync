@@ -123,7 +123,7 @@ export async function GET() {
 
     return NextResponse.json({ conflicts: conflicts.sort((a, b) => b.overlapPercent - a.overlapPercent) });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "Failed to detect conflicts" }, { status: 500 });
   }
 }

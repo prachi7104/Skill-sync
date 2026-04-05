@@ -53,7 +53,7 @@ export async function GET(
     return NextResponse.json({ status: drive.ranking_status });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
-    if (isRedirectError(err)) throw err;
+    if (isRedirectError(err)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     console.error("[GET /api/drives/[driveId]/rank/status]", err);
 
     const message = err?.message ?? "Internal server error";

@@ -35,7 +35,7 @@ export async function GET() {
 
     return NextResponse.json({ config: row ?? null });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ message: "Failed to fetch sandbox config" }, { status: 500 });
   }
 }
@@ -84,7 +84,7 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ config });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ message: "Failed to update sandbox config" }, { status: 500 });
   }
 }

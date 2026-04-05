@@ -83,7 +83,7 @@ export async function PATCH(
 
     return NextResponse.json({ season: updated });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ message: "Failed to update season" }, { status: 500 });
   }
 }
@@ -118,7 +118,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ message: "Failed to delete season" }, { status: 500 });
   }
 }

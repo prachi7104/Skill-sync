@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
       result: result.data,
     });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ message: "Faculty sandbox failed" }, { status: 500 });
   }
 }

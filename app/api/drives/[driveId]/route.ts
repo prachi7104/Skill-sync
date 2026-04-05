@@ -41,7 +41,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, deletedDriveId: driveId });
   } catch (err: any) {
-    if (isRedirectError(err)) throw err;
+    if (isRedirectError(err)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const message = err?.message ?? "Internal server error";
     if (message.includes("Unauthorized") || message.includes("Forbidden")) {
       return NextResponse.json({ error: message }, { status: 403 });
@@ -97,7 +97,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, drive: updated });
   } catch (err: any) {
-    if (isRedirectError(err)) throw err;
+    if (isRedirectError(err)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

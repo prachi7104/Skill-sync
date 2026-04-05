@@ -230,7 +230,7 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error) {
-        if (isRedirectError(error)) throw error;
+        if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         console.error("Merge failed:", error);
         return NextResponse.json(
             { message: "Internal server error during merge" },

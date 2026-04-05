@@ -86,7 +86,7 @@ export async function GET() {
         response.headers.set("Cache-Control", "private, no-store, max-age=0");
         return response;
     } catch (error) {
-        if (isRedirectError(error)) throw error;
+        if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         console.error("[Resume Download] Failed to generate signed URL:", error);
         return NextResponse.json(
             { error: "Failed to generate resume download link" },

@@ -173,7 +173,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ canSubmit, companies });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "Failed to load company experiences" }, { status: 500 });
   }
 }
@@ -269,7 +269,7 @@ Return ONLY valid JSON: {"score": 0.0-1.0, "flag": true/false, "reason": "brief 
 
     return NextResponse.json({ success: true, status, message });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "Failed to submit experience" }, { status: 500 });
   }
 }

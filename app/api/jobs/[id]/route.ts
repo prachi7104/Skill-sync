@@ -85,7 +85,7 @@ export async function GET(
             updatedAt: job.updatedAt,
         });
     } catch (error: unknown) {
-        if (isRedirectError(error)) throw error;
+        if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         console.error("[Jobs API] Failed to fetch job:", error);
         return NextResponse.json(
             { error: "Internal server error" },

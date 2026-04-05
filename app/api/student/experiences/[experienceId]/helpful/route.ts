@@ -51,7 +51,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, helpfulCount: updated?.helpful_count ?? 0, hasVoted: !existingVote });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "Failed to update helpful vote" }, { status: 500 });
   }
 }

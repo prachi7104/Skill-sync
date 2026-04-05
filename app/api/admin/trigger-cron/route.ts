@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const data = await res.json().catch(() => ({}));
     return NextResponse.json({ success: res.ok, status: res.status, data });
   } catch (err: any) {
-    if (isRedirectError(err)) throw err;
+    if (isRedirectError(err)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

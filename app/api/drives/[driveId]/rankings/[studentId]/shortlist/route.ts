@@ -58,7 +58,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, shortlisted });
   } catch (err: unknown) {
-    if (isRedirectError(err)) throw err;
+    if (isRedirectError(err)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     console.error("[shortlist] Error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

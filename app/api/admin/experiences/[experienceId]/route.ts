@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { experience
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "Failed to moderate experience" }, { status: 500 });
   }
 }

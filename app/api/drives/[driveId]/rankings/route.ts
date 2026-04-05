@@ -149,7 +149,7 @@ export async function GET(
     );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
-    if (isRedirectError(err)) throw err;
+    if (isRedirectError(err)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     console.error("[GET /api/drives/[driveId]/rankings]", err);
 
     const message = err?.message ?? "Internal server error";

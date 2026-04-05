@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ experiences });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "Failed to load moderation queue" }, { status: 500 });
   }
 }
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "Failed to create admin experience" }, { status: 500 });
   }
 }

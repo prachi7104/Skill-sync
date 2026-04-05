@@ -39,7 +39,7 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json({ experiences });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "Failed to load faculty experiences" }, { status: 500 });
   }
 }

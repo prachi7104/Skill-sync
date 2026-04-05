@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { students, users } from "@/lib/db/schema";
 
 type Role = "student" | "faculty" | "admin";
 
@@ -45,4 +45,21 @@ export async function requireApiRole(allowedRoles: Role[]) {
   }
 
   return user;
+}
+
+export async function requireApiAuth() {
+  return requireApiRole(["student", "faculty", "admin"]);
+}
+
+export async function requireApiStudentProfile() {
+  const user = await requireApiRole(["student"]);
+  const profile = await db.query.students.findFirst({
+    where: eq(students.id, user.id),
+  });
+
+  if (!profile) {
+    throw new ApiAuthError("Student profile not found", 404);
+  }
+
+  return { user, profile };
 }

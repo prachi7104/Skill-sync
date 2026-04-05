@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ message: "Admin sandbox failed" }, { status: 500 });
   }
 }

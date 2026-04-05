@@ -30,7 +30,7 @@ export async function GET() {
 
     return NextResponse.json({ seasons: rows });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ message: "Failed to load seasons" }, { status: 500 });
   }
 }

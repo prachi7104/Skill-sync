@@ -85,7 +85,7 @@ export async function POST(
       message: `Published. ${updated} student categories updated in SkillSync.`,
     });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     console.error("[POST /api/admin/amcat/[sessionId]/publish]", error);
     return NextResponse.json({ error: "Failed to publish AMCAT session" }, { status: 500 });
   }

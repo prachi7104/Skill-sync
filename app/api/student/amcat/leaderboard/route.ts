@@ -166,7 +166,7 @@ export async function GET(req: NextRequest) {
       isInTop50: myRank ? Number(myRank.rank) <= 50 : false,
     });
   } catch (error: unknown) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ hasData: false, error: "Unable to fetch leaderboard" }, { status: 500 });
   }
 }

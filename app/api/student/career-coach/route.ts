@@ -161,7 +161,7 @@ Return ONLY valid JSON:
 
     return NextResponse.json(response);
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "Failed to build career coach" }, { status: 500 });
   }
 }
@@ -233,7 +233,7 @@ Guidelines:
 
     return NextResponse.json({ reply, role: "assistant" });
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "Failed to get career advice" }, { status: 500 });
   }
 }
