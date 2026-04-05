@@ -1,27 +1,36 @@
 // All CSE specializations — selecting "CSE" includes all of these
 export const CSE_VARIANTS = [
     "CSE",
-    "CSE-AIML",
-    "CSE-DS",
-    "CSE-CCVT",
-    "CSE-Cyber",
-    "CSE-Blockchain",
-    "CSE-Fullstack",
-    "CSE-IoT",
-    "CSE-GG",
+    "AIML",
+    "Data Science",
+    "CCVT",
+    "CSF",
+    "Blockchain",
+    "Full Stack",
+    "IoT",
+    "GG",
 ] as const;
 
+// Keep legacy aliases so older CSE-* values still normalize to short names.
 export const BRANCH_NORMALIZE_MAP: Record<string, string> = {
-    "aiml": "CSE-AIML",
-    "data science": "CSE-DS",
-    "ccvt": "CSE-CCVT",
-    "devops": "CSE-CCVT",
-    "full stack": "CSE-Fullstack",
-    "fullstack": "CSE-Fullstack",
-    "iot": "CSE-IoT",
-    "csf": "CSE-Cyber",
-    "bigdata": "CSE-DS",
-    "gg": "CSE-GG",
+    "cse-aiml": "AIML",
+    "cse-ds": "Data Science",
+    "cse-ccvt": "CCVT",
+    "cse-cyber": "CSF",
+    "cse-blockchain": "Blockchain",
+    "cse-fullstack": "Full Stack",
+    "cse-iot": "IoT",
+    "cse-gg": "GG",
+    "aiml": "AIML",
+    "data science": "Data Science",
+    "ccvt": "CCVT",
+    "devops": "CCVT",
+    "full stack": "Full Stack",
+    "fullstack": "Full Stack",
+    "iot": "IoT",
+    "csf": "CSF",
+    "bigdata": "Data Science",
+    "gg": "GG",
 };
 
 export function normalizeBranch(branch: string): string {
@@ -29,12 +38,12 @@ export function normalizeBranch(branch: string): string {
 }
 
 /**
- * Expands a list of eligible branches to include all sub-branches.
- * If "CSE" is in the list -> also includes CSE-AIML, CSE-DS, etc.
+ * Expands a list of eligible branches to include all CSE sub-branches.
+ * If "CSE" is in the list -> also includes AIML, Data Science, etc.
  * Used in drive eligibility checks and ranking filters.
  */
 export function expandBranches(branches: string[]): string[] {
-    const expanded = new Set(branches);
+    const expanded = new Set(branches.map((branch) => normalizeBranch(branch)));
     if (expanded.has("CSE")) {
         CSE_VARIANTS.forEach((v) => expanded.add(v));
     }
@@ -42,16 +51,14 @@ export function expandBranches(branches: string[]): string[] {
 }
 
 export const UPES_BRANCHES = [
-    // All CSE Specializations
-    { value: "CSE-AIML", label: "AIML" },
-    { value: "CSE-DS", label: "Data Science" },
-    { value: "CSE-CCVT", label: "CCVT" },
-    { value: "CSE-Cyber", label: "Cyber Security (CSF)" },
-    { value: "CSE-Blockchain", label: "Blockchain" },
-    { value: "CSE-Fullstack", label: "Full Stack" },
-    { value: "CSE-IoT", label: "IoT" },
-    { value: "CSE-GG", label: "GG" },
-    // Other departments
+    { value: "AIML", label: "AIML" },
+    { value: "Data Science", label: "Data Science" },
+    { value: "CCVT", label: "CCVT" },
+    { value: "CSF", label: "Cyber Security (CSF)" },
+    { value: "Blockchain", label: "Blockchain" },
+    { value: "Full Stack", label: "Full Stack" },
+    { value: "IoT", label: "IoT" },
+    { value: "GG", label: "GG" },
     { value: "IT", label: "IT" },
     { value: "ECE", label: "ECE" },
     { value: "EEE", label: "EEE" },

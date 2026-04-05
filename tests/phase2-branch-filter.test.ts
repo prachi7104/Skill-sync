@@ -5,19 +5,20 @@ describe("Phase 2 — Branch Filter Fix", () => {
     it("T1: CSE expands to include all CSE specializations", () => {
         const expanded = expandBranches(["CSE"]);
         expect(expanded).toContain("CSE");
-        expect(expanded).toContain("CSE-AIML");
-        expect(expanded).toContain("CSE-DS");
-        expect(expanded).toContain("CSE-Cyber");
-        expect(expanded).toContain("CSE-Blockchain");
-        expect(expanded).toContain("CSE-Fullstack");
-        expect(expanded).toContain("CSE-IoT");
-        expect(expanded).toContain("CSE-CCVT");
+        expect(expanded).toContain("AIML");
+        expect(expanded).toContain("Data Science");
+        expect(expanded).toContain("CSF");
+        expect(expanded).toContain("Blockchain");
+        expect(expanded).toContain("Full Stack");
+        expect(expanded).toContain("IoT");
+        expect(expanded).toContain("CCVT");
+        expect(expanded).toContain("GG");
     });
 
-    it("T2: CSE-AIML does NOT expand to other CSE branches", () => {
-        const expanded = expandBranches(["CSE-AIML"]);
-        expect(expanded).toContain("CSE-AIML");
-        expect(expanded).not.toContain("CSE-DS");
+    it("T2: AIML does NOT expand to other CSE branches", () => {
+        const expanded = expandBranches(["AIML"]);
+        expect(expanded).toContain("AIML");
+        expect(expanded).not.toContain("Data Science");
         expect(expanded).not.toContain("CSE"); // No generic CSE added
         expect(expanded).toHaveLength(1);
     });
@@ -31,7 +32,7 @@ describe("Phase 2 — Branch Filter Fix", () => {
 
     it("T4: AIML student is eligible for CSE drive", () => {
         const eligibleBranches = ["CSE"];
-        const studentBranch = "CSE-AIML";
+        const studentBranch = "AIML";
         const expanded = expandBranches(eligibleBranches);
         const isEligible = expanded.some((b) => b.toLowerCase() === studentBranch.toLowerCase());
         expect(isEligible).toBe(true);
@@ -47,7 +48,7 @@ describe("Phase 2 — Branch Filter Fix", () => {
 
     it("T6: mixed drive [CSE, IT] includes all CSE variants + IT", () => {
         const expanded = expandBranches(["CSE", "IT"]);
-        expect(expanded).toContain("CSE-AIML");
+        expect(expanded).toContain("AIML");
         expect(expanded).toContain("IT");
         expect(expanded).not.toContain("ECE");
     });
