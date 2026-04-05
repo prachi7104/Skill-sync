@@ -2,6 +2,8 @@
 
 import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, BookOpen, MessageSquare, RefreshCw, Sparkles, Target } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -286,7 +288,15 @@ export default function CareerCoachPage() {
                         : "border border-white/10 bg-slate-800 text-slate-100",
                     ].join(" ")}
                   >
-                    {message.content}
+                    {message.role === "assistant" ? (
+                      <div className="break-words [&_a]:text-indigo-300 [&_a]:underline [&_a]:underline-offset-2 [&_code]:rounded [&_code]:bg-slate-900/80 [&_code]:px-1 [&_code]:py-0.5 [&_h1]:mb-2 [&_h1]:text-base [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_p]:whitespace-pre-wrap [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      message.content
+                    )}
                   </div>
                 </div>
               ))}
