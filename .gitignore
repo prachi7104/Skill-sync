@@ -55,6 +55,11 @@ Thumbs.db
 dev.err
 dev.out
 tsc_output.txt
+*-out.txt
+*_output*.txt
+all_tsx_files.txt
+clean.js
+debug_amcat.ts
 
 # database
 /drizzle/

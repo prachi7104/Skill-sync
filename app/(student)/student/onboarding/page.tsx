@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TagInput } from "@/components/ui/tag-input";
 import { useStudent } from "@/app/(student)/providers/student-provider";
 import { cn } from "@/lib/utils";
+import { UPES_BRANCHES, normalizeBranch } from "@/lib/constants/branches";
 import { extractTextFromResume, cleanResumeText } from "@/lib/resume/text-extractor";
 
 type StepKey = "identity" | "academics" | "skills" | "projects" | "experience" | "extras";
@@ -191,6 +192,13 @@ function toFormFromStudent(student: Record<string, unknown> | null): ProfileForm
     (student.codingProfiles as Array<{ platform: string; username?: string; url?: string }> | null) ?? [];
   const research =
     (student.researchPapers as Array<{ title: string; journal?: string; year?: string; url?: string }> | null) ?? [];
+  const branchRaw = (student.branch as string | null) ?? "";
+  const normalizedBranch = branchRaw ? normalizeBranch(branchRaw) : "";
+  const branchForForm = normalizedBranch
+    ? UPES_BRANCHES.some((option) => option.value === normalizedBranch)
+      ? normalizedBranch
+      : "Other"
+    : "";
 
   return {
     sapId: (student.sapId as string) ?? "",
@@ -199,7 +207,7 @@ function toFormFromStudent(student: Record<string, unknown> | null): ProfileForm
     linkedin: (student.linkedin as string) ?? "",
     portfolio: "",
     cgpa: student.cgpa != null ? String(student.cgpa) : "",
-    branch: (student.branch as string) ?? "",
+    branch: branchForForm,
     batchYear: student.batchYear != null ? String(student.batchYear) : "",
     semester: student.semester != null ? String(student.semester) : "",
     tenthPercentage: student.tenthPercentage != null ? String(student.tenthPercentage) : "",
@@ -323,19 +331,6 @@ function isStepComplete(step: StepDef, form: ProfileForm): boolean {
     return val != null;
   });
 }
-
-const BRANCHES = [
-  "AIML",
-  "CSF",
-  "Data Science",
-  "DevOps",
-  "Full Stack",
-  "CCVT",
-  "GG",
-  "IoT",
-  "Bigdata",
-  "Other",
-];
 
 const CURRENT_YEAR = new Date().getFullYear();
 const BATCH_YEARS = [CURRENT_YEAR, CURRENT_YEAR + 1, CURRENT_YEAR + 2, CURRENT_YEAR + 3];
@@ -1216,11 +1211,12 @@ function AcademicsStep({
             className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
           >
             <option value="">Select branch</option>
-            {BRANCHES.map((b) => (
-              <option key={b} value={b}>
-                {b}
+            {UPES_BRANCHES.map((branchOption) => (
+              <option key={branchOption.value} value={branchOption.value}>
+                {branchOption.label}
               </option>
             ))}
+            <option value="Other">Other</option>
           </select>
         </FormField>
 

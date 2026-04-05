@@ -54,9 +54,67 @@ export async function GET() {
       ex(sql`SELECT count(*)::int as count FROM students WHERE college_id = ${user.collegeId} AND embedding IS NOT NULL`),
       ex(sql`SELECT count(*)::int as count FROM drives WHERE college_id = ${user.collegeId}`),
       ex(sql`SELECT count(*)::int as count FROM drives WHERE college_id = ${user.collegeId} AND ranking_status = 'completed'`),
-      ex(sql`SELECT count(*)::int as count FROM jobs WHERE status = 'pending'::job_status`),
-      ex(sql`SELECT count(*)::int as count FROM jobs WHERE status = 'failed'::job_status`),
-      ex(sql`SELECT count(*)::int as count FROM jobs WHERE status = 'completed'::job_status AND updated_at > NOW() - INTERVAL '24 hours'`),
+      ex(sql`
+        SELECT count(*)::int as count
+        FROM jobs j
+        LEFT JOIN drives d ON (
+          CASE
+            WHEN (j.payload->>'driveId') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            THEN (j.payload->>'driveId')::uuid
+            ELSE NULL
+          END
+        ) = d.id
+        LEFT JOIN students s ON (
+          CASE
+            WHEN (j.payload->>'studentId') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            THEN (j.payload->>'studentId')::uuid
+            ELSE NULL
+          END
+        ) = s.id
+        WHERE j.status = 'pending'::job_status
+          AND (d.college_id = ${user.collegeId} OR s.college_id = ${user.collegeId})
+      `),
+      ex(sql`
+        SELECT count(*)::int as count
+        FROM jobs j
+        LEFT JOIN drives d ON (
+          CASE
+            WHEN (j.payload->>'driveId') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            THEN (j.payload->>'driveId')::uuid
+            ELSE NULL
+          END
+        ) = d.id
+        LEFT JOIN students s ON (
+          CASE
+            WHEN (j.payload->>'studentId') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            THEN (j.payload->>'studentId')::uuid
+            ELSE NULL
+          END
+        ) = s.id
+        WHERE j.status = 'failed'::job_status
+          AND (d.college_id = ${user.collegeId} OR s.college_id = ${user.collegeId})
+      `),
+      ex(sql`
+        SELECT count(*)::int as count
+        FROM jobs j
+        LEFT JOIN drives d ON (
+          CASE
+            WHEN (j.payload->>'driveId') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            THEN (j.payload->>'driveId')::uuid
+            ELSE NULL
+          END
+        ) = d.id
+        LEFT JOIN students s ON (
+          CASE
+            WHEN (j.payload->>'studentId') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            THEN (j.payload->>'studentId')::uuid
+            ELSE NULL
+          END
+        ) = s.id
+        WHERE j.status = 'completed'::job_status
+          AND j.updated_at > NOW() - INTERVAL '24 hours'
+          AND (d.college_id = ${user.collegeId} OR s.college_id = ${user.collegeId})
+      `),
       withTimeout(testRedis(), 3000),
     ]);
 

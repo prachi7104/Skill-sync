@@ -19,7 +19,8 @@ describe("Phase 4 Tenant Guard Contract", () => {
     const rankStatusSrc = read("app/api/drives/[driveId]/rank/status/route.ts");
     const shortlistSrc = read("app/api/drives/[driveId]/rankings/[studentId]/shortlist/route.ts");
 
-    expect(driveSrc).toContain("drive.collegeId !== user.collegeId");
+    expect(driveSrc).toContain("and(eq(drives.id, driveId), eq(drives.collegeId, user.collegeId))");
+    expect(driveSrc).toContain("Account not linked to a college");
     expect(exportSrc).toMatch(/drive\.college(Id|_id)\s*!==\s*user\.collegeId/);
     expect(rankStatusSrc).toMatch(/drive\.college(Id|_id)\s*!==\s*user\.collegeId/);
     expect(shortlistSrc).toMatch(/drive\.college(Id|_id)\s*!==\s*user\.collegeId/);

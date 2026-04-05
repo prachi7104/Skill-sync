@@ -64,10 +64,14 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid drive ID" }, { status: 400 });
     }
 
+    if (!user.collegeId) {
+      return NextResponse.json({ error: "Account not linked to a college" }, { status: 403 });
+    }
+
     const [drive] = await db
       .select({ id: drives.id, createdBy: drives.createdBy, collegeId: drives.collegeId })
       .from(drives)
-      .where(eq(drives.id, driveId))
+      .where(and(eq(drives.id, driveId), eq(drives.collegeId, user.collegeId)))
       .limit(1);
 
     if (!drive) {
@@ -76,15 +80,6 @@ export async function PATCH(
 
     if (user.role === "faculty" && drive.createdBy !== user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    if (user.role === "admin") {
-      if (!user.collegeId) {
-        return NextResponse.json({ error: "Admin account not linked to a college" }, { status: 403 });
-      }
-      if (drive.collegeId !== user.collegeId) {
-        return NextResponse.json({ error: "Drive not found" }, { status: 404 });
-      }
     }
 
     const body = await req.json() as { isActive?: boolean; deadline?: string | null };

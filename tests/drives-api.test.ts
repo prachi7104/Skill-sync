@@ -22,7 +22,7 @@ const createDriveSchema = z.object({
     location: z.string().max(255).optional().nullable(),
     packageOffered: z.string().max(100).optional().nullable(),
     rawJd: z.string()
-        .min(10, "Job description must be at least 10 characters")
+        .min(50, "Job description must be at least 50 characters")
         .max(50000, "Job description cannot exceed 50,000 characters"),
     minCgpa: z.number().min(0).max(10).optional().nullable(),
     eligibleBranches: z.array(z.string()).optional().nullable(),
@@ -82,7 +82,7 @@ describe("Drives API", () => {
             expect(result.success).toBe(true);
         });
 
-        it("should reject rawJd under 10 characters", () => {
+        it("should reject rawJd under 50 characters", () => {
             const data = { company: "Test", roleTitle: "SE", rawJd: "too short" };
             const result = createDriveSchema.safeParse(data);
             expect(result.success).toBe(false);
@@ -107,7 +107,10 @@ describe("Drives API", () => {
         });
 
         it("should reject missing company", () => {
-            const data = { roleTitle: "SE", rawJd: "long enough jd string here" };
+            const data = {
+                roleTitle: "SE",
+                rawJd: "This is a sufficiently long job description sample for validation.",
+            };
             const result = createDriveSchema.safeParse(data);
             expect(result.success).toBe(false);
             if (!result.success) {
@@ -117,7 +120,10 @@ describe("Drives API", () => {
         });
 
         it("should reject missing roleTitle", () => {
-            const data = { company: "Google", rawJd: "long enough jd string here" };
+            const data = {
+                company: "Google",
+                rawJd: "This is a sufficiently long job description sample for validation.",
+            };
             const result = createDriveSchema.safeParse(data);
             expect(result.success).toBe(false);
         });
@@ -126,7 +132,7 @@ describe("Drives API", () => {
             const data = {
                 company: "Google",
                 roleTitle: "SWE",
-                rawJd: "A full job description with enough characters",
+                rawJd: "A full job description with enough characters to satisfy the stricter minimum.",
                 minCgpa: 7.5,
                 eligibleBranches: ["CS", "IT"],
                 eligibleBatchYears: [2024, 2025],

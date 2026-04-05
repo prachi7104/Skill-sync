@@ -28,7 +28,7 @@ const createDriveSchema = z.object({
   roleTitle: z.string().min(1, "Role title is required").max(255),
   location: z.string().max(255).optional().nullable(),
   packageOffered: z.string().max(100).optional().nullable(),
-  rawJd: z.string().min(10, "Job description must be at least 10 characters"),
+  rawJd: z.string().min(50, "Job description must be at least 50 characters"),
   minCgpa: z.number().min(0).max(10).optional().nullable(),
   eligibleBranches: z.array(z.string()).optional().nullable(),
   eligibleBatchYears: z.array(z.number().int()).optional().nullable(),
@@ -205,7 +205,7 @@ describe("API Routes", () => {
       expect(result.success).toBe(false);
     });
 
-    it("should reject when rawJd is too short (< 10 chars)", () => {
+    it("should reject when rawJd is too short (< 50 chars)", () => {
       const result = createDriveSchema.safeParse({ ...validDrive, rawJd: "short" });
       expect(result.success).toBe(false);
       if (!result.success) {

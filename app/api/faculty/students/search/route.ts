@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { students, users } from "@/lib/db/schema";
 import { eq, and, ilike, or } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const user = await requireRole(["faculty", "admin"]);
