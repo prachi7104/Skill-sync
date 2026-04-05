@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
-import { jobs } from "@/lib/db/schema";
+import { jobs, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
@@ -17,6 +19,11 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> },
 ) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const { id } = await params;
 
         if (!id) {
@@ -37,12 +44,39 @@ export async function GET(
             );
         }
 
+        const currentUser = await db.query.users.findFirst({
+            where: eq(users.id, session.user.id),
+            columns: { role: true },
+        });
+
+        if (!currentUser) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const payload = (job.payload ?? {}) as Record<string, unknown>;
+        const payloadStudentId = typeof payload.studentId === "string" ? payload.studentId : null;
+
+        // Students can only read their own jobs.
+        if (currentUser.role === "student" && payloadStudentId !== session.user.id) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        // Faculty can only read student-scoped jobs in their own context. For now,
+        // restrict faculty to jobs tied to their own account.
+        if (currentUser.role === "faculty" && payloadStudentId !== session.user.id) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        const isSensitiveJob = job.type === "parse_resume";
+        const includeResult = !isSensitiveJob || currentUser.role === "admin";
+        const includeError = currentUser.role === "admin";
+
         return NextResponse.json({
             id: job.id,
             type: job.type,
             status: job.status,
-            result: job.status === "completed" ? job.result : null,
-            error: job.status === "failed" ? job.error : null,
+            result: job.status === "completed" && includeResult ? job.result : null,
+            error: job.status === "failed" && includeError ? job.error : null,
             retryCount: job.retryCount,
             maxRetries: job.maxRetries,
             modelUsed: job.modelUsed,

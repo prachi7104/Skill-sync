@@ -1,5 +1,7 @@
 
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { sql, eq } from "drizzle-orm";
@@ -7,6 +9,15 @@ import { sql, eq } from "drizzle-orm";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+    if (process.env.NODE_ENV === "production") {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id || session.user.role !== "admin") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const diagnostics: any = {
         connectivity: "pending",
@@ -91,8 +102,7 @@ export async function GET() {
         console.error("DB Diagnostic Error:", error);
         return NextResponse.json({
             status: "error",
-            message: error.message,
-            stack: error.stack,
+            message: "Diagnostic operation failed",
             ...diagnostics
         }, { status: 500 });
     }
