@@ -127,7 +127,13 @@ export async function enforceSandboxLimits(studentId: string, role = "student"):
   const monthlyUsed = student.sandboxMonthResetDate === month ? student.sandboxUsageMonth : 0;
 
   const session = await getCachedSession();
-  const collegeId = session?.user?.collegeId ?? "00000000-0000-0000-0000-000000000001";
+  const collegeId = session?.user?.collegeId;
+  if (!collegeId) throw new GuardrailViolation({
+    code: "MISSING_COLLEGE_CONTEXT",
+    reason: "No college context found for this account.",
+    nextStep: "Sign out and sign back in, or contact your administrator.",
+    status: 403,
+  });
   const limits = await getSandboxLimits(collegeId);
 
   const dailyLimit = role === "faculty" ? limits.faculty_daily_limit : limits.student_daily_limit;
@@ -215,7 +221,13 @@ export async function enforceDetailedAnalysisLimits(studentId: string, role = "s
   const monthlyUsed = student.detailedAnalysisMonthResetDate === month ? student.detailedAnalysisUsageMonth : 0;
 
   const session = await getCachedSession();
-  const collegeId = session?.user?.collegeId ?? "00000000-0000-0000-0000-000000000001";
+  const collegeId = session?.user?.collegeId;
+  if (!collegeId) throw new GuardrailViolation({
+    code: "MISSING_COLLEGE_CONTEXT",
+    reason: "No college context found for this account.",
+    nextStep: "Sign out and sign back in, or contact your administrator.",
+    status: 403,
+  });
   const limits = await getSandboxLimits(collegeId);
 
   const dailyLimit = role === "faculty" ? limits.faculty_detailed_daily : limits.student_detailed_daily;

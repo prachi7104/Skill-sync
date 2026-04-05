@@ -14,29 +14,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireStudentProfile } from "@/lib/auth/helpers";
 import { parseResumeWithAI, mapParsedResumeToProfile } from "@/lib/resume/ai-parser";
+import { redisRateLimit } from "@/lib/redis";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-// ── In-memory rate limiter ──────────────────────────────────────────────────
-const rateLimitMap = new Map<string, number[]>();
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const timestamps = (rateLimitMap.get(userId) || []).filter(
-    (t) => t > now - RATE_LIMIT_WINDOW_MS,
-  );
-  rateLimitMap.set(userId, timestamps);
-
-  if (timestamps.length >= RATE_LIMIT_MAX) return false;
-
-  timestamps.push(now);
-  rateLimitMap.set(userId, timestamps);
-  return true;
-}
 
 // ── Timeout wrapper ─────────────────────────────────────────────────────────
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -58,7 +42,21 @@ export async function POST(req: NextRequest) {
     const { user } = await requireStudentProfile();
 
     // Rate limit check
-    if (!checkRateLimit(user.id)) {
+    const rl = await redisRateLimit(
+      `resume_preview:${user.id}`,
+      RATE_LIMIT_MAX,
+      Math.floor(RATE_LIMIT_WINDOW_MS / 1000),
+      { failClosed: true },
+    );
+
+    if (!rl.allowed) {
+      if (rl.current === -1) {
+        return NextResponse.json(
+          { success: false, error: "Preview temporarily unavailable. Please try again shortly." },
+          { status: 503 },
+        );
+      }
+
       return NextResponse.json(
         { success: false, error: "Rate limit exceeded. Max 3 preview requests per hour." },
         { status: 429 },

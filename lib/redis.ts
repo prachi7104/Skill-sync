@@ -26,13 +26,15 @@ export function getRedis(): Redis | null {
 export async function redisRateLimit(
   key: string,
   limit: number,
-  windowSeconds: number = 60
+  windowSeconds: number = 60,
+  options?: { failClosed?: boolean }
 ): Promise<{ allowed: boolean; current: number; limit: number }> {
+  const failClosed = options?.failClosed === true;
   const redis = getRedis();
   if (!redis) {
     // No Redis configured — allow but log
     console.warn("[Redis] Not configured, skipping rate limit check for:", key);
-    return { allowed: true, current: 0, limit };
+    return failClosed ? { allowed: false, current: -1, limit } : { allowed: true, current: 0, limit };
   }
 
   try {
@@ -47,6 +49,6 @@ export async function redisRateLimit(
     return { allowed: current <= limit, current, limit };
   } catch (err) {
     console.error("[Redis] Rate limit check failed:", err);
-    return { allowed: true, current: 0, limit }; // Fail open
+    return failClosed ? { allowed: false, current: -1, limit } : { allowed: true, current: 0, limit };
   }
 }
