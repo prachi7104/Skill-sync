@@ -55,7 +55,8 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [isPollingParse, setIsPollingParse] = useState(false);
-    const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
+    const [parseChoiceDialogOpen, setParseChoiceDialogOpen] = useState(false);
+    const [pendingResumeFile, setPendingResumeFile] = useState<File | null>(null);
     const [isApplyingMerge, setIsApplyingMerge] = useState(false);
     const [softSkillInput, setSoftSkillInput] = useState("");
     const router = useRouter();
@@ -146,13 +147,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
         return "timeout";
     };
 
-    const applyResumeSync = async (shouldUpdateProfile: boolean) => {
-        if (!shouldUpdateProfile) {
-            setMergeDialogOpen(false);
-            toast.success("New master resume saved. Profile details were kept unchanged.");
-            return;
-        }
-
+    const applyResumeSync = async () => {
         setIsApplyingMerge(true);
         try {
             const response = await fetch("/api/student/profile/merge", {
@@ -167,13 +162,78 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
             }
 
             toast.success("Profile updated from your latest resume.");
-            setMergeDialogOpen(false);
             router.refresh();
         } catch (error) {
             const message = error instanceof Error ? error.message : "Failed to sync profile from resume";
             toast.error(message);
         } finally {
             setIsApplyingMerge(false);
+        }
+    };
+
+    const uploadResumeFile = async (file: File, shouldParseProfile: boolean) => {
+        setIsUploading(true);
+        setIsPollingParse(false);
+        setParseChoiceDialogOpen(false);
+        setPendingResumeFile(null);
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("source", "profile_update");
+            formData.append("parseProfile", shouldParseProfile ? "true" : "false");
+
+            try {
+                const extracted = await extractTextFromResume(file);
+                const cleaned = cleanResumeText(extracted);
+                if (cleaned.length >= 50) {
+                    formData.append("resumeText", cleaned);
+                }
+            } catch {
+                // Keep upload functional even if client-side extraction fails.
+            }
+
+            const response = await fetch("/api/student/resume", { method: "POST", body: formData });
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(payload?.error || payload?.message || "Upload failed");
+            }
+
+            router.refresh();
+
+            if (!shouldParseProfile) {
+                toast.success("New master resume saved. Profile details were kept unchanged.");
+                return;
+            }
+
+            toast.success("Resume uploaded. Parsing and updating your profile...");
+
+            const jobId = typeof payload?.data?.jobId === "string" ? payload.data.jobId : null;
+            if (!jobId) {
+                throw new Error("Parsing could not be started. Please try again.");
+            }
+
+            setIsPollingParse(true);
+            const status = await waitForParseJob(jobId);
+
+            if (status === "completed") {
+                await applyResumeSync();
+                return;
+            }
+
+            if (status === "failed") {
+                toast.error("Resume parsing failed. You can still keep the uploaded file.");
+                return;
+            }
+
+            toast.error("Parsing is taking longer than expected. Please try syncing in a moment.");
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Upload failed. Please try again.";
+            toast.error(message);
+        } finally {
+            setIsUploading(false);
+            setIsPollingParse(false);
         }
     };
 
@@ -199,64 +259,9 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
             return;
         }
 
-        setIsUploading(true);
-        setIsPollingParse(false);
-        setMergeDialogOpen(false);
-
-        try {
-            const formData = new FormData();
-            formData.append("file", file);
-            formData.append("source", "profile_update");
-
-            try {
-                const extracted = await extractTextFromResume(file);
-                const cleaned = cleanResumeText(extracted);
-                if (cleaned.length >= 50) {
-                    formData.append("resumeText", cleaned);
-                }
-            } catch {
-                // Keep upload functional even if client-side extraction fails.
-            }
-
-            const response = await fetch("/api/student/resume", { method: "POST", body: formData });
-            const payload = await response.json().catch(() => ({}));
-
-            if (!response.ok) {
-                throw new Error(payload?.error || payload?.message || "Upload failed");
-            }
-
-            toast.success("Resume uploaded. Parsing latest resume...");
-            router.refresh();
-
-            const jobId = typeof payload?.data?.jobId === "string" ? payload.data.jobId : null;
-            if (!jobId) {
-                toast.success("Resume uploaded successfully.");
-                return;
-            }
-
-            setIsPollingParse(true);
-            const status = await waitForParseJob(jobId);
-
-            if (status === "completed") {
-                setMergeDialogOpen(true);
-                toast.success("Resume parsed. Do you want to update your profile from this new resume?");
-                return;
-            }
-
-            if (status === "failed") {
-                toast.error("Resume parsing failed. You can still keep the uploaded file.");
-                return;
-            }
-
-            toast.error("Parsing is taking longer than expected. Please try syncing in a moment.");
-        } catch (error) {
-            const message = error instanceof Error ? error.message : "Upload failed. Please try again.";
-            toast.error(message);
-        } finally {
-            setIsUploading(false);
-            setIsPollingParse(false);
-            e.currentTarget.value = "";
-        }
+        setPendingResumeFile(file);
+        setParseChoiceDialogOpen(true);
+        e.currentTarget.value = "";
     };
 
     const inputClass = "bg-slate-950/50 border-slate-800 text-white rounded-xl focus:ring-indigo-500 w-full";
@@ -522,13 +527,15 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                                 disabled={isUploading || isPollingParse || isApplyingMerge}
                                                 className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
                                             >
-                                                {(isUploading || isPollingParse)
+                                                {(isUploading || isPollingParse || isApplyingMerge)
                                                     ? <Loader2 className="w-4 h-4 animate-spin" />
                                                     : <Upload className="w-4 h-4" />}
                                                 {isUploading
                                                     ? "Uploading..."
                                                     : isPollingParse
                                                         ? "Parsing..."
+                                                        : isApplyingMerge
+                                                            ? "Updating..."
                                                         : "Upload New"}
                                             </button>
                                         </div>
@@ -769,31 +776,45 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                 </div>
             </Form>
 
-            <Dialog open={mergeDialogOpen} onOpenChange={setMergeDialogOpen}>
+            <Dialog
+                open={parseChoiceDialogOpen}
+                onOpenChange={(open) => {
+                    setParseChoiceDialogOpen(open);
+                    if (!open && !isUploading && !isPollingParse && !isApplyingMerge) {
+                        setPendingResumeFile(null);
+                    }
+                }}
+            >
                 <DialogContent className="border border-white/10 bg-slate-900 text-white sm:max-w-xl">
                     <DialogHeader>
-                        <DialogTitle>Update Profile From New Resume?</DialogTitle>
+                        <DialogTitle>Update Profile From This Resume?</DialogTitle>
                         <DialogDescription className="text-slate-400">
-                            Your new master resume is saved. Do you want us to update your profile details from it now?
+                            Choose what should happen after upload. If you pick yes, we will parse and update your profile. If you pick no, we only save this as your new master resume.
                         </DialogDescription>
                     </DialogHeader>
 
                     <DialogFooter className="gap-2 sm:justify-between sm:space-x-0">
                         <button
                             type="button"
-                            onClick={() => void applyResumeSync(false)}
-                            disabled={isApplyingMerge}
+                            onClick={() => {
+                                if (!pendingResumeFile) return;
+                                void uploadResumeFile(pendingResumeFile, false);
+                            }}
+                            disabled={!pendingResumeFile || isUploading || isPollingParse || isApplyingMerge}
                             className="rounded-xl border border-white/10 bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
                         >
-                            No, Keep My Current Profile
+                            No, Save Resume Only
                         </button>
                         <button
                             type="button"
-                            onClick={() => void applyResumeSync(true)}
-                            disabled={isApplyingMerge}
+                            onClick={() => {
+                                if (!pendingResumeFile) return;
+                                void uploadResumeFile(pendingResumeFile, true);
+                            }}
+                            disabled={!pendingResumeFile || isUploading || isPollingParse || isApplyingMerge}
                             className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
                         >
-                            {isApplyingMerge ? "Updating..." : "Yes, Update My Profile"}
+                            Yes, Parse and Update Profile
                         </button>
                     </DialogFooter>
                 </DialogContent>

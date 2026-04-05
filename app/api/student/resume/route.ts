@@ -36,9 +36,6 @@ function extractCloudinaryPublicId(fileUrl: string): string | null {
     const segments = normalized.split("/").filter(Boolean);
     if (segments.length === 0) return null;
 
-    const fileName = segments[segments.length - 1];
-    segments[segments.length - 1] = fileName.replace(/\.[^/.]+$/, "");
-
     return segments.join("/");
 }
 
@@ -179,6 +176,8 @@ export async function POST(req: NextRequest) {
         // 5. Get client-extracted text
         const resumeText = formData.get("resumeText") as string | null;
         const source = (formData.get("source") as string | null)?.toString() || "";
+        const parseProfile =
+            (formData.get("parseProfile") as string | null)?.toLowerCase() === "true";
 
         // 6. Update DB — store URL and raw text immediately (fast response)
         await db
@@ -214,8 +213,9 @@ export async function POST(req: NextRequest) {
         let jobId: string | null = null;
         const shouldQueue =
             source === "onboarding" ||
-            source === "profile_update" ||
-            (profile.profileCompleteness ?? 0) < 80;
+            (source === "profile_update"
+                ? parseProfile
+                : (profile.profileCompleteness ?? 0) < 80);
 
         // If onboarding flow or not yet complete, enqueue a parse job so the server
         // can attempt server-side extraction when client-side text is missing.
