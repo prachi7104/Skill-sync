@@ -232,7 +232,8 @@ export async function POST(req: NextRequest) {
     WHERE id = ${sessionId}
   `);
 
-  const chunkSize = 100;
+  // Keep row expressions under PostgreSQL limits for wide multi-row VALUES inserts.
+  const chunkSize = 50;
   for (let i = 0; i < matchResults.length; i += chunkSize) {
     const chunk = matchResults.slice(i, i + chunkSize);
 
