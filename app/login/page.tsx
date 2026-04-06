@@ -36,6 +36,19 @@ function LoginForm() {
     }
   }, [errorType, router]);
 
+  const navigateToCallback = (targetUrl: string) => {
+    try {
+      const parsed = new URL(targetUrl, window.location.origin);
+      if (parsed.origin === window.location.origin) {
+        router.replace(`${parsed.pathname}${parsed.search}${parsed.hash}`);
+        return;
+      }
+      window.location.assign(parsed.toString());
+    } catch {
+      router.replace("/");
+    }
+  };
+
   const handleStudentLogin = async () => {
     setIsStudentLoading(true);
     setErrorMessage(null);
@@ -45,7 +58,7 @@ function LoginForm() {
         setErrorMessage(AUTH_ERRORS[result.error] ?? AUTH_ERRORS.Default);
         setIsStudentLoading(false);
       } else if (result?.url) {
-        window.location.href = result.url;
+        navigateToCallback(result.url);
       }
     } catch {
       setErrorMessage(AUTH_ERRORS.Default);
@@ -68,7 +81,7 @@ function LoginForm() {
         setErrorMessage(AUTH_ERRORS.CredentialsSignin);
         setIsStaffLoading(false);
       } else if (result?.url) {
-        window.location.href = result.url;
+        navigateToCallback(result.url);
       }
     } catch {
       setErrorMessage(AUTH_ERRORS.Default);

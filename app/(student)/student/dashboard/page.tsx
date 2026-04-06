@@ -57,6 +57,13 @@ export default function StudentDashboard() {
     const [amcat, setAmcat] = useState<AmcatData>({ hasAmcat: false });
     const [leaderboardRows, setLeaderboardRows] = useState<LeaderboardPreviewRow[]>([]);
     const [leaderboardSessionName, setLeaderboardSessionName] = useState<string>("");
+    const [statsLoading, setStatsLoading] = useState(false);
+    const [amcatLoading, setAmcatLoading] = useState(false);
+    const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+    const [statsError, setStatsError] = useState<string | null>(null);
+    const [amcatError, setAmcatError] = useState<string | null>(null);
+    const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+    const [reloadTick, setReloadTick] = useState(0);
 
     useEffect(() => {
         if (!isLoading && student) {
@@ -74,43 +81,64 @@ export default function StudentDashboard() {
 
     useEffect(() => {
         async function fetchStats() {
+            setStatsLoading(true);
+            setStatsError(null);
             try {
                 const res = await fetch("/api/student/dashboard/stats");
-                if (res.ok) {
-                    const data = await res.json();
-                    setStats(data.data ?? data);
+                if (!res.ok) {
+                    setStatsError("Could not load dashboard statistics.");
+                    return;
                 }
+                const data = await res.json();
+                setStats(data.data ?? data);
             } catch {
-                // Silently handle to fix unused error linting
+                setStatsError("Could not load dashboard statistics.");
+            } finally {
+                setStatsLoading(false);
             }
         }
         if (student) fetchStats();
-    }, [student]);
+    }, [student, reloadTick]);
 
     useEffect(() => {
         async function fetchAmcat() {
+            setAmcatLoading(true);
+            setAmcatError(null);
             try {
                 const res = await fetch("/api/student/amcat");
-                if (res.ok) {
-                    const data = await res.json();
-                    setAmcat(data);
+                if (!res.ok) {
+                    setAmcatError("Could not load AMCAT data.");
+                    return;
                 }
+                const data = await res.json();
+                setAmcat(data);
             } catch {
-                // AMCAT is optional on dashboard
+                setAmcatError("Could not load AMCAT data.");
+            } finally {
+                setAmcatLoading(false);
             }
         }
 
         if (student) fetchAmcat();
-    }, [student]);
+    }, [student, reloadTick]);
 
     useEffect(() => {
         async function fetchLeaderboardPreview() {
+            setLeaderboardLoading(true);
+            setLeaderboardError(null);
             try {
                 const res = await fetch("/api/student/amcat/leaderboard");
-                if (!res.ok) return;
+                if (!res.ok) {
+                    setLeaderboardError("Could not load leaderboard preview.");
+                    return;
+                }
 
                 const raw = await res.text();
-                if (!raw.trim()) return;
+                if (!raw.trim()) {
+                    setLeaderboardRows([]);
+                    setLeaderboardSessionName("");
+                    return;
+                }
 
                 const data = JSON.parse(raw) as LeaderboardPreviewPayload;
                 if (!data.hasData || !Array.isArray(data.top50)) {
@@ -124,11 +152,14 @@ export default function StudentDashboard() {
             } catch {
                 setLeaderboardRows([]);
                 setLeaderboardSessionName("");
+                setLeaderboardError("Could not load leaderboard preview.");
+            } finally {
+                setLeaderboardLoading(false);
             }
         }
 
         if (student) fetchLeaderboardPreview();
-    }, [student]);
+    }, [student, reloadTick]);
 
     if (isLoading || !student || !user) {
         return (
@@ -152,6 +183,8 @@ export default function StudentDashboard() {
     const resumeActionLabel = (student.resumeMime || "").toLowerCase().includes("pdf")
         ? "Download PDF"
         : "Download Resume";
+    const hasAnyFetchError = Boolean(statsError || amcatError || leaderboardError);
+    const isAnyFetchLoading = statsLoading || amcatLoading || leaderboardLoading;
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 p-8 md:p-10 pb-32">
@@ -179,8 +212,28 @@ export default function StudentDashboard() {
                     <span className="text-xs text-slate-500">
                         {stats.hasEmbedding ? "AI Ready" : "Profile Indexing..."}
                     </span>
+                    {isAnyFetchLoading && (
+                        <span className="text-xs text-slate-600">Refreshing...</span>
+                    )}
                 </div>
             </div>
+
+            {hasAnyFetchError && (
+                <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4">
+                    <div className="flex items-center justify-between gap-4">
+                        <p className="text-sm text-rose-200">
+                            {statsError || amcatError || leaderboardError}
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setReloadTick((v) => v + 1)}
+                            className="rounded-md border border-rose-400/40 px-3 py-1 text-xs font-semibold text-rose-200 hover:bg-rose-500/10"
+                        >
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-12 gap-5">
                 <div className="col-span-12 lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-5">

@@ -350,6 +350,7 @@ export default function OnboardingPage() {
   const [resumeStatusText, setResumeStatusText] = useState("");
   const [autofillBanner, setAutofillBanner] = useState(false);
   const [gateWarning, setGateWarning] = useState("");
+  const [actionError, setActionError] = useState("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollDeadlineRef = useRef(0);
 
@@ -382,6 +383,51 @@ export default function OnboardingPage() {
 
   const currentStepIndex = STEPS.findIndex((s) => s.key === activeStep);
 
+  async function readErrorMessage(response: Response): Promise<string> {
+    try {
+      const payload = await response.json();
+      if (typeof payload?.error === "string" && payload.error.trim()) {
+        return payload.error;
+      }
+      if (typeof payload?.message === "string" && payload.message.trim()) {
+        return payload.message;
+      }
+    } catch {
+      // ignore parse errors and return a generic fallback
+    }
+    return "Could not save your profile. Please retry.";
+  }
+
+  async function persistCurrentStep(): Promise<boolean> {
+    setSaveState("saving");
+    setActionError("");
+
+    try {
+      const patch = buildPatch(activeStep, form);
+      const res = await fetch("/api/student/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+
+      if (!res.ok) {
+        throw new Error(await readErrorMessage(res));
+      }
+
+      setSaveState("saved");
+      setTimeout(() => setSaveState("idle"), 2000);
+      return true;
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : "Could not save your profile. Please retry.";
+      console.error("[Onboarding] Failed to persist current step", error);
+      setSaveState("error");
+      setActionError(message);
+      return false;
+    }
+  }
+
   function isStepUnlocked(stepIndex: number): boolean {
     for (let i = 0; i < stepIndex; i++) {
       if (STEPS[i].required.length > 0 && !stepStates[i].done) return false;
@@ -393,20 +439,9 @@ export default function OnboardingPage() {
     if (!isUserChangeRef.current) return;
 
     const timer = setTimeout(async () => {
-      setSaveState("saving");
-      try {
-        const patch = buildPatch(activeStep, form);
-        const res = await fetch("/api/student/profile", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(patch),
-        });
-        if (!res.ok) throw new Error("save-failed");
-        setSaveState("saved");
+      const saved = await persistCurrentStep();
+      if (saved) {
         isUserChangeRef.current = false;
-        setTimeout(() => setSaveState("idle"), 2000);
-      } catch {
-        setSaveState("error");
       }
     }, 1200);
 
@@ -640,26 +675,33 @@ export default function OnboardingPage() {
       uploadResult.status === "fulfilled" ? uploadResult.value : null;
 
     if (!uploadData) {
-      if (!previewApplied) {
-        setResumeState("error");
-        setResumeStatusText("Upload failed. Try again.");
-      }
+      setResumeState("error");
+      setResumeStatusText(
+        previewApplied
+          ? "Autofill preview is temporary because upload failed. Re-upload to save it permanently."
+          : "Upload failed. Try again.",
+      );
       return;
     }
 
     const jobId: string | null = uploadData?.data?.jobId ?? null;
-
-    // If preview already applied, just let Track B finish silently
-    if (previewApplied) {
-      // Track B's background job will persist to DB — no polling needed.
-      // Once the job completes, the next page load or refresh() will pick up
-      // the DB data. We don't need to poll because user already sees autofill.
+    if (!jobId) {
+      setResumeState("error");
+      setResumeStatusText(
+        previewApplied
+          ? "Autofill preview could not be persisted. Re-upload to save it permanently."
+          : "Upload completed but parsing did not start. Please re-upload.",
+      );
       return;
     }
 
-    // ─── Fallback: Track A failed, rely on Track B polling ───────────────
+    // ─── Poll Track B for durable persistence confirmation ────────────────
     setResumeState("parsing");
-    setResumeStatusText("Parsing resume, autofilling your profile...");
+    setResumeStatusText(
+      previewApplied
+        ? "Saving extracted data to your profile..."
+        : "Parsing resume, autofilling your profile...",
+    );
     pollDeadlineRef.current = Date.now() + 3 * 60 * 1000;
 
     pollRef.current = setInterval(async () => {
@@ -672,40 +714,28 @@ export default function OnboardingPage() {
         return;
       }
 
-      if (jobId) {
-        const jobRes = await fetch(`/api/jobs/${jobId}`).catch(() => null);
-        if (!jobRes?.ok) return;
-        const jobData = await jobRes.json();
-        if (jobData.status === "completed") {
-          if (pollRef.current) clearInterval(pollRef.current);
-          setResumeState("done");
-          setResumeStatusText(
-            "Resume parsed! Profile autofilled. Review and continue.",
-          );
-          await refresh();
-          setActiveStep("identity");
-          setAutofillBanner(true);
-        } else if (jobData.status === "failed") {
-          if (pollRef.current) clearInterval(pollRef.current);
-          setResumeState("error");
-          setResumeStatusText(
-            "Parsing failed. You can still fill your profile manually.",
-          );
-        }
-      } else {
-        const profileRes = await fetch("/api/student/profile").catch(
-          () => null,
+      const jobRes = await fetch(`/api/jobs/${jobId}`).catch(() => null);
+      if (!jobRes?.ok) return;
+      const jobData = await jobRes.json();
+      if (jobData.status === "completed") {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setResumeState("done");
+        setResumeStatusText(
+          previewApplied
+            ? "Autofill saved to your profile. Review and continue."
+            : "Resume parsed! Profile autofilled. Review and continue.",
         );
-        if (!profileRes?.ok) return;
-        const profileData = await profileRes.json();
-        if (profileData.data?.profile?.resumeParsedAt) {
-          if (pollRef.current) clearInterval(pollRef.current);
-          setResumeState("done");
-          setResumeStatusText("Resume parsed! Profile autofilled.");
-          await refresh();
-          setActiveStep("identity");
-          setAutofillBanner(true);
-        }
+        await refresh();
+        setActiveStep("identity");
+        setAutofillBanner(true);
+      } else if (jobData.status === "failed") {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setResumeState("error");
+        setResumeStatusText(
+          previewApplied
+            ? "Autofill preview could not be persisted. Re-upload to save it permanently."
+            : "Parsing failed. You can still fill your profile manually.",
+        );
       }
     }, 3000);
   }
@@ -718,12 +748,9 @@ export default function OnboardingPage() {
   );
 
   async function handleNext() {
-    const patch = buildPatch(activeStep, form);
-    await fetch("/api/student/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    }).catch(() => {});
+    const saved = await persistCurrentStep();
+    if (!saved) return;
+    isUserChangeRef.current = false;
 
     const nextIndex = currentStepIndex + 1;
     if (nextIndex < STEPS.length) {
@@ -732,23 +759,13 @@ export default function OnboardingPage() {
   }
 
   async function handleFinish() {
-    // 1. Save the final step
-    const patch = buildPatch(activeStep, form);
-    await fetch("/api/student/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    }).catch(() => {});
+    const saved = await persistCurrentStep();
+    if (!saved) return;
 
-    // 2. Force Next.js to re-run the server layout and re-fetch initialStudent
-    //    Without this, StudentProvider uses stale data → dashboard redirects back
-    router.refresh();
-
-    // 3. Wait for the refresh to propagate before navigating
-    await new Promise((resolve) => setTimeout(resolve, 400));
-
-    // 4. Navigate — now StudentProvider will get fresh data from the server
-    router.push("/student/dashboard");
+    // Refresh context deterministically before navigating away.
+    isUserChangeRef.current = false;
+    await refresh();
+    router.replace("/student/dashboard");
   }
 
   if (isLoading) {
@@ -873,6 +890,11 @@ export default function OnboardingPage() {
             {gateWarning && (
               <div className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-400">
                 {gateWarning}
+              </div>
+            )}
+            {actionError && (
+              <div className="mt-2 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+                {actionError}
               </div>
             )}
             <div className="absolute bottom-4 left-[1.85rem] top-[4.5rem] -z-10 w-px bg-slate-800" />

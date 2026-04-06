@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 describe("Phase 3 — Dashboard Refresh After Onboarding", () => {
 
-  it("T1: handleFinish calls router.refresh() before router.push()", async () => {
+  it("T1: handleFinish refreshes student context and navigates with router.replace", async () => {
     // Read source file and verify the order
     const fs = await import("fs");
     const source = fs.readFileSync(
@@ -14,11 +14,11 @@ describe("Phase 3 — Dashboard Refresh After Onboarding", () => {
       handleStart,
       handleEnd > -1 ? handleEnd : source.length
     );
-    const refreshPos = handleFinishSection.indexOf("router.refresh()");
-    const pushPos = handleFinishSection.indexOf('router.push("/student/dashboard")');
-    expect(refreshPos).toBeGreaterThan(-1);
-    expect(pushPos).toBeGreaterThan(-1);
-    expect(refreshPos).toBeLessThan(pushPos); // refresh BEFORE push
+    const contextRefreshPos = handleFinishSection.indexOf("await refresh()");
+    const replacePos = handleFinishSection.indexOf('router.replace("/student/dashboard")');
+    expect(contextRefreshPos).toBeGreaterThan(-1);
+    expect(replacePos).toBeGreaterThan(-1);
+    expect(contextRefreshPos).toBeLessThan(replacePos);
   });
 
   it("T2: shouldRedirect is false when student has sapId only", () => {
