@@ -352,6 +352,8 @@ export default function OnboardingPage() {
   const [gateWarning, setGateWarning] = useState("");
   const [actionError, setActionError] = useState("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savePromiseRef = useRef<Promise<boolean> | null>(null);
   const pollDeadlineRef = useRef(0);
 
   const [autofillVersion, setAutofillVersion] = useState(0);
@@ -399,33 +401,44 @@ export default function OnboardingPage() {
   }
 
   async function persistCurrentStep(): Promise<boolean> {
-    setSaveState("saving");
-    setActionError("");
-
-    try {
-      const patch = buildPatch(activeStep, form);
-      const res = await fetch("/api/student/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      });
-
-      if (!res.ok) {
-        throw new Error(await readErrorMessage(res));
-      }
-
-      setSaveState("saved");
-      setTimeout(() => setSaveState("idle"), 2000);
-      return true;
-    } catch (error) {
-      const message = error instanceof Error
-        ? error.message
-        : "Could not save your profile. Please retry.";
-      console.error("[Onboarding] Failed to persist current step", error);
-      setSaveState("error");
-      setActionError(message);
-      return false;
+    if (savePromiseRef.current) {
+      return savePromiseRef.current;
     }
+
+    const run = (async () => {
+      setSaveState("saving");
+      setActionError("");
+
+      try {
+        const patch = buildPatch(activeStep, form);
+        const res = await fetch("/api/student/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(patch),
+        });
+
+        if (!res.ok) {
+          throw new Error(await readErrorMessage(res));
+        }
+
+        setSaveState("saved");
+        setTimeout(() => setSaveState("idle"), 2000);
+        return true;
+      } catch (error) {
+        const message = error instanceof Error
+          ? error.message
+          : "Could not save your profile. Please retry.";
+        console.error("[Onboarding] Failed to persist current step", error);
+        setSaveState("error");
+        setActionError(message);
+        return false;
+      } finally {
+        savePromiseRef.current = null;
+      }
+    })();
+
+    savePromiseRef.current = run;
+    return run;
   }
 
   function isStepUnlocked(stepIndex: number): boolean {
@@ -438,14 +451,22 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (!isUserChangeRef.current) return;
 
-    const timer = setTimeout(async () => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(async () => {
       const saved = await persistCurrentStep();
       if (saved) {
         isUserChangeRef.current = false;
       }
     }, 1200);
 
-    return () => clearTimeout(timer);
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
   }, [activeStep, form]);
 
   const setField = useCallback(<K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) => {
@@ -743,11 +764,17 @@ export default function OnboardingPage() {
   useEffect(
     () => () => {
       if (pollRef.current) clearInterval(pollRef.current);
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     },
     [],
   );
 
   async function handleNext() {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+
     const saved = await persistCurrentStep();
     if (!saved) return;
     isUserChangeRef.current = false;
@@ -759,6 +786,11 @@ export default function OnboardingPage() {
   }
 
   async function handleFinish() {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+
     const saved = await persistCurrentStep();
     if (!saved) return;
 
