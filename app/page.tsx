@@ -10,6 +10,7 @@ export default async function Home() {
       case "student": redirect("/student/dashboard");
       case "faculty": redirect("/faculty");
       case "admin": redirect("/admin/health");
+      default: redirect("/unauthorized");
     }
   }
   return (

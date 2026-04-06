@@ -34,10 +34,11 @@ const StatCard = ({ label, value, icon: Icon, color = "indigo" }: any) => (
 export default async function FacultyDashboardPage({
     searchParams,
 }: {
-    searchParams?: { seasonId?: string };
+    searchParams?: { seasonId?: string; error?: string };
 }) {
     const user = await requireRole(["faculty", "admin"]);
     const selectedSeasonId = searchParams?.seasonId ?? "all";
+    const showPermissionWarning = searchParams?.error === "no_permission";
     const firstName = user.name?.trim().split(/\s+/)[0] || "Faculty";
 
     const seasonRows = user.collegeId
@@ -113,6 +114,13 @@ export default async function FacultyDashboardPage({
                     </Link>
                 </div>
             </header>
+
+            {showPermissionWarning && (
+                <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+                    <p className="font-semibold text-amber-100">Permission required</p>
+                    <p className="mt-1">You do not currently have access to create drives. Contact your admin to enable drive management permissions.</p>
+                </div>
+            )}
 
             <div className="mb-6 rounded-xl border border-white/10 bg-slate-900/50 p-4 text-sm text-slate-300">
                 <p className="font-semibold text-white mb-1">Bulk Eligibility Snapshot</p>

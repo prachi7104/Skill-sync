@@ -9,8 +9,12 @@ import { validatePasswordStrength } from "@/lib/auth/password";
 
 export async function PUT(req: NextRequest, { params }: { params: { userId: string } }) {
   const session = await getServerSession(authOptions);
-  if (session?.user?.role !== "admin") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (session.user.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   if (!session.user.collegeId) {

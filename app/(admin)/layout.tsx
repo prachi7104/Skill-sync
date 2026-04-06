@@ -1,15 +1,12 @@
 import { requireRole } from "@/lib/auth/helpers";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/config";
 import Link from "next/link";
 import SignOutButton from "@/components/shared/sign-out-button";
 import MobileNav from "@/components/shared/mobile-nav";
 import AdminNav from "@/components/admin/admin-nav";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  await requireRole(["admin"]);
-  const session = await getServerSession(authOptions);
-  const name = session?.user?.name ?? "Admin";
+  const user = await requireRole(["admin"]);
+  const name = user.name ?? "Admin";
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans text-slate-200 selection:bg-indigo-500/30">
