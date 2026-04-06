@@ -7,7 +7,7 @@
  * and returns the mapped profile JSON so the onboarding form can autofill
  * in ~3-5 seconds without waiting for the background job queue.
  *
- * Rate limit: 3 calls per student per hour (in-memory).
+ * Rate limit: 8 calls per student per hour.
  * Timeout: 15 seconds on the AI call.
  */
 
@@ -19,7 +19,7 @@ import { isRedirectError } from "next/dist/client/components/redirect";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_MAX = 8;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 // ── Timeout wrapper ─────────────────────────────────────────────────────────
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       `resume_preview:${user.id}`,
       RATE_LIMIT_MAX,
       Math.floor(RATE_LIMIT_WINDOW_MS / 1000),
-      { failClosed: true },
+      { failClosed: false },
     );
 
     if (!rl.allowed) {
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       }
 
       return NextResponse.json(
-        { success: false, error: "Rate limit exceeded. Max 3 preview requests per hour." },
+        { success: false, error: "Rate limit exceeded. Max 8 preview requests per hour." },
         { status: 429 },
       );
     }

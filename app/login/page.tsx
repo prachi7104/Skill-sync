@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { Loader2, AlertCircle, Sparkles, ChevronRight, Eye, EyeOff, Lock } from "lucide-react";
 
 const AUTH_ERRORS: Record<string, string> = {
@@ -28,13 +28,6 @@ function LoginForm() {
   const [staffEmail, setStaffEmail] = useState("");
   const [staffPassword, setStaffPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
-  useEffect(() => {
-    if (errorType) {
-      const timer = setTimeout(() => router.replace("/login"), 6000);
-      return () => clearTimeout(timer);
-    }
-  }, [errorType, router]);
 
   const navigateToCallback = (targetUrl: string) => {
     try {
@@ -132,6 +125,13 @@ function LoginForm() {
                 <div>
                   <p className="text-xs font-bold text-rose-400 uppercase tracking-widest">Error</p>
                   <p className="text-sm font-medium text-rose-200/90">{errorMessage}</p>
+                  <button
+                    type="button"
+                    onClick={() => setErrorMessage(null)}
+                    className="mt-2 text-xs font-semibold text-rose-300 hover:text-rose-200"
+                  >
+                    Dismiss
+                  </button>
                 </div>
               </div>
             )}

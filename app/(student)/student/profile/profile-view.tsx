@@ -44,7 +44,7 @@ interface MetaFieldProps {
 }
 
 const POLL_INTERVAL_MS = 2500;
-const POLL_TIMEOUT_MS = 120000;
+const POLL_TIMEOUT_MS = 300000;
 
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -245,7 +245,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                 return;
             }
 
-            toast.error("Parsing is taking longer than expected. Please try syncing in a moment.");
+            toast.error("Parsing is taking longer than expected. You can continue editing and sync again in a moment.");
         } catch (error) {
             const message = error instanceof Error ? error.message : "Upload failed. Please try again.";
             toast.error(message);
