@@ -4,49 +4,66 @@
 
 @layer base {
   :root {
-    --background: 222 47% 4%;         /* slate-950 equivalent */
-    --foreground: 215 20% 90%;        /* slate-200 */
-    --card: 222 47% 7%;               /* slate-900 */
-    --card-foreground: 215 20% 90%;
-    --popover: 222 47% 7%;
-    --popover-foreground: 215 20% 90%;
-    --primary: 238 84% 67%;           /* indigo-500 */
+    /* Notion Light Mode */
+    --background: 0 0% 100%;
+    --foreground: 40 7% 20%;           /* #37352F */
+
+    --card: 0 0% 100%;
+    --card-foreground: 40 7% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 40 7% 20%;
+
+    --primary: 40 7% 20%;              /* #37352F — primary button is dark */
     --primary-foreground: 0 0% 100%;
-    --secondary: 217 33% 14%;         /* slate-800 */
-    --secondary-foreground: 215 20% 80%;
-    --muted: 217 33% 14%;
-    --muted-foreground: 215 15% 55%;  /* slate-400 */
-    --accent: 217 33% 14%;
-    --accent-foreground: 215 20% 80%;
-    --destructive: 0 62% 55%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 217 19% 17%;            /* slate-800 */
-    --input: 217 19% 17%;
-    --ring: 238 84% 67%;
-    --radius: 0.75rem;
+
+    --secondary: 60 5% 96%;            /* #F7F7F5 — sidebar bg */
+    --secondary-foreground: 40 7% 20%;
+
+    --muted: 60 5% 96%;
+    --muted-foreground: 40 4% 46%;     /* #787774 */
+
+    --accent: 60 5% 93%;               /* #EFEFED — hover/active bg */
+    --accent-foreground: 40 7% 20%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 60 5% 91%;               /* #E9E9E7 */
+    --input: 60 5% 91%;
+    --ring: 40 7% 20%;
+
+    --radius: 0.375rem;                /* 6px — Notion standard */
   }
-  
-  /* Keep .dark identical to :root since we run dark-only */
+
   .dark {
-    --background: 222 47% 4%;
-    --foreground: 215 20% 90%;
-    --card: 222 47% 7%;
-    --card-foreground: 215 20% 90%;
-    --popover: 222 47% 7%;
-    --popover-foreground: 215 20% 90%;
-    --primary: 238 84% 67%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 217 33% 14%;
-    --secondary-foreground: 215 20% 80%;
-    --muted: 217 33% 14%;
-    --muted-foreground: 215 15% 55%;
-    --accent: 217 33% 14%;
-    --accent-foreground: 215 20% 80%;
-    --destructive: 0 62% 55%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 217 19% 17%;
-    --input: 217 19% 17%;
-    --ring: 238 84% 67%;
+    --background: 0 0% 9.8%;          /* #191919 */
+    --foreground: 0 0% 93%;           /* ~rgba(255,255,255,0.93) */
+
+    --card: 0 0% 9.8%;
+    --card-foreground: 0 0% 93%;
+
+    --popover: 0 0% 12.5%;            /* #202020 */
+    --popover-foreground: 0 0% 93%;
+
+    --primary: 0 0% 93%;
+    --primary-foreground: 0 0% 9.8%;
+
+    --secondary: 0 0% 12.5%;          /* #202020 */
+    --secondary-foreground: 0 0% 93%;
+
+    --muted: 0 0% 12.5%;
+    --muted-foreground: 40 2% 60%;    /* #9B9A97 */
+
+    --accent: 0 0% 18%;               /* slightly lighter than sidebar */
+    --accent-foreground: 0 0% 93%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 18.4%;             /* #2F2F2F */
+    --input: 0 0% 18.4%;
+    --ring: 0 0% 70%;
   }
 }
 
@@ -55,39 +72,57 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  /* Selection color — Notion uses light blue */
+  ::selection {
+    background-color: #c7d7f4;
+    color: #37352f;
+  }
+  .dark ::selection {
+    background-color: #2f4a7a;
+    color: rgba(255, 255, 255, 0.9);
   }
 }
 
-@keyframes autofill-glow {
-  0% {
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
-    border-color: rgb(99 102 241);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(99, 102, 241, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
-    border-color: rgb(71 85 105);
-  }
-}
-
-.autofill-flash {
-  animation: autofill-glow 1.5s ease-out;
-}
-
+/* ─── Tag chip animation (kept from original, it's neutral) ─── */
 .tag-chip {
-  animation: tag-appear 0.2s ease-out;
+  animation: tag-appear 0.15s ease-out;
 }
 
 @keyframes tag-appear {
-  from {
-    opacity: 0;
-    transform: scale(0.85);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Notion-style document page typography ─── */
+/* Use .prose-notion on max-w-3xl document containers */
+.prose-notion {
+  font-family: var(--font-lora), Georgia, serif;
+  line-height: 1.7;
+  color: hsl(var(--foreground));
+}
+.prose-notion h1 { @apply text-3xl font-semibold mb-6 mt-0; }
+.prose-notion h2 { @apply text-xl font-semibold mb-4 mt-8; }
+.prose-notion h3 { @apply text-base font-semibold mb-3 mt-6; }
+.prose-notion p  { @apply mb-4 text-sm leading-relaxed; }
+
+/* ─── Scrollbar — thin and muted ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* ─── Notion sidebar nav active state ─── */
+.nav-item-active {
+  @apply bg-accent text-accent-foreground;
+}
+.nav-item-inactive {
+  @apply text-muted-foreground hover:bg-accent hover:text-accent-foreground;
 }

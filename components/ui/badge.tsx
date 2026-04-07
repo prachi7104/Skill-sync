@@ -1,20 +1,31 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  // Notion tag: small, soft, monospace-ish, no border by default
+  "inline-flex items-center rounded-sm px-2 py-0.5 text-xs font-medium transition-colors",
   {
     variants: {
       variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive:
-          "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "text-foreground",
+        // Default: gray — like Notion's default tag
+        default:     "bg-secondary text-secondary-foreground",
+        // Secondary: alias for default (backwards compat)
+        secondary:   "bg-secondary text-secondary-foreground",
+        // Blue — for status/info
+        blue:        "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",
+        // Green — for success/positive
+        green:       "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
+        // Red — for errors/destructive
+        red:         "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
+        // Yellow — for warnings
+        yellow:      "bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300",
+        // Purple — for special labels
+        purple:      "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300",
+        // Outline — when you need a bordered empty tag
+        outline:     "border border-border text-foreground",
+        // Destructive — maps to --destructive
+        destructive: "bg-destructive/10 text-destructive border border-destructive/20",
       },
     },
     defaultVariants: {
@@ -28,9 +39,7 @@ export interface BadgeProps
     VariantProps<typeof badgeVariants> {}
 
 function Badge({ className, variant, ...props }: BadgeProps) {
-  return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
-  )
+  return <div className={cn(badgeVariants({ variant }), className)} {...props} />
 }
 
 export { Badge, badgeVariants }
