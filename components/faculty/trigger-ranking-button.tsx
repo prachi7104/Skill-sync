@@ -123,7 +123,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (!jdReady) {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 text-violet-400 bg-violet-500/10 border-violet-500/20">
+            <Button variant="outline" size="sm" disabled className="gap-2 text-muted-foreground bg-muted border-border">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Analyzing JD... (~3 min)
             </Button>
@@ -132,7 +132,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (state === "ranked") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 bg-slate-800 text-slate-500 border-slate-700">
+            <Button variant="outline" size="sm" disabled className="gap-2 bg-secondary text-muted-foreground border-border">
                 Ranked <CheckCircle2 className="h-4 w-4" />
             </Button>
         );
@@ -140,10 +140,10 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (state === "already_processing") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 text-indigo-400 bg-indigo-500/10 border-indigo-500/20">
+            <Button variant="outline" size="sm" disabled className="gap-2 text-foreground bg-primary/10 border-primary/20">
                 <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
                 In queue
             </Button>
@@ -167,7 +167,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
                 onClick={handleTrigger}
                 className={cn(
                     "gap-2 min-w-[140px]",
-                    state === "idle" && "bg-indigo-600 hover:bg-indigo-700"
+                    state === "idle" && "bg-primary hover:bg-primary"
                 )}
             >
                 {state === "loading" ? (

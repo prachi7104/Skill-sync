@@ -3,6 +3,7 @@ import './globals.css'
 import { Inter, Lora, JetBrains_Mono } from 'next/font/google'
 import AuthProvider from "@/components/providers/auth-provider"
 import ClientToaster from "@/components/providers/client-toaster"
+import { ThemeProvider } from "next-themes"
 
 const inter = Inter({
   subsets: ['latin'],
@@ -36,8 +37,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${inter.variable} ${lora.variable} ${jetbrainsMono.variable}`}
     >
       <body className="font-sans bg-background text-foreground antialiased min-h-screen">
-        <AuthProvider>{children}</AuthProvider>
-        <ClientToaster />
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <AuthProvider>{children}</AuthProvider>
+          <ClientToaster />
+        </ThemeProvider>
       </body>
     </html>
   )

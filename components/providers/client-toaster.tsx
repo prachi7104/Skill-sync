@@ -20,5 +20,17 @@ export default function ClientToaster() {
 
     if (!mounted) return null;
 
-    return <Toaster richColors position="bottom-right" />;
+    return (
+        <Toaster
+            position="bottom-right"
+            toastOptions={{
+                classNames: {
+                    toast: "bg-popover border border-border text-foreground text-sm rounded-md shadow-lg",
+                    description: "text-muted-foreground text-xs",
+                    actionButton: "bg-primary text-primary-foreground text-xs rounded-md px-2 py-1",
+                    cancelButton: "bg-secondary text-secondary-foreground text-xs rounded-md px-2 py-1",
+                },
+            }}
+        />
+    );
 }

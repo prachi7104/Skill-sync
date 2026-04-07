@@ -10,8 +10,9 @@ import {
 import Link from "next/link";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 import { toResumeDownloadUrl } from "@/lib/resume/download-url";
+import { EmptyState } from "@/components/ui/empty-state";
+import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -194,17 +195,16 @@ export default function StudentDashboard() {
             </div>
 
             {hasAnyFetchError && (
-                <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 flex items-center justify-between gap-4">
-                    <p className="text-sm text-destructive">
-                        {statsError || amcatError || leaderboardError}
-                    </p>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setReloadTick((v) => v + 1)}
-                    >
-                        Retry
-                    </Button>
+                <div className="py-6 border border-destructive/20 bg-destructive/10 rounded-md">
+                    <EmptyState 
+                        message="Dashboard Error"
+                        description={statsError || amcatError || leaderboardError || "An error occurred while loading your dashboard."}
+                        action={
+                            <Button variant="outline" className="mt-4" onClick={() => setReloadTick((v) => v + 1)}>
+                                Retry
+                            </Button>
+                        }
+                    />
                 </div>
             )}
 
@@ -274,15 +274,16 @@ export default function StudentDashboard() {
                         </div>
                     </div>
                 ) : (
-                    <div className="rounded-md border border-border bg-card p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                        <AlertCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                        <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">No Resume Uploaded</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">AI match rates are significantly lower without a resume.</p>
-                        </div>
-                        <Button size="sm" asChild>
-                            <Link href="/student/onboarding">Upload Now</Link>
-                        </Button>
+                    <div className="py-8 border border-border bg-card rounded-md">
+                        <EmptyState 
+                            message="No Resume Uploaded"
+                            description="AI match rates are significantly lower without a resume. Upload one now to see matching drives."
+                            action={
+                                <Button size="sm" className="mt-4" asChild>
+                                    <Link href="/student/onboarding">Upload Now</Link>
+                                </Button>
+                            }
+                        />
                     </div>
                 )}
             </section>

@@ -18,8 +18,10 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Download, Loader2 } from "lucide-react";
+import { Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type LeaderboardSession = {
@@ -235,14 +237,32 @@ export default function StudentLeaderboardPage() {
       <Separator />
 
       {loading ? (
-        <div className="flex items-center justify-center min-h-[240px]">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full" />
+            ))}
+          </div>
+          <Skeleton className="h-[400px] w-full" />
         </div>
       ) : error ? (
-        <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive font-medium">{error}</div>
+        <div className="py-12 border border-destructive/20 bg-destructive/10 rounded-md">
+          <EmptyState 
+            message="Error loading leaderboard" 
+            description={error}
+            action={
+              <Button variant="outline" className="mt-4" onClick={() => void fetchLeaderboard(selectedSessionId || undefined, selectedBranch)}>
+                Retry
+              </Button>
+            }
+          />
+        </div>
       ) : !hasData ? (
-        <div className="rounded-md border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground font-medium">
-          No published AMCAT data is available yet.
+        <div className="py-20 border border-border bg-card rounded-md">
+          <EmptyState 
+            message="No data available" 
+            description="No published AMCAT data is available yet for this session or branch."
+          />
         </div>
       ) : (
         <>

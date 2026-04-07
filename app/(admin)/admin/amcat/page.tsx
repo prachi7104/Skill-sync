@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/table";
 import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 import { AlertCircle, Check, RefreshCw, Trash2, UploadCloud } from "lucide-react";
 
 type SessionRow = {
@@ -550,7 +551,10 @@ export default function AdminAmcatPage() {
                 {sessionsLoading ? (
                   <p className="text-sm text-muted-foreground">Loading sessions...</p>
                 ) : sessions.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No AMCAT sessions yet.</p>
+                  <EmptyState 
+                    message="No AMCAT sessions yet" 
+                    description="Upload your first CSV or XLSX file to get started."
+                  />
                 ) : (
                   sessions.map((session) => (
                     <button
@@ -817,7 +821,12 @@ export default function AdminAmcatPage() {
                 </TableRow>
               ) : results.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={15} className="text-center text-muted-foreground py-6">No rows found</TableCell>
+                  <TableCell colSpan={15} className="py-12">
+                    <EmptyState 
+                      message="No rows found" 
+                      description="Try adjusting your filters or search query."
+                    />
+                  </TableCell>
                 </TableRow>
               ) : (
                 sortedResults.map((row) => (

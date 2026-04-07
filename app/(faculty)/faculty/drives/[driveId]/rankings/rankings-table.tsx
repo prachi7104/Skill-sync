@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Search } from "lucide-react";
 import { UPES_BRANCHES } from "@/lib/constants/branches";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -137,8 +138,11 @@ export default function RankingsTable({ rankings }: RankingsTableProps) {
             {/* ── Table ────────────────────────────────────────────────────── */}
             <CardContent className="p-0">
                 {filtered.length === 0 ? (
-                    <div className="py-12 text-center text-sm text-muted-foreground">
-                        No students match the current filters.
+                    <div className="py-12">
+                        <EmptyState 
+                          message="No results found" 
+                          description="Try adjusting your filters or search keywords."
+                        />
                     </div>
                 ) : (
                     <div className="overflow-auto max-h-[70vh]">

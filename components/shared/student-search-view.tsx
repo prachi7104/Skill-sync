@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Search, Filter, Loader, AlertCircle, ExternalLink, X } from "lucide-react";
+import { Search, AlertCircle, ExternalLink, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const debounce = (func: (...args: any[]) => void, delay: number) => {
   let timeout: NodeJS.Timeout;
@@ -57,7 +59,7 @@ interface StudentSearchViewProps {
 
 export function ProfileModal({ student, onClose }: { student: StudentProfile; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/50  flex items-center justify-center p-4 z-50">
       <div className="bg-background border border-border rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-background border-b border-border px-8 py-6 flex items-center justify-between">
           <div>
@@ -440,9 +442,10 @@ export default function StudentSearchView({
       <div className="h-px bg-border w-full" />
 
       {loading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader className="h-6 w-6 text-primary animate-spin" />
-          <span className="ml-3 text-muted-foreground">Searching students...</span>
+        <div className="space-y-4">
+          <Skeleton className="h-40 w-full rounded-md" />
+          <Skeleton className="h-40 w-full rounded-md" />
+          <Skeleton className="h-40 w-full rounded-md" />
         </div>
       )}
 
@@ -454,13 +457,15 @@ export default function StudentSearchView({
       )}
 
       {!loading && results.length === 0 && !error && (
-        <div className="text-center py-12">
-          <Filter className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-          <p className="text-muted-foreground text-lg">
-            {searchQuery || selectedBranch !== "all" || selectedBatchYear !== "all"
+        <div className="py-12 border border-border bg-card rounded-md">
+          <EmptyState
+            message={searchQuery || selectedBranch !== "all" || selectedBatchYear !== "all"
               ? "No students found matching your criteria."
               : "Search to find student profiles"}
-          </p>
+            description={searchQuery || selectedBranch !== "all" || selectedBatchYear !== "all"
+              ? "Try clearing your filters or refining your search keywords."
+              : "Use the search bar above to look up students by name, email, or SAP ID."}
+          />
         </div>
       )}
 

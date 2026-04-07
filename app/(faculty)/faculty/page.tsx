@@ -6,6 +6,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import Link from "next/link";
 import { Briefcase, Users, Clock, TrendingUp, PlusCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // Helpers
 function getActivityLabel(type: string, status: string) {
@@ -147,7 +148,10 @@ export default async function FacultyDashboardPage({
                     <h2 className="text-sm font-medium text-foreground mb-4">Recent Activity</h2>
                     <div className="space-y-4">
                         {activityFeed.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No recent activity.</p>
+                            <EmptyState 
+                                message="No recent activity" 
+                                description="When background jobs like ranking students or enhancing JDs are triggered, they will appear here."
+                            />
                         ) : activityFeed.map((item) => {
                             const label = getActivityLabel(item.type, item.status);
                             return (
@@ -198,8 +202,11 @@ export default async function FacultyDashboardPage({
                             </tbody>
                         </table>
                         {filteredDrives.length === 0 && (
-                            <div className="p-4 text-center text-sm text-muted-foreground">
-                                No drives found.
+                            <div className="p-8">
+                                <EmptyState 
+                                    message="No drives found" 
+                                    description="Try selecting a different season or create your first recruitment drive."
+                                />
                             </div>
                         )}
                     </div>

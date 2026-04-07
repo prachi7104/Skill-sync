@@ -50,7 +50,7 @@ export function DriveActionButtons({ driveId, isActive }: { driveId: string; isA
         className={`p-2 rounded-lg text-xs font-bold transition-all ${
           isActive
             ? "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-            : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+            : "bg-secondary text-muted-foreground hover:bg-muted"
         }`}
       >
         {toggling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Power className="h-3.5 w-3.5" />}

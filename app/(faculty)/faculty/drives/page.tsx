@@ -12,6 +12,7 @@ import { Plus, MapPin, IndianRupee, Calendar } from "lucide-react";
 import { getCompanyColor } from "@/lib/utils/company-color";
 import { DriveConflictsButton } from "@/components/faculty/drive-conflicts-button";
 import Pagination from "@/components/shared/pagination";
+import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 
 export default async function FacultyDrivesPage({ searchParams }: { searchParams: { page?: string } }) {
@@ -124,13 +125,16 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
       <div className="h-px bg-border w-full" />
 
       {facultyDrives.length === 0 ? (
-        <div className="py-20 text-center border border-dashed border-border rounded-md">
-          <p className="text-muted-foreground">No drives created yet.</p>
-          {canCreateDrive && (
-            <Button asChild variant="link" className="text-primary mt-2">
-              <Link href="/faculty/drives/new">Create your first drive &rarr;</Link>
-            </Button>
-          )}
+        <div className="py-12 border border-border border-dashed rounded-md bg-card">
+          <EmptyState 
+            message="No drives created yet" 
+            description={canCreateDrive ? "Create your first professional recruitment drive to start ranking students." : "You'll see drives here once they are created or assigned."}
+            action={canCreateDrive ? (
+              <Button asChild variant="outline" className="mt-4">
+                <Link href="/faculty/drives/new">Create Drive &rarr;</Link>
+              </Button>
+            ) : undefined}
+          />
         </div>
       ) : (
         <div className="rounded-md border border-border overflow-hidden">

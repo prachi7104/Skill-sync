@@ -6,12 +6,13 @@ import { requireStudentProfile } from "@/lib/auth/helpers";
 import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { format } from "date-fns";
-import { Briefcase, MapPin, IndianRupee, Award, ChevronRight, Clock, AlertCircle } from "lucide-react";
+import { MapPin, IndianRupee, Award, ChevronRight, Clock } from "lucide-react";
 
 import { expandBranches } from "@/lib/constants/branches";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function StudentDrivesPage() {
     const { user, profile } = await requireStudentProfile();
@@ -67,32 +68,17 @@ export default async function StudentDrivesPage() {
             <Separator />
 
             {eligible.length === 0 ? (
-                hasIncompleteProfile ? (
-                    <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                        <div className="flex items-start gap-3">
-                        <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                        <div>
-                            <p className="text-sm font-semibold text-foreground">Complete your profile to see eligible drives</p>
-                            <p className="text-xs text-muted-foreground mt-1 text-balance">
-                                Add your branch, CGPA, and batch year in your profile to see drives you qualify for.
-                            </p>
-                        </div>
-                        </div>
-                        <Button asChild className="shrink-0">
-                            <Link href="/student/onboarding">
-                                Complete Profile →
-                            </Link>
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center py-20 rounded-md border border-border bg-card">
-                        <Briefcase className="w-8 h-8 text-muted-foreground mb-4" />
-                        <h3 className="text-sm font-semibold text-foreground mb-1">No eligible drives yet</h3>
-                        <p className="text-muted-foreground text-sm max-w-xs text-center text-balance">
-                            No active drives match your branch, batch year, and CGPA right now. Check back soon.
-                        </p>
-                    </div>
-                )
+                <div className="py-12 border border-border bg-card rounded-md">
+                    <EmptyState 
+                        message={hasIncompleteProfile ? "Complete your profile to see eligible drives" : "No eligible drives yet"}
+                        description={hasIncompleteProfile ? "Add your branch, CGPA, and batch year in your profile to see drives you qualify for." : "No active drives match your branch, batch year, and CGPA right now. Check back soon."}
+                        action={hasIncompleteProfile ? (
+                            <Button asChild className="mt-4">
+                                <Link href="/student/onboarding">Complete Profile &rarr;</Link>
+                            </Button>
+                        ) : undefined}
+                    />
+                </div>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2">
                     {eligible.map((drive) => {

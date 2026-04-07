@@ -14,16 +14,16 @@ export default async function Home() {
     }
   }
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-4">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="text-center space-y-6">
-        <h1 className="text-5xl font-black text-white tracking-tight">
-          Skill<span className="text-indigo-500">Sync.</span>
+        <h1 className="text-4xl font-semibold text-foreground tracking-tight">
+          Skill<span className="text-primary">Sync.</span>
         </h1>
-        <p className="text-lg text-slate-400 font-light max-w-md">
+        <p className="text-base text-muted-foreground font-light max-w-md">
           AI-Native Placement Ecosystem for UPES
         </p>
         <Link href="/login"
-          className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-8 py-3.5 text-sm font-bold text-white hover:bg-indigo-500 transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)]"
+          className="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           Sign In
         </Link>

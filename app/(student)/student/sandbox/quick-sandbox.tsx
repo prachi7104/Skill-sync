@@ -10,6 +10,8 @@ import { AlertTriangle, XCircle, Briefcase, FileText, Sparkles, Target, Activity
 import { Button } from "@/components/ui/button";
 
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CardFeedback {
   cards: {
@@ -137,14 +139,16 @@ export default function QuickSandbox() {
 
                     <TabsContent value="drive" className="space-y-4 mt-0">
                         {drivesLoading ? (
-                            <div className="flex items-center justify-center gap-3 py-12 text-sm text-muted-foreground bg-muted/50 rounded-md border border-dashed border-border">
-                                <Activity className="h-5 w-5 animate-pulse" /> Fetching active drives...
+                            <div className="space-y-3 py-6">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-32 w-full" />
                             </div>
                         ) : drives.length === 0 ? (
-                            <div className="py-12 text-center bg-muted/50 rounded-md border border-dashed border-border">
-                                <Briefcase className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
-                                <p className="font-semibold text-foreground mb-1">No active drives yet.</p>
-                                <p className="text-sm text-muted-foreground">Use the "Paste JD" tab instead.</p>
+                            <div className="py-12 border border-border border-dashed rounded-md bg-card">
+                                <EmptyState 
+                                    message="No active drives yet" 
+                                    description="There are currently no placement drives active in your college. Use the 'Paste JD' tab to analyze your own job descriptions."
+                                />
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -213,7 +217,7 @@ function ResultSectionV2({ result }: { result: SandboxResult }) {
       <div className="bg-card rounded-md border border-border p-6 md:p-8">
         <div className="flex flex-col md:flex-row items-center gap-10">
           <div className="text-center md:border-r border-border md:pr-10">
-            <div className={`text-5xl font-black tracking-tighter ${result.matchScore >= 80 ? "text-emerald-600 dark:text-emerald-400" : result.matchScore >= 60 ? "text-amber-600 dark:text-amber-400" : "text-destructive"}`}>
+            <div className={`text-5xl font-semibold tracking-tighter ${result.matchScore >= 80 ? "text-emerald-600 dark:text-emerald-400" : result.matchScore >= 60 ? "text-amber-600 dark:text-amber-400" : "text-destructive"}`}>
               {result.matchScore.toFixed(1)}%
             </div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-2 mb-4">Overall Match</p>
@@ -412,7 +416,7 @@ function ResultSectionV1({ result, getScoreColor }: { result: SandboxResult; get
       <p className="text-xs text-muted-foreground mb-6 font-semibold">Showing simplified analysis</p>
       <div className="flex flex-col md:flex-row items-center gap-10">
         <div className="text-center md:border-r border-border md:pr-10">
-          <div className={`text-5xl font-black tracking-tighter ${getScoreColor(result.matchScore)}`}>
+          <div className={`text-5xl font-semibold tracking-tighter ${getScoreColor(result.matchScore)}`}>
             {result.matchScore.toFixed(1)}%
           </div>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-2 mb-4">Overall Match</p>

@@ -1,13 +1,15 @@
 "use client";
 
 import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, BookOpen, MessageSquare, RefreshCw, Sparkles, Target } from "lucide-react";
+import { AlertTriangle, MessageSquare, RefreshCw, Sparkles, Target } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type PrioritySkill = {
   skill: string;
@@ -227,10 +229,10 @@ export default function CareerCoachPage() {
         </h2>
         <div className="p-5 border border-border bg-card rounded-md">
             {loading ? (
-            <div className="space-y-3" data-testid="summary-skeleton">
-                <div className="h-4 w-11/12 animate-pulse rounded bg-muted" />
-                <div className="h-4 w-9/12 animate-pulse rounded bg-muted" />
-                <div className="h-4 w-8/12 animate-pulse rounded bg-muted" />
+            <div className="space-y-3">
+                <Skeleton className="h-4 w-11/12" />
+                <Skeleton className="h-4 w-9/12" />
+                <Skeleton className="h-4 w-8/12" />
             </div>
             ) : (
             <p className="text-sm leading-relaxed text-foreground">
@@ -337,25 +339,24 @@ export default function CareerCoachPage() {
       {loading ? (
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} data-testid="skill-skeleton" className="space-y-3 rounded-md border border-border bg-card p-5">
-            <div className="h-5 w-1/2 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-full animate-pulse rounded bg-muted" />
-            <div className="h-4 w-10/12 animate-pulse rounded bg-muted" />
-            <div className="h-12 w-full animate-pulse rounded bg-muted" />
+            <div key={i} className="space-y-3 rounded-md border border-border bg-card p-5">
+            <Skeleton className="h-5 w-1/2" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-12 w-full" />
             </div>
         ))}
         </section>
       ) : errorText ? (
-        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-8 flex flex-col items-center gap-3 text-center">
-            <BookOpen className="h-8 w-8 text-amber-600 dark:text-amber-400" />
-            <h2 className="text-base font-semibold text-amber-800 dark:text-amber-200">No drives to analyze</h2>
-            <p className="max-w-2xl text-sm text-amber-700 dark:text-amber-300">
-            {payload?.suggestion || "Complete your profile and wait for active drives to be posted"}
-            </p>
-            <p className="text-xs text-amber-600/80 dark:text-amber-400/80">{errorText}</p>
-            <Button type="button" variant="outline" className="mt-2 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20" onClick={() => void fetchRoadmap(true)}>
-            Retry
-            </Button>
+        <div className="rounded-md border border-border bg-card p-12">
+            <EmptyState 
+                message="No drives to analyze" 
+                description={payload?.suggestion || "Complete your profile and wait for active drives to be posted."}
+                action={
+                    <Button type="button" variant="outline" className="mt-4" onClick={() => void fetchRoadmap(true)}>
+                        Retry
+                    </Button>
+                }
+            />
         </div>
       ) : (
         <section className="space-y-4">

@@ -25,6 +25,7 @@ import { studentProfileSchema, type StudentProfileInput } from "@/lib/validation
 import { computeCompleteness } from "@/lib/profile/completeness";
 import { extractTextFromResume, cleanResumeText } from "@/lib/resume/text-extractor";
 import { toResumeDownloadUrl } from "@/lib/resume/download-url";
+import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 
 interface StudentUser { name: string; email: string; }
@@ -339,7 +340,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                             <div className="flex flex-wrap gap-2">
                                 {profile.skills?.length > 0 ? profile.skills.map((s: any, i: number) => (
                                     <Badge key={i} variant="secondary">{s.name}</Badge>
-                                )) : <p className="text-sm text-muted-foreground">No technical skills added.</p>}
+                                )) : <EmptyState message="No technical skills" description="Add your key technologies and tools here." />}
                             </div>
                         )}
                     </section>
@@ -412,7 +413,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                             <p className="text-sm text-muted-foreground mt-2 leading-relaxed whitespace-pre-wrap">{exp.description}</p>
                                         </div>
                                     </div>
-                                )) : <p className="text-sm text-muted-foreground">No experience listed.</p>}
+                                )) : <EmptyState message="No experience listed" description="Add your internships, full-time roles, or leadership positions." />}
                             </div>
                         )}
                     </section>
@@ -456,7 +457,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                             ))}
                                         </div>
                                     </div>
-                                )) : <div className="col-span-2"><p className="text-sm text-muted-foreground">No projects listed.</p></div>}
+                                )) : <div className="col-span-2"><EmptyState message="No projects listed" description="Showcase your best engineering work here." /></div>}
                             </div>
                         )}
                     </section>

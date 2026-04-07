@@ -62,14 +62,14 @@ export function TagInput({
           <Badge
             key={`${tag}-${index}`}
             variant="secondary"
-            className="flex items-center gap-1 bg-indigo-500/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/30 transition-colors"
+            className="flex items-center gap-1 bg-primary/20 text-foreground border-primary/30 hover:bg-primary/30 transition-colors"
           >
             {tag}
             {!disabled && (
               <button
                 type="button"
                 onClick={() => removeTag(index)}
-                className="rounded-full hover:bg-indigo-500/50 p-0.5 transition-colors"
+                className="rounded-full hover:bg-primary/50 p-0.5 transition-colors"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -84,7 +84,7 @@ export function TagInput({
           onKeyDown={handleKeyDown}
           onBlur={addTag}
           placeholder={tags.length === 0 ? placeholder : "Add more..."}
-          className="border-slate-700 bg-slate-800 text-white focus-visible:ring-indigo-500/50"
+          className="border-border bg-secondary text-foreground focus-visible:ring-ring"
           disabled={disabled}
         />
       )}

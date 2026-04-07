@@ -29,6 +29,7 @@ import {
 import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type User = {
   id: string;
@@ -677,9 +678,10 @@ export default function AdminUsersPage() {
       ) : loading ? (
         <div className="py-16 text-center text-muted-foreground text-sm">Loading users…</div>
       ) : users.length === 0 ? (
-        <div className="py-20 text-center border border-dashed border-border rounded-md">
-          <p className="text-muted-foreground">No users found matching your criteria.</p>
-        </div>
+        <EmptyState 
+          message="No users found" 
+          description="Try adjusting your filters or search query to find users."
+        />
       ) : (
         <div className="space-y-4">
           <div className="rounded-md border border-border overflow-hidden">

@@ -821,7 +821,7 @@ export default function OnboardingPage() {
       `}</style>
       <div className="flex items-center justify-between border-b border-border bg-background px-6 py-3">
         <div className="flex items-center gap-3">
-          <span className="text-xl font-black text-foreground">
+          <span className="text-xl font-semibold text-foreground">
             Skill<span className="text-foreground font-semibold">Sync</span>
           </span>
           <span className="text-muted-foreground">.</span>
@@ -935,7 +935,7 @@ export default function OnboardingPage() {
 
         <main className="min-w-0 flex-1">
           <div className="mb-6">
-            <h1 className="text-2xl font-black text-foreground">
+            <h1 className="text-2xl font-semibold text-foreground">
               {STEPS.find((s) => s.key === activeStep)?.label}
             </h1>
             <p className="mt-1 text-muted-foreground">{STEPS.find((s) => s.key === activeStep)?.description}</p>
@@ -995,7 +995,7 @@ export default function OnboardingPage() {
                     className={cn(
                       "h-1.5 w-1.5 rounded-full transition-all",
                       i === currentStepIndex
-                        ? "w-4 bg-indigo-400"
+                        ? "w-4 bg-primary"
                         : stepStates[i].done
                           ? "bg-emerald-500"
                           : "bg-muted",
@@ -1009,7 +1009,7 @@ export default function OnboardingPage() {
                   <Button
                     onClick={handleNext}
                     disabled={activeStep === "identity" ? !form.rollNo.trim() : (STEPS[currentStepIndex].required.length > 0 && !stepStates[currentStepIndex].done)}
-                    className="bg-primary px-6 font-bold text-foreground hover:bg-indigo-500"
+                    className="bg-primary px-6 font-bold text-foreground hover:bg-primary"
                   >
                     {activeStep === "identity" && !form.rollNo.trim()
                       ? "Enter your Roll Number to continue"
@@ -1090,7 +1090,7 @@ function IdentityStep({
           resumeState === "done"
             ? "border-emerald-500/50 bg-emerald-500/5"
             : resumeState === "parsing"
-              ? "border-primary/50 bg-indigo-500/5"
+              ? "border-primary/50 bg-primary/5"
               : "border-input hover:border-border",
         )}
       >
