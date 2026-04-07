@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Search, Filter, Loader, AlertCircle, ExternalLink, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 
 const debounce = (func: (...args: any[]) => void, delay: number) => {
   let timeout: NodeJS.Timeout;
@@ -50,6 +50,9 @@ interface SearchResponse {
 
 interface StudentSearchViewProps {
   apiEndpoint: string;
+  title?: string;
+  description?: string;
+  headerActions?: React.ReactNode;
 }
 
 export function ProfileModal({ student, onClose }: { student: StudentProfile; onClose: () => void }) {
@@ -90,7 +93,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
             </div>
           </section>
 
-          <Separator />
+          <div className="h-px bg-border my-6" />
 
           <section>
             <h3 className="text-lg font-semibold text-foreground mb-4">Academics</h3>
@@ -128,7 +131,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
 
           {student.resumeUrl && (
             <>
-              <Separator />
+              <div className="h-px bg-border my-6" />
               <section>
                 <h3 className="text-lg font-semibold text-foreground mb-4">Resume</h3>
                 <div className="rounded-md border border-border bg-muted/50 p-4">
@@ -148,7 +151,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
 
           {student.skills.length > 0 && (
             <>
-              <Separator />
+              <div className="h-px bg-border my-6" />
               <section>
                 <h3 className="text-lg font-semibold text-foreground mb-4">Skills</h3>
                 <div className="flex flex-wrap gap-2">
@@ -162,7 +165,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
 
           {student.projects.length > 0 && (
             <>
-              <Separator />
+              <div className="h-px bg-border my-6" />
               <section>
                 <h3 className="text-lg font-semibold text-foreground mb-4">Projects ({student.projects.length})</h3>
                 <div className="space-y-3">
@@ -186,7 +189,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
 
           {student.workExperience.length > 0 && (
             <>
-              <Separator />
+              <div className="h-px bg-border my-6" />
               <section>
                 <h3 className="text-lg font-semibold text-foreground mb-4">Work Experience ({student.workExperience.length})</h3>
                 <div className="space-y-3">
@@ -209,7 +212,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
 
           {student.certifications.length > 0 && (
             <>
-              <Separator />
+              <div className="h-px bg-border my-6" />
               <section>
                 <h3 className="text-lg font-semibold text-foreground mb-4">Certifications ({student.certifications.length})</h3>
                 <div className="space-y-2">
@@ -229,7 +232,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
 
           {student.codingProfiles.length > 0 && (
             <>
-              <Separator />
+              <div className="h-px bg-border my-6" />
               <section>
                 <h3 className="text-lg font-semibold text-foreground mb-4">Coding Profiles ({student.codingProfiles.length})</h3>
                 <div className="space-y-2">
@@ -246,7 +249,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
 
           {student.researchPapers.length > 0 && (
             <>
-              <Separator />
+              <div className="h-px bg-border my-6" />
               <section>
                 <h3 className="text-lg font-semibold text-foreground mb-4">Research Papers ({student.researchPapers.length})</h3>
                 <div className="space-y-2">
@@ -265,7 +268,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
 
           {student.achievements.length > 0 && (
             <>
-              <Separator />
+              <div className="h-px bg-border my-6" />
               <section>
                 <h3 className="text-lg font-semibold text-foreground mb-4">Achievements ({student.achievements.length})</h3>
                 <div className="space-y-3">
@@ -283,7 +286,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
 
           {student.softSkills.length > 0 && (
             <>
-              <Separator />
+              <div className="h-px bg-border my-6" />
               <section>
                 <h3 className="text-lg font-semibold text-foreground mb-4">Soft Skills</h3>
                 <div className="flex flex-wrap gap-2">
@@ -300,7 +303,12 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
   );
 }
 
-export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProps) {
+export default function StudentSearchView({ 
+  apiEndpoint,
+  title = "Student Profiles",
+  description = "Search and view student profiles for your college",
+  headerActions
+}: StudentSearchViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("all");
   const [selectedBatchYear, setSelectedBatchYear] = useState("all");
@@ -382,60 +390,54 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-10 space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Student Profiles</h1>
-        <p className="text-sm text-muted-foreground mt-1">Search and view student profiles for your college</p>
-      </div>
-
-      <Separator />
-
-      <div className="rounded-lg border border-border bg-card p-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search by name, email, or SAP ID..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-background border border-border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-
-          <select
-            value={selectedBranch}
-            onChange={(e) => {
-              setSelectedBranch(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="px-4 py-3 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="all">All Branches</option>
-            {branches.map((branch) => (
-              <option key={branch} value={branch}>
-                {branch}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedBatchYear}
-            onChange={(e) => {
-              setSelectedBatchYear(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="px-4 py-3 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="all">All Batch Years</option>
-            {batchYears.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
+    <div className="max-w-6xl mx-auto px-8 py-10 space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{description}</p>
         </div>
+        {headerActions && <div>{headerActions}</div>}
       </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative max-w-sm w-full">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, email, or SAP ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 w-full"
+          />
+        </div>
+        <select
+          value={selectedBranch}
+          onChange={(e) => {
+            setSelectedBranch(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="h-10 px-3 bg-card border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <option value="all">All Branches</option>
+          {branches.map((branch) => (
+            <option key={branch} value={branch}>{branch}</option>
+          ))}
+        </select>
+        <select
+          value={selectedBatchYear}
+          onChange={(e) => {
+            setSelectedBatchYear(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="h-10 px-3 bg-card border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <option value="all">All Batch Years</option>
+          {batchYears.map((year) => (
+            <option key={year} value={year}>{year}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="h-px bg-border w-full" />
 
       {loading && (
         <div className="flex items-center justify-center py-12">
@@ -463,67 +465,92 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
       )}
 
       {!loading && results.length > 0 && (
-        <>
+        <div className="space-y-4">
           <div className="text-sm text-muted-foreground">
             Showing {(currentPage - 1) * 20 + 1} to {Math.min(currentPage * 20, total)} of {total} results
           </div>
 
-          <div className="space-y-3">
-            {results.map((student) => (
-              <div
-                key={student.id}
-                className="rounded-md border border-border bg-card p-4 flex items-center justify-between hover:bg-muted/50 transition"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-4 flex-wrap">
-                    <div>
-                      <p className="font-semibold text-foreground">{student.name}</p>
-                      <p className="text-sm text-muted-foreground">{student.email}</p>
-                    </div>
-                    <Badge variant="outline">{student.branch || "—"}</Badge>
-                    <div className="text-sm text-muted-foreground">{student.batchYear || "—"}</div>
-                    <div className="text-sm font-semibold text-primary">
-                      CGPA: {student.cgpa?.toFixed(2) || "—"}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {student.profileCompleteness}% Complete
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={() => setSelectedStudent(student)}
-                  size="sm"
-                  className="ml-4 shrink-0"
-                >
-                  View Profile
-                </Button>
-              </div>
-            ))}
+          <div className="rounded-md border border-border overflow-hidden">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-card text-muted-foreground border-b border-border">
+                <tr>
+                  <th className="px-4 py-3 font-medium text-foreground">SAP ID / Roll</th>
+                  <th className="px-4 py-3 font-medium text-foreground">Student Info</th>
+                  <th className="px-4 py-3 font-medium text-foreground">Course Info</th>
+                  <th className="px-4 py-3 font-medium text-foreground">Performance</th>
+                  <th className="px-4 py-3 font-medium text-foreground text-center">Profile</th>
+                  <th className="px-4 py-3 font-medium text-right text-foreground">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {results.map((student, index) => (
+                  <tr key={student.id} className={index % 2 === 0 ? "bg-card" : "bg-muted/30"}>
+                    <td className="px-4 py-3 align-middle font-mono text-xs">
+                      <div className="text-foreground">{student.sapId || "—"}</div>
+                      <div className="text-muted-foreground mt-0.5">{student.rollNo || "—"}</div>
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <p className="font-medium text-foreground">{student.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{student.email}</p>
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <Badge variant="outline" className="text-[10px] py-0">{student.branch || "—"}</Badge>
+                      <div className="text-xs text-muted-foreground mt-1">Batch: {student.batchYear || "—"}</div>
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <div className="font-mono text-sm">{student.cgpa ? student.cgpa.toFixed(2) : "—"}</div>
+                    </td>
+                    <td className="px-4 py-3 align-middle text-center">
+                      <div className="relative inline-flex items-center justify-center">
+                        <svg className="w-8 h-8 transform -rotate-90">
+                          <circle cx="16" cy="16" r="14" strokeWidth="2" stroke="currentColor" fill="none" className="text-muted" />
+                          <circle
+                            cx="16" cy="16" r="14" strokeWidth="2" stroke="currentColor" fill="none"
+                            strokeDasharray={2 * Math.PI * 14}
+                            strokeDashoffset={2 * Math.PI * 14 * (1 - student.profileCompleteness / 100)}
+                            className={student.profileCompleteness > 80 ? "text-green-500" : student.profileCompleteness > 40 ? "text-yellow-500" : "text-red-500"}
+                          />
+                        </svg>
+                        <span className="absolute text-[9px] font-bold">{student.profileCompleteness}%</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 align-middle text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedStudent(student)}
+                      >
+                        View
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
           {total > 20 && (
-            <div className="flex justify-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </Button>
-              <span className="px-4 py-2 text-muted-foreground">
-                Page {currentPage} of {Math.ceil(total / 20)}
-              </span>
-              <Button
-                variant="outline"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage >= Math.ceil(total / 20)}
-              >
-                Next
-              </Button>
+            <div className="flex items-center justify-between pt-4">
+              <div className="text-sm text-muted-foreground">Page {currentPage} of {Math.ceil(total / 20)}</div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= Math.ceil(total / 20)}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {selectedStudent && (

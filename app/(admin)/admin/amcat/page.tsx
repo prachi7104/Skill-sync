@@ -95,10 +95,10 @@ const defaultThresholds = {
   gamma_min: 0,
 };
 
-function categoryClass(category: string) {
-  if (category === "alpha") return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
-  if (category === "beta") return "bg-amber-500/10 text-amber-400 border-amber-500/30";
-  return "bg-rose-500/10 text-rose-400 border-rose-500/30";
+function categoryVariant(category: string) {
+  if (category === "alpha") return "green";
+  if (category === "beta") return "yellow";
+  return "red";
 }
 
 async function safeReadJson(res: Response): Promise<ApiResponse> {
@@ -459,7 +459,7 @@ export default function AdminAmcatPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-6xl mx-auto px-8 py-10 space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">AMCAT Upload System</h1>
@@ -471,7 +471,7 @@ export default function AdminAmcatPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <Card className="xl:col-span-1 border-t-4 border-t-indigo-500">
+        <Card className="xl:col-span-1 border border-border shadow-sm">
           <CardHeader>
             <CardTitle>Upload Session File</CardTitle>
             <CardDescription>CSV/XLSX up to 10MB</CardDescription>
@@ -480,14 +480,14 @@ export default function AdminAmcatPage() {
             <a 
               href="/amcat-template.csv" 
               download 
-              className="inline-flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded transition-colors"
             >
               <UploadCloud className="h-3 w-3" />
               Download CSV Template
             </a>
 
             <div
-              className="border border-dashed rounded-md p-5 text-center bg-slate-50 hover:bg-slate-100 transition-colors"
+              className="border border-dashed rounded-md p-5 text-center bg-muted/50 hover:bg-muted font-medium transition-colors cursor-pointer"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
@@ -495,9 +495,9 @@ export default function AdminAmcatPage() {
                 setUploadFile(file);
               }}
             >
-              <UploadCloud className="h-6 w-6 mx-auto text-slate-500" />
-              <p className="text-sm text-slate-600 mt-2">Drag and drop AMCAT CSV/XLSX here</p>
-              <p className="text-xs text-slate-500 mt-1">or select file below</p>
+              <UploadCloud className="h-6 w-6 mx-auto text-muted-foreground" />
+              <p className="text-sm text-foreground mt-2">Drag and drop AMCAT CSV/XLSX here</p>
+              <p className="text-xs text-muted-foreground mt-1">or select file below</p>
             </div>
 
             <div className="space-y-1.5">
@@ -527,7 +527,7 @@ export default function AdminAmcatPage() {
               <Input id="academic-year" value={academicYear} onChange={(e) => setAcademicYear(e.target.value)} placeholder="2025-26" />
             </div>
 
-            <Button onClick={handleUpload} disabled={uploading} className="w-full gap-2 bg-indigo-600 hover:bg-indigo-700">
+            <Button onClick={handleUpload} disabled={uploading} className="w-full gap-2">
               {uploading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
               {uploading ? "Uploading..." : "Upload AMCAT File"}
             </Button>
@@ -563,12 +563,12 @@ export default function AdminAmcatPage() {
                       }}
                       className={cn(
                         "w-full text-left border rounded-md p-3 transition-colors",
-                        selectedSessionId === session.id ? "border-indigo-400 bg-indigo-50" : "hover:bg-slate-50",
+                        selectedSessionId === session.id ? "border-primary bg-primary/5" : "hover:bg-muted/50",
                       )}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-sm font-medium truncate">{session.session_name}</p>
-                        <Badge variant="outline" className={categoryClass(session.status === "published" ? "alpha" : session.status === "review" ? "beta" : "gamma")}>
+                        <Badge variant={categoryVariant(session.status === "published" ? "alpha" : session.status === "review" ? "beta" : "gamma") as any}>
                           {session.status}
                         </Badge>
                       </div>
@@ -596,7 +596,7 @@ export default function AdminAmcatPage() {
                 <Button
                   disabled={!selectedSessionId || selectedSession?.status !== "review"}
                   onClick={() => setPublishOpen(true)}
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  className="gap-2"
                 >
                   Publish to Students
                 </Button>
@@ -637,7 +637,7 @@ export default function AdminAmcatPage() {
                         <TableCell>{row.branch || "-"}</TableCell>
                         <TableCell>{row.computed_total}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={categoryClass(row.final_category)}>
+                          <Badge variant={categoryVariant(row.final_category) as any}>
                             {row.final_category}
                           </Badge>
                         </TableCell>
@@ -840,13 +840,13 @@ export default function AdminAmcatPage() {
                     <TableCell>{row.quant_score ?? "-"}</TableCell>
                     <TableCell>{row.computed_total}</TableCell>
                     <TableCell>
-                      {row.csv_category ? <Badge variant="outline" className={categoryClass(row.csv_category)}>{row.csv_category}</Badge> : "-"}
+                      {row.csv_category ? <Badge variant={categoryVariant(row.csv_category) as any}>{row.csv_category}</Badge> : "-"}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={categoryClass(row.computed_category)}>{row.computed_category}</Badge>
+                      <Badge variant={categoryVariant(row.computed_category) as any}>{row.computed_category}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={categoryClass(row.final_category)}>{row.final_category}</Badge>
+                      <Badge variant={categoryVariant(row.final_category) as any}>{row.final_category}</Badge>
                     </TableCell>
                     <TableCell>{row.linked ? "✓" : "✗"}</TableCell>
                     <TableCell>
@@ -904,7 +904,7 @@ export default function AdminAmcatPage() {
             <Button type="button" variant="outline" onClick={() => setPublishOpen(false)}>
               Cancel
             </Button>
-            <Button type="button" className="bg-emerald-600 hover:bg-emerald-700" onClick={handlePublish} disabled={publishing}>
+            <Button type="button" onClick={handlePublish} disabled={publishing}>
               {publishing ? "Publishing..." : "Publish Results"}
             </Button>
           </DialogFooter>

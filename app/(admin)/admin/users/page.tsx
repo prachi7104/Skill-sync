@@ -59,17 +59,17 @@ const ROLE_CONFIG = {
   admin: {
     label: "Admin",
     icon: ShieldCheck,
-    badge: "bg-rose-50 text-rose-700 border-rose-200",
+    badge: "red" as const,
   },
   faculty: {
     label: "Faculty",
     icon: UserPlus,
-    badge: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    badge: "blue" as const,
   },
   student: {
     label: "Student",
     icon: GraduationCap,
-    badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    badge: "green" as const,
   },
 };
 
@@ -368,19 +368,15 @@ export default function AdminUsersPage() {
     }
   }
 
-  const grouped = {
-    admin: users.filter((u: User) => u.role === "admin"),
-    faculty: users.filter((u: User) => u.role === "faculty"),
-    student: users.filter((u: User) => u.role === "student"),
-  };
+
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-6xl mx-auto px-8 py-10 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
-          <p className="text-sm text-muted-foreground mt-1">{totalCount} total users</p>
+          <h1 className="text-2xl font-semibold text-foreground">User Management</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage all admin, faculty, and student accounts.</p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchUsers} className="gap-2">
           <RefreshCw className="h-4 w-4" /> Refresh
@@ -388,17 +384,17 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Create Staff Account Card */}
-      <Card className="border-t-4 border-t-indigo-500">
-        <CardHeader>
+      <Card className="rounded-md border border-border shadow-sm">
+        <CardHeader className="bg-muted/50 border-b border-border pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <UserPlus className="h-5 w-5 text-indigo-600" />
+            <UserPlus className="h-5 w-5 text-primary" />
             Create Staff Account
           </CardTitle>
           <CardDescription>
             Creates a new faculty or admin account. Component permissions control which features the user can access.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <form onSubmit={handleCreateStaff} className="space-y-5">
             {/* Role selector */}
             <div className="space-y-2">
@@ -468,9 +464,9 @@ export default function AdminUsersPage() {
                     <label
                       key={key}
                       className={cn(
-                        "flex items-start gap-2.5 rounded-md border p-3 cursor-pointer transition-colors",
+                        "flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-colors",
                         locked ? "opacity-60 cursor-not-allowed bg-muted" : "hover:bg-muted/50",
-                        (locked || newGrantedComponents.includes(key)) ? "border-indigo-300 bg-indigo-50/40" : ""
+                        (locked || newGrantedComponents.includes(key)) ? "border-primary bg-primary/5" : "border-border"
                       )}
                     >
                       <input
@@ -482,7 +478,7 @@ export default function AdminUsersPage() {
                       />
                       <div>
                         <p className="text-sm font-medium leading-none">{label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{desc}</p>
                       </div>
                     </label>
                   ))}
@@ -493,7 +489,7 @@ export default function AdminUsersPage() {
             <Button
               type="submit"
               disabled={creating || !newName.trim() || !newEmail.trim() || (!autoGeneratePassword && newPassword.length < 8)}
-              className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+              className="gap-2"
             >
               {creating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
               {creating ? "Creating..." : `Create ${newRole === "admin" ? "Admin" : "Faculty"}`}
@@ -522,7 +518,7 @@ export default function AdminUsersPage() {
               This password is shown <strong>ONCE</strong>. Copy it now and send to the user securely.
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-xl bg-slate-800 border border-slate-700 p-3">
+          <div className="rounded-md bg-muted border border-border p-3">
             <p className="text-xs text-slate-400 mb-2">Generated Password (shown once)</p>
             <div className="flex items-center gap-3">
               <input
@@ -537,14 +533,14 @@ export default function AdminUsersPage() {
                 size="sm"
                 className={cn(
                   "transition-all",
-                  copied ? "bg-emerald-600 hover:bg-emerald-600" : "bg-slate-700 hover:bg-slate-600"
+                  copied ? "bg-emerald-600 hover:bg-emerald-600 text-white" : ""
                 )}
               >
                 {copied ? <><Check className="w-3.5 h-3.5 mr-1" /> Copied</> : <><Copy className="w-3.5 h-3.5 mr-1" /> Copy</>}
               </Button>
             </div>
           </div>
-          <p className="text-xs text-amber-400 mt-2">
+          <p className="text-xs text-amber-600 mt-2">
             Save this password now. It cannot be recovered after closing this dialog. Send it securely.
           </p>
           <DialogFooter>
@@ -602,9 +598,9 @@ export default function AdminUsersPage() {
                   <label
                     key={key}
                     className={cn(
-                      "flex items-start gap-2.5 rounded-md border p-3 cursor-pointer transition-colors",
+                      "flex items-start gap-3 rounded-md border p-3 cursor-pointer transition-colors",
                       locked ? "opacity-60 cursor-not-allowed bg-muted" : "hover:bg-muted/50",
-                      (locked || editComponents.includes(key)) ? "border-indigo-300 bg-indigo-50/40" : ""
+                      (locked || editComponents.includes(key)) ? "border-primary bg-primary/5" : "border-border"
                     )}
                   >
                     <input
@@ -616,7 +612,7 @@ export default function AdminUsersPage() {
                     />
                     <div>
                       <p className="text-sm font-medium leading-none">{label}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{desc}</p>
                     </div>
                   </label>
                 ))}
@@ -635,7 +631,7 @@ export default function AdminUsersPage() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditUser(null)} disabled={editLoading}>Cancel</Button>
-            <Button onClick={handleSavePermissions} disabled={editLoading} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+            <Button onClick={handleSavePermissions} disabled={editLoading} className="gap-2">
               {editLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               {editLoading ? "Saving…" : "Save Permissions"}
             </Button>
@@ -643,33 +639,35 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
+      <div className="h-px bg-border w-full" />
+
       {/* User List */}
-      <div className="flex items-center gap-3 mb-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or email..."
-            className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-indigo-500"
-          />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
+          <div className="relative max-w-sm w-full sm:w-80">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name or email..."
+              className="w-full pl-9"
+            />
+          </div>
+          <div className="flex gap-2">
+            {(["", "admin", "faculty", "student"] as const).map((r) => (
+              <Badge
+                key={r}
+                variant={filterRole === r ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => setFilterRole(r)}
+              >
+                {r === "" ? "All" : r.charAt(0).toUpperCase() + r.slice(1)}
+              </Badge>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-2">
-          {(["", "admin", "faculty", "student"] as const).map((r) => (
-            <button
-              key={r}
-              onClick={() => setFilterRole(r)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                filterRole === r
-                  ? "bg-indigo-600/20 border border-indigo-500/30 text-indigo-400"
-                  : "bg-slate-800 border border-transparent text-slate-400 hover:text-white"
-              }`}
-            >
-              {r === "" ? "All" : r.charAt(0).toUpperCase() + r.slice(1)}
-            </button>
-          ))}
-        </div>
+        <p className="text-sm text-muted-foreground">{totalCount} users found</p>
       </div>
 
       {fetchError ? (
@@ -678,122 +676,122 @@ export default function AdminUsersPage() {
         </div>
       ) : loading ? (
         <div className="py-16 text-center text-muted-foreground text-sm">Loading users…</div>
+      ) : users.length === 0 ? (
+        <div className="py-20 text-center border border-dashed border-border rounded-md">
+          <p className="text-muted-foreground">No users found matching your criteria.</p>
+        </div>
       ) : (
-        <div className="space-y-6">
-          {(["admin", "faculty", "student"] as const).map((role) => {
-            const group = grouped[role];
-            if (group.length === 0) return null;
-            const cfg = ROLE_CONFIG[role];
-            const Icon = cfg.icon;
+        <div className="space-y-4">
+          <div className="rounded-md border border-border overflow-hidden">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-card text-muted-foreground border-b border-border">
+                <tr>
+                  <th className="px-4 py-3 font-medium text-foreground">User Info</th>
+                  <th className="px-4 py-3 font-medium text-foreground">Role</th>
+                  <th className="px-4 py-3 font-medium text-foreground">Joined Date</th>
+                  <th className="px-4 py-3 font-medium text-right text-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {users.map((user, index) => {
+                  const cfg = ROLE_CONFIG[user.role];
+                  const Icon = cfg.icon;
+                  const rs = resetState[user.email];
 
-            return (
-              <Card key={role}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Icon className="h-4 w-4" />
-                    {cfg.label}s
-                    <Badge variant="secondary" className="ml-1 text-xs">
-                      {group.length}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="max-h-[600px] overflow-y-auto rounded-xl border border-white/5 divide-y">
-                    {group.map((user: User) => {
-                      const rs = resetState[user.email];
-                      return (
-                        <div
-                          key={user.id}
-                          className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                        >
-                          <div className="space-y-0.5">
-                            <p className="text-sm font-semibold">{user.name}</p>
-                            <p className="text-xs text-muted-foreground">{user.email}</p>
-                            <p className="text-[10px] text-muted-foreground">
-                              Joined{" "}
-                              {new Date(user.createdAt).toLocaleDateString("en-IN", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              })}
-                            </p>
+                  return (
+                    <tr key={user.id} className={index % 2 === 0 ? "bg-card" : "bg-muted/30"}>
+                      <td className="px-4 py-4 align-top">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                            <Icon className="h-4 w-4 text-muted-foreground" />
                           </div>
-
-                          <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
-                            <Badge variant="outline" className={cn("text-[10px] font-bold tracking-wide px-2", cfg.badge)}>
-                              {cfg.label.toUpperCase()}
-                            </Badge>
-
-                            {/* Password Reset — faculty only */}
-                            {role === "faculty" && (
-                              <div className="space-y-1.5 w-full sm:w-auto flex flex-col items-end">
-                                <form
-                                  onSubmit={(e) => {
-                                    e.preventDefault();
-                                    handleResetPassword(user.id, user.email);
-                                  }}
-                                  className="flex items-center gap-2"
-                                >
-                                  <Input
-                                    type="password"
-                                    autoComplete="new-password"
-                                    placeholder="New Password"
-                                    className="h-7 text-xs w-[130px]"
-                                    value={rs?.resetPassword ?? ""}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                      setResetState((prev: typeof resetState) => ({
-                                        ...prev,
-                                        [user.email]: {
-                                          ...prev[user.email],
-                                          resetPassword: e.target.value,
-                                          loading: false,
-                                          error: null,
-                                          success: false,
-                                        },
-                                      }))
-                                    }
-                                  />
-                                  <Button
-                                    type="submit"
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={rs?.loading || !rs?.resetPassword || rs.resetPassword.length < 8}
-                                    className="gap-1.5 text-xs h-7 px-3"
-                                  >
-                                    {rs?.loading ? (
-                                      <RefreshCw className="h-3 w-3 animate-spin" />
-                                    ) : (
-                                      <ShieldCheck className="h-3 w-3" />
-                                    )}
-                                    {rs?.loading ? "Resetting..." : "Reset"}
-                                  </Button>
-                                  {rs?.success && <Check className="w-4 h-4 text-emerald-400" />}
-                                </form>
-                                {rs?.error && <p className="text-[10px] text-rose-600">{rs.error}</p>}
-                              </div>
-                            )}
-
-                            {/* Edit Permissions — faculty only */}
-                            {role === "faculty" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="gap-1.5 text-xs h-7 px-3"
-                                onClick={() => handleOpenEditPermissions(user)}
-                              >
-                                <Settings2 className="h-3 w-3" />
-                                Edit Permissions
-                              </Button>
-                            )}
+                          <div>
+                            <p className="font-semibold text-foreground">{user.name}</p>
+                            <p className="text-xs text-muted-foreground">{user.email}</p>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                      </td>
+                      <td className="px-4 py-4 align-top">
+                        <Badge variant={cfg.badge}>{cfg.label}</Badge>
+                      </td>
+                      <td className="px-4 py-4 align-top text-muted-foreground text-xs">
+                        {new Date(user.createdAt).toLocaleDateString("en-IN", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </td>
+                      <td className="px-4 py-4 align-top">
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          {/* Password Reset — faculty only */}
+                          {user.role === "faculty" && (
+                            <div className="space-y-1.5 flex flex-col items-end">
+                              <form
+                                onSubmit={(e) => {
+                                  e.preventDefault();
+                                  handleResetPassword(user.id, user.email);
+                                }}
+                                className="flex items-center gap-2"
+                              >
+                                <Input
+                                  type="password"
+                                  autoComplete="new-password"
+                                  placeholder="New Password"
+                                  className="h-7 text-xs w-[130px]"
+                                  value={rs?.resetPassword ?? ""}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                    setResetState((prev: typeof resetState) => ({
+                                      ...prev,
+                                      [user.email]: {
+                                        ...prev[user.email],
+                                        resetPassword: e.target.value,
+                                        loading: false,
+                                        error: null,
+                                        success: false,
+                                      },
+                                    }))
+                                  }
+                                />
+                                <Button
+                                  type="submit"
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={rs?.loading || !rs?.resetPassword || rs.resetPassword.length < 8}
+                                  className="gap-1.5 text-xs h-7 px-3"
+                                >
+                                  {rs?.loading ? (
+                                    <RefreshCw className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <ShieldCheck className="h-3 w-3" />
+                                  )}
+                                  {rs?.loading ? "Resetting..." : "Reset"}
+                                </Button>
+                                {rs?.success && <Check className="w-4 h-4 text-emerald-500" />}
+                              </form>
+                              {rs?.error && <p className="text-[10px] text-rose-500">{rs.error}</p>}
+                            </div>
+                          )}
+
+                          {/* Edit Permissions — faculty only */}
+                          {user.role === "faculty" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1.5 text-xs h-7 px-3"
+                              onClick={() => handleOpenEditPermissions(user)}
+                            >
+                              <Settings2 className="h-3 w-3" />
+                              Permissions
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
           {totalCount > pageSize && (
             <Pagination page={page} total={totalCount} pageSize={pageSize} />

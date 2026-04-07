@@ -10,8 +10,8 @@ export default async function AdminMasterDashboard() {
   const user = await requireRole(["admin"]);
   if (!user.collegeId) {
     return (
-      <div className="max-w-4xl mx-auto p-8 md:p-10">
-        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 text-amber-200">
+      <div className="max-w-5xl mx-auto px-8 py-10">
+        <div className="rounded-md border border-red-500/30 bg-red-500/10 p-6 text-red-200">
           Admin account is not linked to a college. Dashboard metrics are unavailable.
         </div>
       </div>
@@ -89,60 +89,64 @@ export default async function AdminMasterDashboard() {
     .where(and(eq(users.role, "faculty"), eq(users.collegeId, user.collegeId)));
 
   return (
-    <div className="max-w-7xl mx-auto p-8 md:p-10 pb-32 space-y-10">
+    <div className="max-w-5xl mx-auto px-8 py-10 space-y-6">
       
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-black text-white tracking-tight">Master Dashboard</h1>
-        <p className="text-slate-400 mt-2">
+        <h1 className="text-2xl font-semibold text-foreground">Admin Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Complete placement platform overview · Last updated {format(now, "MMM d, h:mm a")}
         </p>
       </div>
 
+      <div className="h-px bg-border my-6" />
+
       {/* Top Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Students", value: totalStudents[0]?.c ?? 0, sub: `${noResumeStudents[0]?.c ?? 0} without resume`, color: "indigo" },
-          { label: "Active Drives", value: activeDrives[0]?.c ?? 0, sub: `${totalDrives[0]?.c ?? 0} total`, color: "emerald" },
-          { label: "Rankings Generated", value: totalRankings[0]?.c ?? 0, sub: `Avg score: ${avgMatchScore[0]?.avg ?? 0}%`, color: "blue" },
-          { label: "Faculty Members", value: facultyCount?.c ?? 0, sub: "Active staff", color: "amber" },
+          { label: "Total Students", value: totalStudents[0]?.c ?? 0, sub: `${noResumeStudents[0]?.c ?? 0} without resume` },
+          { label: "Active Drives", value: activeDrives[0]?.c ?? 0, sub: `${totalDrives[0]?.c ?? 0} total` },
+          { label: "Rankings Generated", value: totalRankings[0]?.c ?? 0, sub: `Avg score: ${avgMatchScore[0]?.avg ?? 0}%` },
+          { label: "Faculty Members", value: facultyCount?.c ?? 0, sub: "Active staff" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-slate-900/60 rounded-2xl border border-white/5 p-6">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">{stat.label}</p>
-            <p className="text-4xl font-black text-white tracking-tighter">{stat.value}</p>
-            <p className="text-xs text-slate-500 mt-2">{stat.sub}</p>
+          <div key={stat.label} className="rounded-md border border-border bg-card p-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+            <p className="text-xl font-semibold text-foreground mt-1">{stat.value}</p>
+            <p className="text-xs text-muted-foreground mt-1">{stat.sub}</p>
           </div>
         ))}
       </div>
+
+      <div className="h-px bg-border my-6" />
 
       {/* Two-column: AI Pipeline + Student Readiness */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* AI Pipeline Health */}
-        <div className="bg-slate-900/60 rounded-2xl border border-white/5 p-6 space-y-4">
-          <h2 className="font-bold text-white">AI Pipeline Health</h2>
+        <div className="rounded-md border border-border bg-card p-6 space-y-4">
+          <h2 className="text-sm font-semibold text-foreground">AI Pipeline Health</h2>
           {[
             { label: "Pending jobs", value: pendingJobs[0]?.c ?? 0, status: (pendingJobs[0]?.c ?? 0) > 10 ? "warn" : "ok" },
             { label: "Failed (24h)", value: failedJobs[0]?.c ?? 0, status: (failedJobs[0]?.c ?? 0) > 0 ? "error" : "ok" },
             { label: "Completed (24h)", value: completedToday[0]?.c ?? 0, status: "ok" },
             { label: "Drives ranked", value: rankedDrives[0]?.c ?? 0, status: "ok" },
           ].map((row) => (
-            <div key={row.label} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-              <span className="text-sm text-slate-400">{row.label}</span>
-              <span className={`text-sm font-bold ${
-                row.status === "error" ? "text-rose-400" :
-                row.status === "warn" ? "text-amber-400" : "text-emerald-400"
+            <div key={row.label} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+              <span className="text-sm text-muted-foreground">{row.label}</span>
+              <span className={`text-sm font-medium ${
+                row.status === "error" ? "text-red-500" :
+                row.status === "warn" ? "text-yellow-500" : "text-green-500"
               }`}>{row.value}</span>
             </div>
           ))}
-          <Link href="/admin/health" className="text-xs text-indigo-400 hover:text-indigo-300 font-bold">
+          <Link href="/admin/health" className="text-xs text-primary hover:underline">
             Full system health →
           </Link>
         </div>
 
         {/* Student Readiness */}
-        <div className="bg-slate-900/60 rounded-2xl border border-white/5 p-6 space-y-4">
-          <h2 className="font-bold text-white">Student Readiness</h2>
+        <div className="rounded-md border border-border bg-card p-6 space-y-4">
+          <h2 className="text-sm font-semibold text-foreground">Student Readiness</h2>
           {[
             {
               label: "Embedding coverage",
@@ -163,65 +167,74 @@ export default async function AdminMasterDashboard() {
           ].map((row) => (
             <div key={row.label} className="space-y-1.5">
               <div className="flex justify-between text-sm">
-                <span className="text-slate-400">{row.label}</span>
-                <span className="text-white font-bold">{row.value}</span>
+                <span className="text-muted-foreground">{row.label}</span>
+                <span className="text-foreground font-medium">{row.value}</span>
               </div>
-              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${row.inverted ? "bg-rose-500" : "bg-indigo-500"}`}
+                  className={`h-full rounded-full ${row.inverted ? "bg-red-500" : "bg-primary"}`}
                   style={{ width: `${row.pct}%` }}
                 />
               </div>
             </div>
           ))}
-          <Link href="/admin/users" className="text-xs text-indigo-400 hover:text-indigo-300 font-bold">
+          <Link href="/admin/users" className="text-xs text-primary hover:underline">
             View all students →
           </Link>
         </div>
       </div>
 
-      {/* Recent Drives */}
-      <div className="bg-slate-900/60 rounded-2xl border border-white/5 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="font-bold text-white">Recent Drives</h2>
-          <Link href="/admin/drives" className="text-xs text-indigo-400 hover:text-indigo-300 font-bold">
+      <div className="h-px bg-border my-6" />
+
+      {/* Recent Drives - Simple Bordered Table */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">Recent Drives</h2>
+          <Link href="/admin/drives" className="text-xs text-primary hover:underline">
             View all →
           </Link>
         </div>
-        <div className="space-y-3">
-          {recentDrives.map((drive) => (
-            <div key={drive.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-950/50 border border-white/5">
-              <div>
-                <p className="font-bold text-white text-sm">{drive.company} — {drive.roleTitle}</p>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  by {drive.creatorName} · {formatDistanceToNow(drive.createdAt)} ago
-                </p>
-              </div>
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                drive.ranking_status === "completed" ? "bg-emerald-500/15 text-emerald-400" :
-                drive.ranking_status === "processing" ? "bg-indigo-500/15 text-indigo-400" :
-                "bg-slate-800 text-slate-500"
-              }`}>
-                {drive.ranking_status}
-              </span>
-            </div>
-          ))}
+        <div className="rounded-md border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <tbody className="divide-y divide-border">
+              {recentDrives.map((drive, i) => (
+                <tr key={drive.id} className={i % 2 === 0 ? "bg-card" : "bg-secondary/40"}>
+                  <td className="p-3">
+                    <p className="font-medium text-foreground">{drive.company} — {drive.roleTitle}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      by {drive.creatorName} · {formatDistanceToNow(drive.createdAt)} ago
+                    </p>
+                  </td>
+                  <td className="p-3 text-right">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${
+                      drive.ranking_status === "completed" ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20" :
+                      drive.ranking_status === "processing" ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20" :
+                      "bg-secondary text-muted-foreground border-border"
+                    }`}>
+                      {drive.ranking_status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
+
+      <div className="h-px bg-border my-6" />
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { href: "/admin/users", label: "Manage Faculty", desc: "Add or update staff accounts", emoji: "👥" },
-          { href: "/admin/drives", label: "All Drives", desc: "Monitor every placement drive", emoji: "🎯" },
-          { href: "/admin/health", label: "System Health", desc: "Job queue and AI pipeline status", emoji: "⚡" },
+          { href: "/admin/users", label: "Manage Faculty", desc: "Add or update staff accounts" },
+          { href: "/admin/drives", label: "All Drives", desc: "Monitor every placement drive" },
+          { href: "/admin/health", label: "System Health", desc: "Job queue and AI pipeline status" },
         ].map((action) => (
           <Link key={action.href} href={action.href}
-            className="bg-slate-900/40 hover:bg-slate-900/80 border border-white/5 hover:border-indigo-500/30 rounded-2xl p-6 transition-all group"
+            className="flex flex-col gap-1 rounded-md border border-border p-4 hover:bg-secondary/40 transition-colors"
           >
-            <div className="text-2xl mb-3">{action.emoji}</div>
-            <p className="font-bold text-white group-hover:text-indigo-300 transition-colors">{action.label}</p>
-            <p className="text-xs text-slate-500 mt-1">{action.desc}</p>
+            <p className="text-sm font-semibold text-foreground hover:underline">{action.label}</p>
+            <p className="text-xs text-muted-foreground">{action.desc}</p>
           </Link>
         ))}
       </div>
