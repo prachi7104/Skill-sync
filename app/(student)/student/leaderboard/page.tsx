@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -60,9 +61,9 @@ type MyRank = {
 } | null;
 
 const badgeStyles: Record<string, string> = {
-  alpha: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  beta: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  gamma: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+  alpha: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 border-none",
+  beta: "bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 border-none",
+  gamma: "bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border-none",
 };
 
 export default function StudentLeaderboardPage() {
@@ -175,14 +176,14 @@ export default function StudentLeaderboardPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-8 md:p-10 pb-32 space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="max-w-5xl mx-auto px-8 py-10 space-y-8 animate-fade-up">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">AMCAT Leaderboard</h1>
-          <p className="text-slate-400 mt-1">Top performers from published AMCAT sessions</p>
+          <h1 className="text-2xl font-semibold text-foreground">AMCAT Leaderboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">Top performers from published AMCAT sessions</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Select
             value={selectedSessionId}
             onValueChange={(value) => {
@@ -192,7 +193,7 @@ export default function StudentLeaderboardPage() {
             }}
             disabled={!hasData || loading}
           >
-            <SelectTrigger className="w-[260px] bg-slate-900 border-white/10 text-white">
+            <SelectTrigger className="w-full md:w-[220px]">
               <SelectValue placeholder="Select session" />
             </SelectTrigger>
             <SelectContent>
@@ -212,7 +213,7 @@ export default function StudentLeaderboardPage() {
             }}
             disabled={!hasData || loading || branches.length === 0}
           >
-            <SelectTrigger className="w-[180px] bg-slate-900 border-white/10 text-white">
+            <SelectTrigger className="w-full md:w-[160px]">
               <SelectValue placeholder="All branches" />
             </SelectTrigger>
             <SelectContent>
@@ -225,20 +226,22 @@ export default function StudentLeaderboardPage() {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" className="gap-2" onClick={downloadCsv} disabled={!hasData || loading || top50.length === 0}>
-            <Download className="h-4 w-4" /> Download CSV
+          <Button variant="outline" size="sm" className="gap-2 w-full md:w-auto" onClick={downloadCsv} disabled={!hasData || loading || top50.length === 0}>
+            <Download className="h-4 w-4" /> CSV
           </Button>
         </div>
       </div>
 
+      <Separator />
+
       {loading ? (
         <div className="flex items-center justify-center min-h-[240px]">
-          <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>
+        <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive font-medium">{error}</div>
       ) : !hasData ? (
-        <div className="rounded-xl border border-white/10 bg-slate-900/60 px-4 py-6 text-sm text-slate-300">
+        <div className="rounded-md border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground font-medium">
           No published AMCAT data is available yet.
         </div>
       ) : (
@@ -250,11 +253,11 @@ export default function StudentLeaderboardPage() {
             <Stat title="Gamma" value={stats.gamma} />
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-slate-900/60 overflow-hidden">
+          <div className="rounded-md border border-border bg-card overflow-hidden">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-muted/50 text-sm">
                 <TableRow>
-                  <TableHead>Rank</TableHead>
+                  <TableHead className="w-20">Rank</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Branch</TableHead>
                   <TableHead>Score</TableHead>
@@ -264,12 +267,12 @@ export default function StudentLeaderboardPage() {
               <TableBody>
                 {top50.map((row) => (
                   <TableRow key={`${row.rank}-${row.name}`}>
-                    <TableCell className="font-semibold">#{row.rank}</TableCell>
-                    <TableCell>{row.name}</TableCell>
-                    <TableCell>{row.branch ?? "-"}</TableCell>
-                    <TableCell>{row.score}</TableCell>
+                    <TableCell className="font-semibold text-foreground">#{row.rank}</TableCell>
+                    <TableCell className="font-medium">{row.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{row.branch ?? "-"}</TableCell>
+                    <TableCell className="font-medium">{row.score}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={badgeStyles[row.category]}>
+                      <Badge variant="secondary" className={cn(badgeStyles[row.category], "text-[11px] uppercase tracking-wider")}>
                         {row.category}
                       </Badge>
                     </TableCell>
@@ -279,15 +282,15 @@ export default function StudentLeaderboardPage() {
                 {!isInTop50 && myRank && (
                   <>
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-slate-500">...</TableCell>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-4 text-xs font-semibold tracking-widest">•••</TableCell>
                     </TableRow>
-                    <TableRow className="bg-indigo-500/10">
-                      <TableCell className="font-semibold">#{myRank.rank}</TableCell>
-                      <TableCell className="font-semibold">You</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>{myRank.score}</TableCell>
+                    <TableRow className="bg-primary/5">
+                      <TableCell className="font-bold text-foreground">#{myRank.rank}</TableCell>
+                      <TableCell className="font-bold text-foreground">You</TableCell>
+                      <TableCell className="text-muted-foreground">-</TableCell>
+                      <TableCell className="font-bold">{myRank.score}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={cn(badgeStyles[myRank.category], "font-semibold")}>
+                        <Badge variant="secondary" className={cn(badgeStyles[myRank.category], "text-[11px] uppercase tracking-wider font-bold")}>
                           {myRank.category}
                         </Badge>
                       </TableCell>
@@ -305,9 +308,9 @@ export default function StudentLeaderboardPage() {
 
 function Stat({ title, value }: { title: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-      <p className="text-xs uppercase tracking-wide text-slate-400">{title}</p>
-      <p className="text-2xl font-black text-white mt-2">{value}</p>
+    <div className="rounded-md border border-border bg-card p-4 flex flex-col justify-between">
+      <p className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">{title}</p>
+      <p className="text-xl font-bold text-foreground">{value}</p>
     </div>
   );
 }

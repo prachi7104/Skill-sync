@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import { formatCategoryLabel, SOFTSKILLS_RESOURCE_CATEGORIES, TECHNICAL_RESOURCE_CATEGORIES } from "@/lib/phase8-10";
 import { stripMarkdown } from "@/lib/content-utils";
 import { cn } from "@/lib/utils";
@@ -258,36 +259,38 @@ export default function ResourceLibrary() {
   const editCategoryOptions = useMemo(() => CATEGORY_MAP[editForm.section], [editForm.section]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-8">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div className="max-w-5xl mx-auto px-8 py-10 space-y-8 animate-fade-up">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white">Resource Library</h1>
-          <p className="mt-1 text-sm text-slate-400">Browse technical and soft-skills content curated for your college.</p>
+          <h1 className="text-2xl font-semibold text-foreground">Resource Library</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Browse technical and soft-skills content curated for your college.</p>
         </div>
-        {canCreate ? <Button onClick={() => setCreateOpen(true)} className="gap-2 bg-indigo-600 hover:bg-indigo-500"><Plus className="h-4 w-4" /> New Resource</Button> : null}
+        {canCreate ? <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-2 shrink-0"><Plus className="h-4 w-4" /> New Resource</Button> : null}
       </div>
 
-      <Tabs value={section} onValueChange={(value) => setSection(value as "technical" | "softskills")}>
-        <TabsList className="bg-slate-900/60 text-slate-300">
+      <Separator />
+
+      <Tabs value={section} onValueChange={(value) => setSection(value as "technical" | "softskills")} className="space-y-6">
+        <TabsList className="bg-muted">
           <TabsTrigger value="technical">Technical</TabsTrigger>
           <TabsTrigger value="softskills">Soft Skills</TabsTrigger>
         </TabsList>
-        <TabsContent value={section}>
-          <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-            <aside className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/50 p-4">
-              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search resources" className="border-white/10 bg-slate-950 text-slate-100" />
+        <TabsContent value={section} className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+          <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+            <aside className="space-y-4">
+              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search resources" className="bg-transparent" />
               {(viewerRole === "faculty" || viewerRole === "admin") ? (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-wrap gap-2">
                   {(["all", "published", "draft", "archived"] as const).map((statusKey) => (
                     <button
                       key={statusKey}
                       type="button"
                       onClick={() => setStatusFilter(statusKey)}
                       className={cn(
-                        "rounded-xl px-3 py-2 text-xs font-semibold",
+                        "rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors",
                         statusFilter === statusKey
-                          ? "bg-indigo-600 text-white"
-                          : "bg-slate-950 text-slate-300 hover:bg-slate-800"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-transparent text-muted-foreground border-transparent hover:bg-muted"
                       )}
                     >
                       {statusKey === "all" ? "All" : statusKey.charAt(0).toUpperCase() + statusKey.slice(1)}
@@ -295,69 +298,69 @@ export default function ResourceLibrary() {
                   ))}
                 </div>
               ) : null}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <button
                   type="button"
                   onClick={() => setCategory("all")}
                   className={cn(
-                    "w-full rounded-xl px-4 py-3 text-left text-sm font-semibold",
-                    category === "all" ? "bg-indigo-600 text-white" : "bg-slate-950 text-slate-300 hover:bg-slate-800"
+                    "w-full rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors",
+                    category === "all" ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >
                   All Categories
                 </button>
                 {sideCategories.map((item) => (
-                  <button key={item} type="button" onClick={() => setCategory(item)} className={cn("w-full rounded-xl px-4 py-3 text-left text-sm font-semibold", category === item ? "bg-indigo-600 text-white" : "bg-slate-950 text-slate-300 hover:bg-slate-800")}>{formatCategoryLabel(item)}</button>
+                  <button key={item} type="button" onClick={() => setCategory(item)} className={cn("w-full rounded-md px-3 py-2 text-left text-sm font-medium transition-colors", category === item ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground")}>{formatCategoryLabel(item)}</button>
                 ))}
               </div>
             </aside>
 
             <div className="space-y-4">
-              {loading ? <div className="rounded-md border border-border bg-card p-8 text-sm text-muted-foreground">Loading resources...</div> : null}
-              {!loading && resources.length === 0 ? <div className="rounded-md border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">No resources found for this filter yet.</div> : null}
+              {loading ? <div className="rounded-md border border-border bg-card p-8 text-center text-sm font-medium text-muted-foreground animate-pulse">Loading resources...</div> : null}
+              {!loading && resources.length === 0 ? <div className="rounded-md border border-dashed border-border bg-muted/30 p-8 text-center text-sm font-medium text-muted-foreground">No resources found for this filter yet.</div> : null}
               {!loading ? resources.map((resource) => (
-                <article key={resource.id} className="rounded-md border border-border bg-card p-4 hover:bg-accent transition-colors flex flex-col group">
-                  <div className="flex items-start justify-between gap-4">
+                <article key={resource.id} className="rounded-md border border-border bg-card p-5 hover:bg-accent/50 transition-colors flex flex-col group">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <div className="mb-2 flex items-center gap-2">
-                        <Badge variant="default" className="shrink-0">{formatCategoryLabel(resource.category)}</Badge>
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" className="text-[11px] uppercase tracking-wider bg-primary/10 text-primary hover:bg-primary/10 border-none">{formatCategoryLabel(resource.category)}</Badge>
                         {resource.status && resource.status !== "published" ? (
-                          <Badge variant="secondary" className="shrink-0 text-amber-600 dark:text-amber-400">
-                            {resource.status.toUpperCase()}
+                          <Badge variant="outline" className="text-amber-600 dark:text-amber-400 border-amber-500/30 text-[11px] uppercase tracking-wider">
+                            {resource.status}
                           </Badge>
                         ) : null}
                         {resource.attachment_url ? <Upload className="h-3.5 w-3.5 text-muted-foreground" /> : null}
                       </div>
-                      <h3 className="text-sm font-medium leading-tight text-foreground">{resource.title}</h3>
-                      {resource.body ? <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{stripMarkdown(resource.body)}</p> : null}
+                      <h3 className="text-base font-semibold leading-tight text-foreground">{resource.title}</h3>
+                      {resource.body ? <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{stripMarkdown(resource.body)}</p> : null}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                       {resource.attachment_url ? (
-                        <a href={resource.attachment_url} target="_blank" className="flex items-center gap-1.5 rounded-md border border-border bg-secondary px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80">
-                          <Download className="h-3 w-3" /> PDF
+                        <a href={resource.attachment_url} target="_blank" className="flex items-center gap-1.5 rounded-md border border-border bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground hover:bg-secondary/80">
+                          <Download className="h-3.5 w-3.5" /> PDF
                         </a>
                       ) : null}
                       <Button variant="outline" size="sm" onClick={() => openResource(resource)}>
                         Open
                       </Button>
                       {canManageResource(resource) ? (
-                        <Button variant="outline" size="sm" className="gap-1" onClick={() => startEdit(resource)}>
-                          <Pencil className="h-3 w-3" /> Edit
+                        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => startEdit(resource)}>
+                          <Pencil className="h-3.5 w-3.5" /> Edit
                         </Button>
                       ) : null}
                       {canManageResource(resource) ? (
-                        <Button variant="outline" size="sm" className="gap-1 text-destructive hover:bg-destructive/10" onClick={() => deleteResource(resource)}>
-                          <Trash2 className="h-3 w-3" /> Delete
+                        <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive border-border" onClick={() => deleteResource(resource)}>
+                          <Trash2 className="h-3.5 w-3.5" /> Delete
                         </Button>
                       ) : null}
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+                  <div className="mt-4 flex items-center gap-3 text-xs font-medium text-muted-foreground">
                     <span>By {resource.author_name}</span>
                     <span>·</span>
                     <span>{new Date(resource.created_at).toLocaleDateString()}</span>
                     <span>·</span>
-                    <span className="flex flex-1 justify-end items-center gap-1"><Eye className="h-3 w-3" /> {resource.view_count} views</span>
+                    <span className="flex flex-1 justify-end items-center gap-1.5"><Eye className="h-3.5 w-3.5" /> {resource.view_count} views</span>
                   </div>
                 </article>
               )) : null}
@@ -367,16 +370,16 @@ export default function ResourceLibrary() {
       </Tabs>
 
       <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="max-w-3xl border-white/10 bg-slate-950 text-slate-100">
+        <DialogContent className="max-w-3xl">
           {selected ? (
             <>
               <DialogHeader>
-                <DialogTitle>{selected.title}</DialogTitle>
+                <DialogTitle className="text-xl font-semibold">{selected.title}</DialogTitle>
                 <DialogDescription>{formatCategoryLabel(selected.category)} • {selected.author_name}</DialogDescription>
               </DialogHeader>
-              <div className="max-h-[70vh] overflow-y-auto space-y-4">
-                {selected.body ? <MarkdownRenderer content={selected.body} /> : null}
-                {selected.attachment_url ? <a href={selected.attachment_url} target="_blank" className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white"><Download className="h-4 w-4" /> Download attachment</a> : null}
+              <div className="max-h-[70vh] overflow-y-auto space-y-4 pr-2">
+                {selected.body ? <div className="prose prose-sm dark:prose-invert max-w-none"><MarkdownRenderer content={selected.body} /></div> : null}
+                {selected.attachment_url ? <a href={selected.attachment_url} target="_blank" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"><Download className="h-4 w-4" /> Download attachment</a> : null}
               </div>
             </>
           ) : null}
@@ -384,19 +387,19 @@ export default function ResourceLibrary() {
       </Dialog>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-3xl border-white/10 bg-slate-950 text-slate-100">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create Resource</DialogTitle>
             <DialogDescription>Post a new {section === "technical" ? "technical" : "soft skills"} resource for your college.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4">
+          <div className="grid gap-4 py-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Category</Label>
                 <select
                   value={form.category}
                   onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
-                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {CATEGORY_MAP[section].map((option) => (
                     <option key={option} value={option}>{formatCategoryLabel(option)}</option>
@@ -405,48 +408,48 @@ export default function ResourceLibrary() {
               </div>
               <div className="space-y-2">
                 <Label>Title</Label>
-                <Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className="bg-transparent" />
               </div>
               <div className="space-y-2">
                 <Label>Company Name (optional)</Label>
-                <Input value={form.companyName} onChange={(event) => setForm((current) => ({ ...current, companyName: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input value={form.companyName} onChange={(event) => setForm((current) => ({ ...current, companyName: event.target.value }))} className="bg-transparent" />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Markdown Content</Label>
-              <Textarea rows={10} value={form.body} onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+              <Textarea rows={8} value={form.body} onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))} className="bg-transparent resize-y" />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Tags</Label>
-                <Input value={form.tags} onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))} placeholder="comma,separated,tags" className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input value={form.tags} onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))} placeholder="comma,separated,tags" className="bg-transparent" />
               </div>
               <div className="space-y-2">
                 <Label>Attachment</Label>
-                <Input type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={(event) => setForm((current) => ({ ...current, file: event.target.files?.[0] ?? null }))} className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={(event) => setForm((current) => ({ ...current, file: event.target.files?.[0] ?? null }))} className="bg-transparent cursor-pointer" />
               </div>
             </div>
-            {viewerRole === "faculty" ? (
+            {viewerRole === "faculty" || viewerRole === "admin" ? (
               <div className="space-y-2">
                 <Label>Publish Status</Label>
                 <select
                   value={form.status}
                   onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as "draft" | "published" }))}
-                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="published">Publish now</option>
                   <option value="draft">Save as draft</option>
                 </select>
               </div>
             ) : null}
-            <div className="space-y-2 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-              <Label>Preview</Label>
-              {form.body ? <MarkdownRenderer content={form.body} /> : <p className="text-sm text-slate-400">Markdown preview will appear here.</p>}
+            <div className="space-y-2 rounded-md border border-border bg-muted/30 p-4">
+              <Label className="text-muted-foreground uppercase tracking-widest text-[10px]">Preview</Label>
+              {form.body ? <div className="prose prose-sm dark:prose-invert max-w-none"><MarkdownRenderer content={form.body} /></div> : <p className="text-sm text-muted-foreground mt-2">Markdown preview will appear here.</p>}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="border-white/10 bg-slate-900 text-slate-100" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={createResource} disabled={submitting} className="bg-indigo-600 hover:bg-indigo-500">{submitting ? "Creating..." : "Create Resource"}</Button>
+            <Button variant="ghost" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button onClick={createResource} disabled={submitting}>{submitting ? "Creating..." : "Create Resource"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -455,12 +458,12 @@ export default function ResourceLibrary() {
         setEditOpen(open);
         if (!open) setEditing(null);
       }}>
-        <DialogContent className="max-w-3xl border-white/10 bg-slate-950 text-slate-100">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Resource</DialogTitle>
             <DialogDescription>Update content, category, and publish status.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4">
+          <div className="grid gap-4 py-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Section</Label>
@@ -471,7 +474,7 @@ export default function ResourceLibrary() {
                     section: event.target.value as "technical" | "softskills",
                     category: CATEGORY_MAP[event.target.value as "technical" | "softskills"][0],
                   }))}
-                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="technical">Technical</option>
                   <option value="softskills">Soft Skills</option>
@@ -482,7 +485,7 @@ export default function ResourceLibrary() {
                 <select
                   value={editForm.category}
                   onChange={(event) => setEditForm((current) => ({ ...current, category: event.target.value }))}
-                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {editCategoryOptions.map((option) => (
                     <option key={option} value={option}>{formatCategoryLabel(option)}</option>
@@ -493,28 +496,28 @@ export default function ResourceLibrary() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Title</Label>
-                <Input value={editForm.title} onChange={(event) => setEditForm((current) => ({ ...current, title: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input value={editForm.title} onChange={(event) => setEditForm((current) => ({ ...current, title: event.target.value }))} className="bg-transparent" />
               </div>
               <div className="space-y-2">
                 <Label>Company Name (optional)</Label>
-                <Input value={editForm.companyName} onChange={(event) => setEditForm((current) => ({ ...current, companyName: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input value={editForm.companyName} onChange={(event) => setEditForm((current) => ({ ...current, companyName: event.target.value }))} className="bg-transparent" />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Markdown Content</Label>
-              <Textarea rows={10} value={editForm.body} onChange={(event) => setEditForm((current) => ({ ...current, body: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+              <Textarea rows={8} value={editForm.body} onChange={(event) => setEditForm((current) => ({ ...current, body: event.target.value }))} className="bg-transparent resize-y" />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Tags</Label>
-                <Input value={editForm.tags} onChange={(event) => setEditForm((current) => ({ ...current, tags: event.target.value }))} placeholder="comma,separated,tags" className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input value={editForm.tags} onChange={(event) => setEditForm((current) => ({ ...current, tags: event.target.value }))} placeholder="comma,separated,tags" className="bg-transparent" />
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
                 <select
                   value={editForm.status}
                   onChange={(event) => setEditForm((current) => ({ ...current, status: event.target.value as "draft" | "published" | "archived" }))}
-                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="published">Published</option>
                   <option value="draft">Draft</option>
@@ -524,8 +527,8 @@ export default function ResourceLibrary() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="border-white/10 bg-slate-900 text-slate-100" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={saveEdit} disabled={savingEdit} className="bg-indigo-600 hover:bg-indigo-500">{savingEdit ? "Saving..." : "Save Changes"}</Button>
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={saveEdit} disabled={savingEdit}>{savingEdit ? "Saving..." : "Save Changes"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

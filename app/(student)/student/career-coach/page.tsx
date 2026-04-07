@@ -6,7 +6,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 type PrioritySkill = {
   skill: string;
@@ -70,16 +71,11 @@ function timeAgoLabel(iso: string | undefined, cached: boolean): string {
 
 function resourceTypeClass(type?: string): string {
   switch ((type ?? "").toLowerCase()) {
-    case "youtube":
-      return "bg-rose-500/15 text-rose-300 border-rose-500/30";
-    case "github":
-      return "bg-slate-500/20 text-slate-200 border-slate-400/30";
-    case "docs":
-      return "bg-indigo-500/15 text-indigo-300 border-indigo-500/30";
-    case "course":
-      return "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
-    default:
-      return "bg-slate-600/20 text-slate-200 border-slate-500/30";
+    case "youtube": return "destructive";
+    case "github": return "secondary";
+    case "docs": return "default";
+    case "course": return "outline";
+    default: return "secondary";
   }
 }
 
@@ -203,223 +199,210 @@ export default function CareerCoachPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-10">
-      <div className="mx-auto w-full max-w-7xl space-y-8">
-        <header className="flex flex-col gap-4 rounded-2xl border border-white/5 bg-slate-900/40 p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-black tracking-tight">Career Advisor</h1>
-            <p className="mt-2 text-sm text-slate-400">
-              Personalized upskilling roadmap based on your eligible drives
-            </p>
-            <p className="mt-2 text-xs text-slate-500">{generatedLabel}</p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="border-white/10 bg-slate-900 text-slate-200 hover:bg-slate-800"
-            onClick={() => void fetchRoadmap(true)}
-            disabled={refreshing}
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-        </header>
+    <div className="max-w-5xl mx-auto px-8 py-10 space-y-8 animate-fade-up">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Career Advisor</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Personalized upskilling roadmap based on your eligible drives
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground/70">{generatedLabel}</p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void fetchRoadmap(true)}
+          disabled={refreshing}
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      </div>
 
-        <Card className="border-none bg-gradient-to-r from-indigo-700/70 via-indigo-600/55 to-slate-900/70">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              <Sparkles className="h-5 w-5" />
-              Snapshot Summary
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Separator />
+
+      <section className="space-y-4">
+        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" /> Snapshot Summary
+        </h2>
+        <div className="p-5 border border-border bg-card rounded-md">
             {loading ? (
-              <div className="space-y-3" data-testid="summary-skeleton">
-                <div className="h-4 w-11/12 animate-pulse rounded bg-slate-800" />
-                <div className="h-4 w-9/12 animate-pulse rounded bg-slate-800" />
-                <div className="h-4 w-8/12 animate-pulse rounded bg-slate-800" />
-                <p className="pt-2 text-xs text-slate-300">Analyzing your profile...</p>
-              </div>
+            <div className="space-y-3" data-testid="summary-skeleton">
+                <div className="h-4 w-11/12 animate-pulse rounded bg-muted" />
+                <div className="h-4 w-9/12 animate-pulse rounded bg-muted" />
+                <div className="h-4 w-8/12 animate-pulse rounded bg-muted" />
+            </div>
             ) : (
-              <p className="text-sm leading-relaxed text-indigo-50">
+            <p className="text-sm leading-relaxed text-foreground">
                 {payload?.summary || "No summary available yet."}
-              </p>
+            </p>
             )}
-          </CardContent>
-        </Card>
+        </div>
+      </section>
 
-        <Card className="border-white/10 bg-slate-900/60">
-          <CardHeader className="flex flex-row items-center justify-between gap-3">
-            <CardTitle className="flex items-center gap-2 text-white">
-              <MessageSquare className="h-5 w-5" />
-              Conversation
-            </CardTitle>
-            <p className="text-xs text-slate-500">{messages.length}/{MAX_MESSAGES} messages</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" /> Conversation
+            </h2>
+            <p className="text-xs text-muted-foreground">{messages.length}/{MAX_MESSAGES} messages</p>
+        </div>
+        
+        <div className="border border-border bg-card rounded-md p-5 space-y-4">
             {messages.length === 0 ? (
-              <div className="space-y-3">
-                <p className="text-sm text-slate-400">Quick start</p>
+            <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">Quick start</p>
                 <div className="flex flex-wrap gap-2">
-                  {quickStarts.map((chip) => (
+                {quickStarts.map((chip) => (
                     <Button
-                      key={chip}
-                      type="button"
-                      variant="outline"
-                      className="border-white/20 bg-slate-950/40 text-slate-200 hover:bg-slate-800"
-                      onClick={() => void sendMessage(chip)}
-                      disabled={!canSend}
+                    key={chip}
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => void sendMessage(chip)}
+                    disabled={!canSend}
                     >
-                      {chip}
+                    {chip}
                     </Button>
-                  ))}
+                ))}
                 </div>
-              </div>
+            </div>
             ) : null}
 
-            <div className="max-h-[420px] space-y-3 overflow-y-auto rounded-xl border border-white/10 bg-slate-950/40 p-3">
-              {messages.map((message, index) => (
-                <div key={`${message.role}-${index}`} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={[
-                      "max-w-[85%] rounded-2xl px-4 py-2 text-sm leading-relaxed",
-                      message.role === "user"
-                        ? "bg-indigo-600 text-white"
-                        : "border border-white/10 bg-slate-800 text-slate-100",
-                    ].join(" ")}
-                  >
-                    {message.role === "assistant" ? (
-                      <div className="break-words [&_a]:text-indigo-300 [&_a]:underline [&_a]:underline-offset-2 [&_code]:rounded [&_code]:bg-slate-900/80 [&_code]:px-1 [&_code]:py-0.5 [&_h1]:mb-2 [&_h1]:text-base [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_p]:whitespace-pre-wrap [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {message.content}
-                        </ReactMarkdown>
-                      </div>
-                    ) : (
-                      message.content
-                    )}
-                  </div>
-                </div>
-              ))}
+            {messages.length > 0 && (
+                <div className="max-h-[420px] space-y-4 overflow-y-auto pr-2">
+                {messages.map((message, index) => (
+                    <div key={`${message.role}-${index}`} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                    <div
+                        className={[
+                        "max-w-[85%] rounded-md px-4 py-2.5 text-sm leading-relaxed border",
+                        message.role === "user"
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted border-border text-foreground",
+                        ].join(" ")}
+                    >
+                        {message.role === "assistant" ? (
+                        <div className="break-words [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_code]:rounded [&_code]:bg-muted-foreground/20 [&_code]:px-1.5 [&_code]:py-0.5 [&_h1]:mb-2 [&_h1]:text-base [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_p]:whitespace-pre-wrap [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {message.content}
+                            </ReactMarkdown>
+                        </div>
+                        ) : (
+                        message.content
+                        )}
+                    </div>
+                    </div>
+                ))}
 
-              {chatLoading ? (
-                <div className="flex justify-start">
-                  <div
-                    data-testid="typing-indicator"
-                    className="flex items-center gap-1 rounded-2xl border border-white/10 bg-slate-800 px-3 py-2"
-                  >
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-slate-300 [animation-delay:0ms]" />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-slate-300 [animation-delay:120ms]" />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-slate-300 [animation-delay:240ms]" />
-                  </div>
+                {chatLoading ? (
+                    <div className="flex justify-start">
+                    <div data-testid="typing-indicator" className="flex items-center gap-1.5 rounded-md border border-border bg-muted px-4 py-3">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground" />
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground [animation-delay:150ms]" />
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground [animation-delay:300ms]" />
+                    </div>
+                    </div>
+                ) : null}
                 </div>
-              ) : null}
-            </div>
+            )}
 
             {sessionComplete ? (
-              <p className="text-sm text-amber-300">Session complete. Refresh to start a new one.</p>
+            <p className="text-sm font-medium text-amber-600 dark:text-amber-400">Session complete. Refresh to start a new one.</p>
             ) : null}
 
-            <div className="space-y-2">
-              <textarea
+            <div className="space-y-3 pt-4 border-t border-border">
+            <textarea
                 value={chatInput}
                 onChange={(event) => setChatInput(event.target.value)}
                 onKeyDown={onChatInputKeyDown}
                 placeholder={sessionComplete ? "Session complete" : "Ask a question..."}
                 disabled={!canSend}
-                rows={3}
-                className="w-full resize-none rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-indigo-500"
-              />
-              <div className="flex justify-end">
+                rows={2}
+                className="w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:border-input"
+            />
+            <div className="flex justify-end">
                 <Button
-                  type="button"
-                  onClick={() => void sendMessage()}
-                  className="bg-indigo-600 hover:bg-indigo-500"
-                  disabled={!canSend || !chatInput.trim()}
+                type="button"
+                onClick={() => void sendMessage()}
+                disabled={!canSend || !chatInput.trim()}
                 >
-                  Send
+                Send
                 </Button>
-              </div>
             </div>
-          </CardContent>
-        </Card>
+            </div>
+        </div>
+      </section>
 
-        {loading ? (
-          <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} data-testid="skill-skeleton" className="space-y-3 rounded-2xl border border-white/5 bg-slate-900/60 p-5">
-                <div className="h-6 w-1/2 animate-pulse rounded bg-slate-800" />
-                <div className="h-4 w-full animate-pulse rounded bg-slate-800" />
-                <div className="h-4 w-10/12 animate-pulse rounded bg-slate-800" />
-                <div className="h-16 w-full animate-pulse rounded bg-slate-800" />
-              </div>
-            ))}
-          </section>
-        ) : errorText ? (
-          <Card className="border border-amber-500/30 bg-amber-500/10">
-            <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-              <BookOpen className="h-10 w-10 text-amber-300" />
-              <h2 className="text-xl font-bold text-amber-100">No drives to analyze</h2>
-              <p className="max-w-2xl text-sm text-amber-200/90">
-                {payload?.suggestion || "Complete your profile and wait for active drives to be posted"}
-              </p>
-              <p className="text-xs text-amber-200/80">{errorText}</p>
-              <Button type="button" className="mt-2 bg-amber-500 text-slate-950 hover:bg-amber-400" onClick={() => void fetchRoadmap(true)}>
-                Retry
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+      {loading ? (
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} data-testid="skill-skeleton" className="space-y-3 rounded-md border border-border bg-card p-5">
+            <div className="h-5 w-1/2 animate-pulse rounded bg-muted" />
+            <div className="h-4 w-full animate-pulse rounded bg-muted" />
+            <div className="h-4 w-10/12 animate-pulse rounded bg-muted" />
+            <div className="h-12 w-full animate-pulse rounded bg-muted" />
+            </div>
+        ))}
+        </section>
+      ) : errorText ? (
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-8 flex flex-col items-center gap-3 text-center">
+            <BookOpen className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+            <h2 className="text-base font-semibold text-amber-800 dark:text-amber-200">No drives to analyze</h2>
+            <p className="max-w-2xl text-sm text-amber-700 dark:text-amber-300">
+            {payload?.suggestion || "Complete your profile and wait for active drives to be posted"}
+            </p>
+            <p className="text-xs text-amber-600/80 dark:text-amber-400/80">{errorText}</p>
+            <Button type="button" variant="outline" className="mt-2 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20" onClick={() => void fetchRoadmap(true)}>
+            Retry
+            </Button>
+        </div>
+      ) : (
+        <section className="space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Priority Skills</h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {skills.map((skill, index) => (
-              <Card key={`${skill.skill}-${index}`} className="rounded-2xl border border-white/5 bg-slate-900/60">
-                <CardHeader className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <CardTitle className="text-xl font-black text-indigo-300">{skill.skill}</CardTitle>
-                    <span className="rounded-full border border-indigo-400/30 bg-indigo-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-200">
-                      {impactLabel(index)}
-                    </span>
-                  </div>
-                  <span className="inline-flex w-fit items-center rounded-full border border-slate-500/30 bg-slate-800/80 px-2.5 py-1 text-xs text-slate-200">
+            <div key={`${skill.skill}-${index}`} className="flex flex-col rounded-md border border-border bg-card p-5">
+                <div className="space-y-3 mb-4">
+                <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-base font-semibold text-foreground">{skill.skill}</h3>
+                    <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">{impactLabel(index)}</Badge>
+                </div>
+                <Badge variant="outline" className="text-xs font-normal border-border">
                     Start Week {skill.week_start ?? "?"} · {skill.hours_needed ?? "?"} hours
-                  </span>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="rounded-xl border border-white/5 bg-slate-950/40 p-3">
-                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      <Target className="h-3.5 w-3.5" /> Why it matters
+                </Badge>
+                </div>
+                <div className="space-y-4 flex-grow">
+                <div className="rounded-md border border-border bg-muted/30 p-3">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <Target className="h-3.5 w-3.5" /> Why it matters
                     </p>
-                    <p className="text-sm text-slate-200">{skill.why_critical}</p>
-                  </div>
+                    <p className="text-sm text-foreground">{skill.why_critical}</p>
+                </div>
 
-                  <div className="rounded-xl border border-white/5 bg-slate-950/40 p-3">
+                <div className="rounded-md border border-border bg-muted/30 p-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${resourceTypeClass(skill.resource?.type)}`}>
-                        {skill.resource?.type || "Resource"}
-                      </span>
+                    <Badge variant={resourceTypeClass(skill.resource?.type) as any} className="text-[10px] uppercase tracking-wide">{skill.resource?.type || "Resource"}</Badge>
                     </div>
-                    <p className="text-sm font-bold text-white">{skill.resource?.name || "Recommended Resource"}</p>
-                    <p className="mt-1 text-xs text-slate-400">Search: {skill.resource?.url_description || "Find an official resource"}</p>
-                  </div>
-                </CardContent>
-              </Card>
+                    <p className="text-sm font-semibold text-foreground">{skill.resource?.name || "Recommended Resource"}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Search: {skill.resource?.url_description || "Find an official resource"}</p>
+                </div>
+                </div>
+            </div>
             ))}
-          </section>
-        )}
+            </div>
+        </section>
+      )}
 
-        {!loading && payload?.amcat_tip && !errorText ? (
-          <Card className="border border-amber-500/30 bg-amber-500/10">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-amber-100">
-                <AlertTriangle className="h-5 w-5" />
+      {!loading && payload?.amcat_tip && !errorText ? (
+        <div className="rounded-md border border-border bg-card p-5 space-y-3">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
                 AMCAT Focus Area
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-amber-100/95">{payload.amcat_tip}</p>
-            </CardContent>
-          </Card>
-        ) : null}
-      </div>
+            </h2>
+            <p className="text-sm text-muted-foreground">{payload.amcat_tip}</p>
+        </div>
+      ) : null}
     </div>
   );
 }

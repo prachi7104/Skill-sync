@@ -83,13 +83,13 @@ export default function AnalysisPanel({ driveId }: { driveId: string }) {
         <CardTitle>Drive-Specific Analysis</CardTitle>
         <div className="flex gap-2 pt-2">
           <button
-            className={`rounded-md px-3 py-1.5 text-sm ${tab === "resume" ? "bg-indigo-600 text-white" : "bg-slate-200 text-slate-900"}`}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${tab === "resume" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
             onClick={() => setTab("resume")}
           >
             Resume Impact
           </button>
           <button
-            className={`rounded-md px-3 py-1.5 text-sm ${tab === "interview" ? "bg-indigo-600 text-white" : "bg-slate-200 text-slate-900"}`}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${tab === "interview" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
             onClick={() => setTab("interview")}
           >
             Interview Prep

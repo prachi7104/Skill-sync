@@ -3,14 +3,18 @@
 import { useStudent } from "@/app/(student)/providers/student-provider";
 import ProfileView from "./profile-view";
 import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function StudentProfilePage() {
     const { user, student, isLoading } = useStudent();
 
     if (isLoading || !student || !user) {
         return (
-            <div className="flex items-center justify-center h-full min-h-[60vh]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+            <div className="max-w-5xl mx-auto px-8 py-10 space-y-8">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-px w-full" />
+                <Skeleton className="h-32 w-full rounded-md" />
+                <Skeleton className="h-48 w-full rounded-md" />
             </div>
         );
     }
@@ -21,7 +25,6 @@ export default function StudentProfilePage() {
         updatedAt: new Date().toISOString(),
     };
 
-    // Ensure all array fields default to empty arrays so map() doesn't crash
     const serializedProfile = {
         ...student,
         createdAt: new Date(student.createdAt).toISOString(),
@@ -36,10 +39,6 @@ export default function StudentProfilePage() {
         achievements: student.achievements || [],
         softSkills: student.softSkills || [],
     };
-
-    // We accept that some fields in serializedUser might be missing if the type definition 
-    // of UserInfo in provider is strict. We might need to cast or update provider type.
-    // For now, we cast to any to pass to View if types mismatch, but ideally we match types.
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return <ProfileView user={serializedUser as any} profile={serializedProfile} />;
