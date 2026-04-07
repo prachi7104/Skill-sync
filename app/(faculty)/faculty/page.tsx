@@ -1,33 +1,34 @@
-export const dynamic = "force-dynamic";
-
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, rankings, jobs, seasons } from "@/lib/db/schema";
 import { eq, count, avg, sql, and, inArray } from "drizzle-orm";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import Link from "next/link";
-import { Briefcase, Users, Clock, TrendingUp, Activity, PlusCircle, ArrowRight } from "lucide-react";
+import { Briefcase, Users, Clock, TrendingUp, PlusCircle, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Helpers
 function getActivityLabel(type: string, status: string) {
     if (status === "completed") {
-        if (type === "rank_students") return { text: "Rankings ready", color: "bg-emerald-400" };
-        if (type === "enhance_jd") return { text: "JD enhanced", color: "bg-emerald-400" };
-        if (type === "generate_embedding") return { text: "Embedding done", color: "bg-emerald-400" };
-        return { text: "Job completed", color: "bg-emerald-400" };
+        if (type === "rank_students") return { text: "Rankings ready", color: "text-emerald-600" };
+        if (type === "enhance_jd") return { text: "JD enhanced", color: "text-emerald-600" };
+        if (type === "generate_embedding") return { text: "Embedding done", color: "text-emerald-600" };
+        return { text: "Job completed", color: "text-emerald-600" };
     }
-    if (status === "processing") return { text: "Processing...", color: "bg-indigo-500/20 text-indigo-400" };
-    if (status === "failed") return { text: "Job failed", color: "bg-rose-500/20 text-rose-400" };
-    return { text: "Queued", color: "bg-amber-500/20 text-amber-400" };
+    if (status === "processing") return { text: "Processing...", color: "text-blue-600" };
+    if (status === "failed") return { text: "Job failed", color: "text-destructive" };
+    return { text: "Queued", color: "text-amber-600" };
 }
 
-const StatCard = ({ label, value, icon: Icon, color = "indigo" }: any) => (
-  <div className="bg-slate-900/60 p-6 rounded-2xl border border-white/5 shadow-sm flex flex-col justify-between h-full">
-    <div className="flex justify-between items-start mb-4">
-      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{label}</p>
-      {Icon && <Icon className={`w-5 h-5 text-${color}-400`} />}
+const StatCard = ({ label, value, icon: Icon }: any) => (
+  <div className="flex flex-col gap-1">
+    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      {Icon && <Icon className="w-4 h-4" />}
+      <span>{label}</span>
     </div>
-    <h3 className="text-3xl font-black text-white tracking-tighter">{value}</h3>
+    <div className="text-2xl font-semibold text-foreground">
+      {value}
+    </div>
   </div>
 );
 
@@ -85,17 +86,21 @@ export default async function FacultyDashboardPage({
     }
 
     return (
-        <div className="p-8 max-w-7xl w-full animate-in fade-in duration-500 min-h-screen">
-            <header className="flex justify-between items-center mb-10">
+        <div className="max-w-5xl mx-auto px-8 py-10 space-y-6">
+            <header className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight mb-1">Good morning, {firstName}</h1>
-                    <p className="text-sm text-slate-500">Faculty Dashboard — UPES Placement Portal</p>
+                    <h1 className="text-2xl font-semibold text-foreground">
+                        Good morning, {firstName}
+                    </h1>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        {format(new Date(), "EEEE, MMMM d")}
+                    </p>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 max-w-[420px] overflow-x-auto">
                         <Link
                             href="/faculty"
-                            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${selectedSeasonId === "all" ? "bg-indigo-600 text-white" : "bg-slate-900 text-slate-300 border border-white/10"}`}
+                            className={`rounded-md px-3 py-1.5 text-xs font-medium ${selectedSeasonId === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary/50"}`}
                         >
                             All seasons
                         </Link>
@@ -103,102 +108,100 @@ export default async function FacultyDashboardPage({
                             <Link
                                 key={season.id}
                                 href={`/faculty?seasonId=${season.id}`}
-                                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${selectedSeasonId === season.id ? "bg-indigo-600 text-white" : "bg-slate-900 text-slate-300 border border-white/10"}`}
+                                className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium ${selectedSeasonId === season.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary/50"}`}
                             >
                                 {season.name}
                             </Link>
                         ))}
                     </div>
-                    <Link href="/faculty/drives/new" className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center space-x-2 hover:bg-indigo-700 transition-all shadow-sm">
-                        <PlusCircle className="w-4 h-4" /><span>Create Drive</span>
+                    <Link href="/faculty/drives/new">
+                        <Button size="sm" className="h-8 gap-2">
+                            <PlusCircle className="w-4 h-4" />
+                            Create Drive
+                        </Button>
                     </Link>
                 </div>
             </header>
 
             {showPermissionWarning && (
-                <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
-                    <p className="font-semibold text-amber-100">Permission required</p>
+                <div className="rounded-md border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-900 dark:text-amber-200">
+                    <p className="font-medium">Permission required</p>
                     <p className="mt-1">You do not currently have access to create drives. Contact your admin to enable drive management permissions.</p>
                 </div>
             )}
 
-            <div className="mb-6 rounded-xl border border-white/10 bg-slate-900/50 p-4 text-sm text-slate-300">
-                <p className="font-semibold text-white mb-1">Bulk Eligibility Snapshot</p>
-                <p>Select a drive in the rankings table and query <span className="font-mono">/api/faculty/bulk-eligibility?driveId=...</span> for batch eligibility counts.</p>
-                <div className="mt-2 flex gap-2 flex-wrap">
-                    <Link href="/faculty/drives" className="text-indigo-400 hover:text-indigo-300">Open Drives</Link>
-                    <span>•</span>
-                    <span>{filteredDrives.length} drives in current season scope</span>
-                </div>
+            <div className="h-px w-full bg-border" />
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <StatCard label="Active Drives" value={activeDriveCount} icon={Briefcase} />
+                <StatCard label="Total Ranked" value={totalRanked} icon={Users} />
+                <StatCard label="Pending Jobs" value={pendingJobCount} icon={Clock} />
+                <StatCard label="Avg Match Score" value={avgScore ? `${avgScore}%` : "—"} icon={TrendingUp} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-                <StatCard label="Active Drives" value={activeDriveCount} icon={Briefcase} color="indigo" />
-                <StatCard label="Students Ranked" value={totalRanked} icon={Users} color="emerald" />
-                <StatCard label="Pending Jobs" value={pendingJobCount} icon={Clock} color="amber" />
-                <StatCard label="Avg Match Score" value={avgScore ? `${avgScore}%` : "—"} icon={TrendingUp} color="indigo" />
-            </div>
+            <div className="h-px w-full bg-border" />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Activity Feed */}
-                <section className="bg-slate-900/60 rounded-2xl border border-white/5 p-6 shadow-sm">
-                    <h4 className="font-bold text-white mb-6 flex items-center justify-between text-sm">
-                        RECENT ACTIVITY <span className="text-[10px] text-slate-500 font-bold tracking-wider">LIVE FEED</span>
-                    </h4>
-                    <div className="space-y-6">
+                <section>
+                    <h2 className="text-sm font-medium text-foreground mb-4">Recent Activity</h2>
+                    <div className="space-y-4">
                         {activityFeed.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center opacity-40 py-8"><Activity className="w-8 h-8 mb-2"/><p className="text-xs">No activity yet</p></div>
+                            <p className="text-sm text-muted-foreground">No recent activity.</p>
                         ) : activityFeed.map((item) => {
                             const label = getActivityLabel(item.type, item.status);
                             return (
-                                <div key={item.id} className="flex space-x-4">
-                                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${label.color.split(" ")[0]}`} />
-                                    <div>
-                                        <p className={`text-xs font-black uppercase ${label.color.split(" ")[1] || "text-slate-300"}`}>{label.text}</p>
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">{item.type.replace("_", " ")} • {formatDistanceToNow(item.updatedAt)} ago</p>
-                                    </div>
+                                <div key={item.id} className="flex flex-col gap-1">
+                                    <p className={`text-sm font-medium ${label.color}`}>{label.text}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {item.type.replace("_", " ")} • {formatDistanceToNow(item.updatedAt)} ago
+                                    </p>
                                 </div>
                             );
                         })}
                     </div>
                 </section>
 
-                {/* Table */}
-                <section className="lg:col-span-2 bg-slate-900/60 rounded-2xl border border-white/5 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-white/5 flex justify-between items-center">
-                        <h4 className="font-bold text-white text-sm uppercase tracking-wider">Recent Drives</h4>
-                        <Link href="/faculty/drives" className="text-indigo-400 text-xs font-bold hover:text-indigo-300 transition-colors flex items-center">View all <ArrowRight className="w-3 h-3 ml-1" /></Link>
+                {/* Recent Drives List */}
+                <section className="lg:col-span-2">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-sm font-medium text-foreground">Recent Drives</h2>
+                        <Link href="/faculty/drives" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 group transition-colors">
+                            View all <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                        </Link>
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="border border-border rounded-md overflow-hidden">
                         <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-slate-950/50"><th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Details</th><th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th><th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Analytics</th></tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {filteredDrives.slice(0, 5).map((drive) => {
+                            <tbody>
+                                {filteredDrives.slice(0, 5).map((drive, index) => {
                                     const analytics = rankingCounts.get(drive.id);
                                     return (
-                                        <tr key={drive.id} className="hover:bg-slate-800/50 transition-colors">
-                                            <td className="p-4">
-                                                <Link href={`/faculty/drives/${drive.id}/rankings`} className="flex items-center space-x-3">
-                                                    <div className="w-8 h-8 rounded bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-[10px] uppercase shrink-0">{drive.company.slice(0,2)}</div>
-                                                    <div><p className="text-sm font-bold text-white">{drive.company}</p><p className="text-[10px] font-medium text-slate-500 uppercase mt-0.5">{drive.roleTitle}</p></div>
+                                        <tr key={drive.id} className={`border-b border-border hover:bg-accent/50 transition-colors last:border-0 ${index % 2 === 1 ? 'bg-secondary/40' : ''}`}>
+                                            <td className="px-4 py-3">
+                                                <Link href={`/faculty/drives/${drive.id}/rankings`} className="block">
+                                                    <p className="text-sm font-medium text-foreground">{drive.company}</p>
+                                                    <p className="text-xs text-muted-foreground mt-0.5">{drive.roleTitle}</p>
                                                 </Link>
                                             </td>
-                                            <td className="p-4 text-center">
-                                                <span className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${drive.isActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-500'}`}>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="text-xs font-medium text-muted-foreground">
                                                     {drive.isActive ? 'Active' : 'Closed'}
                                                 </span>
                                             </td>
-                                            <td className="p-4 text-right">
-                                                <p className="text-sm font-bold text-white">{analytics?.count ?? 0} <span className="text-[10px] text-slate-500 font-medium tracking-wide">RANKED</span></p>
-                                                {analytics?.avgScore && <p className="text-[10px] text-emerald-400 mt-1">{analytics.avgScore.toFixed(1)}% Avg</p>}
+                                            <td className="px-4 py-3 text-right">
+                                                <p className="text-sm font-medium text-foreground">{analytics?.count ?? 0} <span className="text-muted-foreground font-normal">ranked</span></p>
+                                                {analytics?.avgScore && <p className="text-xs text-muted-foreground mt-0.5">{analytics.avgScore.toFixed(1)}% avg</p>}
                                             </td>
                                         </tr>
                                     );
                                 })}
                             </tbody>
                         </table>
+                        {filteredDrives.length === 0 && (
+                            <div className="p-4 text-center text-sm text-muted-foreground">
+                                No drives found.
+                            </div>
+                        )}
                     </div>
                 </section>
             </div>

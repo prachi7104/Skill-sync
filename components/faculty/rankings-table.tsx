@@ -10,7 +10,6 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -51,12 +50,11 @@ interface RankingData {
 
 interface RankingsTableProps {
     rankings: RankingData[];
-    distribution: Array<{ label: string; count: number }>;
     driveId: string;
     viewerRole: "faculty" | "admin";
 }
 
-export default function RankingsTable({ rankings, distribution, driveId, viewerRole }: RankingsTableProps) {
+export default function RankingsTable({ rankings, driveId, viewerRole }: RankingsTableProps) {
     // ── State ──────────────────────────────────────────────────────────────────
     const [nameSearch, setNameSearch] = useState("");
     const [branchFilter, setBranchFilter] = useState("all");
@@ -118,58 +116,22 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
         }
     }
 
-    const maxCount = Math.max(...distribution.map(d => d.count), 1);
-
     return (
-        <div className="space-y-6">
-            {/* ── Histogram ────────────────────────────────────────────────────────── */}
-            {maxCount > 0 && (
-                <Card className="bg-muted/30 border-dashed">
-                    <CardContent className="pt-6">
-                        <div className="flex items-end justify-around h-24 gap-2 px-4">
-                            {distribution.map((d, i) => {
-                                const height = (d.count / maxCount) * 80;
-                                let colorClass = "bg-rose-500";
-                                if (i >= 2) colorClass = "bg-amber-500";
-                                if (i >= 3) colorClass = "bg-emerald-500";
-
-                                return (
-                                    <div key={d.label} className="flex-1 flex flex-col items-center group">
-                                        <span className="text-[10px] font-mono font-bold opacity-0 group-hover:opacity-100 transition-opacity mb-1">
-                                            {d.count}
-                                        </span>
-                                        <div
-                                            className={cn("w-full max-w-[40px] rounded-t sm:max-w-[60px] transition-all duration-500", colorClass)}
-                                            style={{ height: `${height}px` }}
-                                        />
-                                        <span className="text-[10px] text-muted-foreground mt-2 font-medium">
-                                            {d.label}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <p className="text-[10px] text-center text-muted-foreground mt-4 uppercase tracking-widest font-semibold">
-                            Score Distribution
-                        </p>
-                    </CardContent>
-                </Card>
-            )}
-
+        <div className="space-y-4">
             {/* ── Filter Row ───────────────────────────────────────────────────────── */}
-            <div className="flex flex-wrap items-center gap-3 bg-card p-3 rounded-lg border shadow-sm">
+            <div className="flex flex-wrap items-center gap-2">
                 <div className="relative flex-1 min-w-[200px]">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search by name..."
                         value={nameSearch}
                         onChange={(e) => setNameSearch(e.target.value)}
-                        className="pl-9 bg-muted/50 border-none h-9 text-sm"
+                        className="pl-9 h-9"
                     />
                 </div>
 
                 <Select value={branchFilter} onValueChange={setBranchFilter}>
-                    <SelectTrigger className="w-[180px] h-9 bg-muted/50 border-none text-sm">
+                    <SelectTrigger className="w-[180px] h-9">
                         <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                         <SelectValue placeholder="All Branches" />
                     </SelectTrigger>
@@ -179,15 +141,15 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                     </SelectContent>
                 </Select>
 
-                <div className="flex items-center gap-2 bg-muted/50 rounded-md px-3 h-9 border-none">
-                    <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">Min Score</span>
+                <div className="flex items-center gap-2 border border-input rounded-md px-3 h-9 bg-background">
+                    <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Min Score</span>
                     <input
                         type="number"
                         min="0"
                         max="100"
                         value={minScore}
                         onChange={(e) => setMinScore(Number(e.target.value))}
-                        className="w-12 bg-transparent text-sm font-mono font-bold focus:outline-none"
+                        className="w-12 bg-transparent text-sm font-medium focus:outline-none"
                     />
                 </div>
 
@@ -195,10 +157,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                     variant={shortlistedOnly ? "default" : "outline"}
                     size="sm"
                     onClick={() => setShortlistedOnly(!shortlistedOnly)}
-                    className={cn(
-                        "h-9 gap-2 font-semibold transition-all",
-                        shortlistedOnly ? "bg-indigo-600 hover:bg-indigo-700" : "text-muted-foreground"
-                    )}
+                    className="h-9 gap-2"
                 >
                     <Star className={cn("h-4 w-4", shortlistedOnly && "fill-current")} />
                     Shortlisted Only
@@ -206,7 +165,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
 
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Select value={sortOrder} onValueChange={(v: any) => setSortOrder(v)}>
-                    <SelectTrigger className="w-[160px] h-9 bg-muted/50 border-none text-sm">
+                    <SelectTrigger className="w-[160px] h-9">
                         <ArrowUpDown className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                         <SelectValue />
                     </SelectTrigger>
@@ -219,27 +178,27 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
             </div>
 
             {/* ── Table ────────────────────────────────────────────────────────────── */}
-            <div className="rounded-xl border shadow-sm bg-card overflow-hidden">
+            <div className="rounded-md border border-border bg-card">
                 <Table>
-                    <TableHeader className="bg-muted/40">
-                        <TableRow className="hover:bg-transparent border-b">
-                            <TableHead className="w-16 text-center font-bold text-xs uppercase tracking-wider">Rank</TableHead>
-                            <TableHead className="font-bold text-xs uppercase tracking-wider">Candidate Details</TableHead>
-                            <TableHead className="font-bold text-xs uppercase tracking-wider">Branch / CGPA</TableHead>
-                            <TableHead className="font-bold text-xs uppercase tracking-wider w-[180px]">Match Score</TableHead>
-                            <TableHead className="font-bold text-xs uppercase tracking-wider">Skills Preview</TableHead>
-                            <TableHead className="w-20 text-right font-bold text-xs uppercase tracking-wider">Action</TableHead>
+                    <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead className="w-16 font-medium text-xs">Rank</TableHead>
+                            <TableHead className="font-medium text-xs">Candidate Details</TableHead>
+                            <TableHead className="font-medium text-xs">Branch / CGPA</TableHead>
+                            <TableHead className="font-medium text-xs w-[180px]">Match Score</TableHead>
+                            <TableHead className="font-medium text-xs">Skills Preview</TableHead>
+                            <TableHead className="w-32 text-right font-medium text-xs">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filtered.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                                <TableCell colSpan={6} className="h-32 text-center text-sm text-muted-foreground">
                                     No candidates match your filters.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filtered.map((r) => {
+                            filtered.map((r, index) => {
                                 const isExpanded = expandedId === r.studentId;
                                 const currentShortlistState = localShortlisted[r.studentId] !== undefined
                                     ? localShortlisted[r.studentId]
@@ -256,126 +215,116 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                     <React.Fragment key={r.studentId}>
                                         <TableRow
                                             className={cn(
-                                                "cursor-pointer transition-colors group border-b last:border-0",
-                                                isExpanded ? "bg-indigo-50/30" : "hover:bg-muted/50",
-                                                isShortlisted && "bg-emerald-50/20"
+                                                "cursor-pointer transition-colors group",
+                                                !isExpanded && index % 2 === 1 && "bg-secondary/40",
+                                                isExpanded && "bg-accent/50"
                                             )}
                                             onClick={() => setExpandedId(isExpanded ? null : r.studentId)}
                                         >
-                                            <TableCell className="text-center">
-                                                {r.rankPosition === 1 ? (
-                                                    <span className="text-2xl" title="Rank 1">🥇</span>
-                                                ) : r.rankPosition === 2 ? (
-                                                    <span className="text-2xl" title="Rank 2">🥈</span>
-                                                ) : r.rankPosition === 3 ? (
-                                                    <span className="text-2xl" title="Rank 3">🥉</span>
-                                                ) : (
-                                                    <span className="font-mono font-bold text-muted-foreground">{r.rankPosition}</span>
-                                                )}
+                                            <TableCell className="py-3">
+                                                <span className="font-mono text-xs text-muted-foreground">#{r.rankPosition}</span>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="py-3">
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-sm tracking-tight group-hover:text-indigo-600 transition-colors">
+                                                    <span className="font-medium text-sm text-foreground">
                                                         {r.studentName}
                                                     </span>
-                                                    <span className="text-[10px] text-muted-foreground font-mono uppercase mt-0.5">
-                                                        Roll: {r.rollNo ?? "—"} • SAP: {r.sapId ?? "—"}
+                                                    <span className="text-xs text-muted-foreground mt-0.5">
+                                                        {r.sapId ?? r.rollNo ?? "—"}
                                                     </span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="py-3">
                                                 <div className="flex flex-col gap-1">
-                                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted w-fit">
+                                                    <span className="text-xs text-foreground truncate max-w-[150px]" title={r.branch ?? ""}>
                                                         {r.branch}
                                                     </span>
-                                                    <span className="text-[11px] font-mono font-bold text-muted-foreground flex items-center gap-1.5 px-2">
-                                                        CGPA: <span className="text-indigo-600">{r.cgpa?.toFixed(1) ?? "—"}</span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        CGPA: {r.cgpa?.toFixed(1) ?? "—"}
                                                     </span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="py-3">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden shadow-inner">
+                                                    <div className="flex-1 bg-secondary rounded-full h-1.5 overflow-hidden">
                                                         <div
                                                             style={{ width: `${score}%` }}
                                                             className={cn(
                                                                 "h-full rounded-full transition-all duration-700",
-                                                                score >= 75 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500" : "bg-rose-500"
+                                                                score >= 75 ? "bg-emerald-500" : score >= 50 ? "bg-primary" : "bg-muted-foreground"
                                                             )}
                                                         />
                                                     </div>
-                                                    <span className="font-mono text-sm font-black text-slate-700 min-w-[50px] text-right">
+                                                    <span className="font-medium text-xs text-foreground min-w-[40px] text-right">
                                                         {score.toFixed(1)}%
                                                     </span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="py-3">
                                                 <div className="flex flex-wrap gap-1">
                                                     {r.matchedSkills.slice(0, 3).map(s => (
-                                                        <Badge key={s} variant="secondary" className="px-1.5 py-0 text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                                                        <Badge key={s} variant="secondary" className="px-1.5 py-0 text-[10px]">
                                                             {s}
                                                         </Badge>
                                                     ))}
                                                     {r.missingSkills.slice(0, 1).map(s => (
-                                                        <Badge key={s} variant="outline" className="px-1.5 py-0 text-[10px] text-rose-600 border-rose-200 bg-rose-50/30">
+                                                        <Badge key={s} variant="outline" className="px-1.5 py-0 text-[10px]">
                                                             {s}
                                                         </Badge>
                                                     ))}
                                                     {r.matchedSkills.length + r.missingSkills.length > 4 && (
-                                                        <span className="text-[10px] text-muted-foreground font-medium ml-0.5">
-                                                            +{r.matchedSkills.length + r.missingSkills.length - 4} more
+                                                        <span className="text-[10px] text-muted-foreground ml-1 flex items-center">
+                                                            +{r.matchedSkills.length + r.missingSkills.length - 4}
                                                         </span>
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-right">
+                                            <TableCell className="py-3 text-right">
                                                 <div className="flex justify-end items-center gap-2">
-                                                    <button
+                                                    <Button
+                                                        variant={isShortlisted ? "default" : "outline"}
+                                                        size="sm"
+                                                        className="h-7 text-xs px-2.5"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             toggleShortlist(r.studentId, currentShortlistState);
                                                         }}
-                                                        className={cn(
-                                                            "p-2 rounded-full transition-all duration-200 hover:scale-110 active:scale-95",
-                                                            isShortlisted
-                                                                ? "text-amber-500 bg-amber-50 border border-amber-200 shadow-sm"
-                                                                : "text-gray-300 hover:text-amber-400"
-                                                        )}
                                                     >
-                                                        <Star className={cn("h-5 w-5", isShortlisted && "fill-current")} />
-                                                    </button>
-                                                    {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                                                        <Star className={cn("w-3 h-3 mr-1.5", isShortlisted && "fill-current")} />
+                                                        {isShortlisted ? "Shortlisted" : "Shortlist"}
+                                                    </Button>
+                                                    <div className="text-muted-foreground w-4 flex justify-center">
+                                                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                                    </div>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
 
                                         {/* ── Expanded Content ────────────────────────────────────── */}
                                         {isExpanded && (
-                                            <TableRow className="bg-indigo-50/30 border-b hover:bg-indigo-50/30">
-                                                <TableCell colSpan={6} className="p-0">
-                                                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-2 duration-300">
+                                            <TableRow className="bg-accent/30 hover:bg-accent/30">
+                                                <TableCell colSpan={6} className="p-0 border-b">
+                                                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                                                         <div className="space-y-6">
-                                                            <div className="space-y-4">
-                                                                <h4 className="text-xs font-black uppercase text-indigo-700 tracking-wider flex items-center gap-2">
-                                                                    <div className="h-1 w-4 bg-indigo-700 rounded-full" />
+                                                            <div className="space-y-2">
+                                                                <h4 className="text-xs font-semibold text-foreground uppercase tracking-wide">
                                                                     Match Analysis
                                                                 </h4>
-                                                                <blockquote className="border-l-4 border-indigo-500 pl-4 py-1 italic text-sm text-slate-700 leading-relaxed">
-                                                                    &quot;{r.shortExplanation}&quot;
-                                                                </blockquote>
+                                                                <p className="text-sm text-foreground/80 leading-relaxed border-l-2 border-border pl-4">
+                                                                    {r.shortExplanation}
+                                                                </p>
                                                             </div>
 
                                                             <div className="space-y-4">
-                                                                <h4 className="text-xs font-black uppercase text-emerald-700 tracking-wider flex items-center gap-2">
-                                                                    <div className="h-1 w-4 bg-emerald-700 rounded-full" />
+                                                                <h4 className="text-xs font-semibold text-foreground uppercase tracking-wide">
                                                                     Skills Alignment
                                                                 </h4>
                                                                 <div className="space-y-3">
                                                                     <div>
-                                                                        <p className="text-[10px] font-bold text-muted-foreground mb-1.5 uppercase tracking-wide">Matched Skills</p>
+                                                                        <p className="text-xs text-muted-foreground mb-1">Matched Skills</p>
                                                                         <div className="flex flex-wrap gap-1.5">
                                                                             {r.matchedSkills.map(s => (
-                                                                                <Badge key={s} variant="secondary" className="bg-emerald-100 text-emerald-800 border-none px-2 py-0.5 text-xs font-semibold">
+                                                                                <Badge key={s} variant="secondary" className="px-2 py-0.5 text-xs font-medium">
                                                                                     {s}
                                                                                 </Badge>
                                                                             ))}
@@ -383,10 +332,10 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                                     </div>
                                                                     {r.missingSkills.length > 0 && (
                                                                         <div>
-                                                                            <p className="text-[10px] font-bold text-muted-foreground mb-1.5 uppercase tracking-wide">Missing / Weak Skills</p>
+                                                                            <p className="text-xs text-muted-foreground mb-1">Missing / Weak Skills</p>
                                                                             <div className="flex flex-wrap gap-1.5">
                                                                                 {r.missingSkills.map(s => (
-                                                                                    <Badge key={s} variant="outline" className="border-rose-200 text-rose-700 bg-rose-50 px-2 py-0.5 text-xs font-semibold">
+                                                                                    <Badge key={s} variant="outline" className="px-2 py-0.5 text-xs font-medium border-dashed">
                                                                                         {s}
                                                                                     </Badge>
                                                                                 ))}
@@ -398,62 +347,42 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                         </div>
 
                                                         <div className="space-y-6 flex flex-col">
-                                                            <div className="flex-1 space-y-4">
-                                                                <h4 className="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
-                                                                    <div className="h-1 w-4 bg-slate-700 rounded-full" />
-                                                                    Score Breakdown & Analysis
+                                                            <div className="flex-1 space-y-2">
+                                                                <h4 className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                                                                    Detailed Breakdown
                                                                 </h4>
-                                                                <div className="p-4 bg-white rounded-lg border border-indigo-100 text-sm leading-relaxed text-slate-600 shadow-sm max-h-[250px] overflow-y-auto">
+                                                                <div className="text-sm leading-relaxed text-muted-foreground max-h-[250px] overflow-y-auto pr-4">
                                                                     {r.detailedExplanation.split('\n').map((line, i) => (
-                                                                        <p key={i} className={cn(line.trim() ? "mb-3 last:mb-0" : "h-2")}>
+                                                                        <p key={i} className={cn(line.trim() ? "mb-2 last:mb-0" : "h-2")}>
                                                                             {line}
                                                                         </p>
                                                                     ))}
                                                                 </div>
                                                             </div>
 
-                                                            <div className="flex items-center justify-between pt-4 border-t">
-                                                                <div className="flex items-center gap-2">
-                                                                    <Button
-                                                                        size="sm"
-                                                                        onClick={() => toggleShortlist(r.studentId, currentShortlistState)}
-                                                                        className={cn(
-                                                                            "h-9 px-4 font-bold shadow-sm transition-all",
-                                                                            isShortlisted
-                                                                                ? "bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200"
-                                                                                : "bg-indigo-600 hover:bg-indigo-700"
-                                                                        )}
-                                                                        variant={isShortlisted ? "outline" : "default"}
-                                                                    >
-                                                                        <Star className={cn("h-4 w-4 mr-2", isShortlisted && "fill-current")} />
-                                                                        {isShortlisted ? "Shortlisted" : "Shortlist Candidate"}
-                                                                    </Button>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="ghost"
-                                                                        onClick={() => passCandidate(r.studentId, currentShortlistState)}
-                                                                        className={cn(
-                                                                            "h-9 px-4 font-semibold transition-all",
-                                                                            isPassed ? "text-rose-600 bg-rose-50 hover:bg-rose-100" : "text-muted-foreground hover:text-rose-600 hover:bg-rose-50"
-                                                                        )}
-                                                                    >
-                                                                        <XCircle className="h-4 w-4 mr-2" />
-                                                                        {isPassed ? "Passed ✓" : "Pass/Reject"}
-                                                                    </Button>
-                                                                </div>
-
+                                                            <div className="flex items-center gap-3 pt-4">
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() => passCandidate(r.studentId, currentShortlistState)}
+                                                                    className={cn("h-8 text-xs", isPassed && "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 hover:text-destructive")}
+                                                                >
+                                                                    <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                                                                    {isPassed ? "Rejected" : "Reject"}
+                                                                </Button>
                                                                 <Button
                                                                     variant="link"
                                                                     size="sm"
                                                                     asChild
-                                                                    className="text-indigo-600 gap-1 font-bold"
+                                                                    className="h-8 text-xs text-foreground px-0"
                                                                 >
                                                                     <a
                                                                         href={profileHref}
                                                                         target="_blank"
                                                                         rel="noreferrer"
                                                                     >
-                                                                        <BookOpen className="h-4 w-4" /> {viewerRole === "admin" ? "Full Profile" : "Find in Students"}
+                                                                        <BookOpen className="h-3.5 w-3.5 mr-1.5" /> 
+                                                                        {viewerRole === "admin" ? "Full Profile" : "Find Profile"}
                                                                     </a>
                                                                 </Button>
                                                             </div>

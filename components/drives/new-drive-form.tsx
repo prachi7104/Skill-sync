@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { UPES_BRANCHES } from "@/lib/constants/branches";
 import { cn } from "@/lib/utils";
-import { Check, ChevronRight, ChevronLeft, Calendar, MapPin, Briefcase, IndianRupee } from "lucide-react";
+import { Check, Upload } from "lucide-react";
 
 const schema = z.object({
   company: z.string().min(1, "Required"),
@@ -36,7 +35,6 @@ type NewDriveFormProps = {
 };
 
 export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
-  const [step, setStep] = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seasons, setSeasons] = useState<Array<{ id: string; name: string }>>([]);
@@ -44,7 +42,6 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
   const {
     register,
     handleSubmit,
-    trigger,
     watch,
     setValue,
     formState: { errors },
@@ -61,7 +58,6 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
     },
   });
 
-  const jdValue = watch("rawJd") ?? "";
   const minCgpa = watch("minCgpa") ?? 0;
   const selectedBranches = watch("eligibleBranches") ?? [];
   const selectedBatchYears = watch("eligibleBatchYears") ?? [];
@@ -81,11 +77,6 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
 
     void loadSeasons();
   }, []);
-
-  async function nextStep() {
-    const isValid = await trigger(["company", "roleTitle"]);
-    if (isValid) setStep(2);
-  }
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
@@ -125,282 +116,234 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
   const toggleBranch = (val: string) => {
     const current = selectedBranches;
     if (current.includes(val)) {
-      setValue("eligibleBranches", current.filter((b) => b !== val));
+      setValue("eligibleBranches", current.filter((b) => b !== val), { shouldDirty: true });
     } else {
-      setValue("eligibleBranches", [...current, val]);
+      setValue("eligibleBranches", [...current, val], { shouldDirty: true });
     }
   };
 
   const toggleBatchYear = (val: number) => {
     const current = selectedBatchYears;
     if (current.includes(val)) {
-      setValue("eligibleBatchYears", current.filter((y) => y !== val));
+      setValue("eligibleBatchYears", current.filter((y) => y !== val), { shouldDirty: true });
     } else {
-      setValue("eligibleBatchYears", [...current, val]);
+      setValue("eligibleBatchYears", [...current, val], { shouldDirty: true });
     }
   };
 
   const toggleCategory = (val: "alpha" | "beta" | "gamma") => {
     const current = selectedCategories;
     if (current.includes(val)) {
-      setValue("eligibleCategories", current.filter((c) => c !== val));
+      setValue("eligibleCategories", current.filter((c) => c !== val), { shouldDirty: true });
     } else {
-      setValue("eligibleCategories", [...current, val]);
+      setValue("eligibleCategories", [...current, val], { shouldDirty: true });
     }
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 py-10">
-      <div className="flex items-center justify-center space-x-4">
-        <div
-          className={cn(
-            "flex h-8 w-8 items-center justify-center rounded-full border-2 font-bold",
-            step === 1 ? "border-indigo-600 bg-indigo-600 text-white" : "border-emerald-500 bg-emerald-500 text-white"
-          )}
-        >
-          {step > 1 ? <Check className="h-5 w-5" /> : "1"}
-        </div>
-        <div className={cn("h-px w-20", step > 1 ? "bg-emerald-500" : "bg-slate-800")} />
-        <div
-          className={cn(
-            "flex h-8 w-8 items-center justify-center rounded-full border-2 font-bold",
-            step === 2 ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-800 text-slate-500"
-          )}
-        >
-          2
-        </div>
+    <div className="max-w-3xl mx-auto px-8 py-10">
+      <div>
+        <h1 className="text-2xl font-semibold text-foreground">Create New Drive</h1>
+        <p className="text-sm text-muted-foreground mt-1">Configure details, eligibility, and job description.</p>
       </div>
 
-      <Card className="border-t-4 border-t-indigo-500">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">{step === 1 ? "Basic Drive Details" : "JD & Eligibility"}</CardTitle>
-          <CardDescription>
-            {step === 1 ? "Provide the company and role information." : "Set applicant requirements and paste the job description."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {step === 1 && (
-              <div className="space-y-5 animate-in fade-in duration-300">
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="company" className="flex items-center gap-2">
-                      <Briefcase className="h-4 w-4 text-muted-foreground" />
-                      Company Name *
-                    </Label>
-                    <Input id="company" {...register("company")} placeholder="e.g. Google" />
-                    {errors.company && <p className="text-xs text-red-500">{errors.company.message}</p>}
-                  </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-10">
+        {error && (
+            <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm font-medium text-destructive">
+                {error}
+            </div>
+        )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="roleTitle">Role Title *</Label>
-                    <Input id="roleTitle" {...register("roleTitle")} placeholder="e.g. SDE Intern" />
-                    {errors.roleTitle && <p className="text-xs text-red-500">{errors.roleTitle.message}</p>}
-                  </div>
+        <div className="space-y-6">
+            <h2 className="text-sm font-semibold text-foreground tracking-wide border-b border-border pb-2">BASIC DETAILS</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1.5">
+                    <Label htmlFor="company" className="text-sm font-medium">Company Name</Label>
+                    <Input id="company" placeholder="e.g. Google, Microsoft" {...register("company")} />
+                    {errors.company && <p className="text-xs text-destructive">{errors.company.message}</p>}
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="location" className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      Location
-                    </Label>
-                    <Input id="location" {...register("location")} placeholder="e.g. Gurgaon / Remote" />
-                  </div>
+                <div className="space-y-1.5">
+                    <Label htmlFor="roleTitle" className="text-sm font-medium">Role Title</Label>
+                    <Input id="roleTitle" placeholder="e.g. SDE Intern" {...register("roleTitle")} />
+                    {errors.roleTitle && <p className="text-xs text-destructive">{errors.roleTitle.message}</p>}
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="packageOffered" className="flex items-center gap-2">
-                      <IndianRupee className="h-4 w-4 text-muted-foreground" />
-                      Package Offered
-                    </Label>
-                    <Input id="packageOffered" {...register("packageOffered")} placeholder="e.g. ₹7 LPA" />
-                  </div>
+                <div className="space-y-1.5">
+                    <Label htmlFor="location" className="text-sm font-medium">Location</Label>
+                    <Input id="location" placeholder="e.g. Gurgaon / Remote" {...register("location")} />
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="deadline" className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      Application Deadline
-                    </Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="packageOffered" className="text-sm font-medium">Package Offered</Label>
+                    <Input id="packageOffered" placeholder="e.g. ₹7 LPA" {...register("packageOffered")} />
+                </div>
+
+                <div className="space-y-1.5">
+                    <Label htmlFor="deadline" className="text-sm font-medium">Application Deadline</Label>
                     <Input id="deadline" type="date" {...register("deadline")} />
-                  </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="seasonId">Season</Label>
+                <div className="space-y-1.5 flex flex-col">
+                    <Label htmlFor="seasonId" className="text-sm font-medium mb-1">Season</Label>
                     <select
-                      id="seasonId"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      {...register("seasonId")}
+                        id="seasonId"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
+                        {...register("seasonId")}
                     >
-                      <option value="">No season</option>
-                      {seasons.map((season) => (
+                        <option value="">No season</option>
+                        {seasons.map((season) => (
                         <option key={season.id} value={season.id}>
-                          {season.name}
+                            {season.name}
                         </option>
-                      ))}
+                        ))}
                     </select>
-                  </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="placementType">Placement Type</Label>
+                <div className="space-y-1.5 flex flex-col">
+                    <Label htmlFor="placementType" className="text-sm font-medium mb-1">Placement Type</Label>
                     <select
-                      id="placementType"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      {...register("placementType")}
+                        id="placementType"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
+                        {...register("placementType")}
                     >
-                      <option value="placement">Full-time Placement</option>
-                      <option value="internship">Internship</option>
-                      <option value="ppo">Pre-Placement Offer (PPO)</option>
-                      <option value="other">Other</option>
+                        <option value="placement">Full-time Placement</option>
+                        <option value="internship">Internship</option>
+                        <option value="ppo">Pre-Placement Offer (PPO)</option>
+                        <option value="other">Other</option>
                     </select>
-                  </div>
+                </div>
+            </div>
+
+            <label className="flex items-center gap-2 mt-4 cursor-pointer">
+                <input type="checkbox" className="rounded border-input" {...register("rankingsVisible")} />
+                <span className="text-sm text-foreground">Allow students to view their rankings for this drive</span>
+            </label>
+        </div>
+
+
+        <div className="space-y-6">
+            <h2 className="text-sm font-semibold text-foreground tracking-wide border-b border-border pb-2">JOB DESCRIPTION</h2>
+            
+            <div className="space-y-4">
+                <div className="border border-dashed border-border rounded-md p-8 text-center hover:bg-accent transition-colors cursor-pointer">
+                    <Upload className="w-6 h-6 text-muted-foreground mx-auto mb-2" strokeWidth={1.5} />
+                    <p className="text-sm text-foreground">Click to upload job description</p>
+                    <p className="text-xs text-muted-foreground mt-1">PDF, up to 10MB</p>
+                </div>
+                
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">Or Paste Text</span>
+                    </div>
                 </div>
 
-                <label className="flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2 text-sm">
-                  <input type="checkbox" {...register("rankingsVisible")} />
-                  Allow students to view ranking details for this drive
-                </label>
-
-                <div className="flex justify-end pt-4">
-                  <Button type="button" onClick={nextStep} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
-                    Continue <ChevronRight className="h-4 w-4" />
-                  </Button>
+                <div className="space-y-1.5">
+                    <Label htmlFor="rawJd" className="text-sm font-medium">Raw JD Content</Label>
+                    <Textarea id="rawJd" {...register("rawJd")} rows={10} placeholder="Paste the full job description text here..." className="font-sans" />
+                    {errors.rawJd && <p className="text-xs text-destructive">{errors.rawJd.message}</p>}
                 </div>
-              </div>
-            )}
+            </div>
+        </div>
 
-            {step === 2 && (
-              <div className="space-y-8 animate-in fade-in duration-300">
-                {error && <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-700">{error}</div>}
+        <div className="space-y-6">
+            <h2 className="text-sm font-semibold text-foreground tracking-wide border-b border-border pb-2">ELIGIBILITY CRITERIA</h2>
+            
+            <div className="space-y-8">
+                <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="minCgpa" className="text-sm font-medium">Minimum CGPA</Label>
+                        <span className="text-sm font-medium text-muted-foreground">{minCgpa === 0 ? "No minimum" : minCgpa.toFixed(1)}</span>
+                    </div>
+                    <input
+                        type="range"
+                        id="minCgpa"
+                        min="0"
+                        max="10"
+                        step="0.5"
+                        className="w-full cursor-pointer appearance-none rounded-lg bg-secondary h-2 accent-primary"
+                        {...register("minCgpa", { valueAsNumber: true })}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Students below this CGPA will be excluded from the ranking</p>
+                </div>
 
                 <div className="space-y-3">
-                  <Label htmlFor="rawJd" className="text-base font-semibold">Job Description *</Label>
-                  <Textarea id="rawJd" {...register("rawJd")} rows={12} placeholder="Paste the full JD text here..." className="font-sans leading-relaxed" />
-                  <div className="flex items-center justify-between text-xs">
-                    <p className={cn("font-medium", jdValue.length < 200 || jdValue.length > 5000 ? "text-amber-500" : "text-emerald-500")}>
-                      {jdValue.length.toLocaleString()} characters
-                    </p>
-                    {errors.rawJd && <p className="font-medium text-red-500">{errors.rawJd.message}</p>}
-                  </div>
-                </div>
-
-                <div className="space-y-4 border-t pt-4">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="minCgpa" className="text-base font-semibold">Minimum CGPA</Label>
-                    <span className="text-xl font-mono font-bold text-indigo-400">{minCgpa === 0 ? "No minimum" : minCgpa.toFixed(1)}</span>
-                  </div>
-                  <input
-                    type="range"
-                    id="minCgpa"
-                    min="0"
-                    max="10"
-                    step="0.5"
-                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-800 accent-indigo-600"
-                    {...register("minCgpa", { valueAsNumber: true })}
-                  />
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Students below this CGPA are excluded from ranking</p>
-                </div>
-
-                <div className="space-y-4 border-t pt-4 text-sm">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base font-semibold">Eligible Branches</Label>
-                    <div className="flex gap-4">
-                      <button
-                        type="button"
-                        onClick={() => setValue("eligibleBranches", UPES_BRANCHES.map((b) => b.value))}
-                        className="border-none bg-transparent p-0 text-xs text-indigo-400 hover:text-indigo-300 hover:underline"
-                      >
-                        Select All
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setValue("eligibleBranches", [])}
-                        className="border-none bg-transparent p-0 text-xs text-muted-foreground hover:underline"
-                      >
-                        Clear All
-                      </button>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {UPES_BRANCHES.map((branch) => (
-                      <label key={branch.value} className="group flex cursor-pointer items-center gap-2.5">
-                        <div
-                          className={cn(
-                            "flex h-5 w-5 items-center justify-center rounded border-2 shadow-sm transition-colors",
-                            selectedBranches.includes(branch.value)
-                              ? "border-indigo-600 bg-indigo-600"
-                              : "border-slate-700 group-hover:border-slate-600"
-                          )}
-                        >
-                          {selectedBranches.includes(branch.value) && <Check className="h-3.5 w-3.5 stroke-[3px] text-white" />}
+                    <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium">Eligible Branches</Label>
+                        <div className="flex gap-3">
+                            <button type="button" onClick={() => setValue("eligibleBranches", UPES_BRANCHES.map((b) => b.value))} className="text-xs text-primary hover:underline">Select All</button>
+                            <button type="button" onClick={() => setValue("eligibleBranches", [])} className="text-xs text-muted-foreground hover:underline">Clear All</button>
                         </div>
-                        <input
-                          type="checkbox"
-                          className="hidden"
-                          checked={selectedBranches.includes(branch.value)}
-                          onChange={() => toggleBranch(branch.value)}
-                        />
-                        <span className={cn("transition-colors", selectedBranches.includes(branch.value) ? "font-medium text-white" : "text-muted-foreground")}>
-                          {branch.label}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                  {selectedBranches.length === 0 && <p className="text-xs italic text-muted-foreground">All branches eligible</p>}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {UPES_BRANCHES.map((branch) => {
+                            const isSelected = selectedBranches.includes(branch.value);
+                            return (
+                                <label key={branch.value} className="flex cursor-pointer items-center gap-2">
+                                    <div className={cn("flex h-4 w-4 items-center justify-center rounded border transition-colors", isSelected ? "border-primary bg-primary text-primary-foreground" : "border-input")}>
+                                        {isSelected && <Check className="h-3 w-3" />}
+                                    </div>
+                                    <input type="checkbox" className="hidden" checked={isSelected} onChange={() => toggleBranch(branch.value)} />
+                                    <span className="text-sm">{branch.label}</span>
+                                </label>
+                            );
+                        })}
+                    </div>
+                    {selectedBranches.length === 0 && <p className="text-xs text-muted-foreground">No branches selected — all branches will be eligible by default</p>}
                 </div>
 
-                <div className="space-y-4 border-t pt-4">
-                  <Label className="text-base font-semibold">Eligible Batch Years</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {[2024, 2025, 2026, 2027].map((year) => (
-                      <button
-                        key={year}
-                        type="button"
-                        onClick={() => toggleBatchYear(year)}
-                        className={cn(
-                          "rounded-md border px-4 py-2 text-sm font-semibold shadow-sm transition-all",
-                          selectedBatchYears.includes(year)
-                            ? "border-indigo-600 bg-indigo-600 text-white"
-                            : "border-slate-700 bg-slate-900 text-slate-300 hover:border-indigo-500/50"
-                        )}
-                      >
-                        {year}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <div className="grid md:grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                        <Label className="text-sm font-medium">Eligible Batch Years</Label>
+                        <div className="flex flex-wrap gap-2">
+                            {[2024, 2025, 2026, 2027].map((year) => {
+                                const isSelected = selectedBatchYears.includes(year);
+                                return (
+                                    <button
+                                        key={year}
+                                        type="button"
+                                        onClick={() => toggleBatchYear(year)}
+                                        className={cn("rounded-md border px-3 py-1.5 text-sm font-medium transition-colors", isSelected ? "bg-primary border-primary text-primary-foreground" : "bg-card border-input hover:bg-accent hover:text-accent-foreground")}
+                                    >
+                                        {year}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
 
-                <div className="space-y-4 border-t pb-4 pt-4">
-                  <Label className="text-base font-semibold">Target Categories</Label>
-                  <div className="flex gap-2">
-                    {(["alpha", "beta", "gamma"] as const).map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => toggleCategory(cat)}
-                        className={cn(
-                          "rounded-md border px-6 py-2 text-sm font-semibold capitalize shadow-sm transition-all",
-                          selectedCategories.includes(cat)
-                            ? "border-indigo-600 bg-indigo-600 text-white"
-                            : "border-slate-700 bg-slate-900 text-slate-300 hover:border-indigo-500/50"
-                        )}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
+                    <div className="space-y-3">
+                        <Label className="text-sm font-medium">Target Categories</Label>
+                        <div className="flex flex-wrap gap-2">
+                            {(["alpha", "beta", "gamma"] as const).map((cat) => {
+                                const isSelected = selectedCategories.includes(cat);
+                                return (
+                                    <button
+                                        key={cat}
+                                        type="button"
+                                        onClick={() => toggleCategory(cat)}
+                                        className={cn("rounded-md border px-3 py-1.5 text-sm font-medium capitalize transition-colors", isSelected ? "bg-primary border-primary text-primary-foreground" : "bg-card border-input hover:bg-accent hover:text-accent-foreground")}
+                                    >
+                                        {cat}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </div>
 
-                <div className="flex justify-between border-t pt-6">
-                  <Button type="button" variant="ghost" onClick={() => setStep(1)} className="gap-2 text-slate-500 hover:text-slate-200">
-                    <ChevronLeft className="h-4 w-4" /> Back to details
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting} className="min-w-[140px] bg-indigo-600 hover:bg-indigo-700">
-                    {isSubmitting ? "Creating..." : "Create Drive →"}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </form>
-        </CardContent>
-      </Card>
+        <div className="flex items-center justify-end border-t border-border pt-6">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : "Create Drive"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
