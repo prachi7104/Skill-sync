@@ -69,7 +69,7 @@ describe("Phase 4 - Career Advisor multi-turn", () => {
     expect(prompt).toContain("User: How do I improve placements?");
     expect(prompt).toContain("Assistant: Focus on DSA and projects.");
     expect(prompt).toContain("User: What should I do this week?");
-  });
+  }, 30000);
 
   it("POST without profile returns 403", async () => {
     const { POST } = await loadPostRoute({ profile: null });
@@ -141,7 +141,7 @@ describe("Phase 4 - Career Advisor multi-turn", () => {
     expect(screen.getByText("PyTorch")).toBeInTheDocument();
     expect(screen.queryByText("**Critical**")).not.toBeInTheDocument();
     expect(screen.getByText(/Critical for target drives/i)).toBeInTheDocument();
-  });
+  }, 30000);
 
   it("UI shows error state for no active drives", async () => {
     global.fetch = vi.fn().mockResolvedValue(

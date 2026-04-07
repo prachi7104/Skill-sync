@@ -230,7 +230,12 @@ export function parseAmcatRows(
           (obj as Record<string, unknown>)[field] = null;
         } else {
           const n = Number(strVal);
-          (obj as Record<string, unknown>)[field] = Number.isNaN(n) ? null : Math.round(n);
+          if (!Number.isNaN(n) && (n < 0 || n > 100)) {
+            errors.push(`Row ${rowIndex + 2}: ${field} value ${n} outside 0-100, clamped`);
+          }
+          (obj as Record<string, unknown>)[field] = Number.isNaN(n)
+            ? null
+            : Math.max(0, Math.min(100, Math.round(n)));
         }
       } else if (field === "csv_total") {
         const strVal = String(value ?? "").trim();
@@ -238,7 +243,7 @@ export function parseAmcatRows(
           obj.csv_total = null;
         } else {
           const n = Number(strVal);
-          obj.csv_total = Number.isNaN(n) ? null : n;
+          obj.csv_total = Number.isNaN(n) ? null : Math.round(n * 10) / 10;
         }
       } else if (field === "attendance_pct") {
         const strVal = String(value ?? "").trim();

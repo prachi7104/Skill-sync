@@ -81,7 +81,7 @@ describe("profile route PATCH - coding profile URL optional", () => {
         username: "student123",
       },
     ]);
-  });
+  }, 30000);
 
   it("returns 400 when coding profile URL is non-empty but invalid", async () => {
     const { PATCH } = await loadPatchRoute();

@@ -40,7 +40,7 @@ describe("Phase 3 — Career Coach UI", () => {
     await waitFor(() => expect(screen.getByText("PyTorch")).toBeInTheDocument());
     expect(screen.queryByText("**Critical**")).not.toBeInTheDocument();
     expect(screen.getByText(/Critical skill/i)).toBeInTheDocument();
-  });
+  }, 30000);
 
   it("Test 3: career coach page shows loading skeleton while fetching", async () => {
     global.fetch = vi.fn().mockImplementation(

@@ -4,6 +4,7 @@ import { isRedirectError } from "next/dist/client/components/redirect";
 import { z } from "zod";
 
 import { hasComponent, requireRole } from "@/lib/auth/helpers";
+import { deleteCloudinaryRawByUrl, uploadRawFileToCloudinary } from "@/lib/cloudinary";
 import { db } from "@/lib/db";
 
 const updateResourceSchema = z.object({
@@ -32,6 +33,9 @@ type ResourceAccessRow = {
   tags: string[];
   company_name: string | null;
   attachment_url: string | null;
+  attachment_name: string | null;
+  attachment_mime: string | null;
+  attachment_size_kb: number | null;
   status: "draft" | "published" | "archived";
 };
 
@@ -49,6 +53,9 @@ async function getScopedResource(resourceId: string, collegeId: string) {
       tags,
       company_name,
       attachment_url,
+      attachment_name,
+      attachment_mime,
+      attachment_size_kb,
       status
     FROM resources
     WHERE id = ${resourceId}
@@ -73,8 +80,38 @@ export async function PATCH(
       return NextResponse.json({ error: "College not found" }, { status: 400 });
     }
 
-    const payload = updateResourceSchema.parse(await req.json());
-    if (Object.keys(payload).length === 0) {
+    const contentType = req.headers.get("content-type") ?? "";
+    let payload: z.infer<typeof updateResourceSchema> = {};
+    let file: File | null = null;
+    let removeAttachment = false;
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      file = formData.get("file") as File | null;
+      removeAttachment = String(formData.get("removeAttachment") ?? "").toLowerCase() === "true";
+
+      payload = updateResourceSchema.parse({
+        section: formData.get("section") || undefined,
+        category: formData.get("category") || undefined,
+        title: formData.get("title") || undefined,
+        body: formData.has("body") ? String(formData.get("body") ?? "") : undefined,
+        bodyFormat: formData.get("bodyFormat") || undefined,
+        tags: formData.has("tags")
+          ? String(formData.get("tags") ?? "")
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean)
+          : undefined,
+        companyName: formData.has("companyName")
+          ? (String(formData.get("companyName") ?? "").trim() || null)
+          : undefined,
+        status: formData.get("status") || undefined,
+      });
+    } else {
+      payload = updateResourceSchema.parse(await req.json());
+    }
+
+    if (Object.keys(payload).length === 0 && !file && !removeAttachment) {
       return NextResponse.json({ error: "No updates provided" }, { status: 400 });
     }
 
@@ -85,6 +122,10 @@ export async function PATCH(
 
     if (user.role === "faculty" && resource.author_id !== user.id) {
       return NextResponse.json({ error: "You can only edit your own resources" }, { status: 403 });
+    }
+
+    if (file && removeAttachment) {
+      return NextResponse.json({ error: "Cannot upload and remove attachment in the same request" }, { status: 400 });
     }
 
     const nextSection = payload.section ?? resource.section;
@@ -98,9 +139,51 @@ export async function PATCH(
       }
     }
 
-    const nextBody = payload.body !== undefined ? payload.body : resource.body;
-    const hasAttachment = Boolean(resource.attachment_url);
-    if (!nextBody && !hasAttachment) {
+    let nextAttachmentUrl = resource.attachment_url;
+    let nextAttachmentName = resource.attachment_name;
+    let nextAttachmentMime = resource.attachment_mime;
+    let nextAttachmentSizeKb = resource.attachment_size_kb;
+    let oldAttachmentUrlToDelete: string | null = null;
+
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
+      }
+
+      const allowedTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        return NextResponse.json({ error: "Only PDF and DOCX attachments are supported" }, { status: 400 });
+      }
+
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const uploaded = await uploadRawFileToCloudinary({
+        buffer,
+        folder: "skillsync-resources",
+        publicId: `${user.id}_${Date.now()}`,
+        format: file.type === "application/pdf" ? "pdf" : "docx",
+      });
+
+      nextAttachmentUrl = uploaded.secureUrl;
+      nextAttachmentName = file.name;
+      nextAttachmentMime = file.type;
+      nextAttachmentSizeKb = Math.max(1, Math.round(file.size / 1024));
+      oldAttachmentUrlToDelete = resource.attachment_url;
+    } else if (removeAttachment) {
+      nextAttachmentUrl = null;
+      nextAttachmentName = null;
+      nextAttachmentMime = null;
+      nextAttachmentSizeKb = null;
+      oldAttachmentUrlToDelete = resource.attachment_url;
+    }
+
+    const nextBody = payload.body !== undefined
+      ? (payload.body?.trim() ? payload.body : null)
+      : resource.body;
+
+    if (!nextBody && !nextAttachmentUrl) {
       return NextResponse.json({ error: "Either content body or file attachment is required" }, { status: 400 });
     }
 
@@ -108,6 +191,9 @@ export async function PATCH(
     const nextTags = payload.tags === undefined
       ? resource.tags
       : (payload.tags ?? []);
+    const nextCompanyName = payload.companyName === undefined
+      ? resource.company_name
+      : (payload.companyName?.trim() ? payload.companyName : null);
 
     await db.execute(sql`
       UPDATE resources
@@ -116,13 +202,28 @@ export async function PATCH(
           title = ${payload.title ?? resource.title},
           body = ${nextBody},
           body_format = ${payload.bodyFormat ?? resource.body_format ?? "markdown"},
+          attachment_url = ${nextAttachmentUrl},
+          attachment_name = ${nextAttachmentName},
+          attachment_mime = ${nextAttachmentMime},
+          attachment_size_kb = ${nextAttachmentSizeKb},
           tags = ${nextTags}::text[],
-          company_name = ${payload.companyName === undefined ? resource.company_name : payload.companyName},
+          company_name = ${nextCompanyName},
           status = ${nextStatus},
           updated_at = NOW()
       WHERE id = ${params.resourceId}
         AND college_id = ${user.collegeId}
     `);
+
+    if (
+      oldAttachmentUrlToDelete &&
+      oldAttachmentUrlToDelete !== nextAttachmentUrl
+    ) {
+      try {
+        await deleteCloudinaryRawByUrl(oldAttachmentUrlToDelete);
+      } catch (err) {
+        console.error("[PATCH /api/resources/[resourceId]] Cloudinary cleanup failed:", err);
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -158,6 +259,14 @@ export async function DELETE(
       WHERE id = ${params.resourceId}
         AND college_id = ${user.collegeId}
     `);
+
+    if (resource.attachment_url) {
+      try {
+        await deleteCloudinaryRawByUrl(resource.attachment_url);
+      } catch (err) {
+        console.error("[DELETE /api/resources] Cloudinary cleanup failed:", err);
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

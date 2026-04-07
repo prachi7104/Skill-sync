@@ -83,7 +83,9 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
             .sort((a, b) => {
                 if (sortOrder === "score-desc") return b.matchScore - a.matchScore;
                 if (sortOrder === "score-asc") return a.matchScore - b.matchScore;
-                return a.rankPosition - b.rankPosition;
+                const rankA = a.rankPosition === 0 ? Number.MAX_SAFE_INTEGER : a.rankPosition;
+                const rankB = b.rankPosition === 0 ? Number.MAX_SAFE_INTEGER : b.rankPosition;
+                return rankA - rankB;
             });
     }, [rankings, nameSearch, branchFilter, minScore, shortlistedOnly, sortOrder, localShortlisted]);
 
@@ -263,7 +265,9 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                             onClick={() => setExpandedId(isExpanded ? null : r.studentId)}
                                         >
                                             <TableCell className="text-center">
-                                                {r.rankPosition === 1 ? (
+                                                {r.rankPosition === 0 ? (
+                                                    <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Ineligible</span>
+                                                ) : r.rankPosition === 1 ? (
                                                     <span className="text-2xl" title="Rank 1">🥇</span>
                                                 ) : r.rankPosition === 2 ? (
                                                     <span className="text-2xl" title="Rank 2">🥈</span>

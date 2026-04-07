@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { rankings, drives, students, users } from "@/lib/db/schema";
-import { eq, asc, sql } from "drizzle-orm";
+import { eq, asc, desc, sql } from "drizzle-orm";
 import { enforceRankingsExist, GuardrailViolation } from "@/lib/guardrails";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
@@ -115,7 +115,7 @@ export async function GET(
       .innerJoin(students, eq(rankings.studentId, students.id))
       .innerJoin(users, eq(students.id, users.id))
       .where(eq(rankings.driveId, driveId))
-      .orderBy(asc(rankings.rankPosition))
+      .orderBy(desc(rankings.isEligible), asc(rankings.rankPosition))
       .limit(pageSize)
       .offset(offset);
 
@@ -147,12 +147,11 @@ export async function GET(
       },
       { status: 200 },
     );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (isRedirectError(err)) throw err;
     console.error("[GET /api/drives/[driveId]/rankings]", err);
 
-    const message = err?.message ?? "Internal server error";
+    const message = err instanceof Error ? err.message : "Internal server error";
 
     if (message.includes("Unauthorized")) {
       return NextResponse.json({ error: message }, { status: 401 });

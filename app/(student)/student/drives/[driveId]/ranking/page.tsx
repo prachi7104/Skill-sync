@@ -147,7 +147,10 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <ScoreTile label="Rank" value={`#${myRanking.rankPosition}`} />
+                <ScoreTile
+                  label="Rank"
+                  value={myRanking.rankPosition > 0 ? `#${myRanking.rankPosition}` : "Ineligible"}
+                />
                 <ScoreTile
                   label="Match Score"
                   value={myRanking.matchScore.toFixed(1)}

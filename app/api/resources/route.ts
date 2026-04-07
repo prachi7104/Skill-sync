@@ -85,7 +85,8 @@ export async function GET(req: NextRequest) {
         r.helpful_count,
         r.created_at,
         r.updated_at,
-        u.name AS author_name
+        u.name AS author_name,
+        COUNT(*) OVER()::int AS total_count
       FROM resources r
       JOIN users u ON u.id = r.author_id
       WHERE ${sql.join(whereParts, sql` AND `)}
@@ -93,12 +94,15 @@ export async function GET(req: NextRequest) {
       LIMIT ${pageSize} OFFSET ${offset}
     `) as unknown as Array<Record<string, unknown>>;
 
+    const totalCount = Number(resources[0]?.total_count ?? 0);
+
     const canCreate = user.role === "admin"
       ? true
       : await hasComponent(section === "softskills" ? "softskills_content" : "technical_content");
 
     return NextResponse.json({
       resources,
+      totalCount,
       canCreate,
       viewerRole: user.role,
       viewerId: user.id,
@@ -131,22 +135,47 @@ export async function POST(req: NextRequest) {
         category: formData.get("category"),
         title: formData.get("title"),
         body: formData.get("body"),
-        bodyFormat: formData.get("bodyFormat") ?? "markdown",
+        bodyFormat: formData.get("bodyFormat") || "markdown",
         tags: String(formData.get("tags") ?? "")
           .split(",")
           .map((tag) => tag.trim())
           .filter(Boolean),
-        companyName: formData.get("companyName"),
+        companyName: formData.get("companyName") || null,
+        status: formData.get("status") || undefined,
       });
 
       const file = formData.get("file") as File | null;
       if (file) {
+        if (file.size > 10 * 1024 * 1024) {
+          return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
+        }
+
         const allowedTypes = [
           "application/pdf",
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         ];
         if (!allowedTypes.includes(file.type)) {
           return NextResponse.json({ error: "Only PDF and DOCX attachments are supported" }, { status: 400 });
+        }
+
+        // Verify magic bytes match declared MIME type.
+        const headerBytes = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+        const isPdfMagic =
+          headerBytes[0] === 0x25 &&
+          headerBytes[1] === 0x50 &&
+          headerBytes[2] === 0x44 &&
+          headerBytes[3] === 0x46; // %PDF
+        const isZipMagic =
+          headerBytes[0] === 0x50 &&
+          headerBytes[1] === 0x4b &&
+          headerBytes[2] === 0x03 &&
+          headerBytes[3] === 0x04; // PK.. (DOCX is a ZIP)
+
+        if (file.type === "application/pdf" && !isPdfMagic) {
+          return NextResponse.json({ error: "File content does not match PDF type" }, { status: 400 });
+        }
+        if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" && !isZipMagic) {
+          return NextResponse.json({ error: "File content does not match DOCX type" }, { status: 400 });
         }
 
         const buffer = Buffer.from(await file.arrayBuffer());
@@ -173,7 +202,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!parsedBody.body && !attachmentUrl) {
+    const normalizedBody = parsedBody.body?.trim() ? parsedBody.body : null;
+    const normalizedCompanyName = parsedBody.companyName?.trim() ? parsedBody.companyName : null;
+
+    if (!normalizedBody && !attachmentUrl) {
       return NextResponse.json({ error: "Either content body or file attachment is required" }, { status: 400 });
     }
 
@@ -184,8 +216,8 @@ export async function POST(req: NextRequest) {
         tags, company_name, status
       ) VALUES (
         ${user.collegeId}, ${user.id}, ${parsedBody.section}, ${parsedBody.category}, ${parsedBody.title},
-        ${parsedBody.body ?? null}, ${parsedBody.bodyFormat ?? "markdown"}, ${attachmentUrl}, ${attachmentName}, ${attachmentMime}, ${attachmentSizeKb},
-        ${parsedBody.tags ?? []}::text[], ${parsedBody.companyName ?? null},
+        ${normalizedBody}, ${parsedBody.bodyFormat ?? "markdown"}, ${attachmentUrl}, ${attachmentName}, ${attachmentMime}, ${attachmentSizeKb},
+        ${parsedBody.tags ?? []}::text[], ${normalizedCompanyName},
         ${user.role === "faculty" && parsedBody.status === "draft" ? "draft" : "published"}
       ) RETURNING id
     `) as unknown as Array<{ id: string }>;
@@ -193,9 +225,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, id: resource.id }, { status: 201 });
   } catch (error) {
     if (isRedirectError(error)) throw error;
+    console.error("[POST /api/resources]", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Validation failed", details: error.flatten().fieldErrors }, { status: 400 });
     }
-    return NextResponse.json({ error: "Failed to create resource" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to create resource" }, { status: 500 });
   }
 }

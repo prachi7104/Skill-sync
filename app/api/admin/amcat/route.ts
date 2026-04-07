@@ -240,14 +240,21 @@ export async function POST(req: NextRequest) {
   const matchResults = processed.map((row) => {
     const normalizedEmail = row.email ? normalizeAmcatEmail(row.email) : null;
     const studentId =
-      (normalizedEmail && emailToStudentId[normalizedEmail]) ||
       sapToStudentId[row.sap_id] ||
+      (normalizedEmail ? emailToStudentId[normalizedEmail] : null) ||
       null;
     return { ...row, studentId };
   });
 
-  const unmatchedCount = matchResults.filter((row) => !row.studentId).length;
-  const unmatchedDetails = matchResults
+  // Deduplicate within this upload chunk: keep the last occurrence for each SAP ID.
+  const dedupedBySap = new Map<string, (typeof matchResults)[number]>();
+  for (const row of matchResults) {
+    dedupedBySap.set(row.sap_id, row);
+  }
+  const dedupedResults = Array.from(dedupedBySap.values());
+
+  const unmatchedCount = dedupedResults.filter((row) => !row.studentId).length;
+  const unmatchedDetails = dedupedResults
     .filter((row) => !row.studentId)
     .slice(0, 50)
     .map((row) => ({ name: row.full_name, sapId: row.sap_id, email: row.email }));
@@ -258,8 +265,9 @@ export async function POST(req: NextRequest) {
     WHERE id = ${sessionId}
   `);
 
-  const resultPayload = matchResults.map((row) => ({
+  const resultPayload = dedupedResults.map((row) => ({
     sap_id: row.sap_id,
+    email: row.email ? normalizeAmcatEmail(row.email) : null,
     student_id: row.studentId,
     full_name: row.full_name,
     course: row.course,
@@ -288,6 +296,7 @@ export async function POST(req: NextRequest) {
         session_id,
         college_id,
         sap_id,
+        email,
         student_id,
         full_name,
         course,
@@ -311,6 +320,7 @@ export async function POST(req: NextRequest) {
         ${sessionId}::uuid,
         ${session.user.collegeId}::uuid,
         r.sap_id,
+        r.email,
         r.student_id,
         r.full_name,
         r.course,
@@ -331,6 +341,7 @@ export async function POST(req: NextRequest) {
         r.rank_in_session
       FROM jsonb_to_recordset(${JSON.stringify(chunk)}::jsonb) AS r(
         sap_id text,
+        email text,
         student_id uuid,
         full_name text,
         course text,
@@ -350,11 +361,31 @@ export async function POST(req: NextRequest) {
         final_category text,
         rank_in_session integer
       )
-      ON CONFLICT (session_id, sap_id) DO NOTHING
+      ON CONFLICT (session_id, sap_id) DO UPDATE SET
+        student_id = EXCLUDED.student_id,
+        full_name = EXCLUDED.full_name,
+        email = EXCLUDED.email,
+        course = EXCLUDED.course,
+        branch = EXCLUDED.branch,
+        programme_name = EXCLUDED.programme_name,
+        status = EXCLUDED.status,
+        attendance_pct = EXCLUDED.attendance_pct,
+        cs_score = EXCLUDED.cs_score,
+        cp_score = EXCLUDED.cp_score,
+        automata_score = EXCLUDED.automata_score,
+        automata_fix_score = EXCLUDED.automata_fix_score,
+        quant_score = EXCLUDED.quant_score,
+        csv_total = EXCLUDED.csv_total,
+        csv_category = EXCLUDED.csv_category,
+        computed_total = EXCLUDED.computed_total,
+        computed_category = EXCLUDED.computed_category,
+        final_category = EXCLUDED.final_category,
+        rank_in_session = EXCLUDED.rank_in_session,
+        updated_at = NOW()
     `);
   }
 
-  const rosterPayload = matchResults
+  const rosterPayload = dedupedResults
     .filter((item) => !item.studentId)
     .map((row) => ({
       sap_id: row.sap_id,
@@ -410,7 +441,7 @@ export async function POST(req: NextRequest) {
             course = COALESCE(student_roster.course, EXCLUDED.course),
             branch = COALESCE(student_roster.branch, EXCLUDED.branch),
             email = COALESCE(student_roster.email, EXCLUDED.email)
-        `).catch(() => {});
+        `).catch((e) => console.error("[AMCAT] Roster row insert failed for SAP:", row.sap_id, e));
       }
     }
   }
@@ -461,7 +492,7 @@ export async function GET(_req: NextRequest) {
         COUNT(CASE WHEN r.final_category = 'alpha' THEN 1 END)::int AS alpha_count,
         COUNT(CASE WHEN r.final_category = 'beta'  THEN 1 END)::int AS beta_count,
         COUNT(CASE WHEN r.final_category = 'gamma' THEN 1 END)::int AS gamma_count,
-        COUNT(r.id)::int AS matched_count
+        COUNT(r.student_id)::int AS matched_count
       FROM amcat_sessions s
       LEFT JOIN amcat_results r ON r.session_id = s.id
       WHERE s.college_id = ${session.user.collegeId}
@@ -470,7 +501,7 @@ export async function GET(_req: NextRequest) {
     `);
 
     return NextResponse.json({ sessions });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[GET /api/admin/amcat]", err);
     return NextResponse.json(
       { error: "Failed to load AMCAT sessions" },
@@ -502,7 +533,7 @@ export async function DELETE(_req: NextRequest) {
       deletedSessions: deletedSessions.length,
       message: `Deleted ${deletedSessions.length} AMCAT session(s)`,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[DELETE /api/admin/amcat]", err);
     return NextResponse.json(
       { error: "Failed to delete AMCAT sessions" },

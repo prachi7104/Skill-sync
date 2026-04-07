@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, rankings, students, users } from "@/lib/db/schema";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, desc } from "drizzle-orm";
 
 export async function GET(
     req: Request,
@@ -63,7 +63,7 @@ export async function GET(
         .innerJoin(students, eq(rankings.studentId, students.id))
         .innerJoin(users, eq(students.id, users.id))
         .where(and(...conditions))
-        .orderBy(asc(rankings.rankPosition))
+        .orderBy(desc(rankings.isEligible), asc(rankings.rankPosition))
         .limit(MAX_EXPORT_ROWS + 1);
 
     const isTruncated = rows.length > MAX_EXPORT_ROWS;

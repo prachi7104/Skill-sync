@@ -19,7 +19,7 @@
  * - Deterministic output for same inputs
  * - Re-running replaces old results cleanly (DELETE + INSERT)
  * - Students without embeddings or resume are skipped
- * - Ineligible students are excluded from rankings
+ * - Ineligible students are persisted with rankPosition = 0
  * - Tie-breaking: matchScore DESC → semanticScore DESC → CGPA DESC → UUID ASC
  *
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -30,7 +30,15 @@ import "server-only";
 import pLimit from "p-limit";
 import { db } from "@/lib/db";
 import { students, drives, rankings, users } from "@/lib/db/schema";
-import type { Skill, Project, WorkExperience, ResearchPaper, Achievement, CodingProfile } from "@/lib/db/schema";
+import type {
+  Skill,
+  Project,
+  WorkExperience,
+  ResearchPaper,
+  Achievement,
+  CodingProfile,
+  Certification,
+} from "@/lib/db/schema";
 import { eq, asc, sql } from "drizzle-orm";
 import {
   generateEmbedding,
@@ -86,8 +94,7 @@ interface StudentForRanking {
   skills: Skill[] | null;
   projects: Project[] | null;
   workExperience: WorkExperience[] | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  certifications: any[] | null;
+  certifications: Certification[] | null;
   researchPapers: ResearchPaper[] | null;
   achievements: Achievement[] | null;
   softSkills: string[] | null;
@@ -95,6 +102,8 @@ interface StudentForRanking {
   embedding: number[] | null;
   profileCompleteness: number | null;
 }
+
+type RankingTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 // ── DB helpers ──────────────────────────────────────────────────────────────
 
@@ -155,7 +164,7 @@ async function fetchAllStudentsForCollege(
     .where(eq(students.collegeId, collegeId))
     .orderBy(asc(students.createdAt));
 
-  return results.map((s: any) => ({
+  return results.map((s) => ({
     id: s.id,
     cgpa: s.cgpa,
     branch: s.branch,
@@ -164,11 +173,11 @@ async function fetchAllStudentsForCollege(
     skills: s.skills,
     projects: s.projects as Project[] | null,
     workExperience: s.workExperience as WorkExperience[] | null,
-    certifications: s.certifications,
-    researchPapers: s.researchPapers,
-    achievements: s.achievements,
-    softSkills: s.softSkills,
-    codingProfiles: s.codingProfiles,
+    certifications: s.certifications as Certification[] | null,
+    researchPapers: s.researchPapers as ResearchPaper[] | null,
+    achievements: s.achievements as Achievement[] | null,
+    softSkills: s.softSkills as string[] | null,
+    codingProfiles: s.codingProfiles as CodingProfile[] | null,
     embedding: s.embedding,
     profileCompleteness: s.profileCompleteness ?? 0,
   }));
@@ -338,7 +347,7 @@ export async function computeRanking(
 ): Promise<RankingComputationResult> {
   const errors: string[] = [];
   const computeStart = Date.now();
-  const skippedNoEmbedding = 0;
+  let skippedNoEmbedding = 0;
 
   // eslint-disable-next-line no-console
   console.log(`[Ranking] Starting computation for drive ${driveId}`);
@@ -360,12 +369,13 @@ export async function computeRanking(
     eligibleCategories: drive.eligibleCategories,
   };
 
-  if (!drive.collegeId) {
+  const driveCollegeId = drive.collegeId;
+  if (!driveCollegeId) {
     throw new Error(`Drive ${driveId} creator has no college context`);
   }
 
   // 3. Fetch all students in the same college
-  let allStudents = await fetchAllStudentsForCollege(drive.collegeId);
+  let allStudents = await fetchAllStudentsForCollege(driveCollegeId);
   // eslint-disable-next-line no-console
   console.log(`[Ranking] Total students in college: ${allStudents.length}`);
   const totalStudentsFetched = allStudents.length;
@@ -472,6 +482,8 @@ export async function computeRanking(
     }
 
     if (!studentEmbedding) {
+      skippedNoEmbedding++;
+
       // No embedding — use ATS-only scoring (30% of max)
       const { overlapRatio, matchedSkills, missingSkills } = computeSkillOverlap(
         extractStudentSkillNames(student.skills),
@@ -565,18 +577,37 @@ export async function computeRanking(
   });
 
   // 8. Assign rank positions (1-indexed)
-  const rankedWithPositions = scoredStudents.map((r, index) => ({
+  const eligibleScored = scoredStudents.filter((s) => s.isEligible);
+  const ineligibleScored = scoredStudents.filter((s) => !s.isEligible);
+
+  const rankedEligible = eligibleScored.map((r, index) => ({
     ...r,
     rankPosition: index + 1,
   }));
+  const rankedIneligible = ineligibleScored.map((r) => ({
+    ...r,
+    rankPosition: 0,
+  }));
+  const rankedWithPositions = [...rankedEligible, ...rankedIneligible];
 
   // 9. Persist rankings in a single upsert transaction
-  await db.transaction(async (tx: any) => {
+  await db.transaction(async (tx: RankingTransaction) => {
+    await tx.execute(sql`
+      DELETE FROM rankings r
+      WHERE r.drive_id = ${driveId}
+        AND NOT EXISTS (
+          SELECT 1
+          FROM students s
+          WHERE s.id = r.student_id
+            AND s.college_id = ${driveCollegeId}
+        )
+    `);
+
     if (rankedWithPositions.length > 0) {
       const rankingRows = rankedWithPositions.map((r) => ({
         driveId,
         studentId: r.studentId,
-        collegeId: drive.collegeId,
+        collegeId: drive.collegeId as string,
         matchScore: r.scoring.matchScore,
         semanticScore: r.scoring.semanticScore,
         structuredScore: r.scoring.structuredScore,
@@ -629,12 +660,12 @@ export async function computeRanking(
   return {
     driveId,
     totalStudents: totalStudentsFetched,
-    eligibleStudents: scoredStudents.filter((s) => s.isEligible).length,
-    rankedStudents: rankedWithPositions.length,
+    eligibleStudents: rankedEligible.length,
+    rankedStudents: rankedEligible.length,
     wasTruncated: totalStudentsFetched > MAX_STUDENTS_PER_RANKING_RUN,
     truncatedAt: MAX_STUDENTS_PER_RANKING_RUN,
     skippedNoEmbedding,
-    topScores: rankedWithPositions.slice(0, 5).map((r) => ({
+    topScores: rankedEligible.slice(0, 5).map((r) => ({
       studentId: r.studentId,
       matchScore: r.scoring.matchScore,
       rankPosition: r.rankPosition,

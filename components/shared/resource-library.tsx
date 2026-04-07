@@ -67,6 +67,8 @@ type EditResourceForm = {
   tags: string;
   companyName: string;
   status: "draft" | "published" | "archived";
+  file: File | null;
+  removeAttachment: boolean;
 };
 
 export default function ResourceLibrary() {
@@ -102,6 +104,8 @@ export default function ResourceLibrary() {
     tags: "",
     companyName: "",
     status: "published" as "draft" | "published" | "archived",
+    file: null,
+    removeAttachment: false,
   });
 
   useEffect(() => {
@@ -191,6 +195,8 @@ export default function ResourceLibrary() {
       tags: (resource.tags ?? []).join(","),
       companyName: resource.company_name ?? "",
       status: resource.status ?? "published",
+      file: null,
+      removeAttachment: false,
     });
     setEditOpen(true);
   }
@@ -200,23 +206,44 @@ export default function ResourceLibrary() {
 
     setSavingEdit(true);
     try {
-      const res = await fetch(`/api/resources/${editing.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          section: editForm.section,
-          category: editForm.category,
-          title: editForm.title,
-          body: editForm.body || null,
-          bodyFormat: "markdown",
-          tags: editForm.tags
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter(Boolean),
-          companyName: editForm.companyName || null,
-          status: editForm.status,
-        }),
-      });
+      const tags = editForm.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+
+      const res = (editForm.file || editForm.removeAttachment)
+        ? await (async () => {
+          const body = new FormData();
+          body.append("section", editForm.section);
+          body.append("category", editForm.category);
+          body.append("title", editForm.title);
+          body.append("body", editForm.body);
+          body.append("bodyFormat", "markdown");
+          body.append("tags", tags.join(","));
+          body.append("companyName", editForm.companyName);
+          body.append("status", editForm.status);
+          if (editForm.file) body.append("file", editForm.file);
+          if (editForm.removeAttachment) body.append("removeAttachment", "true");
+
+          return fetch(`/api/resources/${editing.id}`, {
+            method: "PATCH",
+            body,
+          });
+        })()
+        : await fetch(`/api/resources/${editing.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            section: editForm.section,
+            category: editForm.category,
+            title: editForm.title,
+            body: editForm.body || null,
+            bodyFormat: "markdown",
+            tags,
+            companyName: editForm.companyName || null,
+            status: editForm.status,
+          }),
+        });
 
       const json = await res.json();
       if (!res.ok) {
@@ -519,6 +546,36 @@ export default function ResourceLibrary() {
                   {viewerRole === "admin" ? <option value="archived">Archived</option> : null}
                 </select>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Attachment (optional)</Label>
+              <Input
+                type="file"
+                accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={(event) => setEditForm((current) => ({
+                  ...current,
+                  file: event.target.files?.[0] ?? null,
+                  removeAttachment: event.target.files?.[0] ? false : current.removeAttachment,
+                }))}
+                className="border-white/10 bg-slate-900 text-slate-100"
+              />
+              {editing?.attachment_name ? (
+                <p className="text-xs text-slate-400">Current: {editing.attachment_name}</p>
+              ) : null}
+              {editing?.attachment_url ? (
+                <label className="flex items-center gap-2 text-xs text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={editForm.removeAttachment}
+                    disabled={Boolean(editForm.file)}
+                    onChange={(event) => setEditForm((current) => ({
+                      ...current,
+                      removeAttachment: event.target.checked,
+                    }))}
+                  />
+                  Remove current attachment
+                </label>
+              ) : null}
             </div>
           </div>
           <DialogFooter>

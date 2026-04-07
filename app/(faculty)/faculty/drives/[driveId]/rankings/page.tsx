@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, rankings, students, users } from "@/lib/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -113,7 +113,7 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
     .innerJoin(students, eq(rankings.studentId, students.id))
     .innerJoin(users, eq(students.id, users.id))
     .where(eq(rankings.driveId, driveId))
-    .orderBy(asc(rankings.rankPosition))
+    .orderBy(desc(rankings.isEligible), asc(rankings.rankPosition))
     .limit(MAX_RANKINGS_ROWS + 1);
 
   const isTruncated = rowsRaw.length > MAX_RANKINGS_ROWS;
@@ -285,7 +285,7 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
             </div>
             {ineligibleRankings.slice(0, 10).map((r) => (
               <div key={r.studentId} className="rounded-lg border border-slate-700 bg-slate-800/40 px-3 py-2 text-sm flex items-center justify-between gap-3">
-                <span className="text-slate-300">#{r.rankPosition} {r.studentName}</span>
+                <span className="text-slate-300">Ineligible • {r.studentName}</span>
                 <Badge variant="outline" className="border-slate-500 text-slate-300 max-w-[60%] truncate">
                   {r.ineligibilityReason ?? "Does not meet criteria"}
                 </Badge>

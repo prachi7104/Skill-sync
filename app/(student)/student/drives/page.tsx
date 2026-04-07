@@ -86,6 +86,7 @@ export default async function StudentDrivesPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {eligible.map((drive) => {
             const ranking = rankingMap.get(drive.id);
+            const hasRankPosition = Boolean(ranking && ranking.rankPosition > 0);
             const isDeadlineSoon = drive.deadline
               ? new Date(drive.deadline).getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000
               : false;
@@ -104,7 +105,9 @@ export default async function StudentDrivesPage() {
                     <div className="flex items-center gap-1.5 bg-indigo-500/15 border border-indigo-500/25 rounded-full px-3 py-1.5 hover:bg-indigo-500/25 transition-colors">
                       <Award className="w-3.5 h-3.5 text-indigo-400" />
                       <span className="text-xs font-black text-indigo-400">
-                        #{ranking.rankPosition} · {ranking.matchScore.toFixed(0)}%
+                        {hasRankPosition
+                          ? `#${ranking.rankPosition} · ${ranking.matchScore.toFixed(0)}%`
+                          : "Ineligible"}
                       </span>
                     </div>
                   </Link>

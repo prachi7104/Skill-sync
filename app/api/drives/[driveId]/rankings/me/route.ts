@@ -63,12 +63,20 @@ export async function GET(
         id: drives.id,
         company: drives.company,
         roleTitle: drives.roleTitle,
+        collegeId: drives.collegeId,
       })
       .from(drives)
       .where(eq(drives.id, driveId))
       .limit(1);
 
     if (!drive) {
+      return NextResponse.json(
+        { error: "Drive not found" },
+        { status: 404 },
+      );
+    }
+
+    if (!user.collegeId || drive.collegeId !== user.collegeId) {
       return NextResponse.json(
         { error: "Drive not found" },
         { status: 404 },
@@ -125,12 +133,11 @@ export async function GET(
       },
       { status: 200 },
     );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (isRedirectError(err)) throw err;
     console.error("[GET /api/drives/[driveId]/rankings/me]", err);
 
-    const message = err?.message ?? "Internal server error";
+    const message = err instanceof Error ? err.message : "Internal server error";
 
     if (message.includes("Unauthorized")) {
       return NextResponse.json({ error: message }, { status: 401 });

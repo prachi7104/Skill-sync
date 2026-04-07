@@ -110,7 +110,7 @@ export async function POST(
       
       // Mark job as completed immediately
       await db.update(jobs)
-        .set({ status: "completed", result: result as any, latencyMs: result.durationMs, updatedAt: new Date() })
+        .set({ status: "completed", result: result as unknown as Record<string, unknown>, latencyMs: result.durationMs, updatedAt: new Date() })
         .where(eq(jobs.id, job.id));
 
       // Update drive ranking_status
@@ -137,8 +137,7 @@ export async function POST(
         { status: 202 }
       );
     }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (isRedirectError(err)) throw err;
     console.error("[POST /api/drives/[driveId]/rank]", err);
 
@@ -147,7 +146,7 @@ export async function POST(
       return NextResponse.json(err.toJSON(), { status: err.status });
     }
 
-    const message = err?.message ?? "Internal server error";
+    const message = err instanceof Error ? err.message : "Internal server error";
 
     // Drive not found
     if (message.includes("Drive not found")) {

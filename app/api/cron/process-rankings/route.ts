@@ -80,8 +80,7 @@ export async function GET(req: NextRequest) {
           .update(jobs)
           .set({
             status: "completed",
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            result: result as any,
+            result: result as unknown as Record<string, unknown>,
             latencyMs: Date.now() - startTime,
             updatedAt: new Date(),
           })
@@ -121,11 +120,11 @@ export async function GET(req: NextRequest) {
       { message: "Rankings worker executed", processed, failed },
       { status: 200 },
     );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Cron:Rankings] Worker failed:", error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
-      error: error.message || String(error),
+      error: message,
       timestamp: new Date().toISOString(),
       type: "cron_worker_failure",
       worker: "process-rankings"

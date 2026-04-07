@@ -8,47 +8,10 @@ import { eq, and, sql } from "drizzle-orm";
 import { processResumeParseJobs } from "@/lib/workers/parse-resume";
 import { logger } from "@/lib/logger";
 import { isRedirectError } from "next/dist/client/components/redirect";
-
-// Configure Cloudinary
-cloudinary.config({
-    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import { deleteCloudinaryRawByUrl } from "@/lib/cloudinary";
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-function extractCloudinaryPublicId(fileUrl: string): string | null {
-    if (!fileUrl || !fileUrl.includes("/upload/")) return null;
-
-    const [withoutQuery] = fileUrl.split("?");
-    const [, uploadPath = ""] = withoutQuery.split("/upload/");
-    if (!uploadPath) return null;
-
-    let normalized = uploadPath;
-    if (normalized.startsWith("fl_attachment/")) {
-        normalized = normalized.slice("fl_attachment/".length);
-    }
-    normalized = normalized.replace(/^v\d+\//, "");
-    if (!normalized) return null;
-
-    const segments = normalized.split("/").filter(Boolean);
-    if (segments.length === 0) return null;
-
-    return segments.join("/");
-}
-
-async function deleteCloudinaryRawByUrl(fileUrl: string): Promise<void> {
-    const publicId = extractCloudinaryPublicId(fileUrl);
-    if (!publicId) return;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await cloudinary.uploader.destroy(publicId, { resource_type: "raw", invalidate: true }) as any;
-    if (result?.result !== "ok" && result?.result !== "not found") {
-        throw new Error(`Cloudinary delete failed: ${result?.result ?? "unknown"}`);
-    }
-}
 
 export async function POST(req: NextRequest) {
     try {
@@ -141,8 +104,7 @@ export async function POST(req: NextRequest) {
         const timestamp = Date.now();
         const isPdf = file.type === "application/pdf";
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const uploadResult = await new Promise<any>((resolve, reject) => {
+        const uploadResult = await new Promise<{ secure_url?: string }>((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
                 {
                     folder: "skillsync-resumes",
@@ -159,7 +121,7 @@ export async function POST(req: NextRequest) {
                         console.error("[Cloudinary] Upload error:", error);
                         reject(new Error(`Cloudinary upload failed: ${error.message}`));
                     } else {
-                        resolve(result);
+                        resolve({ secure_url: result?.secure_url });
                     }
                 }
             );
@@ -293,12 +255,12 @@ export async function POST(req: NextRequest) {
             { status: 202 }
         );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
         if (isRedirectError(error)) throw error;
         console.error("Resume upload failed:", error);
+        const message = error instanceof Error ? error.message : "Internal server error during upload";
         return NextResponse.json(
-            { success: false, error: error.message || "Internal server error during upload" },
+            { success: false, error: message },
             { status: 500 }
         );
     }
