@@ -5,17 +5,17 @@ import { LayoutDashboard, FolderOpen, Settings, LibraryBig, Users } from "lucide
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/faculty", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/faculty/drives", label: "Drives", icon: FolderOpen },
-  { href: "/faculty/students", label: "Students", icon: Users },
+  { href: "/faculty",           label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/faculty/drives",    label: "Drives",    icon: FolderOpen },
+  { href: "/faculty/students",  label: "Students",  icon: Users },
   { href: "/faculty/resources", label: "Resources", icon: LibraryBig },
-  { href: "/faculty/settings", label: "Settings", icon: Settings },
+  { href: "/faculty/settings",  label: "Settings",  icon: Settings },
 ];
 
-export default function SidebarNav({ name }: { name: string }) {
+export default function SidebarNav() {
   const pathname = usePathname();
   return (
-    <nav className="space-y-2">
+    <nav className="space-y-0.5">
       {links.map((link) => {
         const isActive = link.exact
           ? pathname === link.href
@@ -25,24 +25,17 @@ export default function SidebarNav({ name }: { name: string }) {
             key={link.href}
             href={link.href}
             className={cn(
-              "group flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-sm",
+              "flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm transition-colors",
               isActive
-                ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/20"
-                : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                ? "bg-accent text-accent-foreground font-medium"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground"
             )}
           >
-            <link.icon className={cn(
-              "w-5 h-5 transition-all",
-              isActive ? "text-indigo-400" : "opacity-60 group-hover:opacity-100"
-            )} />
-            {link.label}
+            <link.icon className="w-4 h-4 shrink-0 opacity-70" strokeWidth={1.5} />
+            <span>{link.label}</span>
           </Link>
         );
       })}
-      <div className="mt-8 px-4 pt-6 border-t border-slate-800">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Signed in as</p>
-        <p className="text-xs text-slate-400 mt-1 font-medium truncate">{name}</p>
-      </div>
     </nav>
   );
 }

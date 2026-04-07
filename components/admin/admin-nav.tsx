@@ -2,36 +2,42 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import {
+  Activity, Target, Compass, BookOpen, BarChart2,
+  Calendar, Users, GraduationCap, Cpu, Settings
+} from "lucide-react";
 
 const links = [
-  { href: "/admin/health", label: "System Health", emoji: "⚡" },
-  { href: "/admin/drives", label: "All Drives", emoji: "🎯" },
-  { href: "/admin/experiences", label: "Experiences", emoji: "🧭" },
-  { href: "/admin/resources", label: "Resources", emoji: "📚" },
-  { href: "/admin/amcat", label: "AMCAT", emoji: "📊" },
-  { href: "/admin/seasons", label: "Seasons", emoji: "🗓️" },
-  { href: "/admin/users", label: "User Management", emoji: "👥" },
-  { href: "/admin/students", label: "Students", emoji: "👨‍🎓" },
-  { href: "/admin/ai-models", label: "AI Models", emoji: "🤖" },
-  { href: "/admin/settings", label: "Settings", emoji: "⚙️" },
+  { href: "/admin/health",     label: "System Health",   icon: Activity },
+  { href: "/admin/drives",     label: "All Drives",      icon: Target },
+  { href: "/admin/experiences",label: "Experiences",     icon: Compass },
+  { href: "/admin/resources",  label: "Resources",       icon: BookOpen },
+  { href: "/admin/amcat",      label: "AMCAT",           icon: BarChart2 },
+  { href: "/admin/seasons",    label: "Seasons",         icon: Calendar },
+  { href: "/admin/users",      label: "User Management", icon: Users },
+  { href: "/admin/students",   label: "Students",        icon: GraduationCap },
+  { href: "/admin/ai-models",  label: "AI Models",       icon: Cpu },
+  { href: "/admin/settings",   label: "Settings",        icon: Settings },
 ];
 
 export default function AdminNav() {
   const pathname = usePathname();
   return (
-    <nav className="space-y-2">
+    <nav className="space-y-0.5">
       {links.map((link) => {
         const isActive = pathname.startsWith(link.href);
         return (
-          <Link key={link.href} href={link.href}
+          <Link
+            key={link.href}
+            href={link.href}
             className={cn(
-              "group flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-sm",
+              "flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm transition-colors",
               isActive
-                ? "bg-rose-500/10 text-rose-400 border border-rose-500/15"
-                : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                ? "bg-accent text-accent-foreground font-medium"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground"
             )}
           >
-            <span>{link.emoji}</span>
+            <link.icon className="w-4 h-4 shrink-0 opacity-70" strokeWidth={1.5} />
             <span>{link.label}</span>
           </Link>
         );

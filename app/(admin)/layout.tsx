@@ -1,53 +1,48 @@
 import { requireRole } from "@/lib/auth/helpers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/config";
 import Link from "next/link";
 import SignOutButton from "@/components/shared/sign-out-button";
 import MobileNav from "@/components/shared/mobile-nav";
 import AdminNav from "@/components/admin/admin-nav";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const user = await requireRole(["admin"]);
-  const name = user.name ?? "Admin";
+  await requireRole(["admin"]);
+  const session = await getServerSession(authOptions);
+  const name = session?.user?.name ?? "Admin";
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col font-sans text-slate-200 selection:bg-indigo-500/30">
-      
-      {/* Header */}
-      <header className="h-16 border-b border-slate-800 bg-slate-950/60 backdrop-blur-xl flex items-center justify-between px-8 shrink-0 sticky top-0 z-50">
+    <div className="min-h-screen bg-background flex flex-col font-sans text-foreground">
+
+      <header className="h-12 border-b border-border bg-background flex items-center justify-between px-4 shrink-0 sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <Link href="/admin/health" className="text-xl font-black tracking-tight text-white select-none">
-            Skill<span className="text-indigo-500">Sync.</span>
+          <Link href="/admin/health" className="text-sm font-semibold text-foreground tracking-tight">
+            SkillSync
           </Link>
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-full px-2.5 py-1">
-            Master
-          </span>
+          <span className="text-xs text-muted-foreground hidden md:block">/ Admin</span>
         </div>
-        <div className="flex items-center space-x-6">
-          <div className="text-sm font-medium text-slate-300 hidden md:block">
-            {name} <span className="text-rose-400 font-normal ml-1">(admin)</span>
-          </div>
+        <div className="flex items-center gap-3">
           <MobileNav userName={name} role="admin" />
+          <span className="text-xs text-muted-foreground hidden md:block">{name}</span>
           <SignOutButton />
         </div>
       </header>
 
-      <div className="flex flex-1 h-[calc(100vh-64px)] overflow-hidden relative">
-        
-        {/* Ambient glow — rose for admin distinction */}
-        <div className="absolute top-[-10%] right-[-5%] w-[30%] h-[30%] bg-rose-600/8 blur-[100px] rounded-full mix-blend-screen pointer-events-none z-0" />
+      <div className="flex flex-1 overflow-hidden">
 
-        {/* Sidebar */}
-        <aside className="w-64 border-r border-slate-800 bg-slate-900/50 backdrop-blur-md p-6 hidden md:block shrink-0 z-10">
-          <div className="mb-8 px-2">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-              Master Dashboard
-            </h2>
+        <aside className="w-60 border-r border-border bg-secondary flex-col hidden md:flex shrink-0 overflow-y-auto">
+          <div className="px-3 py-4 border-b border-border">
+            <span className="text-xs font-medium text-muted-foreground">Admin workspace</span>
           </div>
-          <AdminNav />
+          <div className="flex-1 px-2 py-3">
+            <AdminNav />
+          </div>
         </aside>
 
-        <main className="flex-1 overflow-y-auto bg-transparent relative z-10">
+        <main className="flex-1 overflow-y-auto bg-background">
           {children}
         </main>
+
       </div>
     </div>
   );

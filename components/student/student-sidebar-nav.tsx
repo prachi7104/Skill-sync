@@ -1,20 +1,23 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, UserCircle, Briefcase, Box, Settings, Trophy, Building2, LibraryBig, Sparkles, Lock } from "lucide-react";
+import {
+  LayoutDashboard, UserCircle, Briefcase, Box, Settings,
+  Trophy, Building2, LibraryBig, Sparkles
+} from "lucide-react";
 import { toast } from "sonner";
 import { useStudent } from "@/app/(student)/providers/student-provider";
 import { cn } from "@/lib/utils";
 
 const studentLinks = [
-  { href: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/student/profile", label: "My Profile", icon: UserCircle },
-  { href: "/student/drives", label: "Drives", icon: Briefcase },
-  { href: "/student/companies", label: "Companies", icon: Building2 },
-  { href: "/student/resources", label: "Resources", icon: LibraryBig },
+  { href: "/student/dashboard",    label: "Dashboard",    icon: LayoutDashboard },
+  { href: "/student/profile",      label: "My Profile",   icon: UserCircle },
+  { href: "/student/drives",       label: "Drives",       icon: Briefcase },
+  { href: "/student/companies",    label: "Companies",    icon: Building2 },
+  { href: "/student/resources",    label: "Resources",    icon: LibraryBig },
   { href: "/student/career-coach", label: "Career Coach", icon: Sparkles },
-  { href: "/student/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/student/sandbox", label: "AI Sandbox", icon: Box },
-  { href: "/student/settings", label: "Settings", icon: Settings },
+  { href: "/student/leaderboard",  label: "Leaderboard",  icon: Trophy },
+  { href: "/student/sandbox",      label: "AI Sandbox",   icon: Box },
+  { href: "/student/settings",     label: "Settings",     icon: Settings },
 ];
 
 export default function StudentSidebarNav() {
@@ -23,10 +26,11 @@ export default function StudentSidebarNav() {
   const { onboardingRequired } = useStudent();
 
   return (
-    <nav className="space-y-2">
+    <nav className="space-y-0.5">
       {studentLinks.map((link) => {
-        const isActive = pathname.startsWith(link.href);
+        const isActive  = pathname.startsWith(link.href);
         const isBlocked = onboardingRequired && link.href !== "/student/onboarding";
+
         return (
           <button
             key={link.href}
@@ -34,7 +38,7 @@ export default function StudentSidebarNav() {
             onClick={() => {
               if (isBlocked) {
                 toast.info("Complete your profile setup first", {
-                  description: "Fill in your SAP ID, roll number, academic details, and more.",
+                  description: "Fill in your SAP ID, roll number, and academic details.",
                   action: { label: "Go to Onboarding", onClick: () => router.push("/student/onboarding") },
                 });
                 return;
@@ -42,22 +46,19 @@ export default function StudentSidebarNav() {
               router.push(link.href);
             }}
             className={cn(
-              "group flex w-full items-center space-x-3 px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-sm text-left",
+              "flex w-full items-center gap-2.5 px-3 py-1.5 rounded-md text-sm transition-colors text-left",
               isActive && !isBlocked
-                ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/20"
+                ? "bg-accent text-accent-foreground font-medium"
                 : isBlocked
-                  ? "text-slate-600 cursor-not-allowed opacity-50"
-                  : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                  ? "text-muted-foreground/40 cursor-not-allowed"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
             )}
           >
             <link.icon
-              className={cn(
-                "w-5 h-5 transition-all",
-                isActive && !isBlocked ? "text-indigo-400" : "opacity-60 group-hover:opacity-100"
-              )}
+              className={cn("w-4 h-4 shrink-0", isActive && !isBlocked ? "opacity-100" : "opacity-70")}
+              strokeWidth={1.5}
             />
             <span>{link.label}</span>
-            {isBlocked && <Lock className="w-3 h-3 ml-auto text-slate-600" />}
           </button>
         );
       })}
