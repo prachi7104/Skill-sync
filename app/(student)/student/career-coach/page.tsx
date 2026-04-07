@@ -229,7 +229,7 @@ export default function CareerCoachPage() {
         </h2>
         <div className="p-5 border border-border bg-card rounded-md">
             {loading ? (
-            <div className="space-y-3">
+            <div className="space-y-3" data-testid="summary-skeleton">
                 <Skeleton className="h-4 w-11/12" />
                 <Skeleton className="h-4 w-9/12" />
                 <Skeleton className="h-4 w-8/12" />
@@ -339,7 +339,7 @@ export default function CareerCoachPage() {
       {loading ? (
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="space-y-3 rounded-md border border-border bg-card p-5">
+            <div key={i} data-testid="skill-skeleton" className="space-y-3 rounded-md border border-border bg-card p-5">
             <Skeleton className="h-5 w-1/2" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-12 w-full" />
