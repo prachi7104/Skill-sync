@@ -1,6 +1,9 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 export default function Pagination({ page, total, pageSize = 20 }: {
   page: number; total: number; pageSize?: number;
 }) {
@@ -18,17 +21,29 @@ export default function Pagination({ page, total, pageSize = 20 }: {
 
   return (
     <div className="flex items-center gap-2 mt-8">
-      <button onClick={() => go(page - 1)} disabled={page <= 1}
-        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl disabled:opacity-40 text-sm font-bold transition-colors border border-slate-700">
-        &larr; Prev
-      </button>
-      <span className="text-sm font-medium text-slate-400 px-2 lg:px-4">
-        Page <span className="text-white">{page}</span> of <span className="text-white">{totalPages}</span>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => go(page - 1)}
+        disabled={page <= 1}
+      >
+        <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
+        <span className="sr-only">Previous</span>
+      </Button>
+      
+      <span className="text-xs text-muted-foreground px-2">
+        Page {page} of {totalPages}
       </span>
-      <button onClick={() => go(page + 1)} disabled={page >= totalPages}
-        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl disabled:opacity-40 text-sm font-bold transition-colors border border-slate-700">
-        Next &rarr;
-      </button>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => go(page + 1)}
+        disabled={page >= totalPages}
+      >
+        <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+        <span className="sr-only">Next</span>
+      </Button>
     </div>
   );
 }

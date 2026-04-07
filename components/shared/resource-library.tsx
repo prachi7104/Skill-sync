@@ -313,49 +313,51 @@ export default function ResourceLibrary() {
             </aside>
 
             <div className="space-y-4">
-              {loading ? <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-8 text-sm text-slate-400">Loading resources...</div> : null}
-              {!loading && resources.length === 0 ? <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-8 text-sm text-slate-400">No resources found for this filter yet.</div> : null}
+              {loading ? <div className="rounded-md border border-border bg-card p-8 text-sm text-muted-foreground">Loading resources...</div> : null}
+              {!loading && resources.length === 0 ? <div className="rounded-md border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">No resources found for this filter yet.</div> : null}
               {!loading ? resources.map((resource) => (
-                <article key={resource.id} className="rounded-2xl border border-white/5 bg-slate-900/60 p-5 transition-all hover:border-white/10">
+                <article key={resource.id} className="rounded-md border border-border bg-card p-4 hover:bg-accent transition-colors flex flex-col group">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="mb-2 flex items-center gap-2">
-                        <Badge className="border border-white/10 bg-slate-800 text-slate-200">{formatCategoryLabel(resource.category)}</Badge>
+                        <Badge variant="default" className="shrink-0">{formatCategoryLabel(resource.category)}</Badge>
                         {resource.status && resource.status !== "published" ? (
-                          <Badge className="border border-amber-500/30 bg-amber-500/10 text-amber-300">
+                          <Badge variant="secondary" className="shrink-0 text-amber-600 dark:text-amber-400">
                             {resource.status.toUpperCase()}
                           </Badge>
                         ) : null}
-                        {resource.attachment_url ? <Upload className="h-3.5 w-3.5 text-slate-400" /> : null}
+                        {resource.attachment_url ? <Upload className="h-3.5 w-3.5 text-muted-foreground" /> : null}
                       </div>
-                      <h3 className="text-sm font-bold leading-tight text-white">{resource.title}</h3>
-                      {resource.body ? <p className="mt-1.5 line-clamp-2 text-xs text-slate-400">{stripMarkdown(resource.body)}</p> : null}
+                      <h3 className="text-sm font-medium leading-tight text-foreground">{resource.title}</h3>
+                      {resource.body ? <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{stripMarkdown(resource.body)}</p> : null}
                     </div>
                     <div className="flex items-center gap-2">
                       {resource.attachment_url ? (
-                        <a href={resource.attachment_url} target="_blank" className="flex items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-600/20 px-3 py-1.5 text-xs font-bold text-indigo-400 hover:bg-indigo-600/30">
+                        <a href={resource.attachment_url} target="_blank" className="flex items-center gap-1.5 rounded-md border border-border bg-secondary px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80">
                           <Download className="h-3 w-3" /> PDF
                         </a>
                       ) : null}
-                      <Button variant="outline" className="border-white/10 bg-slate-950 text-slate-200 hover:bg-slate-800" onClick={() => openResource(resource)}>
+                      <Button variant="outline" size="sm" onClick={() => openResource(resource)}>
                         Open
                       </Button>
                       {canManageResource(resource) ? (
-                        <Button variant="outline" className="gap-1 border-white/10 bg-slate-950 text-slate-200 hover:bg-slate-800" onClick={() => startEdit(resource)}>
+                        <Button variant="outline" size="sm" className="gap-1" onClick={() => startEdit(resource)}>
                           <Pencil className="h-3 w-3" /> Edit
                         </Button>
                       ) : null}
                       {canManageResource(resource) ? (
-                        <Button variant="outline" className="gap-1 border-rose-500/40 bg-rose-900/20 text-rose-300 hover:bg-rose-900/30" onClick={() => deleteResource(resource)}>
+                        <Button variant="outline" size="sm" className="gap-1 text-destructive hover:bg-destructive/10" onClick={() => deleteResource(resource)}>
                           <Trash2 className="h-3 w-3" /> Delete
                         </Button>
                       ) : null}
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center gap-4 border-t border-white/5 pt-3">
-                    <span className="text-xs text-slate-500">By {resource.author_name}</span>
-                    <span className="text-xs text-slate-600">{new Date(resource.created_at).toLocaleDateString()}</span>
-                    <span className="ml-auto flex items-center gap-1 text-xs text-slate-500"><Eye className="h-3 w-3" /> {resource.view_count}</span>
+                  <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>By {resource.author_name}</span>
+                    <span>·</span>
+                    <span>{new Date(resource.created_at).toLocaleDateString()}</span>
+                    <span>·</span>
+                    <span className="flex flex-1 justify-end items-center gap-1"><Eye className="h-3 w-3" /> {resource.view_count} views</span>
                   </div>
                 </article>
               )) : null}
