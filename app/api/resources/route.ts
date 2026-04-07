@@ -22,6 +22,11 @@ const resourceSchema = z.object({
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+function sqlTextArray(arr: string[]) {
+  if (arr.length === 0) return sql`ARRAY[]::text[]`;
+  return sql`ARRAY[${sql.join(arr.map((t) => sql`${t}`), sql`, `)}]::text[]`;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const user = await requireAuth();
@@ -217,7 +222,7 @@ export async function POST(req: NextRequest) {
       ) VALUES (
         ${user.collegeId}, ${user.id}, ${parsedBody.section}, ${parsedBody.category}, ${parsedBody.title},
         ${normalizedBody}, ${parsedBody.bodyFormat ?? "markdown"}, ${attachmentUrl}, ${attachmentName}, ${attachmentMime}, ${attachmentSizeKb},
-        ${parsedBody.tags ?? []}::text[], ${normalizedCompanyName},
+        ${sqlTextArray(parsedBody.tags ?? [])}, ${normalizedCompanyName},
         ${user.role === "faculty" && parsedBody.status === "draft" ? "draft" : "published"}
       ) RETURNING id
     `) as unknown as Array<{ id: string }>;

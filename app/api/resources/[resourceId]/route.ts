@@ -21,6 +21,11 @@ const updateResourceSchema = z.object({
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+function sqlTextArray(arr: string[]) {
+  if (arr.length === 0) return sql`ARRAY[]::text[]`;
+  return sql`ARRAY[${sql.join(arr.map((t) => sql`${t}`), sql`, `)}]::text[]`;
+}
+
 type ResourceAccessRow = {
   id: string;
   author_id: string;
@@ -206,7 +211,7 @@ export async function PATCH(
           attachment_name = ${nextAttachmentName},
           attachment_mime = ${nextAttachmentMime},
           attachment_size_kb = ${nextAttachmentSizeKb},
-          tags = ${nextTags}::text[],
+            tags = ${sqlTextArray(nextTags)},
           company_name = ${nextCompanyName},
           status = ${nextStatus},
           updated_at = NOW()
