@@ -37,8 +37,8 @@ export default function AdminExperiencesPage() {
   const [rejectionReason, setRejectionReason] = useState<Record<string, string>>({});
   const [form, setForm] = useState({ companyName: "", roleTitle: "", driveType: "placement", outcome: "not_disclosed", interviewProcess: "", tips: "", difficulty: 3, batchYear: "", category: "" });
 
-  async function loadRows() {
-    const queue = tab === "published" ? "published" : "pending";
+  async function loadRows(overrideQueue?: "published" | "pending") {
+    const queue = overrideQueue ?? (tab === "published" ? "published" : "pending");
     const res = await fetch(`/api/admin/experiences?queue=${queue}`);
     const json = await res.json();
     setRows(json.experiences ?? []);
@@ -81,7 +81,7 @@ export default function AdminExperiencesPage() {
     toast.success("Admin-posted experience published");
     setForm({ companyName: "", roleTitle: "", driveType: "placement", outcome: "not_disclosed", interviewProcess: "", tips: "", difficulty: 3, batchYear: "", category: "" });
     setTab("published");
-    loadRows().catch(() => undefined);
+    loadRows("published").catch(() => undefined);
   }
 
   return (
