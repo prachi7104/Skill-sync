@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,19 +36,44 @@ export default function AdminExperiencesPage() {
   const [tab, setTab] = useState("queue");
   const [rejectionReason, setRejectionReason] = useState<Record<string, string>>({});
   const [form, setForm] = useState({ companyName: "", roleTitle: "", driveType: "placement", outcome: "not_disclosed", interviewProcess: "", tips: "", difficulty: 3, batchYear: "", category: "" });
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  function isAbortError(error: unknown): boolean {
+    return error instanceof DOMException && error.name === "AbortError";
+  }
 
   async function loadRows(overrideQueue?: "published" | "pending") {
     const queue = overrideQueue ?? (tab === "published" ? "published" : "pending");
-    const res = await fetch(`/api/admin/experiences?queue=${queue}`);
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    const res = await fetch(`/api/admin/experiences?queue=${queue}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to load experiences for ${queue}`);
+    }
     const json = await res.json();
-    setRows(json.experiences ?? []);
+    setRows(Array.isArray(json.experiences) ? json.experiences : []);
   }
 
   useEffect(() => {
     if (tab === "queue" || tab === "published") {
-      loadRows().catch(() => undefined);
+      loadRows().catch((error) => {
+        if (!isAbortError(error)) {
+          toast.error("Failed to load experiences");
+        }
+      });
     }
   }, [tab]);
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   async function moderate(id: string, action: "approve" | "reject") {
     const res = await fetch(`/api/admin/experiences/${id}`, {
@@ -61,7 +86,11 @@ export default function AdminExperiencesPage() {
       return;
     }
     toast.success(action === "approve" ? "Experience published" : "Experience rejected");
-    loadRows().catch(() => undefined);
+    loadRows().catch((error) => {
+      if (!isAbortError(error)) {
+        toast.error("Failed to refresh moderation list");
+      }
+    });
   }
 
   async function createAdminPost() {
@@ -81,7 +110,11 @@ export default function AdminExperiencesPage() {
     toast.success("Admin-posted experience published");
     setForm({ companyName: "", roleTitle: "", driveType: "placement", outcome: "not_disclosed", interviewProcess: "", tips: "", difficulty: 3, batchYear: "", category: "" });
     setTab("published");
-    loadRows("published").catch(() => undefined);
+    loadRows("published").catch((error) => {
+      if (!isAbortError(error)) {
+        toast.error("Failed to refresh published experiences");
+      }
+    });
   }
 
   return (
