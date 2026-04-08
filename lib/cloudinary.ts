@@ -22,6 +22,7 @@ export async function uploadRawFileToCloudinary({
       {
         folder,
         resource_type: "raw",
+        access_mode: "public",
         public_id: publicId,
         overwrite: true,
         format,

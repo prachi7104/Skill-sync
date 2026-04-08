@@ -468,7 +468,7 @@ describe("adminExperiences_returns200_notNull", () => {
     expect(response.experiences).toEqual([]);
   });
 
-  it("GET SQL does not directly select ce.student_name or ce.student_email", () => {
+  it("GET SQL selects ce.student_name and ce.student_email", () => {
     const routeSource = readFileSync(
       resolve(__dirname, "../app/api/admin/experiences/route.ts"),
       "utf-8"
@@ -480,12 +480,11 @@ describe("adminExperiences_returns200_notNull", () => {
     expect(getHandler).not.toBeNull();
 
     const getCode = getHandler![0];
-    // Should NOT contain "ce.student_name" (the direct column reference)
-    expect(getCode).not.toContain("ce.student_name");
-    expect(getCode).not.toContain("ce.student_email");
-    // SHOULD contain the NULL::text placeholders
-    expect(getCode).toContain("NULL::text AS student_name");
-    expect(getCode).toContain("NULL::text AS student_email");
+    expect(getCode).toContain("ce.student_name");
+    expect(getCode).toContain("ce.student_email");
+    // Should no longer use NULL placeholders for these fields.
+    expect(getCode).not.toContain("NULL::text AS student_name");
+    expect(getCode).not.toContain("NULL::text AS student_email");
   });
 
   it("POST INSERT does not reference student_name or student_email columns", () => {

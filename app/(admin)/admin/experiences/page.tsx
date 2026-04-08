@@ -18,6 +18,7 @@ type ModerationRow = {
   role_title: string | null;
   student_name: string | null;
   student_email: string | null;
+  is_admin_posted: boolean;
   interview_process: string | null;
   tips: string | null;
   status: string;
@@ -142,7 +143,17 @@ export default function AdminExperiencesPage() {
                 <CardTitle className="text-white">{row.company_name} — {row.role_title ?? "Unknown role"}</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-slate-300">
-                <p>{row.student_name ?? "Anonymous"}</p>
+                <div className="flex items-center gap-2">
+                  <p>{row.is_admin_posted ? "Admin Posted" : row.student_name ?? "Anonymous"}</p>
+                  {row.is_admin_posted ? (
+                    <span className="rounded-full border border-indigo-400/40 bg-indigo-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-300">
+                      Admin Posted
+                    </span>
+                  ) : null}
+                </div>
+                {!row.is_admin_posted && row.student_email ? (
+                  <p className="mt-1 text-xs text-slate-500">{row.student_email}</p>
+                ) : null}
                 <p className="mt-1 text-xs text-slate-500">Author: {row.author_real_name ?? "System"} {row.author_email ? `(${row.author_email})` : ""}</p>
                 <p className="mt-1 text-xs text-slate-500">Created: {new Date(row.created_at).toLocaleString("en-IN")}</p>
                 <p className="mt-1 text-xs text-slate-500">Updated: {new Date(row.updated_at).toLocaleString("en-IN")}</p>
