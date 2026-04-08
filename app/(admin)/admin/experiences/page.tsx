@@ -175,7 +175,7 @@ export default function AdminExperiencesPage() {
               <CardHeader>
                 <CardTitle className="text-white">{row.company_name} — {row.role_title ?? "Unknown role"}</CardTitle>
               </CardHeader>
-              <CardContent className="text-sm text-slate-300">
+              <CardContent className="space-y-4 text-sm text-slate-300">
                 <div className="flex items-center gap-2">
                   <p>{row.is_admin_posted ? "Admin Posted" : row.student_name ?? "Anonymous"}</p>
                   {row.is_admin_posted ? (
@@ -191,6 +191,21 @@ export default function AdminExperiencesPage() {
                 <p className="mt-1 text-xs text-slate-500">Created: {new Date(row.created_at).toLocaleString("en-IN")}</p>
                 <p className="mt-1 text-xs text-slate-500">Updated: {new Date(row.updated_at).toLocaleString("en-IN")}</p>
                 {row.reviewed_by_name ? <p className="mt-1 text-xs text-slate-500">Reviewed by: {row.reviewed_by_name}</p> : null}
+                {row.interview_process ? (
+                  <div className="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Interview Process</p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-200">{row.interview_process}</p>
+                  </div>
+                ) : null}
+                {row.tips ? (
+                  <div className="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Tips</p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-200">{row.tips}</p>
+                  </div>
+                ) : null}
+                {!row.interview_process && !row.tips ? (
+                  <p className="text-xs text-slate-500">No interview details were provided for this experience.</p>
+                ) : null}
               </CardContent>
             </Card>
           ))}
