@@ -117,6 +117,31 @@ export default function AdminExperiencesPage() {
     });
   }
 
+  async function deleteExperience(row: ModerationRow) {
+    const confirmed = window.confirm(
+      `Delete this experience permanently?\n\n${row.company_name} - ${row.role_title ?? "Unknown role"}`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    const res = await fetch(`/api/admin/experiences/${row.id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      toast.error("Failed to delete experience");
+      return;
+    }
+
+    toast.success("Experience deleted");
+    loadRows("published").catch((error) => {
+      if (!isAbortError(error)) {
+        toast.error("Failed to refresh published experiences");
+      }
+    });
+  }
+
   return (
     <div className="space-y-6 p-8">
       <div>
@@ -206,6 +231,15 @@ export default function AdminExperiencesPage() {
                 {!row.interview_process && !row.tips ? (
                   <p className="text-xs text-slate-500">No interview details were provided for this experience.</p>
                 ) : null}
+                <div className="flex justify-end pt-1">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => deleteExperience(row)}
+                  >
+                    Delete Experience
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}

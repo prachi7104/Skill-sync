@@ -54,3 +54,28 @@ export async function PATCH(req: NextRequest, { params }: { params: { experience
     return NextResponse.json({ error: "Failed to moderate experience" }, { status: 500 });
   }
 }
+
+export async function DELETE(_req: NextRequest, { params }: { params: { experienceId: string } }) {
+  try {
+    const user = await requireRole(["admin"]);
+    if (!user.collegeId) {
+      return NextResponse.json({ error: "College not found" }, { status: 400 });
+    }
+
+    const deleted = await db.execute(sql`
+      DELETE FROM company_experiences
+      WHERE id = ${params.experienceId}
+        AND college_id = ${user.collegeId}
+      RETURNING id
+    `) as unknown as Array<{ id: string }>;
+
+    if (!deleted[0]?.id) {
+      return NextResponse.json({ error: "Experience not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    return NextResponse.json({ error: "Failed to delete experience" }, { status: 500 });
+  }
+}
