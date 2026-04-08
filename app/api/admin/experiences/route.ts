@@ -23,6 +23,23 @@ const adminExperienceSchema = z.object({
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+function getRows<T>(result: unknown): T[] {
+  if (Array.isArray(result)) {
+    return result as T[];
+  }
+
+  if (
+    result &&
+    typeof result === "object" &&
+    "rows" in result &&
+    Array.isArray((result as { rows?: unknown }).rows)
+  ) {
+    return (result as { rows: T[] }).rows;
+  }
+
+  return [];
+}
+
 export async function GET(req: NextRequest) {
   try {
     const user = await requireRole(["admin"]);
@@ -35,7 +52,19 @@ export async function GET(req: NextRequest) {
       ? sql`ce.status = 'published'`
       : sql`ce.status IN ('pending', 'ai_flagged', 'ai_approved')`;
 
-    const experiences = await db.execute(sql`
+    const columnRows = getRows<{ column_name: string }>(await db.execute(sql`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'company_experiences'
+        AND column_name IN ('student_name', 'student_email')
+    `));
+
+    const columnSet = new Set(columnRows.map((row) => row.column_name));
+    const studentNameExpr = columnSet.has("student_name") ? sql`ce.student_name` : sql`u.name`;
+    const studentEmailExpr = columnSet.has("student_email") ? sql`ce.student_email` : sql`u.email`;
+
+    const experiences = getRows<Record<string, unknown>>(await db.execute(sql`
       SELECT
         ce.id,
         ce.company_name,
@@ -54,8 +83,8 @@ export async function GET(req: NextRequest) {
         ce.helpful_count,
         ce.batch_year,
         ce.category_snapshot,
-        ce.student_name,
-        ce.student_email,
+        ${studentNameExpr} AS student_name,
+        ${studentEmailExpr} AS student_email,
         ce.created_at,
         ce.updated_at,
         ce.published_at,
@@ -68,11 +97,12 @@ export async function GET(req: NextRequest) {
       WHERE ce.college_id = ${user.collegeId}
         AND ${whereClause}
       ORDER BY ce.created_at DESC
-    `) as unknown as Array<Record<string, unknown>>;
+    `));
 
     return NextResponse.json({ experiences });
   } catch (error) {
     if (isRedirectError(error)) throw error;
+    console.error("[admin/experiences][GET]", error);
     return NextResponse.json({ error: "Failed to load moderation queue" }, { status: 500 });
   }
 }
