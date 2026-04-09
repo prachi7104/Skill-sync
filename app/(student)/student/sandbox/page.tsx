@@ -11,10 +11,10 @@ export default function SandboxPage() {
         
       {/* Premium Header */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white flex items-center gap-3">
-          AI Sandbox <Sparkles className="w-6 h-6 text-indigo-500" />
+        <h1 className="text-3xl md:text-4xl font-black tracking-tight text-foreground flex items-center gap-3">
+          AI Sandbox <Sparkles className="w-6 h-6 text-primary" />
         </h1>
-        <p className="text-slate-400 mt-1 text-base">
+        <p className="text-muted-foreground mt-1 text-base">
           Analyze your profile against Job Descriptions using advanced LLM matching.
         </p>
       </div>
@@ -23,17 +23,17 @@ export default function SandboxPage() {
       <Tabs defaultValue="quick" className="space-y-8">
         
         {/* Styled to look like a premium segmented control */}
-        <TabsList className="bg-slate-900/80 backdrop-blur-md p-1.5 rounded-xl border border-slate-800 inline-flex h-auto shadow-sm">
+        <TabsList className="bg-card  p-1.5 rounded-md border border-border inline-flex h-auto shadow-sm">
           <TabsTrigger 
             value="quick" 
-            className="px-6 py-2.5 rounded-lg text-sm font-bold data-[state=active]:bg-slate-800 data-[state=active]:text-white data-[state=active]:shadow-md text-slate-500 hover:text-slate-300 transition-all flex items-center gap-2"
+            className="px-6 py-2.5 rounded-md text-sm font-bold data-[state=active]:bg-muted/50 data-[state=active]:text-foreground data-[state=active]:shadow-md text-muted-foreground hover:text-muted-foreground transition-all flex items-center gap-2"
           >
             <Zap className="w-4 h-4" /> Quick Analysis
           </TabsTrigger>
           
           <TabsTrigger 
             value="detailed" 
-            className="px-6 py-2.5 rounded-lg text-sm font-bold data-[state=active]:bg-slate-800 data-[state=active]:text-white data-[state=active]:shadow-md text-slate-500 hover:text-slate-300 transition-all flex items-center gap-2"
+            className="px-6 py-2.5 rounded-md text-sm font-bold data-[state=active]:bg-muted/50 data-[state=active]:text-foreground data-[state=active]:shadow-md text-muted-foreground hover:text-muted-foreground transition-all flex items-center gap-2"
           >
             <LayoutTemplate className="w-4 h-4" /> Detailed Analysis
           </TabsTrigger>

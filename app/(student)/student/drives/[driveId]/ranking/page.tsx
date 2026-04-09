@@ -47,7 +47,7 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
   if (!drive.rankingsVisible && user.role === "student") {
     return (
       <div className="text-center p-12">
-        <p className="text-slate-400">Rankings for this drive have not been published yet.</p>
+        <p className="text-muted-foreground">Rankings for this drive have not been published yet.</p>
       </div>
     );
   }
@@ -235,7 +235,7 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
 /** Small helper component for the score tiles. */
 function ScoreTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border p-3 text-center">
+    <div className="rounded-md border p-3 text-center">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-lg font-bold mt-0.5">{value}</p>
     </div>

@@ -54,30 +54,30 @@ export default async function StudentDrivesPage() {
 
       {/* Header */}
       <div className="space-y-1">
-        <h1 className="text-4xl font-black tracking-tight text-white">
+        <h1 className="text-4xl font-black tracking-tight text-foreground">
           Placement Drives
         </h1>
-        <p className="text-slate-400 font-medium">
+        <p className="text-muted-foreground font-medium">
           {eligible.length} active {eligible.length === 1 ? "drive" : "drives"} matching your profile
         </p>
       </div>
 
       {eligible.length === 0 ? (
         hasIncompleteProfile ? (
-          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 text-center">
-            <p className="text-amber-400 font-bold">Complete your profile to see eligible drives</p>
-            <p className="text-slate-400 text-sm mt-2">
+          <div className="rounded-md border border-warning/20 bg-warning/10 p-6 text-center">
+            <p className="text-warning font-bold">Complete your profile to see eligible drives</p>
+            <p className="text-muted-foreground text-sm mt-2">
               Add your branch, CGPA, and batch year in your profile to see drives you qualify for.
             </p>
-            <Link href="/student/onboarding" className="mt-4 inline-block bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-bold px-6 py-2.5 rounded-lg transition-colors">
+            <Link href="/student/onboarding" className="mt-4 inline-block bg-warning/10 hover:bg-warning/10 text-warning font-bold px-6 py-2.5 rounded-md transition-colors">
               Complete Profile →
             </Link>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-24 rounded-3xl border border-dashed border-slate-700 bg-slate-900/30">
-            <Briefcase className="w-12 h-12 text-slate-600 mb-4" />
-            <h3 className="text-lg font-bold text-white mb-1">No eligible drives yet</h3>
-            <p className="text-slate-400 text-sm max-w-xs text-center">
+          <div className="flex flex-col items-center justify-center py-24 rounded-md border border-dashed border-border bg-card/30">
+            <Briefcase className="w-12 h-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-bold text-foreground mb-1">No eligible drives yet</h3>
+            <p className="text-muted-foreground text-sm max-w-xs text-center">
               No active drives match your branch, batch year, and CGPA right now. Check back soon.
             </p>
           </div>
@@ -94,7 +94,7 @@ export default async function StudentDrivesPage() {
             return (
               <div
                 key={drive.id}
-                className="group relative bg-slate-900/60 rounded-2xl border border-white/5 hover:border-indigo-500/30 transition-all duration-300 overflow-hidden flex flex-col"
+                className="group relative bg-card rounded-md border border-border hover:border-indigo-500/30 transition-all duration-300 overflow-hidden flex flex-col"
               >
                 {/* Rank badge */}
                 {ranking && (
@@ -102,9 +102,9 @@ export default async function StudentDrivesPage() {
                     href={`/student/drives/${drive.id}/ranking`}
                     className="absolute top-4 right-4 z-10"
                   >
-                    <div className="flex items-center gap-1.5 bg-indigo-500/15 border border-indigo-500/25 rounded-full px-3 py-1.5 hover:bg-indigo-500/25 transition-colors">
-                      <Award className="w-3.5 h-3.5 text-indigo-400" />
-                      <span className="text-xs font-black text-indigo-400">
+                    <div className="flex items-center gap-1.5 bg-primary/15 border border-indigo-500/25 rounded-full px-3 py-1.5 hover:bg-primary/25 transition-colors">
+                      <Award className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-xs font-black text-primary">
                         {hasRankPosition
                           ? `#${ranking.rankPosition} · ${ranking.matchScore.toFixed(0)}%`
                           : "Ineligible"}
@@ -116,10 +116,10 @@ export default async function StudentDrivesPage() {
                 <div className="p-6 flex-1">
                   {/* Company + Role */}
                   <div className="mb-4 pr-24">
-                    <h3 className="font-black text-white text-lg leading-tight tracking-tight">
+                    <h3 className="font-black text-foreground text-lg leading-tight tracking-tight">
                       {drive.company}
                     </h3>
-                    <p className="text-slate-400 text-sm font-medium mt-0.5">
+                    <p className="text-muted-foreground text-sm font-medium mt-0.5">
                       {drive.roleTitle}
                     </p>
                   </div>
@@ -127,26 +127,26 @@ export default async function StudentDrivesPage() {
                   {/* Info pills */}
                   <div className="flex flex-wrap gap-2 mb-4">
                     {drive.location && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 bg-slate-800/80 rounded-lg px-2.5 py-1">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground bg-muted/50/80 rounded-md px-2.5 py-1">
                         <MapPin className="w-3 h-3" /> {drive.location}
                       </span>
                     )}
                     {drive.packageOffered && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 bg-slate-800/80 rounded-lg px-2.5 py-1">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground bg-muted/50/80 rounded-md px-2.5 py-1">
                         <IndianRupee className="w-3 h-3" /> {drive.packageOffered}
                       </span>
                     )}
                     {drive.minCgpa && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 bg-slate-800/80 rounded-lg px-2.5 py-1">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground bg-muted/50/80 rounded-md px-2.5 py-1">
                         Min CGPA {drive.minCgpa}
                       </span>
                     )}
                     {drive.deadline && (
                       <span className={cn(
-                        "inline-flex items-center gap-1 text-[11px] font-bold rounded-lg px-2.5 py-1",
+                        "inline-flex items-center gap-1 text-[11px] font-bold rounded-md px-2.5 py-1",
                         isDeadlineSoon
-                          ? "text-amber-400 bg-amber-500/10"
-                          : "text-slate-400 bg-slate-800/80"
+                          ? "text-warning bg-warning/10"
+                          : "text-muted-foreground bg-muted/50/80"
                       )}>
                         <Clock className="w-3 h-3" />
                         {format(new Date(drive.deadline), "MMM d, yyyy")}
@@ -157,14 +157,14 @@ export default async function StudentDrivesPage() {
                   {/* Ranking result */}
                   {ranking ? (
                     <div className="space-y-3">
-                      <p className="text-xs text-slate-400 leading-relaxed">
+                      <p className="text-xs text-muted-foreground leading-relaxed">
                         {ranking.shortExplanation}
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {(ranking.matchedSkills as string[]).slice(0, 4).map((skill) => (
                           <span
                             key={skill}
-                            className="inline-flex items-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400"
+                            className="inline-flex items-center rounded-md bg-success/10 border border-success/20 px-2 py-0.5 text-[10px] font-bold text-success"
                           >
                             ✓ {skill}
                           </span>
@@ -172,7 +172,7 @@ export default async function StudentDrivesPage() {
                         {(ranking.missingSkills as string[]).slice(0, 2).map((skill) => (
                           <span
                             key={skill}
-                            className="inline-flex items-center rounded-lg bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 text-[10px] font-bold text-rose-400"
+                            className="inline-flex items-center rounded-md bg-destructive/10 border border-destructive/20 px-2 py-0.5 text-[10px] font-bold text-destructive"
                           >
                             ✗ {skill}
                           </span>
@@ -180,7 +180,7 @@ export default async function StudentDrivesPage() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-600 italic">
+                    <p className="text-xs text-muted-foreground italic">
                       Rankings not yet generated for this drive.
                     </p>
                   )}
@@ -190,7 +190,7 @@ export default async function StudentDrivesPage() {
                 {ranking && (
                   <Link
                     href={`/student/drives/${drive.id}/ranking`}
-                    className="flex items-center justify-between px-6 py-3.5 border-t border-white/5 text-xs font-bold text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/5 transition-all"
+                    className="flex items-center justify-between px-6 py-3.5 border-t border-border text-xs font-bold text-primary hover:text-primary hover:bg-primary/5 transition-all"
                   >
                     View Full Ranking
                     <ChevronRight className="w-4 h-4" />

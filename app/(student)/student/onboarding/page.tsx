@@ -753,14 +753,14 @@ export default function OnboardingPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+      <div className="flex min-h-screen items-center justify-center bg-muted/20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-muted/20 text-foreground">
       {/* Autofill highlight animation */}
       <style>{`
         @keyframes autofill-glow {
@@ -770,27 +770,27 @@ export default function OnboardingPage() {
         }
         .autofill-flash { animation: autofill-glow 1.5s ease-out; }
       `}</style>
-      <div className="flex items-center justify-between border-b border-white/5 bg-slate-900/80 px-6 py-3 backdrop-blur">
+      <div className="flex items-center justify-between border-b border-border bg-card px-6 py-3 backdrop-blur">
         <div className="flex items-center gap-3">
-          <span className="text-xl font-black text-white">
-            Skill<span className="text-indigo-400">Sync</span>
+          <span className="text-xl font-black text-foreground">
+            Skill<span className="text-primary">Sync</span>
           </span>
-          <span className="text-slate-500">.</span>
-          <span className="text-sm text-slate-400">Profile Setup</span>
+          <span className="text-muted-foreground">.</span>
+          <span className="text-sm text-muted-foreground">Profile Setup</span>
         </div>
         <div className="flex items-center gap-3 text-xs">
           {saveState === "saving" && (
-            <span className="flex items-center gap-1 text-slate-400">
+            <span className="flex items-center gap-1 text-muted-foreground">
               <Loader2 className="h-3 w-3 animate-spin" /> Saving...
             </span>
           )}
           {saveState === "saved" && (
-            <span className="flex items-center gap-1 text-emerald-400">
+            <span className="flex items-center gap-1 text-success">
               <CheckCircle2 className="h-3 w-3" /> Saved
             </span>
           )}
           {saveState === "error" && (
-            <span className="flex items-center gap-1 text-rose-400">
+            <span className="flex items-center gap-1 text-destructive">
               <AlertCircle className="h-3 w-3" /> Save failed
             </span>
           )}
@@ -800,7 +800,7 @@ export default function OnboardingPage() {
       <div className="mx-auto flex max-w-5xl gap-8 px-4 py-8">
         <aside className="hidden w-56 shrink-0 md:block">
           <div className="sticky top-8 space-y-1">
-            <p className="mb-4 px-2 text-xs font-bold uppercase tracking-widest text-slate-500">Progress</p>
+            <p className="mb-4 px-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">Progress</p>
             {STEPS.map((step, i) => {
               const unlocked = isStepUnlocked(i);
               const done = stepStates[i].done;
@@ -821,12 +821,12 @@ export default function OnboardingPage() {
                     }
                   }}
                   className={cn(
-                    "w-full rounded-xl border px-3 py-3 text-left transition-all",
+                    "w-full rounded-md border px-3 py-3 text-left transition-all",
                     "flex items-center gap-3",
                     active
-                      ? "border-indigo-500/30 bg-indigo-600/20"
+                      ? "border-indigo-500/30 bg-primary/20"
                       : unlocked
-                        ? "border-transparent hover:bg-slate-800/60"
+                        ? "border-transparent hover:bg-muted/50/60"
                         : "cursor-not-allowed border-transparent opacity-40",
                   )}
                 >
@@ -835,12 +835,12 @@ export default function OnboardingPage() {
                       "h-7 w-7 shrink-0 rounded-full text-xs font-bold",
                       "flex items-center justify-center transition-all",
                       done
-                        ? "bg-emerald-500 text-white"
+                        ? "bg-success/10 text-foreground"
                         : active
-                          ? "bg-indigo-600 text-white ring-2 ring-indigo-400/30 ring-offset-2 ring-offset-slate-950"
+                          ? "bg-primary text-foreground ring-2 ring-indigo-400/30 ring-offset-2 ring-offset-slate-950"
                           : unlocked
-                            ? "bg-slate-700 text-slate-400"
-                            : "bg-slate-800 text-slate-600",
+                            ? "bg-card text-muted-foreground"
+                            : "bg-muted/50 text-muted-foreground",
                     )}
                   >
                     {done ? <Check className="h-3.5 w-3.5" /> : !unlocked ? <Lock className="h-3 w-3" /> : i + 1}
@@ -850,50 +850,50 @@ export default function OnboardingPage() {
                     <p
                       className={cn(
                         "truncate text-sm font-semibold",
-                        active ? "text-white" : unlocked ? "text-slate-300" : "text-slate-600",
+                        active ? "text-foreground" : unlocked ? "text-muted-foreground" : "text-muted-foreground",
                       )}
                     >
                       {step.label}
                     </p>
                     {isGatingStep && (
-                      <p className="mt-0.5 flex items-center gap-1 text-[10px] text-amber-400">
+                      <p className="mt-0.5 flex items-center gap-1 text-[10px] text-warning">
                         <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
                         Required
                       </p>
                     )}
                     {step.required.length > 0 && !done && !isGatingStep && (
-                      <p className="mt-0.5 text-[10px] text-rose-400">Required</p>
+                      <p className="mt-0.5 text-[10px] text-destructive">Required</p>
                     )}
-                    {done && <p className="mt-0.5 text-[10px] text-emerald-400">Complete</p>}
+                    {done && <p className="mt-0.5 text-[10px] text-success">Complete</p>}
                   </div>
                 </button>
               );
             })}
 
             {gateWarning && (
-              <div className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-400">
+              <div className="mt-2 rounded-md border border-warning/20 bg-warning/10 px-3 py-2 text-xs text-warning">
                 {gateWarning}
               </div>
             )}
-            <div className="absolute bottom-4 left-[1.85rem] top-[4.5rem] -z-10 w-px bg-slate-800" />
+            <div className="absolute bottom-4 left-[1.85rem] top-[4.5rem] -z-10 w-px bg-muted/50" />
           </div>
         </aside>
 
         <main className="min-w-0 flex-1">
           <div className="mb-6">
-            <h1 className="text-2xl font-black text-white">
+            <h1 className="text-2xl font-black text-foreground">
               {STEPS.find((s) => s.key === activeStep)?.label}
             </h1>
-            <p className="mt-1 text-slate-400">{STEPS.find((s) => s.key === activeStep)?.description}</p>
+            <p className="mt-1 text-muted-foreground">{STEPS.find((s) => s.key === activeStep)?.description}</p>
           </div>
 
           {autofillBanner && activeStep === "identity" && (
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
+            <div className="flex items-center gap-2 rounded-md border border-success/20 bg-success/10 px-4 py-3 text-sm text-success">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               ✓ Profile autofilled from your resume. Review and continue.
             </div>
           )}
-          <div className="space-y-6 rounded-2xl border border-white/5 bg-slate-900/60 p-6 shadow-lg">
+          <div className="space-y-6 rounded-md border border-border bg-card p-6 shadow-lg">
             {activeStep === "identity" && (
               <IdentityStep
                 form={form}
@@ -928,7 +928,7 @@ export default function OnboardingPage() {
                 if (prev >= 0) setActiveStep(STEPS[prev].key);
               }}
               disabled={currentStepIndex === 0}
-              className="text-sm text-slate-400 transition-all hover:text-white disabled:opacity-0"
+              className="text-sm text-muted-foreground transition-all hover:text-foreground disabled:opacity-0"
             >
               Back
             </button>
@@ -943,8 +943,8 @@ export default function OnboardingPage() {
                       i === currentStepIndex
                         ? "w-4 bg-indigo-400"
                         : stepStates[i].done
-                          ? "bg-emerald-500"
-                          : "bg-slate-700",
+                          ? "bg-success/10"
+                          : "bg-card",
                     )}
                   />
                 ))}
@@ -955,7 +955,7 @@ export default function OnboardingPage() {
                   <Button
                     onClick={handleNext}
                     disabled={activeStep === "identity" ? !form.rollNo.trim() : (STEPS[currentStepIndex].required.length > 0 && !stepStates[currentStepIndex].done)}
-                    className="bg-indigo-600 px-6 font-bold text-white hover:bg-indigo-500"
+                    className="bg-primary px-6 font-bold text-foreground hover:bg-primary"
                   >
                     {activeStep === "identity" && !form.rollNo.trim()
                       ? "Enter your Roll Number to continue"
@@ -963,14 +963,14 @@ export default function OnboardingPage() {
                     <ChevronRight className="ml-1 h-4 w-4" />
                   </Button>
                   {activeStep === "identity" && !form.rollNo.trim() && (
-                    <p className="text-[11px] text-amber-400">Roll Number is required to proceed</p>
+                    <p className="text-[11px] text-warning">Roll Number is required to proceed</p>
                   )}
                 </div>
               ) : (
                 <Button
                   onClick={handleFinish}
                   disabled={!allRequired}
-                  className="bg-emerald-600 px-6 font-bold text-white hover:bg-emerald-500"
+                  className="bg-emerald-600 px-6 font-bold text-foreground hover:bg-success/10"
                 >
                   {allRequired ? "Go to Dashboard" : "Complete required fields first"}
                 </Button>
@@ -998,13 +998,13 @@ function FormField({
 }) {
   return (
     <div className={cn("space-y-2", className)}>
-      <Label className="text-sm font-medium text-slate-200">
+      <Label className="text-sm font-medium text-foreground">
         {label}
-        {required && <span className="ml-1 text-rose-400">*</span>}
-        {!required && <span className="ml-1 text-xs text-slate-500">(optional)</span>}
+        {required && <span className="ml-1 text-destructive">*</span>}
+        {!required && <span className="ml-1 text-xs text-muted-foreground">(optional)</span>}
       </Label>
       {children}
-      {hint && <p className="text-xs text-slate-500">{hint}</p>}
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -1032,32 +1032,32 @@ function IdentityStep({
     <div className="space-y-6">
       <div
         className={cn(
-          "rounded-xl border-2 border-dashed p-5 transition-all",
+          "rounded-md border-2 border-dashed p-5 transition-all",
           resumeState === "done"
-            ? "border-emerald-500/50 bg-emerald-500/5"
+            ? "border-success/20 bg-success/10"
             : resumeState === "parsing"
-              ? "border-indigo-500/50 bg-indigo-500/5"
-              : "border-slate-700 hover:border-slate-600",
+              ? "border-indigo-500/50 bg-primary/5"
+              : "border-border hover:border-border",
         )}
       >
         <div className="flex items-start gap-4">
           <div
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-              resumeState === "done" ? "bg-emerald-500/20" : "bg-slate-800",
+              resumeState === "done" ? "bg-success/10" : "bg-muted/50",
             )}
           >
             {resumeState === "extracting" || resumeState === "analyzing" || resumeState === "uploading" || resumeState === "parsing" ? (
-              <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
             ) : resumeState === "done" ? (
-              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+              <CheckCircle2 className="h-5 w-5 text-success" />
             ) : (
-              <Upload className="h-5 w-5 text-slate-400" />
+              <Upload className="h-5 w-5 text-muted-foreground" />
             )}
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-white">Upload Resume</p>
-            <p className="mt-0.5 text-xs text-slate-400">
+            <p className="text-sm font-semibold text-foreground">Upload Resume</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
               PDF or DOCX, we autofill skills, projects, and experience automatically.
             </p>
             {resumeStatusText && (
@@ -1065,10 +1065,10 @@ function IdentityStep({
                 className={cn(
                   "mt-2 text-xs",
                   resumeState === "done"
-                    ? "text-emerald-400"
+                    ? "text-success"
                     : resumeState === "error"
-                      ? "text-rose-400"
-                      : "text-indigo-400",
+                      ? "text-destructive"
+                      : "text-primary",
                 )}
               >
                 {resumeStatusText}
@@ -1078,7 +1078,7 @@ function IdentityStep({
               <input
                 type="file"
                 accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                className="mt-3 cursor-pointer text-xs text-slate-400 file:mr-2 file:rounded-lg file:border-0 file:bg-indigo-600/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-indigo-400 hover:file:bg-indigo-600/30"
+                className="mt-3 cursor-pointer text-xs text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary hover:file:bg-primary/30"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) onResumeUpload(f);
@@ -1090,12 +1090,12 @@ function IdentityStep({
       </div>
 
       {resumeState !== "done" && resumeState !== "skipped" && resumeState !== "extracting" && resumeState !== "analyzing" && resumeState !== "uploading" && resumeState !== "parsing" && (
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           Upload your resume to autofill Skills, Projects, and Experience.
           You can also{" "}
           <button
             type="button"
-            className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2"
+            className="text-primary hover:text-primary underline underline-offset-2"
             onClick={() => setResumeState("skipped")}
           >
             skip resume →
@@ -1104,37 +1104,37 @@ function IdentityStep({
         </p>
       )}
       {resumeState === "skipped" && (
-        <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
           Resume skipped — you can fill everything manually below.
         </p>
       )}
 
-      <div className="space-y-3 rounded-xl border border-white/5 bg-slate-800/40 p-4">
-        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Account Info (from Microsoft)</p>
+      <div className="space-y-3 rounded-md border border-border bg-muted/50/40 p-4">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Account Info (from Microsoft)</p>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <p className="text-xs text-slate-500">Status</p>
-            <p className="text-sm font-medium text-slate-200">Connected</p>
+            <p className="text-xs text-muted-foreground">Status</p>
+            <p className="text-sm font-medium text-foreground">Connected</p>
           </div>
         </div>
-        <p className="text-xs text-slate-600">
+        <p className="text-xs text-muted-foreground">
           Name and email are synced from your university Microsoft account and are not editable here.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label className="text-sm font-medium text-slate-200">
-            SAP ID <span className="text-slate-500 text-xs ml-1">(auto-filled from university email)</span>
+          <Label className="text-sm font-medium text-foreground">
+            SAP ID <span className="text-muted-foreground text-xs ml-1">(auto-filled from university email)</span>
           </Label>
-          <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5">
-            <span className="text-sm font-mono text-white flex-1">
-              {form.sapId || <span className="text-slate-500 italic">Deriving from email...</span>}
+          <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2.5">
+            <span className="text-sm font-mono text-foreground flex-1">
+              {form.sapId || <span className="text-muted-foreground italic">Deriving from email...</span>}
             </span>
-            <Lock className="w-4 h-4 text-slate-500 shrink-0" />
+            <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
           </div>
           {form.sapId && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Derived from your university email. Contact admin if incorrect.
             </p>
           )}
@@ -1144,7 +1144,7 @@ function IdentityStep({
             value={form.rollNo}
             onChange={(e) => setField("rollNo", e.target.value)}
             placeholder="R2142212345"
-            className={cn("border-slate-700 bg-slate-800 text-white", autofillClass)}
+            className={cn("border-border bg-muted/50 text-foreground", autofillClass)}
           />
         </FormField>
         <FormField label="Phone">
@@ -1152,7 +1152,7 @@ function IdentityStep({
             value={form.phone}
             onChange={(e) => setField("phone", e.target.value)}
             placeholder="+91 98765 43210"
-            className="border-slate-700 bg-slate-800 text-white"
+            className="border-border bg-muted/50 text-foreground"
           />
         </FormField>
         <FormField label="LinkedIn">
@@ -1160,7 +1160,7 @@ function IdentityStep({
             value={form.linkedin}
             onChange={(e) => setField("linkedin", e.target.value)}
             placeholder="linkedin.com/in/your-name"
-            className="border-slate-700 bg-slate-800 text-white"
+            className="border-border bg-muted/50 text-foreground"
           />
         </FormField>
         <FormField label="Portfolio / GitHub" className="sm:col-span-2">
@@ -1168,11 +1168,11 @@ function IdentityStep({
             value={form.portfolio}
             onChange={(e) => setField("portfolio", e.target.value)}
             placeholder="github.com/your-username or yourportfolio.dev"
-            className="border-slate-700 bg-slate-800 text-white"
+            className="border-border bg-muted/50 text-foreground"
           />
         </FormField>
       </div>
-      <p className="text-xs text-slate-500 mt-2">
+      <p className="text-xs text-muted-foreground mt-2">
         Fill your Roll Number to unlock all other tabs.
       </p>
     </div>
@@ -1200,7 +1200,7 @@ function AcademicsStep({
             value={form.cgpa}
             onChange={(e) => setField("cgpa", e.target.value)}
             placeholder="8.5"
-            className="border-slate-700 bg-slate-800 text-white"
+            className="border-border bg-muted/50 text-foreground"
           />
         </FormField>
 
@@ -1208,7 +1208,7 @@ function AcademicsStep({
           <select
             value={form.branch}
             onChange={(e) => setField("branch", e.target.value)}
-            className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+            className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
           >
             <option value="">Select branch</option>
             {UPES_BRANCHES.map((branchOption) => (
@@ -1222,15 +1222,15 @@ function AcademicsStep({
 
         <FormField label="Batch Year" required hint="Year of graduation - cannot be changed after saving">
           {student?.batchYear ? (
-            <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5">
-              <span className="text-sm text-white flex-1">{String(student.batchYear)}</span>
-              <Lock className="w-4 h-4 text-slate-500 shrink-0" />
+            <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2.5">
+              <span className="text-sm text-foreground flex-1">{String(student.batchYear)}</span>
+              <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
             </div>
           ) : (
             <select
               value={form.batchYear}
               onChange={(e) => setField("batchYear", e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500"
+              className="w-full bg-muted/50 border border-border text-foreground rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500"
             >
               <option value="">Select year</option>
               {BATCH_YEARS.map((y) => (
@@ -1246,7 +1246,7 @@ function AcademicsStep({
           <select
             value={form.semester}
             onChange={(e) => setField("semester", e.target.value)}
-            className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+            className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
           >
             <option value="">Select</option>
             {SEMESTERS.map((s) => (
@@ -1266,7 +1266,7 @@ function AcademicsStep({
             value={form.tenthPercentage}
             onChange={(e) => setField("tenthPercentage", e.target.value)}
             placeholder="85.5"
-            className="border-slate-700 bg-slate-800 text-white"
+            className="border-border bg-muted/50 text-foreground"
           />
         </FormField>
 
@@ -1279,7 +1279,7 @@ function AcademicsStep({
             value={form.twelfthPercentage}
             onChange={(e) => setField("twelfthPercentage", e.target.value)}
             placeholder="87.0"
-            className="border-slate-700 bg-slate-800 text-white"
+            className="border-border bg-muted/50 text-foreground"
           />
         </FormField>
       </div>
@@ -1308,7 +1308,7 @@ function SkillsStep({
           className={autofillVersion > 0 ? "autofill-flash" : ""}
         />
       </FormField>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-muted-foreground">
         Skills are used directly for embeddings and ranking. Prefer specific skills like React.js, PostgreSQL, or
         TensorFlow.
       </p>
@@ -1362,22 +1362,22 @@ function ProjectsStep({
   return (
     <div className="space-y-4">
       {form.projects.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-700 p-8 text-center">
-          <p className="text-sm text-slate-400">No projects yet. Add your best projects here.</p>
-          <p className="mt-1 text-xs text-slate-600">
+        <div className="rounded-md border border-dashed border-border p-8 text-center">
+          <p className="text-sm text-muted-foreground">No projects yet. Add your best projects here.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
             Projects are optional but significantly improve ranking quality.
           </p>
         </div>
       )}
 
       {form.projects.map((p, idx) => (
-        <div key={p.id} className="space-y-3 rounded-xl border border-white/5 bg-slate-800/30 p-4">
+        <div key={p.id} className="space-y-3 rounded-md border border-border bg-muted/50/30 p-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold uppercase text-slate-500">Project {idx + 1}</p>
+            <p className="text-xs font-bold uppercase text-muted-foreground">Project {idx + 1}</p>
             <button
               type="button"
               onClick={() => removeProject(p.id)}
-              className="text-xs text-rose-400 hover:text-rose-300"
+              className="text-xs text-destructive hover:text-rose-300"
             >
               Remove
             </button>
@@ -1386,14 +1386,14 @@ function ProjectsStep({
             value={p.title}
             onChange={(e) => updateProject(p.id, { title: e.target.value })}
             placeholder="Project title"
-            className="border-slate-700 bg-slate-800 text-white"
+            className="border-border bg-muted/50 text-foreground"
           />
           <Textarea
             value={p.description}
             onChange={(e) => updateProject(p.id, { description: e.target.value })}
             placeholder="Brief description of what you built and your role"
             rows={2}
-            className="resize-none border-slate-700 bg-slate-800 text-sm text-white"
+            className="resize-none border-border bg-muted/50 text-sm text-foreground"
           />
           <TagInput
             tags={p.techStack}
@@ -1404,7 +1404,7 @@ function ProjectsStep({
             value={p.githubUrl}
             onChange={(e) => updateProject(p.id, { githubUrl: e.target.value })}
             placeholder="GitHub or live URL"
-            className="border-slate-700 bg-slate-800 text-sm text-white"
+            className="border-border bg-muted/50 text-sm text-foreground"
           />
         </div>
       ))}
@@ -1412,7 +1412,7 @@ function ProjectsStep({
       <button
         type="button"
         onClick={addProject}
-        className="w-full rounded-xl border border-dashed border-slate-700 py-3 text-sm text-slate-400 transition-all hover:border-indigo-500/50 hover:text-indigo-400"
+        className="w-full rounded-md border border-dashed border-border py-3 text-sm text-muted-foreground transition-all hover:border-indigo-500/50 hover:text-primary"
       >
         + Add Project
       </button>
@@ -1459,19 +1459,19 @@ function ExperienceStep({
   return (
     <div className="space-y-4">
       {form.experience.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-700 p-8 text-center">
-          <p className="text-sm text-slate-400">No experience yet. Add internships, part-time, or freelance work.</p>
+        <div className="rounded-md border border-dashed border-border p-8 text-center">
+          <p className="text-sm text-muted-foreground">No experience yet. Add internships, part-time, or freelance work.</p>
         </div>
       )}
 
       {form.experience.map((e, idx) => (
-        <div key={e.id} className="space-y-3 rounded-xl border border-white/5 bg-slate-800/30 p-4">
+        <div key={e.id} className="space-y-3 rounded-md border border-border bg-muted/50/30 p-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold uppercase text-slate-500">Experience {idx + 1}</p>
+            <p className="text-xs font-bold uppercase text-muted-foreground">Experience {idx + 1}</p>
             <button
               type="button"
               onClick={() => removeExp(e.id)}
-              className="text-xs text-rose-400 hover:text-rose-300"
+              className="text-xs text-destructive hover:text-rose-300"
             >
               Remove
             </button>
@@ -1481,30 +1481,30 @@ function ExperienceStep({
               value={e.company}
               onChange={(ev) => updateExp(e.id, { company: ev.target.value })}
               placeholder="Company name"
-              className="border-slate-700 bg-slate-800 text-white"
+              className="border-border bg-muted/50 text-foreground"
             />
             <Input
               value={e.role}
               onChange={(ev) => updateExp(e.id, { role: ev.target.value })}
               placeholder="Role / Designation"
-              className="border-slate-700 bg-slate-800 text-white"
+              className="border-border bg-muted/50 text-foreground"
             />
             <Input
               type="month"
               value={e.startDate}
               onChange={(ev) => updateExp(e.id, { startDate: ev.target.value })}
-              className="border-slate-700 bg-slate-800 text-white"
+              className="border-border bg-muted/50 text-foreground"
             />
             {!e.isPresent && (
               <Input
                 type="month"
                 value={e.endDate}
                 onChange={(ev) => updateExp(e.id, { endDate: ev.target.value })}
-                className="border-slate-700 bg-slate-800 text-white"
+                className="border-border bg-muted/50 text-foreground"
               />
             )}
           </div>
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-400">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
             <input
               type="checkbox"
               checked={e.isPresent}
@@ -1518,7 +1518,7 @@ function ExperienceStep({
             onChange={(ev) => updateExp(e.id, { description: ev.target.value })}
             placeholder="What you did, technologies used, outcomes"
             rows={2}
-            className="resize-none border-slate-700 bg-slate-800 text-sm text-white"
+            className="resize-none border-border bg-muted/50 text-sm text-foreground"
           />
         </div>
       ))}
@@ -1526,7 +1526,7 @@ function ExperienceStep({
       <button
         type="button"
         onClick={addExp}
-        className="w-full rounded-xl border border-dashed border-slate-700 py-3 text-sm text-slate-400 transition-all hover:border-indigo-500/50 hover:text-indigo-400"
+        className="w-full rounded-md border border-dashed border-border py-3 text-sm text-muted-foreground transition-all hover:border-indigo-500/50 hover:text-primary"
       >
         + Add Experience
       </button>
@@ -1544,8 +1544,8 @@ function ExtrasStep({
   return (
     <div className="space-y-8">
       <div className="space-y-3">
-        <h3 className="text-sm font-bold text-slate-300">
-          Certifications <span className="text-xs font-normal text-slate-500">(optional)</span>
+        <h3 className="text-sm font-bold text-muted-foreground">
+          Certifications <span className="text-xs font-normal text-muted-foreground">(optional)</span>
         </h3>
         {form.certifications.map((c, i) => (
           <div key={c.id} className="grid grid-cols-3 items-center gap-2">
@@ -1558,7 +1558,7 @@ function ExtrasStep({
                 )
               }
               placeholder="Certification name"
-              className="border-slate-700 bg-slate-800 text-sm text-white"
+              className="border-border bg-muted/50 text-sm text-foreground"
             />
             <Input
               value={c.issuer}
@@ -1569,7 +1569,7 @@ function ExtrasStep({
                 )
               }
               placeholder="Issuer"
-              className="border-slate-700 bg-slate-800 text-sm text-white"
+              className="border-border bg-muted/50 text-sm text-foreground"
             />
             <div className="flex gap-2">
               <Input
@@ -1581,7 +1581,7 @@ function ExtrasStep({
                   )
                 }
                 placeholder="Year"
-                className="border-slate-700 bg-slate-800 text-sm text-white"
+                className="border-border bg-muted/50 text-sm text-foreground"
               />
               <button
                 type="button"
@@ -1591,7 +1591,7 @@ function ExtrasStep({
                     form.certifications.filter((_, j) => j !== i),
                   )
                 }
-                className="px-2 text-xs text-rose-400 hover:text-rose-300"
+                className="px-2 text-xs text-destructive hover:text-rose-300"
               >
                 X
               </button>
@@ -1606,15 +1606,15 @@ function ExtrasStep({
               { id: uid(), title: "", issuer: "", year: "" },
             ])
           }
-          className="text-xs text-indigo-400 hover:text-indigo-300"
+          className="text-xs text-primary hover:text-primary"
         >
           + Add Certification
         </button>
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-sm font-bold text-slate-300">
-          Coding Profiles <span className="text-xs font-normal text-slate-500">(optional)</span>
+        <h3 className="text-sm font-bold text-muted-foreground">
+          Coding Profiles <span className="text-xs font-normal text-muted-foreground">(optional)</span>
         </h3>
         {form.codingProfiles.map((c, i) => (
           <div key={c.id} className="grid grid-cols-3 items-center gap-2">
@@ -1626,7 +1626,7 @@ function ExtrasStep({
                   form.codingProfiles.map((x, j) => (j === i ? { ...x, platform: e.target.value } : x)),
                 )
               }
-              className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white"
+              className="rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground"
             >
               <option value="">Platform</option>
               {[
@@ -1651,7 +1651,7 @@ function ExtrasStep({
                 )
               }
               placeholder="Username"
-              className="border-slate-700 bg-slate-800 text-sm text-white"
+              className="border-border bg-muted/50 text-sm text-foreground"
             />
             <div className="flex gap-2">
               <Input
@@ -1663,7 +1663,7 @@ function ExtrasStep({
                   )
                 }
                 placeholder="Profile URL"
-                className="border-slate-700 bg-slate-800 text-sm text-white"
+                className="border-border bg-muted/50 text-sm text-foreground"
               />
               <button
                 type="button"
@@ -1673,7 +1673,7 @@ function ExtrasStep({
                     form.codingProfiles.filter((_, j) => j !== i),
                   )
                 }
-                className="px-2 text-xs text-rose-400"
+                className="px-2 text-xs text-destructive"
               >
                 X
               </button>
@@ -1688,18 +1688,18 @@ function ExtrasStep({
               { id: uid(), platform: "", username: "", url: "" },
             ])
           }
-          className="text-xs text-indigo-400 hover:text-indigo-300"
+          className="text-xs text-primary hover:text-primary"
         >
           + Add Profile
         </button>
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-sm font-bold text-slate-300">
-          Research Papers <span className="text-xs font-normal text-slate-500">(optional)</span>
+        <h3 className="text-sm font-bold text-muted-foreground">
+          Research Papers <span className="text-xs font-normal text-muted-foreground">(optional)</span>
         </h3>
         {form.researchPapers.map((r, i) => (
-          <div key={r.id} className="space-y-2 rounded-xl border border-white/5 bg-slate-800/20 p-3">
+          <div key={r.id} className="space-y-2 rounded-md border border-border bg-muted/50/20 p-3">
             <div className="flex gap-2">
               <Input
                 value={r.title}
@@ -1710,7 +1710,7 @@ function ExtrasStep({
                   )
                 }
                 placeholder="Paper title"
-                className="flex-1 border-slate-700 bg-slate-800 text-sm text-white"
+                className="flex-1 border-border bg-muted/50 text-sm text-foreground"
               />
               <button
                 type="button"
@@ -1720,7 +1720,7 @@ function ExtrasStep({
                     form.researchPapers.filter((_, j) => j !== i),
                   )
                 }
-                className="px-2 text-xs text-rose-400"
+                className="px-2 text-xs text-destructive"
               >
                 X
               </button>
@@ -1735,7 +1735,7 @@ function ExtrasStep({
                   )
                 }
                 placeholder="Journal or Conference"
-                className="border-slate-700 bg-slate-800 text-sm text-white"
+                className="border-border bg-muted/50 text-sm text-foreground"
               />
               <Input
                 value={r.year}
@@ -1746,7 +1746,7 @@ function ExtrasStep({
                   )
                 }
                 placeholder="Year"
-                className="border-slate-700 bg-slate-800 text-sm text-white"
+                className="border-border bg-muted/50 text-sm text-foreground"
               />
             </div>
           </div>
@@ -1759,7 +1759,7 @@ function ExtrasStep({
               { id: uid(), title: "", journal: "", year: "", url: "" },
             ])
           }
-          className="text-xs text-indigo-400 hover:text-indigo-300"
+          className="text-xs text-primary hover:text-primary"
         >
           + Add Paper
         </button>
@@ -1771,7 +1771,7 @@ function ExtrasStep({
             value={form.achievements}
             onChange={(e) => setField("achievements", e.target.value)}
             rows={4}
-            className="border-slate-700 bg-slate-800 text-sm text-white"
+            className="border-border bg-muted/50 text-sm text-foreground"
           />
         </FormField>
       </div>

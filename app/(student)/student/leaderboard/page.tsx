@@ -60,9 +60,9 @@ type MyRank = {
 } | null;
 
 const badgeStyles: Record<string, string> = {
-  alpha: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  beta: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  gamma: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+  alpha: "bg-success/10 text-success border-success/20",
+  beta: "bg-warning/10 text-warning border-warning/20",
+  gamma: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
 export default function StudentLeaderboardPage() {
@@ -178,8 +178,8 @@ export default function StudentLeaderboardPage() {
     <div className="max-w-6xl mx-auto p-8 md:p-10 pb-32 space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">AMCAT Leaderboard</h1>
-          <p className="text-slate-400 mt-1">Top performers from published AMCAT sessions</p>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-foreground">AMCAT Leaderboard</h1>
+          <p className="text-muted-foreground mt-1">Top performers from published AMCAT sessions</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -192,7 +192,7 @@ export default function StudentLeaderboardPage() {
             }}
             disabled={!hasData || loading}
           >
-            <SelectTrigger className="w-[260px] bg-slate-900 border-white/10 text-white">
+            <SelectTrigger className="w-[260px] bg-card border-border text-foreground">
               <SelectValue placeholder="Select session" />
             </SelectTrigger>
             <SelectContent>
@@ -212,7 +212,7 @@ export default function StudentLeaderboardPage() {
             }}
             disabled={!hasData || loading || branches.length === 0}
           >
-            <SelectTrigger className="w-[180px] bg-slate-900 border-white/10 text-white">
+            <SelectTrigger className="w-[180px] bg-card border-border text-foreground">
               <SelectValue placeholder="All branches" />
             </SelectTrigger>
             <SelectContent>
@@ -233,12 +233,12 @@ export default function StudentLeaderboardPage() {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[240px]">
-          <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>
+        <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-rose-300">{error}</div>
       ) : !hasData ? (
-        <div className="rounded-xl border border-white/10 bg-slate-900/60 px-4 py-6 text-sm text-slate-300">
+        <div className="rounded-md border border-border bg-card px-4 py-6 text-sm text-muted-foreground">
           No published AMCAT data is available yet.
         </div>
       ) : (
@@ -250,7 +250,7 @@ export default function StudentLeaderboardPage() {
             <Stat title="Gamma" value={stats.gamma} />
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-slate-900/60 overflow-hidden">
+          <div className="rounded-md border border-border bg-card overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -279,9 +279,9 @@ export default function StudentLeaderboardPage() {
                 {!isInTop50 && myRank && (
                   <>
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-slate-500">...</TableCell>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">...</TableCell>
                     </TableRow>
-                    <TableRow className="bg-indigo-500/10">
+                    <TableRow className="bg-primary/10">
                       <TableCell className="font-semibold">#{myRank.rank}</TableCell>
                       <TableCell className="font-semibold">You</TableCell>
                       <TableCell>-</TableCell>
@@ -305,9 +305,9 @@ export default function StudentLeaderboardPage() {
 
 function Stat({ title, value }: { title: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-      <p className="text-xs uppercase tracking-wide text-slate-400">{title}</p>
-      <p className="text-2xl font-black text-white mt-2">{value}</p>
+    <div className="rounded-md border border-border bg-card p-5">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{title}</p>
+      <p className="text-2xl font-black text-foreground mt-2">{value}</p>
     </div>
   );
 }

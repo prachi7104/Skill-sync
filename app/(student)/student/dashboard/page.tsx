@@ -154,21 +154,21 @@ export default function StudentDashboard() {
         : "Download Resume";
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 p-8 md:p-10 pb-32">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
             
             {/* Header */}
             <div className="space-y-2">
-                <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white drop-shadow-sm">
+                <h1 className="text-3xl font-heading font-bold tracking-tight text-foreground">
                     Student Dashboard
                 </h1>
-                <p className="text-slate-400 text-lg font-medium">
-                    Welcome back, <span className="text-slate-100 font-bold">{user.name}</span>. Here&apos;s what&apos;s happening.
+                <p className="text-muted-foreground text-sm font-medium">
+                    Welcome back, <span className="text-foreground font-bold">{user.name}</span>. Here&apos;s what&apos;s happening.
                 </p>
                 <div className="flex items-center gap-2 pt-1">
                     <div
                         className={cn(
                             "h-2 w-2 rounded-full",
-                            stats.hasEmbedding ? "bg-emerald-500" : "animate-pulse bg-rose-500",
+                            stats.hasEmbedding ? "bg-success" : "animate-pulse bg-warning",
                         )}
                         title={
                             stats.hasEmbedding
@@ -176,7 +176,7 @@ export default function StudentDashboard() {
                                 : "Profile embedding pending. Complete profile fields to enable ranking and sandbox."
                         }
                     />
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted-foreground">
                         {stats.hasEmbedding ? "AI Ready" : "Profile Indexing..."}
                     </span>
                 </div>
@@ -190,28 +190,25 @@ export default function StudentDashboard() {
                     <StatCard title="Sandbox Usage" value={`${sandboxUsageToday}/5`} icon={Eye} subtitle="Today" />
                 </div>
                 <div className="col-span-12 lg:col-span-5">
-                    <div className="bg-slate-900/60 rounded-2xl border border-white/5 p-6 h-full">
-                        <h3 className="text-sm uppercase tracking-wider text-slate-400">Profile Ring</h3>
-                        <div className="mt-4 flex items-center justify-between">
-                            <div>
-                                <p className="text-4xl font-black text-white">{score}%</p>
-                                <p className="text-sm text-slate-400">Completeness</p>
-                            </div>
-                            <Link href="/student/onboarding" className="text-sm text-indigo-400 hover:text-indigo-300">Improve profile</Link>
+                    <div className="bg-card rounded-md border border-border p-6 h-full flex flex-col justify-center">
+                        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Profile Completeness</h3>
+                        <div className="flex items-center justify-between mb-2">
+                            <p className="text-3xl font-bold text-foreground">{score}%</p>
+                            <Link href="/student/onboarding" className="text-sm text-primary hover:text-primary/80 font-medium">Improve profile</Link>
                         </div>
-                        <div className="mt-4 h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                            <div className="h-full bg-indigo-500" style={{ width: `${score}%` }} />
+                        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary" style={{ width: `${score}%` }} />
                         </div>
                     </div>
                 </div>
             </div>
 
             {amcat.hasAmcat && (
-                <div className="bg-slate-900/60 rounded-2xl border border-white/5 p-6">
+                <div className="bg-card rounded-md border border-border p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                            <h3 className="font-bold text-white">AMCAT Performance</h3>
-                            <Link href="/student/leaderboard" className="text-xs text-indigo-300 hover:text-indigo-200 font-semibold">
+                            <h3 className="font-bold text-foreground">AMCAT Performance</h3>
+                            <Link href="/student/leaderboard" className="text-xs text-primary hover:text-primary/80 font-semibold">
                                 View Leaderboard
                             </Link>
                         </div>
@@ -219,14 +216,14 @@ export default function StudentDashboard() {
                     </div>
 
                     <div className="flex items-baseline gap-3 mb-4">
-                        <span className="text-4xl font-black text-white">{amcat.score ?? 0}</span>
-                        <span className="text-slate-400 text-sm">/ 100</span>
-                        <span className="text-slate-400 text-sm ml-auto">
+                        <span className="text-3xl font-bold text-foreground">{amcat.score ?? 0}</span>
+                        <span className="text-muted-foreground text-sm">/ 100</span>
+                        <span className="text-muted-foreground text-sm ml-auto">
                             Rank #{amcat.rank ?? "-"} of {amcat.total_students ?? "-"}
                         </span>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-3 mt-4">
                         {[
                             { label: "Automata", score: amcat.automata_score ?? 0 },
                             { label: "Automata Fix", score: amcat.automata_fix_score ?? 0 },
@@ -235,14 +232,14 @@ export default function StudentDashboard() {
                             { label: "Quant", score: amcat.quant_score ?? 0 },
                         ].map((section) => (
                             <div key={section.label} className="flex items-center gap-3">
-                                <span className="text-xs text-slate-400 w-24">{section.label}</span>
-                                <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                <span className="text-xs text-muted-foreground w-24 font-medium">{section.label}</span>
+                                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-indigo-500 rounded-full"
+                                        className="h-full bg-primary rounded-full"
                                         style={{ width: `${Math.max(0, Math.min(100, section.score))}%` }}
                                     />
                                 </div>
-                                <span className="text-xs text-slate-300 w-8 text-right">{section.score}</span>
+                                <span className="text-xs text-foreground w-8 text-right font-medium">{section.score}</span>
                             </div>
                         ))}
                     </div>
@@ -250,28 +247,28 @@ export default function StudentDashboard() {
             )}
 
             {leaderboardRows.length > 0 && (
-                <div className="bg-slate-900/60 rounded-2xl border border-white/5 p-6">
+                <div className="bg-card rounded-md border border-border p-6">
                     <div className="flex items-center justify-between gap-3 mb-4">
                         <div>
-                            <h3 className="font-bold text-white">AMCAT Leaderboard Snapshot</h3>
+                            <h3 className="font-bold text-foreground">AMCAT Leaderboard Snapshot</h3>
                             {leaderboardSessionName && (
-                                <p className="text-xs text-slate-400 mt-1">{leaderboardSessionName}</p>
+                                <p className="text-xs text-muted-foreground mt-1">{leaderboardSessionName}</p>
                             )}
                         </div>
-                        <Link href="/student/leaderboard" className="text-sm text-indigo-300 hover:text-indigo-200 font-semibold">
+                        <Link href="/student/leaderboard" className="text-sm text-primary hover:text-primary/80 font-semibold">
                             Open Full Leaderboard
                         </Link>
                     </div>
 
                     <div className="space-y-2">
                         {leaderboardRows.map((row) => (
-                            <div key={`${row.rank}-${row.name}`} className="flex items-center gap-3 rounded-xl border border-white/5 bg-slate-950/40 px-3 py-2.5">
-                                <span className="w-12 text-sm font-bold text-white">#{row.rank}</span>
+                            <div key={`${row.rank}-${row.name}`} className="flex items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2.5">
+                                <span className="w-12 text-sm font-bold text-foreground">#{row.rank}</span>
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-semibold text-slate-100 truncate">{row.name}</p>
-                                    <p className="text-xs text-slate-500">{row.branch || "Branch N/A"}</p>
+                                    <p className="text-sm font-semibold text-foreground truncate">{row.name}</p>
+                                    <p className="text-xs text-muted-foreground">{row.branch || "Branch N/A"}</p>
                                 </div>
-                                <span className="w-12 text-right text-sm font-semibold text-slate-200">{row.score}</span>
+                                <span className="w-12 text-right text-sm font-semibold text-foreground">{row.score}</span>
                                 <CategoryBadge category={row.category} />
                             </div>
                         ))}
@@ -282,46 +279,46 @@ export default function StudentDashboard() {
             <div className="grid grid-cols-12 gap-6 md:gap-8">
                 
                 {/* Resume Status Card */}
-                <div className="col-span-12 lg:col-span-8 bg-slate-900/60 rounded-[2.5rem] border border-white/5 p-8 space-y-6 relative overflow-hidden group">
-                    <div className="flex items-center space-x-3 text-indigo-400 relative z-10">
+                <div className="col-span-12 lg:col-span-8 bg-card rounded-md border border-border p-8 space-y-6 relative overflow-hidden group">
+                    <div className="flex items-center space-x-3 text-primary relative z-10">
                         <FileText className="w-6 h-6" />
-                        <h3 className="font-bold text-white text-xl tracking-tight">Resume Status</h3>
+                        <h3 className="font-bold text-foreground text-xl tracking-tight">Resume Status</h3>
                     </div>
-                    <p className="text-slate-300 font-medium relative z-10">Your current master resume on file.</p>
+                    <p className="text-muted-foreground font-medium relative z-10">Your current master resume on file.</p>
                     
-                    <div className="bg-slate-950/50 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between border border-white/5 hover:border-indigo-500/40 transition-colors duration-300 relative z-10">
+                    <div className="bg-muted/30 rounded-md p-6 flex flex-col sm:flex-row sm:items-center justify-between border border-border relative z-10">
                         {student.resumeUrl ? (
                             <>
                                 <div className="mb-5 sm:mb-0">
-                                    <p className="font-bold text-slate-100 text-base truncate max-w-[300px]">
+                                    <p className="font-bold text-foreground text-base truncate max-w-[300px]">
                                         {student.resumeFilename || "Resume.pdf"}
                                     </p>
-                                    <p className="text-xs text-slate-500 mt-1.5 font-bold tracking-wide uppercase">
+                                    <p className="text-xs text-muted-foreground mt-1.5 font-bold tracking-wide uppercase">
                                         Uploaded {student.resumeUploadedAt ? format(new Date(student.resumeUploadedAt), "MMM d, yyyy") : "Recently"}
                                     </p>
                                 </div>
                                 <div className="flex space-x-3">
                                     <a href={resumeDownloadUrl || "#"} target="_blank" rel="noreferrer"
-                                       className="px-6 py-2.5 border border-white/10 bg-white/5 rounded-xl text-sm font-bold text-white hover:bg-white/10 transition-all">
+                                       className="px-6 py-2.5 border border-border bg-background hover:bg-muted rounded-md text-sm font-bold text-foreground transition-all">
                                         {resumeActionLabel}
                                     </a>
                                     <Link href="/student/profile"
-                                          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)]">
+                                          className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md text-sm font-bold transition-all shadow-sm">
                                         Update
                                     </Link>
                                 </div>
                             </>
                         ) : (
                             <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-5 w-full">
-                                <div className="p-3 bg-amber-500/10 rounded-full shrink-0">
-                                    <AlertCircle className="h-6 w-6 text-amber-500" />
+                                <div className="p-3 bg-warning/10 rounded-full shrink-0">
+                                    <AlertCircle className="h-6 w-6 text-warning" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="font-bold text-white text-base">No Resume Uploaded</p>
-                                    <p className="text-sm text-slate-400 mt-1 font-medium">AI match rates are significantly lower without a resume.</p>
+                                    <p className="font-bold text-foreground text-base">No Resume Uploaded</p>
+                                    <p className="text-sm text-muted-foreground mt-1 font-medium">AI match rates are significantly lower without a resume.</p>
                                 </div>
-                                                                <Link href="/student/onboarding"
-                                      className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all whitespace-nowrap shadow-[0_0_20px_rgba(79,70,229,0.3)]">
+                                <Link href="/student/onboarding"
+                                      className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md text-sm font-bold transition-all whitespace-nowrap shadow-sm">
                                     Upload Now
                                 </Link>
                             </div>
@@ -329,44 +326,47 @@ export default function StudentDashboard() {
                     </div>
                 </div>
 
-                {/* Profile Completeness Score */}
-                <div className="col-span-12 lg:col-span-4 bg-slate-900/60 rounded-[2.5rem] border border-white/5 p-8 space-y-8 relative overflow-hidden">
-                    <h3 className="font-bold text-white flex items-center space-x-3 text-xl tracking-tight">
-                        <Sparkles className="w-6 h-6 text-emerald-400" />
+                {/* Profile Completeness Score (Additional Card if needed, or replace to match clean design) */}
+                <div className="col-span-12 lg:col-span-4 bg-card rounded-md border border-border p-8 space-y-8 relative overflow-hidden">
+                    <h3 className="font-bold text-foreground flex items-center space-x-3 text-xl tracking-tight">
+                        <Sparkles className="w-6 h-6 text-success" />
                         <span>Completeness</span>
                     </h3>
                     
                     <div className="space-y-4">
                         <div className="flex justify-between items-end">
-                            <p className="text-3xl font-black text-white tracking-tighter">{score}%</p>
+                            <p className="text-3xl font-bold text-foreground tracking-tighter">{score}%</p>
                             <p className={`text-sm font-bold mb-1 ${
-                                score >= 80 ? "text-emerald-400" :
-                                score >= 60 ? "text-blue-400" :
-                                score >= 40 ? "text-amber-400" : "text-rose-400"
+                                score >= 80 ? "text-success" :
+                                score >= 60 ? "text-info" :
+                                score >= 40 ? "text-warning" : "text-destructive"
                             }`}>
                                 {score >= 80 ? "Excellent" : score >= 60 ? "Good" : score >= 40 ? "Fair" : "Needs work"}
                             </p>
                         </div>
-                        <div className="h-2.5 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5">
-                           <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(16,185,129,0.6)]" style={{ width: `${score}%` }} />
+                        <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden border border-border">
+                           <div className={cn("h-full rounded-full transition-all duration-1000 ease-out", 
+                                score >= 80 ? "bg-success" :
+                                score >= 60 ? "bg-info" :
+                                score >= 40 ? "bg-warning" : "bg-destructive")} style={{ width: `${score}%` }} />
                         </div>
                     </div>
 
-                    <div className="pt-6 border-t border-white/5">
+                    <div className="pt-6 border-t border-border">
                         {missing.length > 0 ? (
                             <>
-                                <p className="text-sm font-bold text-slate-300 mb-3 tracking-tight">Action Items:</p>
-                                <ul className="text-sm text-slate-400 space-y-3 list-none font-medium">
+                                <p className="text-sm font-bold text-foreground mb-3 tracking-tight">Action Items:</p>
+                                <ul className="text-sm text-muted-foreground space-y-3 list-none font-medium">
                                     {missing.slice(0, 3).map((msg, i) => (
                                         <li key={i} className="flex items-start">
-                                            <span className="mr-3 text-indigo-500 font-bold">•</span>
+                                            <span className="mr-3 text-primary font-bold">•</span>
                                             {msg}
                                         </li>
                                     ))}
                                 </ul>
                             </>
                         ) : (
-                            <p className="text-sm font-bold text-emerald-400 flex items-center bg-emerald-400/10 p-4 rounded-xl border border-emerald-400/20">
+                            <p className="text-sm font-bold text-success flex items-center bg-success/10 p-4 rounded-md border border-success/20">
                                 <CheckCircle2 className="w-5 h-5 mr-2 shrink-0" />
                                 Profile is perfectly optimized.
                             </p>
@@ -375,20 +375,20 @@ export default function StudentDashboard() {
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-6 flex items-center justify-between">
+            <div className="rounded-md border border-border bg-muted/20 p-6 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div>
-                    <p className="text-white font-semibold">Quick Actions</p>
-                    <p className="text-sm text-slate-400">Jump to active drives or refine your profile to improve shortlist odds.</p>
+                    <p className="text-foreground font-semibold">Quick Actions</p>
+                    <p className="text-sm text-muted-foreground mt-1">Jump to active drives or refine your profile to improve shortlist odds.</p>
                 </div>
-                <div className="flex gap-3">
-                    <Link href="/student/drives" className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold">Explore Drives</Link>
-                    <Link href="/student/onboarding" className="px-4 py-2 rounded-lg border border-white/15 text-slate-100 text-sm font-semibold">Edit Onboarding</Link>
+                <div className="flex gap-3 w-full md:w-auto">
+                    <Link href="/student/drives" className="px-5 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-semibold text-center flex-1 md:flex-none hover:bg-primary/90 transition-colors">Explore Drives</Link>
+                    <Link href="/student/onboarding" className="px-5 py-2.5 rounded-md border border-border bg-background text-foreground text-sm font-semibold text-center flex-1 md:flex-none hover:bg-muted transition-colors">Edit Onboarding</Link>
                 </div>
             </div>
 
             {/* Profile Sections Grid */}
-            <div className="bg-slate-900/60 rounded-[2.5rem] border border-white/5 p-8 md:p-10">
-                <h3 className="font-bold text-white mb-8 text-xl tracking-tight">Data Parameters</h3>
+            <div className="bg-card rounded-md border border-border p-8 md:p-10">
+                <h3 className="font-bold text-foreground mb-8 text-xl tracking-tight">Data Parameters</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                    <ProfileSectionItem label="Core Skills" count={student.skills?.length || 0} min={5} />
                    <ProfileSectionItem label="Projects" count={student.projects?.length || 0} min={2} />
@@ -397,9 +397,9 @@ export default function StudentDashboard() {
                 </div>
                 <div className="mt-10 flex justify-end">
                    <Link href="/student/profile"
-                         className="group flex items-center bg-slate-950 border border-slate-800 text-slate-200 rounded-xl px-8 py-4 font-bold text-sm hover:bg-slate-900 hover:text-white hover:border-slate-600 transition-all shadow-sm">
+                         className="group flex items-center bg-background border border-border text-foreground rounded-md px-8 py-4 font-bold text-sm hover:bg-muted transition-all shadow-sm">
                          Manage Full Profile 
-                         <ArrowRight className="ml-3 w-4 h-4 text-slate-500 group-hover:translate-x-1 group-hover:text-white transition-all" />
+                         <ArrowRight className="ml-3 w-4 h-4 text-muted-foreground group-hover:translate-x-1 group-hover:text-foreground transition-all" />
                    </Link>
                 </div>
             </div>
@@ -409,16 +409,16 @@ export default function StudentDashboard() {
 
 function StatCard({ title, value, subtitle, icon: Icon }: any) {
   return (
-    <div className="bg-slate-900/60 p-7 rounded-2xl border border-white/5 relative group hover:border-indigo-500/40 hover:bg-slate-900/80 transition-all duration-300 overflow-hidden">
-      <div className="flex flex-col justify-between h-full space-y-6 relative z-10">
-                <h4 className="text-sm font-bold text-slate-300 uppercase tracking-[0.1em]">{title}</h4>
+    <div className="bg-card p-6 rounded-md border border-border relative group hover:border-primary/40 transition-all duration-300">
+      <div className="flex flex-col justify-between h-full space-y-4">
+         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{title}</h4>
         <div>
-            <p className="text-4xl font-black text-white tracking-tighter leading-none">{value ?? 0}</p>
-            <p className="text-[11px] font-bold text-slate-500 mt-2.5 tracking-[0.1em] uppercase">{subtitle}</p>
+            <p className="text-3xl font-bold text-foreground tracking-tight leading-none">{value ?? 0}</p>
+            <p className="text-xs font-medium text-muted-foreground mt-2">{subtitle}</p>
         </div>
       </div>
-            <div className="absolute top-6 right-6 z-10 rounded-2xl bg-white/5 p-3 transition-colors duration-300 group-hover:bg-indigo-500/20">
-        <Icon className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 transition-colors duration-300" />
+      <div className="absolute top-6 right-6 z-10 rounded-md bg-muted p-2 transition-colors duration-300 group-hover:bg-primary/10">
+        <Icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
       </div>
     </div>
   );
@@ -427,20 +427,20 @@ function StatCard({ title, value, subtitle, icon: Icon }: any) {
 function ProfileSectionItem({ label, count, min, isOptional }: any) {
   const isGood = count >= min;
   return (
-    <div className="flex items-center justify-between p-6 rounded-2xl border border-white/5 bg-slate-950/50 hover:bg-slate-900 hover:border-white/10 transition-all duration-300">
+    <div className="flex items-center justify-between p-6 rounded-md border border-border bg-muted/20 hover:bg-muted/50 transition-all duration-300">
       <div>
-        <p className="font-bold text-slate-100 text-base tracking-tight">{label}</p>
-        <p className="text-[10px] text-slate-500 font-bold mt-1.5 uppercase tracking-[0.15em]">
-          {isOptional ? "Optional Data" : `Min Req: ${min}`}
+        <p className="font-bold text-foreground text-sm tracking-tight">{label}</p>
+        <p className="text-xs text-muted-foreground font-medium mt-1">
+           {isOptional ? "Optional Data" : `Min Req: ${min}`}
         </p>
       </div>
       <div className="flex items-center space-x-4">
-        <span className="text-2xl font-black text-white tracking-tighter">{count ?? 0}</span>
-        <div className={isGood ? "bg-white/10 rounded-xl p-2" : "bg-rose-500/10 border border-rose-500/20 rounded-xl p-2"}>
+        <span className="text-2xl font-bold text-foreground">{count ?? 0}</span>
+        <div className={isGood ? "bg-success/10 rounded-md p-2 text-success" : "bg-destructive/10 border border-destructive/20 rounded-md p-2 text-destructive"}>
            {isGood ? (
-               <CheckCircle2 className="w-5 h-5 text-emerald-400" strokeWidth={2.5} />
+               <CheckCircle2 className="w-5 h-5 mx-auto" />
            ) : (
-               <AlertCircle className="w-5 h-5 text-rose-400" strokeWidth={2.5} />
+               <AlertCircle className="w-5 h-5 mx-auto" />
            )}
         </div>
       </div>
@@ -450,10 +450,10 @@ function ProfileSectionItem({ label, count, min, isOptional }: any) {
 
 function CategoryBadge({ category }: { category: "alpha" | "beta" | "gamma" }) {
     const style = category === "alpha"
-        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+        ? "bg-success/10 text-success border-success/20"
         : category === "beta"
-            ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-            : "bg-rose-500/10 text-rose-400 border-rose-500/20";
+            ? "bg-warning/10 text-warning border-warning/20"
+            : "bg-destructive/10 text-destructive border-destructive/20";
 
     return (
         <span className={`text-xs uppercase font-bold px-2.5 py-1 rounded-full border ${style}`}>
