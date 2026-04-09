@@ -9,6 +9,7 @@ import { students } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import StudentSidebarNav from "@/components/student/student-sidebar-nav";
 import OnboardingBanner from "@/components/student/onboarding-banner";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 function deriveSapFromEmail(email: string): string | null {
     if (!email.toLowerCase().includes("stu.upes.ac.in")) return null;
@@ -116,6 +117,7 @@ export default async function StudentLayout({
                         <div className="text-sm font-medium text-muted-foreground hidden md:block">
                             {user.name} <span className="opacity-70 font-normal ml-1">(student)</span>
                         </div>
+                        <ThemeToggle />
                         <SignOutButton />
                     </div>
                 </header>

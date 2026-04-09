@@ -5,6 +5,7 @@ import Link from "next/link";
 import SignOutButton from "@/components/shared/sign-out-button";
 import MobileNav from "@/components/shared/mobile-nav";
 import AdminNav from "@/components/admin/admin-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   await requireRole(["admin"]);
@@ -29,6 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             {name} <span className="text-primary opacity-70 font-normal ml-1">(admin)</span>
           </div>
           <MobileNav userName={name} role="admin" />
+          <ThemeToggle />
           <SignOutButton />
         </div>
       </header>

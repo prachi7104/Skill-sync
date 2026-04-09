@@ -5,6 +5,7 @@ import Link from "next/link";
 import SidebarNav from "@/components/faculty/sidebar-nav";
 import SignOutButton from "@/components/shared/sign-out-button";
 import MobileNav from "@/components/shared/mobile-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 export default async function FacultyLayout({ children }: { children: React.ReactNode }) {
   await requireRole(["faculty", "admin"]);
   const session = await getServerSession(authOptions);
@@ -25,6 +26,7 @@ export default async function FacultyLayout({ children }: { children: React.Reac
             <span className="opacity-70 font-normal ml-1.5 capitalize">({role})</span>
           </div>
           <MobileNav userName={name} role="faculty" />
+          <ThemeToggle />
           <SignOutButton />
         </div>
       </header>

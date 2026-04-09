@@ -8,6 +8,8 @@ const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakart
 import AuthProvider from "@/components/providers/auth-provider";
 import ClientToaster from "@/components/providers/client-toaster";
 
+import { ThemeProvider } from "@/components/providers/theme-provider";
+
 export const metadata: Metadata = {
   title: 'SkillSync — Placement Intelligence Hub',
   description: 'Placement Intelligence Hub',
@@ -22,10 +24,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jakarta.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jakarta.variable}`} suppressHydrationWarning>
       <body className="bg-background text-foreground font-sans antialiased">
-        <AuthProvider>{children}</AuthProvider>
-        <ClientToaster />
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          <AuthProvider>{children}</AuthProvider>
+          <ClientToaster />
+        </ThemeProvider>
       </body>
     </html>
   )
