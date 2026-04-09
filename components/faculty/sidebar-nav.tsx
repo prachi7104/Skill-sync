@@ -25,23 +25,23 @@ export default function SidebarNav({ name }: { name: string }) {
             key={link.href}
             href={link.href}
             className={cn(
-              "group flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-sm",
+              "group flex items-center gap-3 px-4 py-3.5 rounded-md transition-all duration-300 font-semibold text-sm",
               isActive
-                ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/20"
-                : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             )}
           >
             <link.icon className={cn(
               "w-5 h-5 transition-all",
-              isActive ? "text-indigo-400" : "opacity-60 group-hover:opacity-100"
+              isActive ? "text-primary" : "opacity-60 group-hover:opacity-100"
             )} />
             {link.label}
           </Link>
         );
       })}
-      <div className="mt-8 px-4 pt-6 border-t border-slate-800">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Signed in as</p>
-        <p className="text-xs text-slate-400 mt-1 font-medium truncate">{name}</p>
+      <div className="mt-8 px-4 pt-6 border-t border-border">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Signed in as</p>
+        <p className="text-xs text-muted-foreground mt-1 font-medium truncate">{name}</p>
       </div>
     </nav>
   );

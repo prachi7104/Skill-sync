@@ -42,22 +42,22 @@ export default function StudentSidebarNav() {
               router.push(link.href);
             }}
             className={cn(
-              "group flex w-full items-center space-x-3 px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-sm text-left",
+              "group flex w-full items-center space-x-3 px-4 py-3.5 rounded-md transition-all duration-300 font-semibold text-sm text-left",
               isActive && !isBlocked
-                ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/20"
+                ? "bg-primary/10 text-primary"
                 : isBlocked
-                  ? "text-slate-600 cursor-not-allowed opacity-50"
-                  : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                  ? "text-muted-foreground cursor-not-allowed opacity-50"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             )}
           >
             <link.icon
               className={cn(
                 "w-5 h-5 transition-all",
-                isActive && !isBlocked ? "text-indigo-400" : "opacity-60 group-hover:opacity-100"
+                isActive && !isBlocked ? "text-primary" : "opacity-60 group-hover:opacity-100"
               )}
             />
             <span>{link.label}</span>
-            {isBlocked && <Lock className="w-3 h-3 ml-auto text-slate-600" />}
+            {isBlocked && <Lock className="w-3 h-3 ml-auto text-muted-foreground" />}
           </button>
         );
       })}
