@@ -133,7 +133,7 @@ export default function StudentDashboard() {
     if (isLoading || !student || !user) {
         return (
             <div className="flex items-center justify-center h-full min-h-[60vh]">
-                <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }

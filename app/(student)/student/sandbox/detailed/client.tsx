@@ -27,7 +27,7 @@ function RadarChart({ breakdown, label }: { breakdown: ScoreBreakdown; label: st
     const cx = 120, cy = 120, maxR = 90, n = dimensions.length;
 
     const gridCircles = [25, 50, 75, 100].map(pct => (
-        <circle key={pct} cx={cx} cy={cy} r={maxR * pct / 100} fill="none" stroke="currentColor" strokeWidth="0.5" className="text-slate-700" />
+        <circle key={pct} cx={cx} cy={cy} r={maxR * pct / 100} fill="none" stroke="currentColor" strokeWidth="0.5" className="text-muted-foreground" />
     ));
 
     const points = dimensions.map((d, i) => {
@@ -159,9 +159,9 @@ export default function DetailedSandboxClient() {
     }
 
     function getBarColor(score: number) {
-        if (score >= 75) return "bg-success/10 shadow-[0_0_10px_rgba(16,185,129,0.5)]";
-        if (score >= 50) return "bg-warning/10 shadow-[0_0_10px_rgba(245,158,11,0.5)]";
-        return "bg-destructive/10 shadow-[0_0_10px_rgba(244,63,94,0.5)]";
+        if (score >= 75) return "bg-success/10 shadow-sm";
+        if (score >= 50) return "bg-warning/10 shadow-sm";
+        return "bg-destructive/10 shadow-sm";
     }
 
     const groupedSkills = useMemo(() => {
@@ -193,11 +193,11 @@ export default function DetailedSandboxClient() {
                             <h3 className="font-bold text-foreground">Target Resume</h3>
                         </div>
                         <label className="cursor-pointer block">
-                            <div className={`border-2 border-dashed rounded-md p-8 flex flex-col items-center justify-center transition-all ${resumeFile ? "border-success/20 bg-success/10" : "border-border hover:border-indigo-500/50 hover:bg-card"}`}>
+                            <div className={`border-2 border-dashed rounded-md p-8 flex flex-col items-center justify-center transition-all ${resumeFile ? "border-success/20 bg-success/10" : "border-border hover:border-primary/30 hover:bg-card"}`}>
                                 {resumeFile ? (
                                     <>
                                         <FileText className="h-8 w-8 text-success mb-3" />
-                                        <span className="text-sm font-bold text-emerald-300 truncate max-w-[200px]">{resumeFile.name}</span>
+                                        <span className="text-sm font-bold text-success truncate max-w-[200px]">{resumeFile.name}</span>
                                         <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-2">Click to change</span>
                                     </>
                                 ) : (
@@ -226,8 +226,8 @@ export default function DetailedSandboxClient() {
                 <div className="lg:col-span-7 flex flex-col h-full min-h-[500px]">
                     {!result ? (
                         <div className="flex-1 bg-card border-2 border-dashed border-border rounded-md flex flex-col items-center justify-center text-center p-10 relative overflow-hidden group">
-                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-50" />
-                            <div className="p-5 bg-card  rounded-full shadow-2xl border border-border mb-6 z-10">
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-purple-500/5 opacity-50" />
+                            <div className="p-5 bg-card  rounded-full shadow-sm border border-border mb-6 z-10">
                                 <div className="p-4 bg-card rounded-full">
                                     <Target className="w-8 h-8 text-primary/50" />
                                 </div>
@@ -252,16 +252,16 @@ export default function DetailedSandboxClient() {
                                 <div className="bg-muted/20 p-6 rounded-md border border-border text-center">
                                     <div className={`text-5xl font-black tracking-tighter ${getScoreColor(result.profileMatchScore)}`}>{result.profileMatchScore}%</div>
                                     <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-2 mb-3">True Potential</div>
-                                    <span className="px-3 py-1 rounded border border-indigo-500/30 text-primary bg-primary/10 text-[10px] font-black uppercase tracking-wider">
+                                    <span className="px-3 py-1 rounded border border-primary/30 text-primary bg-primary/10 text-[10px] font-black uppercase tracking-wider">
                                         Max Score
                                     </span>
                                 </div>
                             </div>
 
                             {result.profileMatchScore > result.resumeMatchScore + 5 && (
-                                <div className="mt-8 flex items-start gap-3 p-4 rounded-md bg-primary/10 border border-indigo-500/20">
+                                <div className="mt-8 flex items-start gap-3 p-4 rounded-md bg-primary/10 border border-primary/30">
                                     <TrendingUp className="h-5 w-5 text-primary shrink-0" />
-                                    <p className="text-sm font-medium text-indigo-200">
+                                    <p className="text-sm font-medium text-primary">
                                         Your profile shows <strong className="text-foreground">{result.profileMatchScore - result.resumeMatchScore}% more potential</strong> than your resume currently reflects. Update your resume to close the gap!
                                     </p>
                                 </div>
@@ -271,7 +271,7 @@ export default function DetailedSandboxClient() {
 
                     <button 
                         onClick={handleAnalyze} disabled={isLoading || !resumeFile || jdText.length < 50}
-                        className="mt-6 w-full py-4 bg-primary hover:bg-primary disabled:bg-card text-foreground rounded-md font-bold transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] disabled:shadow-none flex items-center justify-center gap-2"
+                        className="mt-6 w-full py-4 bg-primary hover:bg-primary disabled:bg-card text-foreground rounded-md font-bold transition-all shadow-sm disabled:shadow-none flex items-center justify-center gap-2"
                     >
                         {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Processing Vectors...</> : <><Zap className="w-5 h-5" /> Run Detailed Analysis</>}
                     </button>

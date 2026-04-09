@@ -293,14 +293,14 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                 
                 <div className="flex flex-col lg:flex-row gap-8 items-start lg:items-center justify-between relative z-10">
                     <div className="flex items-center gap-6">
-                        <div className="w-28 h-28 rounded-md bg-gradient-to-br from-indigo-500 to-violet-700 flex items-center justify-center text-4xl font-black text-foreground shadow-sm border border-border shrink-0">
+                        <div className="w-28 h-28 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-4xl font-black text-primary-foreground shadow-sm border border-border shrink-0">
                             {initials}
                         </div>
                         <div className="space-y-2">
                             <h1 className="text-4xl font-black text-foreground tracking-tight">{user.name}</h1>
                             <div className="flex flex-wrap items-center gap-3 text-muted-foreground font-medium">
                                 <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" /> {user.email}</span>
-                                <span className="px-3 py-1 bg-white/5 border border-border rounded-full text-[10px] font-bold uppercase tracking-widest text-primary">Student Platform</span>
+                                <span className="px-3 py-1 bg-muted/10 border border-border rounded-full text-[10px] font-bold uppercase tracking-widest text-primary">Student Platform</span>
                             </div>
                         </div>
                     </div>
@@ -325,7 +325,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                         ) : (
                             <div className="flex gap-3 w-full sm:w-auto h-full">
                                 <button type="button" onClick={handleCancel} disabled={isLoading} className="flex-1 sm:flex-none bg-muted/50 text-foreground px-6 py-4 rounded-md font-bold text-sm hover:bg-card transition-all disabled:opacity-50">Cancel</button>
-                                <button type="button" onClick={form.handleSubmit(onSubmit)} disabled={isLoading} className="flex-1 sm:flex-none bg-primary text-foreground px-8 py-4 rounded-md font-bold text-sm hover:bg-primary shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 disabled:opacity-50">
+                                <button type="button" onClick={form.handleSubmit(onSubmit)} disabled={isLoading} className="flex-1 sm:flex-none bg-primary text-foreground px-8 py-4 rounded-md font-bold text-sm hover:bg-primary/90 shadow-sm flex items-center justify-center gap-2 disabled:opacity-50">
                                     {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save
                                 </button>
                             </div>
@@ -424,7 +424,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                     <div className="p-2.5 bg-success/10 rounded-md"><Code2 className="w-5 h-5 text-success" /></div>
                                     <h2 className="font-bold text-foreground text-lg">Core Skills</h2>
                                 </div>
-                                {isEditing && <button type="button" onClick={() => appendSkill({ name: "", proficiency: 1 })} className="text-success p-2 hover:bg-emerald-400/10 rounded-md transition"><Plus className="w-5 h-5" /></button>}
+                                {isEditing && <button type="button" onClick={() => appendSkill({ name: "", proficiency: 1 })} className="text-success p-2 hover:bg-success/10 rounded-md transition"><Plus className="w-5 h-5" /></button>}
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 {isEditing ? (
@@ -591,7 +591,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                     <div className="p-2.5 bg-warning/10 rounded-md"><Briefcase className="w-5 h-5 text-warning" /></div>
                                     <h2 className="font-bold text-foreground text-xl">Experience</h2>
                                 </div>
-                                {isEditing && <button type="button" onClick={() => appendExp({ company: "", role: "", description: "", startDate: "", endDate: "", location: "" })} className="text-xs font-bold text-warning bg-amber-400/10 px-4 py-2 rounded-md">+ Add Role</button>}
+                                {isEditing && <button type="button" onClick={() => appendExp({ company: "", role: "", description: "", startDate: "", endDate: "", location: "" })} className="text-xs font-bold text-warning bg-warning/10 px-4 py-2 rounded-md">+ Add Role</button>}
                             </div>
 
                             {isEditing ? (
@@ -656,7 +656,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {profile.projects?.length > 0 ? profile.projects.map((p: any, i: number) => (
-                                        <div key={i} className="bg-muted/20 border border-border p-6 rounded-md flex flex-col h-full hover:border-indigo-500/30 transition-all group">
+                                        <div key={i} className="bg-muted/20 border border-border p-6 rounded-md flex flex-col h-full hover:border-primary/30 transition-all group">
                                             <div className="flex justify-between items-start mb-4">
                                                 <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">{p.title}</h3>
                                                 {p.url && <a href={p.url} target="_blank" rel="noreferrer"><ExternalLink className="w-4 h-4 text-muted-foreground hover:text-foreground" /></a>}

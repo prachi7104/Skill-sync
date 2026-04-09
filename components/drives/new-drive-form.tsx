@@ -155,23 +155,23 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
         <div
           className={cn(
             "flex h-8 w-8 items-center justify-center rounded-full border-2 font-bold",
-            step === 1 ? "border-indigo-600 bg-indigo-600 text-white" : "border-emerald-500 bg-emerald-500 text-white"
+            step === 1 ? "border-primary/30 bg-primary text-foreground" : "border-success/20 bg-success/10 text-foreground"
           )}
         >
           {step > 1 ? <Check className="h-5 w-5" /> : "1"}
         </div>
-        <div className={cn("h-px w-20", step > 1 ? "bg-emerald-500" : "bg-slate-800")} />
+        <div className={cn("h-px w-20", step > 1 ? "bg-success/10" : "bg-card")} />
         <div
           className={cn(
             "flex h-8 w-8 items-center justify-center rounded-full border-2 font-bold",
-            step === 2 ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-800 text-slate-500"
+            step === 2 ? "border-primary/30 bg-primary text-foreground" : "border-border text-muted-foreground"
           )}
         >
           2
         </div>
       </div>
 
-      <Card className="border-t-4 border-t-indigo-500">
+      <Card className="border-t-4 border-t-primary">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">{step === 1 ? "Basic Drive Details" : "JD & Eligibility"}</CardTitle>
           <CardDescription>
@@ -253,13 +253,13 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                   </div>
                 </div>
 
-                <label className="flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2 text-sm">
+                <label className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 text-sm">
                   <input type="checkbox" {...register("rankingsVisible")} />
                   Allow students to view ranking details for this drive
                 </label>
 
                 <div className="flex justify-end pt-4">
-                  <Button type="button" onClick={nextStep} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+                  <Button type="button" onClick={nextStep} className="gap-2 bg-primary hover:bg-primary">
                     Continue <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -268,13 +268,13 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
 
             {step === 2 && (
               <div className="space-y-8 animate-in fade-in duration-300">
-                {error && <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-700">{error}</div>}
+                {error && <div className="rounded-md border border-destructive/20 bg-rose-50 p-3 text-sm font-medium text-destructive">{error}</div>}
 
                 <div className="space-y-3">
                   <Label htmlFor="rawJd" className="text-base font-semibold">Job Description *</Label>
                   <Textarea id="rawJd" {...register("rawJd")} rows={12} placeholder="Paste the full JD text here..." className="font-sans leading-relaxed" />
                   <div className="flex items-center justify-between text-xs">
-                    <p className={cn("font-medium", jdValue.length < 200 || jdValue.length > 5000 ? "text-amber-500" : "text-emerald-500")}>
+                    <p className={cn("font-medium", jdValue.length < 200 || jdValue.length > 5000 ? "text-warning" : "text-success")}>
                       {jdValue.length.toLocaleString()} characters
                     </p>
                     {errors.rawJd && <p className="font-medium text-red-500">{errors.rawJd.message}</p>}
@@ -284,7 +284,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                 <div className="space-y-4 border-t pt-4">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="minCgpa" className="text-base font-semibold">Minimum CGPA</Label>
-                    <span className="text-xl font-mono font-bold text-indigo-400">{minCgpa === 0 ? "No minimum" : minCgpa.toFixed(1)}</span>
+                    <span className="text-xl font-mono font-bold text-primary">{minCgpa === 0 ? "No minimum" : minCgpa.toFixed(1)}</span>
                   </div>
                   <input
                     type="range"
@@ -292,7 +292,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                     min="0"
                     max="10"
                     step="0.5"
-                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-800 accent-indigo-600"
+                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-card accent-primary"
                     {...register("minCgpa", { valueAsNumber: true })}
                   />
                   <p className="text-xs uppercase tracking-wider text-muted-foreground">Students below this CGPA are excluded from ranking</p>
@@ -305,7 +305,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                       <button
                         type="button"
                         onClick={() => setValue("eligibleBranches", UPES_BRANCHES.map((b) => b.value))}
-                        className="border-none bg-transparent p-0 text-xs text-indigo-400 hover:text-indigo-300 hover:underline"
+                        className="border-none bg-transparent p-0 text-xs text-primary hover:text-primary hover:underline"
                       >
                         Select All
                       </button>
@@ -325,11 +325,11 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                           className={cn(
                             "flex h-5 w-5 items-center justify-center rounded border-2 shadow-sm transition-colors",
                             selectedBranches.includes(branch.value)
-                              ? "border-indigo-600 bg-indigo-600"
-                              : "border-slate-700 group-hover:border-slate-600"
+                              ? "border-primary/30 bg-primary"
+                              : "border-border group-hover:border-border"
                           )}
                         >
-                          {selectedBranches.includes(branch.value) && <Check className="h-3.5 w-3.5 stroke-[3px] text-white" />}
+                          {selectedBranches.includes(branch.value) && <Check className="h-3.5 w-3.5 stroke-[3px] text-foreground" />}
                         </div>
                         <input
                           type="checkbox"
@@ -337,7 +337,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                           checked={selectedBranches.includes(branch.value)}
                           onChange={() => toggleBranch(branch.value)}
                         />
-                        <span className={cn("transition-colors", selectedBranches.includes(branch.value) ? "font-medium text-white" : "text-muted-foreground")}>
+                        <span className={cn("transition-colors", selectedBranches.includes(branch.value) ? "font-medium text-foreground" : "text-muted-foreground")}>
                           {branch.label}
                         </span>
                       </label>
@@ -357,8 +357,8 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                         className={cn(
                           "rounded-md border px-4 py-2 text-sm font-semibold shadow-sm transition-all",
                           selectedBatchYears.includes(year)
-                            ? "border-indigo-600 bg-indigo-600 text-white"
-                            : "border-slate-700 bg-slate-900 text-slate-300 hover:border-indigo-500/50"
+                            ? "border-primary/30 bg-primary text-foreground"
+                            : "border-border bg-card text-muted-foreground hover:border-primary/30"
                         )}
                       >
                         {year}
@@ -378,8 +378,8 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                         className={cn(
                           "rounded-md border px-6 py-2 text-sm font-semibold capitalize shadow-sm transition-all",
                           selectedCategories.includes(cat)
-                            ? "border-indigo-600 bg-indigo-600 text-white"
-                            : "border-slate-700 bg-slate-900 text-slate-300 hover:border-indigo-500/50"
+                            ? "border-primary/30 bg-primary text-foreground"
+                            : "border-border bg-card text-muted-foreground hover:border-primary/30"
                         )}
                       >
                         {cat}
@@ -389,10 +389,10 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                 </div>
 
                 <div className="flex justify-between border-t pt-6">
-                  <Button type="button" variant="ghost" onClick={() => setStep(1)} className="gap-2 text-slate-500 hover:text-slate-200">
+                  <Button type="button" variant="ghost" onClick={() => setStep(1)} className="gap-2 text-muted-foreground hover:text-foreground">
                     <ChevronLeft className="h-4 w-4" /> Back to details
                   </Button>
-                  <Button type="submit" disabled={isSubmitting} className="min-w-[140px] bg-indigo-600 hover:bg-indigo-700">
+                  <Button type="submit" disabled={isSubmitting} className="min-w-[140px] bg-primary hover:bg-primary">
                     {isSubmitting ? "Creating..." : "Create Drive →"}
                   </Button>
                 </div>

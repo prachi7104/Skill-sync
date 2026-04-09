@@ -35,26 +35,26 @@ export function DriveConflictsButton() {
 
   return (
     <>
-      <Button variant="outline" className="border-white/10 bg-slate-900/60 text-slate-100 hover:bg-slate-800" onClick={loadConflicts}>
+      <Button variant="outline" className="border-border bg-card text-foreground hover:bg-card" onClick={loadConflicts}>
         Check Conflicts
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl border-white/10 bg-slate-950 text-slate-100">
+        <DialogContent className="max-w-3xl border-border bg-muted/20 text-foreground">
           <DialogHeader>
             <DialogTitle>Drive Conflicts</DialogTitle>
             <DialogDescription>Detect overlapping eligible student pools within the next 7 days.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            {loading ? <p className="text-sm text-slate-400">Checking conflicts...</p> : null}
-            {!loading && conflicts.length === 0 ? <p className="text-sm text-slate-400">No significant conflicts found.</p> : null}
+            {loading ? <p className="text-sm text-muted-foreground">Checking conflicts...</p> : null}
+            {!loading && conflicts.length === 0 ? <p className="text-sm text-muted-foreground">No significant conflicts found.</p> : null}
             {!loading ? conflicts.map((conflict) => (
-              <div key={`${conflict.drive1.id}-${conflict.drive2.id}`} className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
+              <div key={`${conflict.drive1.id}-${conflict.drive2.id}`} className="rounded-md border border-warning/20 bg-warning/10 p-4">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-400" />
+                  <AlertTriangle className="mt-0.5 h-5 w-5 text-warning" />
                   <div>
-                    <p className="font-semibold text-white">{conflict.drive1.company} — {conflict.drive1.roleTitle}</p>
-                    <p className="font-semibold text-white">{conflict.drive2.company} — {conflict.drive2.roleTitle}</p>
-                    <p className="mt-2 text-sm text-amber-200">{conflict.overlapCount} students overlap ({conflict.overlapPercent}% of the eligible pool).</p>
+                    <p className="font-semibold text-foreground">{conflict.drive1.company} — {conflict.drive1.roleTitle}</p>
+                    <p className="font-semibold text-foreground">{conflict.drive2.company} — {conflict.drive2.roleTitle}</p>
+                    <p className="mt-2 text-sm text-warning">{conflict.overlapCount} students overlap ({conflict.overlapPercent}% of the eligible pool).</p>
                   </div>
                 </div>
               </div>

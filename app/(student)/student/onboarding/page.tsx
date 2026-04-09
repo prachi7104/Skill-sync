@@ -824,7 +824,7 @@ export default function OnboardingPage() {
                     "w-full rounded-md border px-3 py-3 text-left transition-all",
                     "flex items-center gap-3",
                     active
-                      ? "border-indigo-500/30 bg-primary/20"
+                      ? "border-primary/30 bg-primary/20"
                       : unlocked
                         ? "border-transparent hover:bg-muted/50/60"
                         : "cursor-not-allowed border-transparent opacity-40",
@@ -837,7 +837,7 @@ export default function OnboardingPage() {
                       done
                         ? "bg-success/10 text-foreground"
                         : active
-                          ? "bg-primary text-foreground ring-2 ring-indigo-400/30 ring-offset-2 ring-offset-slate-950"
+                          ? "bg-primary text-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-slate-950"
                           : unlocked
                             ? "bg-card text-muted-foreground"
                             : "bg-muted/50 text-muted-foreground",
@@ -857,7 +857,7 @@ export default function OnboardingPage() {
                     </p>
                     {isGatingStep && (
                       <p className="mt-0.5 flex items-center gap-1 text-[10px] text-warning">
-                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
+                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-warning/10" />
                         Required
                       </p>
                     )}
@@ -941,7 +941,7 @@ export default function OnboardingPage() {
                     className={cn(
                       "h-1.5 w-1.5 rounded-full transition-all",
                       i === currentStepIndex
-                        ? "w-4 bg-indigo-400"
+                        ? "w-4 bg-primary/10"
                         : stepStates[i].done
                           ? "bg-success/10"
                           : "bg-card",
@@ -970,7 +970,7 @@ export default function OnboardingPage() {
                 <Button
                   onClick={handleFinish}
                   disabled={!allRequired}
-                  className="bg-emerald-600 px-6 font-bold text-foreground hover:bg-success/10"
+                  className="bg-success/10 px-6 font-bold text-foreground hover:bg-success/10"
                 >
                   {allRequired ? "Go to Dashboard" : "Complete required fields first"}
                 </Button>
@@ -1036,7 +1036,7 @@ function IdentityStep({
           resumeState === "done"
             ? "border-success/20 bg-success/10"
             : resumeState === "parsing"
-              ? "border-indigo-500/50 bg-primary/5"
+              ? "border-primary/30 bg-primary/5"
               : "border-border hover:border-border",
         )}
       >
@@ -1208,7 +1208,7 @@ function AcademicsStep({
           <select
             value={form.branch}
             onChange={(e) => setField("branch", e.target.value)}
-            className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
+            className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground focus:border-primary/30 focus:outline-none"
           >
             <option value="">Select branch</option>
             {UPES_BRANCHES.map((branchOption) => (
@@ -1230,7 +1230,7 @@ function AcademicsStep({
             <select
               value={form.batchYear}
               onChange={(e) => setField("batchYear", e.target.value)}
-              className="w-full bg-muted/50 border border-border text-foreground rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500"
+              className="w-full bg-muted/50 border border-border text-foreground rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-primary/30"
             >
               <option value="">Select year</option>
               {BATCH_YEARS.map((y) => (
@@ -1246,7 +1246,7 @@ function AcademicsStep({
           <select
             value={form.semester}
             onChange={(e) => setField("semester", e.target.value)}
-            className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
+            className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground focus:border-primary/30 focus:outline-none"
           >
             <option value="">Select</option>
             {SEMESTERS.map((s) => (
@@ -1377,7 +1377,7 @@ function ProjectsStep({
             <button
               type="button"
               onClick={() => removeProject(p.id)}
-              className="text-xs text-destructive hover:text-rose-300"
+              className="text-xs text-destructive hover:text-destructive"
             >
               Remove
             </button>
@@ -1412,7 +1412,7 @@ function ProjectsStep({
       <button
         type="button"
         onClick={addProject}
-        className="w-full rounded-md border border-dashed border-border py-3 text-sm text-muted-foreground transition-all hover:border-indigo-500/50 hover:text-primary"
+        className="w-full rounded-md border border-dashed border-border py-3 text-sm text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
       >
         + Add Project
       </button>
@@ -1471,7 +1471,7 @@ function ExperienceStep({
             <button
               type="button"
               onClick={() => removeExp(e.id)}
-              className="text-xs text-destructive hover:text-rose-300"
+              className="text-xs text-destructive hover:text-destructive"
             >
               Remove
             </button>
@@ -1526,7 +1526,7 @@ function ExperienceStep({
       <button
         type="button"
         onClick={addExp}
-        className="w-full rounded-md border border-dashed border-border py-3 text-sm text-muted-foreground transition-all hover:border-indigo-500/50 hover:text-primary"
+        className="w-full rounded-md border border-dashed border-border py-3 text-sm text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
       >
         + Add Experience
       </button>
@@ -1591,7 +1591,7 @@ function ExtrasStep({
                     form.certifications.filter((_, j) => j !== i),
                   )
                 }
-                className="px-2 text-xs text-destructive hover:text-rose-300"
+                className="px-2 text-xs text-destructive hover:text-destructive"
               >
                 X
               </button>

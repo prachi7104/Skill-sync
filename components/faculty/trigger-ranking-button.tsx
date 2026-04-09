@@ -132,7 +132,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (state === "ranked") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 bg-slate-800 text-slate-500 border-slate-700">
+            <Button variant="outline" size="sm" disabled className="gap-2 bg-card text-muted-foreground border-border">
                 Ranked <CheckCircle2 className="h-4 w-4" />
             </Button>
         );
@@ -140,10 +140,10 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (state === "already_processing") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 text-indigo-400 bg-indigo-500/10 border-indigo-500/20">
+            <Button variant="outline" size="sm" disabled className="gap-2 text-primary bg-primary/10 border-primary/30">
                 <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/10 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
                 In queue
             </Button>
@@ -152,7 +152,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (state === "queued") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+            <Button variant="outline" size="sm" disabled className="gap-2 bg-success/10 text-success border-success/20">
                 Queued <CheckCircle2 className="h-4 w-4" />
             </Button>
         );
@@ -167,7 +167,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
                 onClick={handleTrigger}
                 className={cn(
                     "gap-2 min-w-[140px]",
-                    state === "idle" && "bg-indigo-600 hover:bg-indigo-700"
+                    state === "idle" && "bg-primary hover:bg-primary"
                 )}
             >
                 {state === "loading" ? (
@@ -186,23 +186,23 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
                 )}
             </Button>
             {state === "error" && errorMessage && (
-                <span className="text-[10px] text-rose-600 font-medium flex items-center gap-1">
+                <span className="text-[10px] text-destructive font-medium flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
                     {errorMessage}
                 </span>
             )}
             {embeddingCheck && !embeddingCheck.loading && embeddingCheck.withEmbedding < embeddingCheck.total && (
-                <div className="mt-2 w-full rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-left">
-                    <p className="text-sm font-medium text-amber-300">
+                <div className="mt-2 w-full rounded-md border border-warning/20 bg-warning/10 p-3 text-left">
+                    <p className="text-sm font-medium text-warning">
                         {embeddingCheck.total - embeddingCheck.withEmbedding} of {embeddingCheck.total} eligible students have no embedding yet.
                     </p>
-                    <p className="mt-1 text-xs text-amber-400/70">
+                    <p className="mt-1 text-xs text-warning/70">
                         These students will be skipped in ranking. You can queue their embeddings now and retry shortly.
                     </p>
                     <button
                         type="button"
                         onClick={queueMissingEmbeddings}
-                        className="mt-2 text-xs text-amber-300 underline hover:text-amber-200"
+                        className="mt-2 text-xs text-warning underline hover:text-warning"
                     >
                         Queue missing embeddings now
                     </button>

@@ -44,9 +44,9 @@ type Experience = {
 
 function OutcomeBadge({ outcome }: { outcome: string }) {
   const styles: Record<string, string> = {
-    selected: "bg-emerald-500/15 text-emerald-300 border-emerald-500/20",
-    rejected: "bg-rose-500/15 text-rose-300 border-rose-500/20",
-    not_disclosed: "bg-slate-800 text-slate-300 border-white/10",
+    selected: "bg-success/10 text-success border-success/20",
+    rejected: "bg-destructive/10 text-destructive border-destructive/20",
+    not_disclosed: "bg-card text-muted-foreground border-border",
   };
 
   return <Badge className={cn("border", styles[outcome] ?? styles.not_disclosed)}>{formatCategoryLabel(outcome)}</Badge>;
@@ -54,7 +54,7 @@ function OutcomeBadge({ outcome }: { outcome: string }) {
 
 function CategoryBadge({ category }: { category: string | null }) {
   if (!category) return null;
-  return <Badge className="border border-indigo-500/20 bg-indigo-500/10 text-indigo-300">{category.toUpperCase()}</Badge>;
+  return <Badge className="border border-primary/30 bg-primary/10 text-primary">{category.toUpperCase()}</Badge>;
 }
 
 export default function CompanyExperienceWall({ companySlug }: { companySlug?: string }) {
@@ -106,68 +106,68 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
     <div className="mx-auto max-w-6xl space-y-6 p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white">{headerTitle}</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-3xl font-black tracking-tight text-foreground">{headerTitle}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {isDetailView ? "Read how seniors approached this company and what helped them succeed." : "Browse interview experiences shared by students from your college."}
           </p>
         </div>
         {canSubmit ? (
-          <Button asChild className="gap-2 bg-indigo-600 hover:bg-indigo-500">
+          <Button asChild className="gap-2 bg-primary hover:bg-primary">
             <Link href="/student/companies/submit"><Plus className="h-4 w-4" /> Share Your Experience</Link>
           </Button>
         ) : null}
       </div>
 
-      <div className="grid gap-4 rounded-2xl border border-white/10 bg-slate-900/50 p-5 md:grid-cols-[1fr_auto_auto]">
+      <div className="grid gap-4 rounded-md border border-border bg-card p-5 md:grid-cols-[1fr_auto_auto]">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by company name" className="border-white/10 bg-slate-950 pl-10 text-slate-100" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by company name" className="border-border bg-muted/20 pl-10 text-foreground" />
         </div>
         <div className="flex items-center gap-2 overflow-x-auto">
           {["all", "placement", "internship", "ppo"].map((type) => (
-            <button key={type} type="button" onClick={() => setDriveType(type)} className={cn("rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide", driveType === type ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-300")}>{formatCategoryLabel(type)}</button>
+            <button key={type} type="button" onClick={() => setDriveType(type)} className={cn("rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide", driveType === type ? "bg-primary text-foreground" : "bg-card text-muted-foreground")}>{formatCategoryLabel(type)}</button>
           ))}
         </div>
         <div className="flex items-center gap-2 overflow-x-auto">
           {["all", "1", "2", "3", "4", "5"].map((value) => (
-            <button key={value} type="button" onClick={() => setDifficulty(value)} className={cn("rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide", difficulty === value ? "bg-amber-500 text-slate-950" : "bg-slate-800 text-slate-300")}>{value === "all" ? "All levels" : `${value}★+`}</button>
+            <button key={value} type="button" onClick={() => setDifficulty(value)} className={cn("rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide", difficulty === value ? "bg-warning/10 text-slate-950" : "bg-card text-muted-foreground")}>{value === "all" ? "All levels" : `${value}★+`}</button>
           ))}
         </div>
       </div>
 
-      {loading ? <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-8 text-sm text-slate-400">Loading experiences...</div> : null}
+      {loading ? <div className="rounded-md border border-border bg-card p-8 text-sm text-muted-foreground">Loading experiences...</div> : null}
 
       {!loading && !isDetailView ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {companies.map((company) => (
             <Link key={company.company_normalized} href={`/student/companies/${company.company_normalized}`}>
-              <Card className="h-full border-white/10 bg-slate-900/60 transition-all hover:border-white/20 hover:bg-slate-900/80">
+              <Card className="h-full border-border bg-card transition-all hover:border-border hover:bg-card">
                 <CardHeader className="space-y-2">
-                  <CardTitle className="text-lg text-white">{company.company_name}</CardTitle>
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <CardTitle className="text-lg text-foreground">{company.company_name}</CardTitle>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{company.experience_count} experiences</span>
                     <span>•</span>
                     <span>Avg difficulty {company.avg_difficulty}</span>
                   </div>
                 </CardHeader>
-                <CardContent className="flex items-center gap-1 text-amber-400">
-                  {[1, 2, 3, 4, 5].map((star) => <Star key={star} className={cn("h-4 w-4", star <= Math.round(Number(company.avg_difficulty)) ? "fill-amber-400" : "text-slate-700")} />)}
+                <CardContent className="flex items-center gap-1 text-warning">
+                  {[1, 2, 3, 4, 5].map((star) => <Star key={star} className={cn("h-4 w-4", star <= Math.round(Number(company.avg_difficulty)) ? "fill-amber-400" : "text-muted-foreground")} />)}
                 </CardContent>
               </Card>
             </Link>
           ))}
-          {companies.length === 0 ? <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-8 text-sm text-slate-400">No published experiences found for that search yet.</div> : null}
+          {companies.length === 0 ? <div className="rounded-md border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">No published experiences found for that search yet.</div> : null}
         </div>
       ) : null}
 
       {!loading && isDetailView ? (
         <div className="space-y-4">
           {experiences.map((experience) => (
-            <article key={experience.id} className="space-y-4 rounded-2xl border border-white/5 bg-slate-900/60 p-6">
+            <article key={experience.id} className="space-y-4 rounded-md border border-border bg-card p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-bold text-white">{experience.show_name ? experience.student_name : experience.is_admin_posted ? "Anonymous — Shared by Admin" : "Anonymous"}</p>
-                  <p className="text-sm text-slate-400">{experience.role_title ?? "Unknown role"} • {experience.batch_year ?? "Unknown"} Batch</p>
+                  <p className="font-bold text-foreground">{experience.show_name ? experience.student_name : experience.is_admin_posted ? "Anonymous — Shared by Admin" : "Anonymous"}</p>
+                  <p className="text-sm text-muted-foreground">{experience.role_title ?? "Unknown role"} • {experience.batch_year ?? "Unknown"} Batch</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <CategoryBadge category={experience.category_snapshot} />
@@ -177,34 +177,34 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
 
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((value) => (
-                  <Star key={value} className={cn("h-4 w-4", value <= experience.difficulty ? "fill-amber-400 text-amber-400" : "text-slate-600")} />
+                  <Star key={value} className={cn("h-4 w-4", value <= experience.difficulty ? "fill-amber-400 text-warning" : "text-muted-foreground")} />
                 ))}
-                <span className="ml-2 text-xs text-slate-400">Difficulty {experience.difficulty}/5</span>
+                <span className="ml-2 text-xs text-muted-foreground">Difficulty {experience.difficulty}/5</span>
               </div>
 
               {experience.interview_process ? (
                 <section>
-                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Interview Process</h4>
+                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Interview Process</h4>
                   <MarkdownRenderer content={experience.interview_process} />
                 </section>
               ) : null}
 
               {experience.tips ? (
                 <section>
-                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Tips for Future Students</h4>
+                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Tips for Future Students</h4>
                   <MarkdownRenderer content={experience.tips} />
                 </section>
               ) : null}
 
-              <div className="flex items-center justify-between border-t border-white/5 pt-2">
-                <button type="button" onClick={() => toggleHelpful(experience.id)} className={cn("flex items-center gap-1.5 text-xs", experience.has_voted ? "text-indigo-300" : "text-slate-400 hover:text-white")}>
+              <div className="flex items-center justify-between border-t border-border pt-2">
+                <button type="button" onClick={() => toggleHelpful(experience.id)} className={cn("flex items-center gap-1.5 text-xs", experience.has_voted ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
                   <ThumbsUp className="h-3.5 w-3.5" /> Helpful ({experience.helpful_count})
                 </button>
-                <span className="text-xs text-slate-600">{formatDistanceToNow(new Date(experience.created_at), { addSuffix: true })}</span>
+                <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(experience.created_at), { addSuffix: true })}</span>
               </div>
             </article>
           ))}
-          {experiences.length === 0 ? <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-8 text-sm text-slate-400">No published experiences for this company yet.</div> : null}
+          {experiences.length === 0 ? <div className="rounded-md border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">No published experiences for this company yet.</div> : null}
         </div>
       ) : null}
     </div>

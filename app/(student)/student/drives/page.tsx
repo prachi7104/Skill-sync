@@ -94,7 +94,7 @@ export default async function StudentDrivesPage() {
             return (
               <div
                 key={drive.id}
-                className="group relative bg-card rounded-md border border-border hover:border-indigo-500/30 transition-all duration-300 overflow-hidden flex flex-col"
+                className="group relative bg-card rounded-md border border-border hover:border-primary/30 transition-all duration-300 overflow-hidden flex flex-col"
               >
                 {/* Rank badge */}
                 {ranking && (
@@ -102,7 +102,7 @@ export default async function StudentDrivesPage() {
                     href={`/student/drives/${drive.id}/ranking`}
                     className="absolute top-4 right-4 z-10"
                   >
-                    <div className="flex items-center gap-1.5 bg-primary/15 border border-indigo-500/25 rounded-full px-3 py-1.5 hover:bg-primary/25 transition-colors">
+                    <div className="flex items-center gap-1.5 bg-primary/15 border border-primary/30 rounded-full px-3 py-1.5 hover:bg-primary/25 transition-colors">
                       <Award className="w-3.5 h-3.5 text-primary" />
                       <span className="text-xs font-black text-primary">
                         {hasRankPosition

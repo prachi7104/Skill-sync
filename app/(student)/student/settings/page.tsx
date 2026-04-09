@@ -35,7 +35,7 @@ export default function StudentSettingsPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter your display name"
-          className="w-full bg-muted/50 border border-border text-foreground rounded-md px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
+          className="w-full bg-muted/50 border border-border text-foreground rounded-md px-4 py-3 text-sm focus:outline-none focus:border-primary/30"
           required
         />
 

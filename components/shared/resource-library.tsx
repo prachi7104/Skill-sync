@@ -288,21 +288,21 @@ export default function ResourceLibrary() {
     <div className="mx-auto max-w-7xl space-y-6 p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white">Resource Library</h1>
-          <p className="mt-1 text-sm text-slate-400">Browse technical and soft-skills content curated for your college.</p>
+          <h1 className="text-3xl font-black tracking-tight text-foreground">Resource Library</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Browse technical and soft-skills content curated for your college.</p>
         </div>
-        {canCreate ? <Button onClick={() => setCreateOpen(true)} className="gap-2 bg-indigo-600 hover:bg-indigo-500"><Plus className="h-4 w-4" /> New Resource</Button> : null}
+        {canCreate ? <Button onClick={() => setCreateOpen(true)} className="gap-2 bg-primary hover:bg-primary"><Plus className="h-4 w-4" /> New Resource</Button> : null}
       </div>
 
       <Tabs value={section} onValueChange={(value) => setSection(value as "technical" | "softskills")}>
-        <TabsList className="bg-slate-900/60 text-slate-300">
+        <TabsList className="bg-card text-muted-foreground">
           <TabsTrigger value="technical">Technical</TabsTrigger>
           <TabsTrigger value="softskills">Soft Skills</TabsTrigger>
         </TabsList>
         <TabsContent value={section}>
           <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-            <aside className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/50 p-4">
-              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search resources" className="border-white/10 bg-slate-950 text-slate-100" />
+            <aside className="space-y-4 rounded-md border border-border bg-card p-4">
+              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search resources" className="border-border bg-muted/20 text-foreground" />
               {(viewerRole === "faculty" || viewerRole === "admin") ? (
                 <div className="grid grid-cols-2 gap-2">
                   {(["all", "published", "draft", "archived"] as const).map((statusKey) => (
@@ -311,10 +311,10 @@ export default function ResourceLibrary() {
                       type="button"
                       onClick={() => setStatusFilter(statusKey)}
                       className={cn(
-                        "rounded-xl px-3 py-2 text-xs font-semibold",
+                        "rounded-md px-3 py-2 text-xs font-semibold",
                         statusFilter === statusKey
-                          ? "bg-indigo-600 text-white"
-                          : "bg-slate-950 text-slate-300 hover:bg-slate-800"
+                          ? "bg-primary text-foreground"
+                          : "bg-muted/20 text-muted-foreground hover:bg-card"
                       )}
                     >
                       {statusKey === "all" ? "All" : statusKey.charAt(0).toUpperCase() + statusKey.slice(1)}
@@ -327,62 +327,62 @@ export default function ResourceLibrary() {
                   type="button"
                   onClick={() => setCategory("all")}
                   className={cn(
-                    "w-full rounded-xl px-4 py-3 text-left text-sm font-semibold",
-                    category === "all" ? "bg-indigo-600 text-white" : "bg-slate-950 text-slate-300 hover:bg-slate-800"
+                    "w-full rounded-md px-4 py-3 text-left text-sm font-semibold",
+                    category === "all" ? "bg-primary text-foreground" : "bg-muted/20 text-muted-foreground hover:bg-card"
                   )}
                 >
                   All Categories
                 </button>
                 {sideCategories.map((item) => (
-                  <button key={item} type="button" onClick={() => setCategory(item)} className={cn("w-full rounded-xl px-4 py-3 text-left text-sm font-semibold", category === item ? "bg-indigo-600 text-white" : "bg-slate-950 text-slate-300 hover:bg-slate-800")}>{formatCategoryLabel(item)}</button>
+                  <button key={item} type="button" onClick={() => setCategory(item)} className={cn("w-full rounded-md px-4 py-3 text-left text-sm font-semibold", category === item ? "bg-primary text-foreground" : "bg-muted/20 text-muted-foreground hover:bg-card")}>{formatCategoryLabel(item)}</button>
                 ))}
               </div>
             </aside>
 
             <div className="space-y-4">
-              {loading ? <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-8 text-sm text-slate-400">Loading resources...</div> : null}
-              {!loading && resources.length === 0 ? <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-8 text-sm text-slate-400">No resources found for this filter yet.</div> : null}
+              {loading ? <div className="rounded-md border border-border bg-card p-8 text-sm text-muted-foreground">Loading resources...</div> : null}
+              {!loading && resources.length === 0 ? <div className="rounded-md border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">No resources found for this filter yet.</div> : null}
               {!loading ? resources.map((resource) => (
-                <article key={resource.id} className="rounded-2xl border border-white/5 bg-slate-900/60 p-5 transition-all hover:border-white/10">
+                <article key={resource.id} className="rounded-md border border-border bg-card p-5 transition-all hover:border-border">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="mb-2 flex items-center gap-2">
-                        <Badge className="border border-white/10 bg-slate-800 text-slate-200">{formatCategoryLabel(resource.category)}</Badge>
+                        <Badge className="border border-border bg-card text-foreground">{formatCategoryLabel(resource.category)}</Badge>
                         {resource.status && resource.status !== "published" ? (
-                          <Badge className="border border-amber-500/30 bg-amber-500/10 text-amber-300">
+                          <Badge className="border border-warning/20 bg-warning/10 text-warning">
                             {resource.status.toUpperCase()}
                           </Badge>
                         ) : null}
-                        {resource.attachment_url ? <Upload className="h-3.5 w-3.5 text-slate-400" /> : null}
+                        {resource.attachment_url ? <Upload className="h-3.5 w-3.5 text-muted-foreground" /> : null}
                       </div>
-                      <h3 className="text-sm font-bold leading-tight text-white">{resource.title}</h3>
-                      {resource.body ? <p className="mt-1.5 line-clamp-2 text-xs text-slate-400">{stripMarkdown(resource.body)}</p> : null}
+                      <h3 className="text-sm font-bold leading-tight text-foreground">{resource.title}</h3>
+                      {resource.body ? <p className="mt-1.5 line-clamp-2 text-xs text-muted-foreground">{stripMarkdown(resource.body)}</p> : null}
                     </div>
                     <div className="flex items-center gap-2">
                       {resource.attachment_url ? (
-                        <a href={resource.attachment_url} target="_blank" className="flex items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-600/20 px-3 py-1.5 text-xs font-bold text-indigo-400 hover:bg-indigo-600/30">
+                        <a href={resource.attachment_url} target="_blank" className="flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/20 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/30">
                           <Download className="h-3 w-3" /> PDF
                         </a>
                       ) : null}
-                      <Button variant="outline" className="border-white/10 bg-slate-950 text-slate-200 hover:bg-slate-800" onClick={() => openResource(resource)}>
+                      <Button variant="outline" className="border-border bg-muted/20 text-foreground hover:bg-card" onClick={() => openResource(resource)}>
                         Open
                       </Button>
                       {canManageResource(resource) ? (
-                        <Button variant="outline" className="gap-1 border-white/10 bg-slate-950 text-slate-200 hover:bg-slate-800" onClick={() => startEdit(resource)}>
+                        <Button variant="outline" className="gap-1 border-border bg-muted/20 text-foreground hover:bg-card" onClick={() => startEdit(resource)}>
                           <Pencil className="h-3 w-3" /> Edit
                         </Button>
                       ) : null}
                       {canManageResource(resource) ? (
-                        <Button variant="outline" className="gap-1 border-rose-500/40 bg-rose-900/20 text-rose-300 hover:bg-rose-900/30" onClick={() => deleteResource(resource)}>
+                        <Button variant="outline" className="gap-1 border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/10" onClick={() => deleteResource(resource)}>
                           <Trash2 className="h-3 w-3" /> Delete
                         </Button>
                       ) : null}
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center gap-4 border-t border-white/5 pt-3">
-                    <span className="text-xs text-slate-500">By {resource.author_name}</span>
-                    <span className="text-xs text-slate-600">{new Date(resource.created_at).toLocaleDateString()}</span>
-                    <span className="ml-auto flex items-center gap-1 text-xs text-slate-500"><Eye className="h-3 w-3" /> {resource.view_count}</span>
+                  <div className="mt-3 flex items-center gap-4 border-t border-border pt-3">
+                    <span className="text-xs text-muted-foreground">By {resource.author_name}</span>
+                    <span className="text-xs text-muted-foreground">{new Date(resource.created_at).toLocaleDateString()}</span>
+                    <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground"><Eye className="h-3 w-3" /> {resource.view_count}</span>
                   </div>
                 </article>
               )) : null}
@@ -392,7 +392,7 @@ export default function ResourceLibrary() {
       </Tabs>
 
       <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="max-w-3xl border-white/10 bg-slate-950 text-slate-100">
+        <DialogContent className="max-w-3xl border-border bg-muted/20 text-foreground">
           {selected ? (
             <>
               <DialogHeader>
@@ -401,7 +401,7 @@ export default function ResourceLibrary() {
               </DialogHeader>
               <div className="max-h-[70vh] overflow-y-auto space-y-4">
                 {selected.body ? <MarkdownRenderer content={selected.body} /> : null}
-                {selected.attachment_url ? <a href={selected.attachment_url} target="_blank" className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white"><Download className="h-4 w-4" /> Download attachment</a> : null}
+                {selected.attachment_url ? <a href={selected.attachment_url} target="_blank" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-foreground"><Download className="h-4 w-4" /> Download attachment</a> : null}
               </div>
             </>
           ) : null}
@@ -409,7 +409,7 @@ export default function ResourceLibrary() {
       </Dialog>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-3xl border-white/10 bg-slate-950 text-slate-100">
+        <DialogContent className="max-w-3xl border-border bg-muted/20 text-foreground">
           <DialogHeader>
             <DialogTitle>Create Resource</DialogTitle>
             <DialogDescription>Post a new {section === "technical" ? "technical" : "soft skills"} resource for your college.</DialogDescription>
@@ -421,7 +421,7 @@ export default function ResourceLibrary() {
                 <select
                   value={form.category}
                   onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
-                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                  className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground"
                 >
                   {CATEGORY_MAP[section].map((option) => (
                     <option key={option} value={option}>{formatCategoryLabel(option)}</option>
@@ -430,25 +430,25 @@ export default function ResourceLibrary() {
               </div>
               <div className="space-y-2">
                 <Label>Title</Label>
-                <Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className="border-border bg-card text-foreground" />
               </div>
               <div className="space-y-2">
                 <Label>Company Name (optional)</Label>
-                <Input value={form.companyName} onChange={(event) => setForm((current) => ({ ...current, companyName: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input value={form.companyName} onChange={(event) => setForm((current) => ({ ...current, companyName: event.target.value }))} className="border-border bg-card text-foreground" />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Markdown Content</Label>
-              <Textarea rows={10} value={form.body} onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+              <Textarea rows={10} value={form.body} onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))} className="border-border bg-card text-foreground" />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Tags</Label>
-                <Input value={form.tags} onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))} placeholder="comma,separated,tags" className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input value={form.tags} onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))} placeholder="comma,separated,tags" className="border-border bg-card text-foreground" />
               </div>
               <div className="space-y-2">
                 <Label>Attachment</Label>
-                <Input type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={(event) => setForm((current) => ({ ...current, file: event.target.files?.[0] ?? null }))} className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={(event) => setForm((current) => ({ ...current, file: event.target.files?.[0] ?? null }))} className="border-border bg-card text-foreground" />
               </div>
             </div>
             {viewerRole === "faculty" ? (
@@ -457,21 +457,21 @@ export default function ResourceLibrary() {
                 <select
                   value={form.status}
                   onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as "draft" | "published" }))}
-                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                  className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground"
                 >
                   <option value="published">Publish now</option>
                   <option value="draft">Save as draft</option>
                 </select>
               </div>
             ) : null}
-            <div className="space-y-2 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+            <div className="space-y-2 rounded-md border border-border bg-card p-4">
               <Label>Preview</Label>
-              {form.body ? <MarkdownRenderer content={form.body} /> : <p className="text-sm text-slate-400">Markdown preview will appear here.</p>}
+              {form.body ? <MarkdownRenderer content={form.body} /> : <p className="text-sm text-muted-foreground">Markdown preview will appear here.</p>}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="border-white/10 bg-slate-900 text-slate-100" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={createResource} disabled={submitting} className="bg-indigo-600 hover:bg-indigo-500">{submitting ? "Creating..." : "Create Resource"}</Button>
+            <Button variant="outline" className="border-border bg-card text-foreground" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button onClick={createResource} disabled={submitting} className="bg-primary hover:bg-primary">{submitting ? "Creating..." : "Create Resource"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -480,7 +480,7 @@ export default function ResourceLibrary() {
         setEditOpen(open);
         if (!open) setEditing(null);
       }}>
-        <DialogContent className="max-w-3xl border-white/10 bg-slate-950 text-slate-100">
+        <DialogContent className="max-w-3xl border-border bg-muted/20 text-foreground">
           <DialogHeader>
             <DialogTitle>Edit Resource</DialogTitle>
             <DialogDescription>Update content, category, and publish status.</DialogDescription>
@@ -496,7 +496,7 @@ export default function ResourceLibrary() {
                     section: event.target.value as "technical" | "softskills",
                     category: CATEGORY_MAP[event.target.value as "technical" | "softskills"][0],
                   }))}
-                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                  className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground"
                 >
                   <option value="technical">Technical</option>
                   <option value="softskills">Soft Skills</option>
@@ -507,7 +507,7 @@ export default function ResourceLibrary() {
                 <select
                   value={editForm.category}
                   onChange={(event) => setEditForm((current) => ({ ...current, category: event.target.value }))}
-                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                  className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground"
                 >
                   {editCategoryOptions.map((option) => (
                     <option key={option} value={option}>{formatCategoryLabel(option)}</option>
@@ -518,28 +518,28 @@ export default function ResourceLibrary() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Title</Label>
-                <Input value={editForm.title} onChange={(event) => setEditForm((current) => ({ ...current, title: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input value={editForm.title} onChange={(event) => setEditForm((current) => ({ ...current, title: event.target.value }))} className="border-border bg-card text-foreground" />
               </div>
               <div className="space-y-2">
                 <Label>Company Name (optional)</Label>
-                <Input value={editForm.companyName} onChange={(event) => setEditForm((current) => ({ ...current, companyName: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input value={editForm.companyName} onChange={(event) => setEditForm((current) => ({ ...current, companyName: event.target.value }))} className="border-border bg-card text-foreground" />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Markdown Content</Label>
-              <Textarea rows={10} value={editForm.body} onChange={(event) => setEditForm((current) => ({ ...current, body: event.target.value }))} className="border-white/10 bg-slate-900 text-slate-100" />
+              <Textarea rows={10} value={editForm.body} onChange={(event) => setEditForm((current) => ({ ...current, body: event.target.value }))} className="border-border bg-card text-foreground" />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Tags</Label>
-                <Input value={editForm.tags} onChange={(event) => setEditForm((current) => ({ ...current, tags: event.target.value }))} placeholder="comma,separated,tags" className="border-white/10 bg-slate-900 text-slate-100" />
+                <Input value={editForm.tags} onChange={(event) => setEditForm((current) => ({ ...current, tags: event.target.value }))} placeholder="comma,separated,tags" className="border-border bg-card text-foreground" />
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
                 <select
                   value={editForm.status}
                   onChange={(event) => setEditForm((current) => ({ ...current, status: event.target.value as "draft" | "published" | "archived" }))}
-                  className="h-10 w-full rounded-md border border-white/10 bg-slate-900 px-3 text-sm text-slate-100"
+                  className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground"
                 >
                   <option value="published">Published</option>
                   <option value="draft">Draft</option>
@@ -557,13 +557,13 @@ export default function ResourceLibrary() {
                   file: event.target.files?.[0] ?? null,
                   removeAttachment: event.target.files?.[0] ? false : current.removeAttachment,
                 }))}
-                className="border-white/10 bg-slate-900 text-slate-100"
+                className="border-border bg-card text-foreground"
               />
               {editing?.attachment_name ? (
-                <p className="text-xs text-slate-400">Current: {editing.attachment_name}</p>
+                <p className="text-xs text-muted-foreground">Current: {editing.attachment_name}</p>
               ) : null}
               {editing?.attachment_url ? (
-                <label className="flex items-center gap-2 text-xs text-slate-300">
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
                   <input
                     type="checkbox"
                     checked={editForm.removeAttachment}
@@ -579,8 +579,8 @@ export default function ResourceLibrary() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="border-white/10 bg-slate-900 text-slate-100" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={saveEdit} disabled={savingEdit} className="bg-indigo-600 hover:bg-indigo-500">{savingEdit ? "Saving..." : "Save Changes"}</Button>
+            <Button variant="outline" className="border-border bg-card text-foreground" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={saveEdit} disabled={savingEdit} className="bg-primary hover:bg-primary">{savingEdit ? "Saving..." : "Save Changes"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

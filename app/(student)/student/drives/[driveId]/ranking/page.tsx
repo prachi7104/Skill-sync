@@ -112,7 +112,7 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
       <div className="space-y-2">
         <Link
           href="/student/drives"
-          className="text-sm text-indigo-600 hover:underline inline-flex items-center gap-1"
+          className="text-sm text-primary hover:underline inline-flex items-center gap-1"
         >
           ← Back to Drives
         </Link>

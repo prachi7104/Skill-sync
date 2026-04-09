@@ -72,14 +72,14 @@ export default function CompanyExperienceForm() {
 
   return (
     <div className="mx-auto grid max-w-6xl gap-6 p-8 lg:grid-cols-[1.2fr_0.8fr]">
-      <Card className="border-white/10 bg-slate-900/60">
+      <Card className="border-border bg-card">
         <CardHeader>
-          <CardTitle className="text-white">Share Your Interview Experience</CardTitle>
+          <CardTitle className="text-foreground">Share Your Interview Experience</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="space-y-2">
             <Label>Company Name</Label>
-            <Input value={companyName} onChange={(event) => setCompanyName(event.target.value)} list="company-suggestions" className="border-white/10 bg-slate-950 text-slate-100" />
+            <Input value={companyName} onChange={(event) => setCompanyName(event.target.value)} list="company-suggestions" className="border-border bg-muted/20 text-foreground" />
             <datalist id="company-suggestions">
               {suggestions.map((suggestion) => <option key={suggestion} value={suggestion} />)}
             </datalist>
@@ -87,11 +87,11 @@ export default function CompanyExperienceForm() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>Role Title</Label>
-              <Input value={roleTitle} onChange={(event) => setRoleTitle(event.target.value)} className="border-white/10 bg-slate-950 text-slate-100" />
+              <Input value={roleTitle} onChange={(event) => setRoleTitle(event.target.value)} className="border-border bg-muted/20 text-foreground" />
             </div>
             <div className="space-y-2">
               <Label>Drive Type</Label>
-              <select value={driveType} onChange={(event) => setDriveType(event.target.value)} className="h-10 w-full rounded-md border border-white/10 bg-slate-950 px-3 text-sm text-slate-100">
+              <select value={driveType} onChange={(event) => setDriveType(event.target.value)} className="h-10 w-full rounded-md border border-border bg-muted/20 px-3 text-sm text-foreground">
                 <option value="placement">Placement</option>
                 <option value="internship">Internship</option>
                 <option value="ppo">PPO</option>
@@ -100,7 +100,7 @@ export default function CompanyExperienceForm() {
           </div>
           <div className="space-y-2">
             <Label>Outcome</Label>
-            <select value={outcome} onChange={(event) => setOutcome(event.target.value)} className="h-10 w-full rounded-md border border-white/10 bg-slate-950 px-3 text-sm text-slate-100">
+            <select value={outcome} onChange={(event) => setOutcome(event.target.value)} className="h-10 w-full rounded-md border border-border bg-muted/20 px-3 text-sm text-foreground">
               <option value="selected">Selected</option>
               <option value="rejected">Rejected</option>
               <option value="not_disclosed">Prefer not to say</option>
@@ -108,58 +108,58 @@ export default function CompanyExperienceForm() {
           </div>
           <div className="space-y-2">
             <Label>Interview Process</Label>
-            <Textarea rows={8} maxLength={1500} value={interviewProcess} onChange={(event) => setInterviewProcess(event.target.value)} className="border-white/10 bg-slate-950 text-slate-100" />
-            <p className="text-xs text-slate-500">{interviewProcess.length}/1500</p>
+            <Textarea rows={8} maxLength={1500} value={interviewProcess} onChange={(event) => setInterviewProcess(event.target.value)} className="border-border bg-muted/20 text-foreground" />
+            <p className="text-xs text-muted-foreground">{interviewProcess.length}/1500</p>
           </div>
           <div className="space-y-2">
             <Label>Tips for Future Students</Label>
-            <Textarea rows={6} maxLength={1000} value={tips} onChange={(event) => setTips(event.target.value)} className="border-white/10 bg-slate-950 text-slate-100" />
-            <p className="text-xs text-slate-500">{tips.length}/1000</p>
+            <Textarea rows={6} maxLength={1000} value={tips} onChange={(event) => setTips(event.target.value)} className="border-border bg-muted/20 text-foreground" />
+            <p className="text-xs text-muted-foreground">{tips.length}/1000</p>
           </div>
           <div className="space-y-2">
             <Label>Difficulty Rating</Label>
             <div className="flex items-center gap-2">
               {[1, 2, 3, 4, 5].map((value) => (
                 <button key={value} type="button" onClick={() => setDifficulty(value)}>
-                  <Star className={cn("h-6 w-6", value <= difficulty ? "fill-amber-400 text-amber-400" : "text-slate-600")} />
+                  <Star className={cn("h-6 w-6", value <= difficulty ? "fill-amber-400 text-warning" : "text-muted-foreground")} />
                 </button>
               ))}
             </div>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-slate-200">
+            <label className="flex items-center gap-3 rounded-md border border-border bg-muted/20 px-4 py-3 text-sm text-foreground">
               <input type="checkbox" checked={wouldRecommend} onChange={(event) => setWouldRecommend(event.target.checked)} />
               I would recommend this company to juniors
             </label>
-            <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-slate-200">
+            <label className="flex items-center gap-3 rounded-md border border-border bg-muted/20 px-4 py-3 text-sm text-foreground">
               <input type="checkbox" checked={showName} onChange={(event) => setShowName(event.target.checked)} />
               Show my name publicly
             </label>
           </div>
-          <Button onClick={onSubmit} disabled={submitting} className="bg-indigo-600 hover:bg-indigo-500">
+          <Button onClick={onSubmit} disabled={submitting} className="bg-primary hover:bg-primary">
             {submitting ? "Submitting..." : "Submit Experience"}
           </Button>
         </CardContent>
       </Card>
 
-      <Card className="border-white/10 bg-slate-900/60">
+      <Card className="border-border bg-card">
         <CardHeader>
-          <CardTitle className="text-white">Markdown Preview</CardTitle>
+          <CardTitle className="text-foreground">Markdown Preview</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {interviewProcess ? (
             <div>
-              <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Interview Process</h4>
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Interview Process</h4>
               <MarkdownRenderer content={interviewProcess} />
             </div>
           ) : null}
           {tips ? (
             <div>
-              <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Tips</h4>
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Tips</h4>
               <MarkdownRenderer content={tips} />
             </div>
           ) : null}
-          {!interviewProcess && !tips ? <p className="text-sm text-slate-400">Your markdown preview will appear here.</p> : null}
+          {!interviewProcess && !tips ? <p className="text-sm text-muted-foreground">Your markdown preview will appear here.</p> : null}
         </CardContent>
       </Card>
     </div>

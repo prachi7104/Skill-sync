@@ -191,7 +191,7 @@ export default function QuickSandbox() {
                     <button 
                         onClick={handleSubmit} 
                         disabled={isLoading || jdText.trim().length < 20}
-                        className="bg-primary hover:bg-primary disabled:bg-card text-foreground px-8 py-3.5 rounded-md font-bold text-sm transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] disabled:shadow-none flex items-center justify-center gap-2"
+                        className="bg-primary hover:bg-primary disabled:bg-card text-foreground px-8 py-3.5 rounded-md font-bold text-sm transition-all shadow-sm disabled:shadow-none flex items-center justify-center gap-2"
                     >
                         {isLoading ? <><Activity className="h-4 w-4 animate-spin" /> Analyzing...</> : "Run Quick Analysis"}
                     </button>
@@ -203,7 +203,7 @@ export default function QuickSandbox() {
                     <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
                     <div>
                         <p className="text-sm font-bold text-destructive">{error.reason || error.message || "An error occurred"}</p>
-                        {error.nextStep && <p className="text-xs text-rose-300 mt-1">{error.nextStep}</p>}
+                        {error.nextStep && <p className="text-xs text-destructive mt-1">{error.nextStep}</p>}
                     </div>
                 </div>
             )}
@@ -289,9 +289,9 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
                   <div className="bg-card border border-border rounded-md p-6">
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Seniority Fit</p>
                     {result.seniorityWarning ? (
-                      <p className="text-sm text-amber-300 mb-4">{result.seniorityWarning}</p>
+                      <p className="text-sm text-warning mb-4">{result.seniorityWarning}</p>
                     ) : (
-                      <p className="text-sm text-emerald-300 mb-4">Role level matches your profile</p>
+                      <p className="text-sm text-success mb-4">Role level matches your profile</p>
                     )}
                     <div className="space-y-2.5">
                       <ScoreRow label="Hard Skills" pct={result.hardSkillsScore} />
@@ -356,7 +356,7 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
                       <div className="flex flex-wrap gap-2">
                         {result.missingSkills.length > 0 ? (
                           result.missingSkills.map(skill => (
-                            <span key={skill} className="px-3 py-1.5 bg-destructive/10 border border-destructive/20 text-rose-300 text-xs font-bold rounded-md">
+                            <span key={skill} className="px-3 py-1.5 bg-destructive/10 border border-destructive/20 text-destructive text-xs font-bold rounded-md">
                               {skill}
                             </span>
                           ))
@@ -371,7 +371,7 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
                       <div className="flex flex-wrap gap-2">
                         {result.matchedSkills.length > 0 ? (
                           result.matchedSkills.map(skill => (
-                            <span key={skill} className="px-3 py-1.5 bg-success/10 border border-success/20 text-emerald-300 text-xs font-bold rounded-md">
+                            <span key={skill} className="px-3 py-1.5 bg-success/10 border border-success/20 text-success text-xs font-bold rounded-md">
                               {skill}
                             </span>
                           ))
@@ -383,7 +383,7 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
                   </div>
 
                   {cardFeedback.cards.domainAlignment.multiDomainNote && (
-                    <div className="bg-primary/10 border border-indigo-500/20 rounded-md p-6">
+                    <div className="bg-primary/10 border border-primary/30 rounded-md p-6">
                       <p className="text-xs font-bold text-primary uppercase tracking-wider mb-2">Multi-Domain Note</p>
                       <p className="text-sm text-primary">{cardFeedback.cards.domainAlignment.multiDomainNote}</p>
                     </div>
@@ -396,7 +396,7 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
           {!result.isEligible && (
             <div className="mt-6 p-4 bg-warning/10 border border-warning/20 rounded-md text-sm text-warning font-medium flex gap-3">
               <AlertTriangle className="h-5 w-5 shrink-0" />
-              <div><strong className="text-amber-300">Not Eligible:</strong> {result.ineligibilityReason}</div>
+              <div><strong className="text-warning">Not Eligible:</strong> {result.ineligibilityReason}</div>
             </div>
           )}
 
@@ -406,7 +406,7 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
                 <AlertTriangle className="h-4 w-4" /> Detected Flags
               </h4>
               {result.redFlags.map((rf, i) => (
-                <div key={i} className={`flex items-start gap-3 p-3 rounded-md border text-sm font-medium ${rf.severity === "Critical" ? "bg-destructive/10 border-destructive/20 text-rose-300" : "bg-warning/10 border-warning/20 text-amber-300"}`}>
+                <div key={i} className={`flex items-start gap-3 p-3 rounded-md border text-sm font-medium ${rf.severity === "Critical" ? "bg-destructive/10 border-destructive/20 text-destructive" : "bg-warning/10 border-warning/20 text-warning"}`}>
                   <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
                   <span><strong className="text-foreground mr-2">{rf.severity}</strong> {rf.flag} (-{rf.impact} pts)</span>
                 </div>
@@ -440,8 +440,8 @@ function DimensionCard({ title, score, bullets, note }: { title: string; score: 
 
 function FeedbackCard({ item }: { item: CardFeedback["feedback"][0] }) {
   const typeColors: Record<string, { badge: string; label: string }> = {
-    add_to_resume: { badge: "bg-warning/10 border-warning/20 text-amber-300", label: "Critical gap" },
-    learn_skill: { badge: "bg-destructive/10 border-destructive/20 text-rose-300", label: "Learn skill" },
+    add_to_resume: { badge: "bg-warning/10 border-warning/20 text-warning", label: "Critical gap" },
+    learn_skill: { badge: "bg-destructive/10 border-destructive/20 text-destructive", label: "Learn skill" },
     quantify: { badge: "bg-blue-500/10 border-blue-500/20 text-blue-300", label: "Strengthen evidence" },
     highlight: { badge: "bg-purple-500/10 border-purple-500/20 text-purple-300", label: "Highlight deeper" },
     format: { badge: "bg-card border-border text-muted-foreground", label: "Format fix" },
@@ -511,7 +511,7 @@ function ResultSectionV1({ result, getScoreColor, REC_STYLE }: { result: Sandbox
           {!result.isEligible && (
             <div className="mt-6 p-4 bg-warning/10 border border-warning/20 rounded-md text-sm text-warning font-medium flex gap-3">
               <AlertTriangle className="h-5 w-5 shrink-0" />
-              <div><strong className="text-amber-300">Not Eligible:</strong> {result.ineligibilityReason}</div>
+              <div><strong className="text-warning">Not Eligible:</strong> {result.ineligibilityReason}</div>
             </div>
           )}
 
@@ -521,7 +521,7 @@ function ResultSectionV1({ result, getScoreColor, REC_STYLE }: { result: Sandbox
                 <AlertTriangle className="h-4 w-4" /> Detected Flags
               </h4>
               {result.redFlags.map((rf, i) => (
-                <div key={i} className={`flex items-start gap-3 p-3 rounded-md border text-sm font-medium ${rf.severity === "Critical" ? "bg-destructive/10 border-destructive/20 text-rose-300" : "bg-warning/10 border-warning/20 text-amber-300"}`}>
+                <div key={i} className={`flex items-start gap-3 p-3 rounded-md border text-sm font-medium ${rf.severity === "Critical" ? "bg-destructive/10 border-destructive/20 text-destructive" : "bg-warning/10 border-warning/20 text-warning"}`}>
                   <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
                   <span><strong className="text-foreground mr-2">{rf.severity}</strong> {rf.flag} (-{rf.impact} pts)</span>
                 </div>
@@ -538,7 +538,7 @@ function ResultSectionV1({ result, getScoreColor, REC_STYLE }: { result: Sandbox
           </h4>
           <div className="flex flex-wrap gap-2">
             {result.matchedSkills.length > 0 ? result.matchedSkills.map(s => (
-              <span key={s} className="px-3 py-1.5 bg-success/10 border border-success/20 text-emerald-300 text-xs font-bold rounded-md">{s}</span>
+              <span key={s} className="px-3 py-1.5 bg-success/10 border border-success/20 text-success text-xs font-bold rounded-md">{s}</span>
             )) : <span className="text-xs text-muted-foreground italic">No skills matched</span>}
           </div>
         </div>
@@ -548,7 +548,7 @@ function ResultSectionV1({ result, getScoreColor, REC_STYLE }: { result: Sandbox
           </h4>
           <div className="flex flex-wrap gap-2">
             {result.missingSkills.length > 0 ? result.missingSkills.map(s => (
-              <span key={s} className="px-3 py-1.5 bg-destructive/10 border border-destructive/20 text-rose-300 text-xs font-bold rounded-md">{s}</span>
+              <span key={s} className="px-3 py-1.5 bg-destructive/10 border border-destructive/20 text-destructive text-xs font-bold rounded-md">{s}</span>
             )) : <span className="text-xs text-success italic font-bold">100% skill coverage!</span>}
           </div>
         </div>

@@ -71,13 +71,13 @@ function timeAgoLabel(iso: string | undefined, cached: boolean): string {
 function resourceTypeClass(type?: string): string {
   switch ((type ?? "").toLowerCase()) {
     case "youtube":
-      return "bg-destructive/10 text-rose-300 border-destructive/20";
+      return "bg-destructive/10 text-destructive border-destructive/20";
     case "github":
       return "bg-muted text-foreground border-border";
     case "docs":
-      return "bg-primary/15 text-primary border-indigo-500/30";
+      return "bg-primary/15 text-primary border-primary/30";
     case "course":
-      return "bg-success/10 text-emerald-300 border-success/20";
+      return "bg-success/10 text-success border-success/20";
     default:
       return "bg-muted/50 text-foreground border-border";
   }
@@ -225,7 +225,7 @@ export default function CareerCoachPage() {
           </Button>
         </header>
 
-        <Card className="border-none bg-gradient-to-r from-indigo-700/70 via-indigo-600/55 to-slate-900/70">
+        <Card className="border-none bg-gradient-to-r from-primary/15 via-primary/10 to-muted/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground">
               <Sparkles className="h-5 w-5" />
@@ -241,7 +241,7 @@ export default function CareerCoachPage() {
                 <p className="pt-2 text-xs text-muted-foreground">Analyzing your profile...</p>
               </div>
             ) : (
-              <p className="text-sm leading-relaxed text-indigo-50">
+              <p className="text-sm leading-relaxed text-muted-foreground">
                 {payload?.summary || "No summary available yet."}
               </p>
             )}
@@ -316,7 +316,7 @@ export default function CareerCoachPage() {
             </div>
 
             {sessionComplete ? (
-              <p className="text-sm text-amber-300">Session complete. Refresh to start a new one.</p>
+              <p className="text-sm text-warning">Session complete. Refresh to start a new one.</p>
             ) : null}
 
             <div className="space-y-2">
@@ -327,7 +327,7 @@ export default function CareerCoachPage() {
                 placeholder={sessionComplete ? "Session complete" : "Ask a question..."}
                 disabled={!canSend}
                 rows={3}
-                className="w-full resize-none rounded-md border border-border bg-muted/20/60 px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-indigo-500"
+                className="w-full resize-none rounded-md border border-border bg-muted/20/60 px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/30"
               />
               <div className="flex justify-end">
                 <Button
@@ -357,13 +357,13 @@ export default function CareerCoachPage() {
         ) : errorText ? (
           <Card className="border border-warning/20 bg-warning/10">
             <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-              <BookOpen className="h-10 w-10 text-amber-300" />
-              <h2 className="text-xl font-bold text-amber-100">No drives to analyze</h2>
-              <p className="max-w-2xl text-sm text-amber-200/90">
+              <BookOpen className="h-10 w-10 text-warning" />
+              <h2 className="text-xl font-bold text-warning">No drives to analyze</h2>
+              <p className="max-w-2xl text-sm text-warning/90">
                 {payload?.suggestion || "Complete your profile and wait for active drives to be posted"}
               </p>
-              <p className="text-xs text-amber-200/80">{errorText}</p>
-              <Button type="button" className="mt-2 bg-warning/10 text-slate-950 hover:bg-amber-400" onClick={() => void fetchRoadmap(true)}>
+              <p className="text-xs text-warning/80">{errorText}</p>
+              <Button type="button" className="mt-2 bg-warning/10 text-slate-950 hover:bg-warning/10" onClick={() => void fetchRoadmap(true)}>
                 Retry
               </Button>
             </CardContent>
@@ -375,11 +375,11 @@ export default function CareerCoachPage() {
                 <CardHeader className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <CardTitle className="text-xl font-black text-primary">{skill.skill}</CardTitle>
-                    <span className="rounded-full border border-indigo-400/30 bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-200">
+                    <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
                       {impactLabel(index)}
                     </span>
                   </div>
-                  <span className="inline-flex w-fit items-center rounded-full border border-slate-500/30 bg-muted/50/80 px-2.5 py-1 text-xs text-foreground">
+                  <span className="inline-flex w-fit items-center rounded-full border border-border bg-muted/50/80 px-2.5 py-1 text-xs text-foreground">
                     Start Week {skill.week_start ?? "?"} · {skill.hours_needed ?? "?"} hours
                   </span>
                 </CardHeader>
@@ -409,13 +409,13 @@ export default function CareerCoachPage() {
         {!loading && payload?.amcat_tip && !errorText ? (
           <Card className="border border-warning/20 bg-warning/10">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-amber-100">
+              <CardTitle className="flex items-center gap-2 text-warning">
                 <AlertTriangle className="h-5 w-5" />
                 AMCAT Focus Area
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-amber-100/95">{payload.amcat_tip}</p>
+              <p className="text-sm text-warning/95">{payload.amcat_tip}</p>
             </CardContent>
           </Card>
         ) : null}

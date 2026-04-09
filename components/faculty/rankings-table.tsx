@@ -131,9 +131,9 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                         <div className="flex items-end justify-around h-24 gap-2 px-4">
                             {distribution.map((d, i) => {
                                 const height = (d.count / maxCount) * 80;
-                                let colorClass = "bg-rose-500";
-                                if (i >= 2) colorClass = "bg-amber-500";
-                                if (i >= 3) colorClass = "bg-emerald-500";
+                                let colorClass = "bg-destructive/10";
+                                if (i >= 2) colorClass = "bg-warning/10";
+                                if (i >= 3) colorClass = "bg-success/10";
 
                                 return (
                                     <div key={d.label} className="flex-1 flex flex-col items-center group">
@@ -199,7 +199,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                     onClick={() => setShortlistedOnly(!shortlistedOnly)}
                     className={cn(
                         "h-9 gap-2 font-semibold transition-all",
-                        shortlistedOnly ? "bg-indigo-600 hover:bg-indigo-700" : "text-muted-foreground"
+                        shortlistedOnly ? "bg-primary hover:bg-primary" : "text-muted-foreground"
                     )}
                 >
                     <Star className={cn("h-4 w-4", shortlistedOnly && "fill-current")} />
@@ -221,7 +221,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
             </div>
 
             {/* ── Table ────────────────────────────────────────────────────────────── */}
-            <div className="rounded-xl border shadow-sm bg-card overflow-hidden">
+            <div className="rounded-md border shadow-sm bg-card overflow-hidden">
                 <Table>
                     <TableHeader className="bg-muted/40">
                         <TableRow className="hover:bg-transparent border-b">
@@ -259,14 +259,14 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                         <TableRow
                                             className={cn(
                                                 "cursor-pointer transition-colors group border-b last:border-0",
-                                                isExpanded ? "bg-indigo-50/30" : "hover:bg-muted/50",
+                                                isExpanded ? "bg-primary/5" : "hover:bg-muted/50",
                                                 isShortlisted && "bg-emerald-50/20"
                                             )}
                                             onClick={() => setExpandedId(isExpanded ? null : r.studentId)}
                                         >
                                             <TableCell className="text-center">
                                                 {r.rankPosition === 0 ? (
-                                                    <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Ineligible</span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Ineligible</span>
                                                 ) : r.rankPosition === 1 ? (
                                                     <span className="text-2xl" title="Rank 1">🥇</span>
                                                 ) : r.rankPosition === 2 ? (
@@ -279,7 +279,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-sm tracking-tight group-hover:text-indigo-600 transition-colors">
+                                                    <span className="font-bold text-sm tracking-tight group-hover:text-primary transition-colors">
                                                         {r.studentName}
                                                     </span>
                                                     <span className="text-[10px] text-muted-foreground font-mono uppercase mt-0.5">
@@ -293,7 +293,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                         {r.branch}
                                                     </span>
                                                     <span className="text-[11px] font-mono font-bold text-muted-foreground flex items-center gap-1.5 px-2">
-                                                        CGPA: <span className="text-indigo-600">{r.cgpa?.toFixed(1) ?? "—"}</span>
+                                                        CGPA: <span className="text-primary">{r.cgpa?.toFixed(1) ?? "—"}</span>
                                                     </span>
                                                 </div>
                                             </TableCell>
@@ -304,11 +304,11 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                             style={{ width: `${score}%` }}
                                                             className={cn(
                                                                 "h-full rounded-full transition-all duration-700",
-                                                                score >= 75 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500" : "bg-rose-500"
+                                                                score >= 75 ? "bg-success/10" : score >= 50 ? "bg-warning/10" : "bg-destructive/10"
                                                             )}
                                                         />
                                                     </div>
-                                                    <span className="font-mono text-sm font-black text-slate-700 min-w-[50px] text-right">
+                                                    <span className="font-mono text-sm font-black text-muted-foreground min-w-[50px] text-right">
                                                         {score.toFixed(1)}%
                                                     </span>
                                                 </div>
@@ -316,12 +316,12 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                             <TableCell>
                                                 <div className="flex flex-wrap gap-1">
                                                     {r.matchedSkills.slice(0, 3).map(s => (
-                                                        <Badge key={s} variant="secondary" className="px-1.5 py-0 text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                                                        <Badge key={s} variant="secondary" className="px-1.5 py-0 text-[10px] bg-emerald-50 text-success border-success/20">
                                                             {s}
                                                         </Badge>
                                                     ))}
                                                     {r.missingSkills.slice(0, 1).map(s => (
-                                                        <Badge key={s} variant="outline" className="px-1.5 py-0 text-[10px] text-rose-600 border-rose-200 bg-rose-50/30">
+                                                        <Badge key={s} variant="outline" className="px-1.5 py-0 text-[10px] text-destructive border-destructive/20 bg-rose-50/30">
                                                             {s}
                                                         </Badge>
                                                     ))}
@@ -342,8 +342,8 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                         className={cn(
                                                             "p-2 rounded-full transition-all duration-200 hover:scale-110 active:scale-95",
                                                             isShortlisted
-                                                                ? "text-amber-500 bg-amber-50 border border-amber-200 shadow-sm"
-                                                                : "text-gray-300 hover:text-amber-400"
+                                                                ? "text-warning bg-amber-50 border border-warning/20 shadow-sm"
+                                                                : "text-gray-300 hover:text-warning"
                                                         )}
                                                     >
                                                         <Star className={cn("h-5 w-5", isShortlisted && "fill-current")} />
@@ -355,23 +355,23 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
 
                                         {/* ── Expanded Content ────────────────────────────────────── */}
                                         {isExpanded && (
-                                            <TableRow className="bg-indigo-50/30 border-b hover:bg-indigo-50/30">
+                                            <TableRow className="bg-primary/5 border-b hover:bg-primary/5">
                                                 <TableCell colSpan={6} className="p-0">
                                                     <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-2 duration-300">
                                                         <div className="space-y-6">
                                                             <div className="space-y-4">
-                                                                <h4 className="text-xs font-black uppercase text-indigo-700 tracking-wider flex items-center gap-2">
-                                                                    <div className="h-1 w-4 bg-indigo-700 rounded-full" />
+                                                                <h4 className="text-xs font-black uppercase text-primary tracking-wider flex items-center gap-2">
+                                                                    <div className="h-1 w-4 bg-primary rounded-full" />
                                                                     Match Analysis
                                                                 </h4>
-                                                                <blockquote className="border-l-4 border-indigo-500 pl-4 py-1 italic text-sm text-slate-700 leading-relaxed">
+                                                                <blockquote className="border-l-4 border-primary/30 pl-4 py-1 italic text-sm text-muted-foreground leading-relaxed">
                                                                     &quot;{r.shortExplanation}&quot;
                                                                 </blockquote>
                                                             </div>
 
                                                             <div className="space-y-4">
-                                                                <h4 className="text-xs font-black uppercase text-emerald-700 tracking-wider flex items-center gap-2">
-                                                                    <div className="h-1 w-4 bg-emerald-700 rounded-full" />
+                                                                <h4 className="text-xs font-black uppercase text-success tracking-wider flex items-center gap-2">
+                                                                    <div className="h-1 w-4 bg-success/10 rounded-full" />
                                                                     Skills Alignment
                                                                 </h4>
                                                                 <div className="space-y-3">
@@ -379,7 +379,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                                         <p className="text-[10px] font-bold text-muted-foreground mb-1.5 uppercase tracking-wide">Matched Skills</p>
                                                                         <div className="flex flex-wrap gap-1.5">
                                                                             {r.matchedSkills.map(s => (
-                                                                                <Badge key={s} variant="secondary" className="bg-emerald-100 text-emerald-800 border-none px-2 py-0.5 text-xs font-semibold">
+                                                                                <Badge key={s} variant="secondary" className="bg-success/10 text-success border-none px-2 py-0.5 text-xs font-semibold">
                                                                                     {s}
                                                                                 </Badge>
                                                                             ))}
@@ -390,7 +390,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                                             <p className="text-[10px] font-bold text-muted-foreground mb-1.5 uppercase tracking-wide">Missing / Weak Skills</p>
                                                                             <div className="flex flex-wrap gap-1.5">
                                                                                 {r.missingSkills.map(s => (
-                                                                                    <Badge key={s} variant="outline" className="border-rose-200 text-rose-700 bg-rose-50 px-2 py-0.5 text-xs font-semibold">
+                                                                                    <Badge key={s} variant="outline" className="border-destructive/20 text-destructive bg-rose-50 px-2 py-0.5 text-xs font-semibold">
                                                                                         {s}
                                                                                     </Badge>
                                                                                 ))}
@@ -403,11 +403,11 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
 
                                                         <div className="space-y-6 flex flex-col">
                                                             <div className="flex-1 space-y-4">
-                                                                <h4 className="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
-                                                                    <div className="h-1 w-4 bg-slate-700 rounded-full" />
+                                                                <h4 className="text-xs font-black uppercase text-muted-foreground tracking-wider flex items-center gap-2">
+                                                                    <div className="h-1 w-4 bg-card rounded-full" />
                                                                     Score Breakdown & Analysis
                                                                 </h4>
-                                                                <div className="p-4 bg-white rounded-lg border border-indigo-100 text-sm leading-relaxed text-slate-600 shadow-sm max-h-[250px] overflow-y-auto">
+                                                                <div className="p-4 bg-white rounded-lg border border-primary/30 text-sm leading-relaxed text-muted-foreground shadow-sm max-h-[250px] overflow-y-auto">
                                                                     {r.detailedExplanation.split('\n').map((line, i) => (
                                                                         <p key={i} className={cn(line.trim() ? "mb-3 last:mb-0" : "h-2")}>
                                                                             {line}
@@ -424,8 +424,8 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                                         className={cn(
                                                                             "h-9 px-4 font-bold shadow-sm transition-all",
                                                                             isShortlisted
-                                                                                ? "bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200"
-                                                                                : "bg-indigo-600 hover:bg-indigo-700"
+                                                                                ? "bg-warning/10 text-warning border-warning/20 hover:bg-warning/10"
+                                                                                : "bg-primary hover:bg-primary"
                                                                         )}
                                                                         variant={isShortlisted ? "outline" : "default"}
                                                                     >
@@ -438,7 +438,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                                         onClick={() => passCandidate(r.studentId, currentShortlistState)}
                                                                         className={cn(
                                                                             "h-9 px-4 font-semibold transition-all",
-                                                                            isPassed ? "text-rose-600 bg-rose-50 hover:bg-rose-100" : "text-muted-foreground hover:text-rose-600 hover:bg-rose-50"
+                                                                            isPassed ? "text-destructive bg-rose-50 hover:bg-destructive/10" : "text-muted-foreground hover:text-destructive hover:bg-rose-50"
                                                                         )}
                                                                     >
                                                                         <XCircle className="h-4 w-4 mr-2" />
@@ -450,7 +450,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                                     variant="link"
                                                                     size="sm"
                                                                     asChild
-                                                                    className="text-indigo-600 gap-1 font-bold"
+                                                                    className="text-primary gap-1 font-bold"
                                                                 >
                                                                     <a
                                                                         href={profileHref}
