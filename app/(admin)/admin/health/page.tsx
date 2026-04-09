@@ -83,17 +83,17 @@ function getTimeAgo(date: Date): string {
 
 function Metric({ label, value, status }: { label: string; value: string; status?: "ok" | "warning" | "error" | "neutral" }) {
   const statusClass = {
-    ok: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-    warning: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-    error: "bg-rose-500/15 text-rose-300 border-rose-500/30",
-    neutral: "bg-slate-500/15 text-slate-300 border-slate-500/30",
+    ok: "bg-success/10 text-success border-success/20",
+    warning: "bg-warning/10 text-warning border-warning/20",
+    error: "bg-destructive/10 text-destructive border-destructive/20",
+    neutral: "bg-muted text-muted-foreground border-border",
   };
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-      <p className="text-xs text-slate-400">{label}</p>
+    <div className="rounded-md border border-border bg-card p-4">
+      <p className="text-xs text-muted-foreground">{label}</p>
       <div className="mt-2 flex items-center gap-2">
-        <p className="text-2xl font-black text-white">{value}</p>
+        <p className="text-2xl font-black text-foreground">{value}</p>
         {status && <span className={`rounded px-2 py-0.5 text-[10px] font-bold border ${statusClass[status]}`}>{status.toUpperCase()}</span>}
       </div>
     </div>
@@ -208,9 +208,9 @@ export default function AdminHealthPage() {
   if (loading) {
     return (
       <div className="w-full max-w-6xl p-8">
-        <h1 className="text-3xl font-black text-white">System Health</h1>
-        <p className="mt-1 text-sm text-slate-400">Operational dashboard — live snapshot</p>
-        <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/50 p-12 text-center text-slate-400">
+        <h1 className="text-3xl font-black text-foreground">System Health</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
+        <div className="mt-6 rounded-md border border-border bg-card p-12 text-center text-muted-foreground">
           Loading health data...
         </div>
       </div>
@@ -220,9 +220,9 @@ export default function AdminHealthPage() {
   if (!health) {
     return (
       <div className="w-full max-w-6xl p-8">
-        <h1 className="text-3xl font-black text-white">System Health</h1>
-        <p className="mt-1 text-sm text-slate-400">Operational dashboard — live snapshot</p>
-        <div className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-6 text-rose-300">
+        <h1 className="text-3xl font-black text-foreground">System Health</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
+        <div className="mt-6 rounded-md border border-destructive/20 bg-destructive/10 p-6 text-destructive">
           Health data unavailable
         </div>
       </div>
@@ -233,13 +233,13 @@ export default function AdminHealthPage() {
     <div className="w-full max-w-6xl space-y-6 p-8 animate-in fade-in duration-300">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white">System Health</h1>
-          <p className="mt-1 text-sm text-slate-400">Operational dashboard — live snapshot</p>
+          <h1 className="text-3xl font-black text-foreground">System Health</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="inline-flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-lg bg-card px-3 py-2 text-xs font-bold text-foreground hover:bg-card disabled:opacity-60"
         >
           {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
           Refresh
@@ -247,20 +247,20 @@ export default function AdminHealthPage() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+        <div className="rounded-md border border-warning/20 bg-warning/10 p-4 text-sm text-amber-200">
           {error}
         </div>
       )}
 
       {health.degraded ? (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+        <div className="rounded-md border border-warning/20 bg-warning/10 p-4 text-sm text-amber-100">
           Partial health data: some checks failed within timeout
           {health.failedChecks && health.failedChecks.length > 0 ? ` (${health.failedChecks.join(", ")})` : ""}.
         </div>
       ) : null}
 
       <section>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-400">Core Metrics</h2>
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted-foreground">Core Metrics</h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4 xl:grid-cols-5">
           <Metric label="Total Students" value={displayCount(health.totalStudents)} />
           <Metric label="Students Onboarded" value={displayCount(health.studentsOnboarded)} />
@@ -275,45 +275,45 @@ export default function AdminHealthPage() {
         </div>
       </section>
 
-      <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-slate-400">Job Queue</h2>
+      <section className="rounded-md border border-border bg-card p-5">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Job Queue</h2>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
           <Metric label="Pending Total" value={displayCount(pendingTotal)} status={pendingTotal > 0 ? "warning" : "ok"} />
           <Metric label="Failed (24h)" value={displayCount(failed24h)} status={failed24h > 0 ? "error" : "ok"} />
           <Metric label="Success Rate" value={`${successRate}%`} status={successRate >= 90 ? "ok" : "warning"} />
         </div>
-        <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300">
-          <span className="rounded bg-slate-800 px-3 py-1">parse_resume: {displayCount(pendingByType.parse_resume)}</span>
-          <span className="rounded bg-slate-800 px-3 py-1">generate_embedding: {displayCount(pendingByType.generate_embedding)}</span>
-          <span className="rounded bg-slate-800 px-3 py-1">enhance_jd: {displayCount(pendingByType.enhance_jd)}</span>
-          <span className="rounded bg-slate-800 px-3 py-1">rank_students: {displayCount(pendingByType.rank_students)}</span>
-          <span className="rounded bg-slate-800 px-3 py-1">avg_latency_ms: {displayCount(jobsHealth.avgLatencyMs)}</span>
+        <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
+          <span className="rounded bg-card px-3 py-1">parse_resume: {displayCount(pendingByType.parse_resume)}</span>
+          <span className="rounded bg-card px-3 py-1">generate_embedding: {displayCount(pendingByType.generate_embedding)}</span>
+          <span className="rounded bg-card px-3 py-1">enhance_jd: {displayCount(pendingByType.enhance_jd)}</span>
+          <span className="rounded bg-card px-3 py-1">rank_students: {displayCount(pendingByType.rank_students)}</span>
+          <span className="rounded bg-card px-3 py-1">avg_latency_ms: {displayCount(jobsHealth.avgLatencyMs)}</span>
         </div>
         {jobsHealth.lastActivity && (
-          <p className="mt-4 text-xs text-slate-400">
+          <p className="mt-4 text-xs text-muted-foreground">
             Last activity: {jobsHealth.lastActivity.type} ({jobsHealth.lastActivity.status}) - {getTimeAgo(new Date(jobsHealth.lastActivity.updated_at))}
           </p>
         )}
       </section>
 
-      <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-slate-400">Manual Triggers</h2>
+      <section className="rounded-md border border-border bg-card p-5">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Manual Triggers</h2>
         <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
           {(["resumes", "embeddings", "jd-enhancement", "rankings", "cleanup"] as const).map((type) => (
             <button
               key={type}
               onClick={() => handleTrigger(type)}
               disabled={!!triggering[type]}
-              className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-500 disabled:opacity-60"
+              className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-foreground hover:bg-primary disabled:opacity-60"
             >
               {triggering[type] ? "Running..." : type}
             </button>
           ))}
         </div>
-        {triggerMessage && <p className="mt-3 text-xs text-slate-300">{triggerMessage}</p>}
+        {triggerMessage && <p className="mt-3 text-xs text-muted-foreground">{triggerMessage}</p>}
       </section>
 
-      <p className="text-xs text-slate-500">Last updated: {new Date(health.timestamp).toLocaleString()}</p>
+      <p className="text-xs text-muted-foreground">Last updated: {new Date(health.timestamp).toLocaleString()}</p>
     </div>
   );
 }

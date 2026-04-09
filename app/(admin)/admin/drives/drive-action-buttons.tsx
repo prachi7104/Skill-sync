@@ -49,8 +49,8 @@ export function DriveActionButtons({ driveId, isActive }: { driveId: string; isA
         title={isActive ? "Deactivate drive" : "Activate drive"}
         className={`p-2 rounded-lg text-xs font-bold transition-all ${
           isActive
-            ? "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-            : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+            ? "bg-warning/10 text-warning hover:bg-warning/10"
+            : "bg-card text-muted-foreground hover:bg-card"
         }`}
       >
         {toggling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Power className="h-3.5 w-3.5" />}
@@ -59,7 +59,7 @@ export function DriveActionButtons({ driveId, isActive }: { driveId: string; isA
         onClick={handleDelete}
         disabled={deleting}
         title="Permanently delete drive"
-        className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-all"
+        className="p-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/10 transition-all"
       >
         {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
       </button>

@@ -147,21 +147,21 @@ export default function AIModelsPage() {
     <div className="max-w-7xl mx-auto p-8 pb-32 space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">AI Model Registry</h1>
-          <p className="text-slate-400 mt-1">
+          <h1 className="text-3xl font-black text-foreground tracking-tight">AI Model Registry</h1>
+          <p className="text-muted-foreground mt-1">
             {activeCount} active · {deprecatedCount} deprecated · {unhealthyCount} unhealthy
           </p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={fetchModels}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold text-slate-300 transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-card hover:bg-card rounded-md text-sm font-bold text-muted-foreground transition-all"
           >
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
           <button
             onClick={() => setShowAddForm((s) => !s)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-sm font-bold text-white transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary rounded-md text-sm font-bold text-foreground transition-all"
           >
             <Plus className="w-4 h-4" /> Add Model
           </button>
@@ -169,25 +169,25 @@ export default function AIModelsPage() {
       </div>
 
       {showAddForm && (
-        <form onSubmit={createModel} className="bg-slate-900/60 rounded-2xl border border-white/5 p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <form onSubmit={createModel} className="bg-card rounded-md border border-border p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           <input
             required
             value={newModel.model_key}
             onChange={(e) => setNewModel((p) => ({ ...p, model_key: e.target.value }))}
             placeholder="model_key"
-            className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
+            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
           />
           <input
             required
             value={newModel.display_name}
             onChange={(e) => setNewModel((p) => ({ ...p, display_name: e.target.value }))}
             placeholder="display_name"
-            className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
+            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
           />
           <select
             value={newModel.provider}
             onChange={(e) => setNewModel((p) => ({ ...p, provider: e.target.value as "google" | "groq" }))}
-            className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
+            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
           >
             <option value="google">google</option>
             <option value="groq">groq</option>
@@ -196,53 +196,53 @@ export default function AIModelsPage() {
             value={newModel.task_types}
             onChange={(e) => setNewModel((p) => ({ ...p, task_types: e.target.value }))}
             placeholder="task1,task2"
-            className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
+            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
           />
           <input
             value={newModel.rpm_limit}
             onChange={(e) => setNewModel((p) => ({ ...p, rpm_limit: e.target.value }))}
             placeholder="rpm_limit"
-            className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
+            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
           />
           <input
             value={newModel.rpd_limit}
             onChange={(e) => setNewModel((p) => ({ ...p, rpd_limit: e.target.value }))}
             placeholder="rpd_limit"
-            className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
+            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
           />
           <input
             value={newModel.tpm_limit}
             onChange={(e) => setNewModel((p) => ({ ...p, tpm_limit: e.target.value }))}
             placeholder="tpm_limit (optional)"
-            className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
+            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
           />
           <input
             value={newModel.priority}
             onChange={(e) => setNewModel((p) => ({ ...p, priority: e.target.value }))}
             placeholder="priority"
-            className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
+            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
           />
           <input
             value={newModel.notes}
             onChange={(e) => setNewModel((p) => ({ ...p, notes: e.target.value }))}
             placeholder="notes"
-            className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
+            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
           />
           <div className="md:col-span-2 lg:col-span-3 flex justify-end gap-2 pt-1">
-            <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 rounded-xl text-sm font-bold text-slate-300 bg-slate-800 hover:bg-slate-700">
+            <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 rounded-md text-sm font-bold text-muted-foreground bg-card hover:bg-card">
               Cancel
             </button>
-            <button type="submit" className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500">
+            <button type="submit" className="px-4 py-2 rounded-md text-sm font-bold text-foreground bg-primary hover:bg-primary">
               Save Model
             </button>
           </div>
         </form>
       )}
 
-      <div className="bg-slate-900/60 rounded-2xl border border-white/5 overflow-hidden">
+      <div className="bg-card rounded-md border border-border overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-white/5">
+            <tr className="border-b border-border">
               {[
                 "Status",
                 "Model",
@@ -255,17 +255,17 @@ export default function AIModelsPage() {
               ].map((heading) => (
                 <th
                   key={heading}
-                  className="px-4 py-3 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest"
+                  className="px-4 py-3 text-left text-[10px] font-black text-muted-foreground uppercase tracking-widest"
                 >
                   {heading}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                   Loading...
                 </td>
               </tr>
@@ -275,26 +275,26 @@ export default function AIModelsPage() {
               return (
                 <tr
                   key={model.id}
-                  className={`hover:bg-slate-800/30 transition-colors ${model.is_deprecated ? "opacity-50" : ""}`}
+                  className={`hover:bg-card transition-colors ${model.is_deprecated ? "opacity-50" : ""}`}
                 >
                   <td className="px-4 py-3">
                     <div
                       className={`w-2.5 h-2.5 rounded-full ${
                         model.is_deprecated
-                          ? "bg-slate-600"
+                          ? "bg-muted"
                           : !model.is_active
-                            ? "bg-slate-600"
+                            ? "bg-muted"
                             : isExhausted
-                              ? "bg-amber-500"
+                              ? "bg-warning/10"
                               : model.last_ping_ok === false
-                                ? "bg-rose-500"
-                                : "bg-emerald-500"
+                                ? "bg-destructive/10"
+                                : "bg-success/10"
                       }`}
                     />
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-mono text-xs text-white font-bold">{model.model_key}</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">P{model.priority} · {model.display_name}</p>
+                    <p className="font-mono text-xs text-foreground font-bold">{model.model_key}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">P{model.priority} · {model.display_name}</p>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-[10px] font-bold px-2 py-1 rounded border ${PROVIDER_COLORS[model.provider]}`}>
@@ -304,34 +304,34 @@ export default function AIModelsPage() {
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       {model.task_types.map((task) => (
-                        <span key={task} className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded">
+                        <span key={task} className="text-[9px] font-bold px-1.5 py-0.5 bg-card text-muted-foreground rounded">
                           {TASK_TYPE_LABELS[task] ?? task}
                         </span>
                       ))}
                     </div>
                   </td>
                   <td className="px-4 py-3 space-y-1">
-                    <p className="text-xs text-slate-300">{model.rpm_limit} RPM</p>
-                    <p className="text-[10px] text-slate-500">{model.rpd_limit ? `${model.rpd_limit.toLocaleString()} RPD` : "-"}</p>
+                    <p className="text-xs text-muted-foreground">{model.rpm_limit} RPM</p>
+                    <p className="text-[10px] text-muted-foreground">{model.rpd_limit ? `${model.rpd_limit.toLocaleString()} RPD` : "-"}</p>
                     <div className="flex gap-1">
                       <input
                         defaultValue={model.priority}
-                        className="w-14 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-200"
+                        className="w-14 bg-card border border-border rounded px-2 py-1 text-[10px] text-foreground"
                         onBlur={(e) => updateModel(model, { priority: Number(e.target.value) })}
                       />
                       <input
                         defaultValue={model.rpm_limit}
-                        className="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-200"
+                        className="w-16 bg-card border border-border rounded px-2 py-1 text-[10px] text-foreground"
                         onBlur={(e) => updateModel(model, { rpm_limit: Number(e.target.value) })}
                       />
                     </div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-16 bg-slate-700 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full transition-all ${isExhausted ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${Math.min(usagePct, 100)}%` }} />
+                      <div className="h-1.5 w-16 bg-card rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${isExhausted ? "bg-warning/10" : "bg-success/10"}`} style={{ width: `${Math.min(usagePct, 100)}%` }} />
                       </div>
-                      <span className={`text-[10px] font-bold ${isExhausted ? "text-amber-400" : "text-slate-400"}`}>
+                      <span className={`text-[10px] font-bold ${isExhausted ? "text-warning" : "text-muted-foreground"}`}>
                         {model.current_rpm_usage}/{model.rpm_limit}
                       </span>
                     </div>
@@ -340,14 +340,14 @@ export default function AIModelsPage() {
                     {model.last_ping_at ? (
                       <div className="flex items-center gap-1.5">
                         {model.last_ping_ok ? (
-                          <CheckCircle className="w-3 h-3 text-emerald-400" />
+                          <CheckCircle className="w-3 h-3 text-success" />
                         ) : (
-                          <XCircle className="w-3 h-3 text-rose-400" />
+                          <XCircle className="w-3 h-3 text-destructive" />
                         )}
-                        <span className="text-[10px] text-slate-400">{model.last_ping_ms}ms</span>
+                        <span className="text-[10px] text-muted-foreground">{model.last_ping_ms}ms</span>
                       </div>
                     ) : (
-                      <span className="text-[10px] text-slate-600">Never</span>
+                      <span className="text-[10px] text-muted-foreground">Never</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -355,7 +355,7 @@ export default function AIModelsPage() {
                       <button
                         onClick={() => pingModel(model)}
                         disabled={pinging === model.id}
-                        className="text-[10px] font-bold px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300 transition-all disabled:opacity-50"
+                        className="text-[10px] font-bold px-2 py-1 bg-card hover:bg-card rounded text-muted-foreground transition-all disabled:opacity-50"
                       >
                         {pinging === model.id ? <Activity className="w-3 h-3 animate-pulse" /> : "Ping"}
                       </button>
@@ -364,8 +364,8 @@ export default function AIModelsPage() {
                         disabled={savingModelId === model.id}
                         className={`text-[10px] font-bold px-2 py-1 rounded transition-all ${
                           model.is_active
-                            ? "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                            : "bg-slate-800 text-slate-500 hover:bg-slate-700"
+                            ? "bg-success/10 text-success hover:bg-success/10"
+                            : "bg-card text-muted-foreground hover:bg-card"
                         }`}
                       >
                         {model.is_active ? "Active" : "Inactive"}
@@ -375,8 +375,8 @@ export default function AIModelsPage() {
                         disabled={savingModelId === model.id}
                         className={`text-[10px] font-bold px-2 py-1 rounded transition-all ${
                           model.is_deprecated
-                            ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"
-                            : "bg-slate-800 text-slate-500 hover:bg-slate-700"
+                            ? "bg-destructive/10 text-destructive hover:bg-destructive/10"
+                            : "bg-card text-muted-foreground hover:bg-card"
                         }`}
                       >
                         {model.is_deprecated ? "Deprecated" : "Deprecate"}
@@ -384,7 +384,7 @@ export default function AIModelsPage() {
                       <button
                         onClick={() => deleteModel(model)}
                         disabled={deletingModelId === model.id}
-                        className="text-[10px] font-bold px-2 py-1 rounded bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-all disabled:opacity-50"
+                        className="text-[10px] font-bold px-2 py-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/10 transition-all disabled:opacity-50"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>

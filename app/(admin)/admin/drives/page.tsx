@@ -27,7 +27,7 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
   const user = await requireRole(["admin"]);
 
   if (!user.collegeId) {
-    return <div className="p-8 text-rose-400">Account not linked to a college.</div>;
+    return <div className="p-8 text-destructive">Account not linked to a college.</div>;
   }
 
   const page = Number(searchParams?.page ?? 1);
@@ -134,7 +134,7 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
             {totalRanked} students ranked
           </p>
         </div>
-        <Button asChild className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+        <Button asChild className="gap-2 bg-primary hover:bg-primary">
           <Link href="/admin/drives/new">
             <Plus className="h-4 w-4" /> Create Drive
           </Link>
@@ -146,21 +146,21 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
         <Badge variant="outline" className="text-sm px-3 py-1">
           Total Drives: {totalDrives}
         </Badge>
-        <Badge variant="outline" className="text-sm px-3 py-1 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+        <Badge variant="outline" className="text-sm px-3 py-1 bg-success/10 text-success border-success/20">
           Active: {activeDrives}
         </Badge>
-        <Badge variant="outline" className="text-sm px-3 py-1 text-slate-500 border-slate-700">
+        <Badge variant="outline" className="text-sm px-3 py-1 text-muted-foreground border-border">
           Closed: {totalDrives - activeDrives}
         </Badge>
-        <Badge variant="outline" className="text-sm px-3 py-1 text-indigo-400 border-indigo-500/20 bg-indigo-500/10">
+        <Badge variant="outline" className="text-sm px-3 py-1 text-primary border-primary/30 bg-primary/10">
           Students Ranked: {totalRanked}
         </Badge>
       </div>
 
       {totalDrives === 0 ? (
-        <div className="py-20 text-center border-2 border-dashed rounded-xl">
+        <div className="py-20 text-center border-2 border-dashed rounded-md">
           <p className="text-muted-foreground">No drives created yet.</p>
-          <Button asChild variant="link" className="text-indigo-600 mt-2">
+          <Button asChild variant="link" className="text-primary mt-2">
             <Link href="/admin/drives/new">Create your first drive &rarr;</Link>
           </Button>
         </div>
@@ -177,11 +177,11 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
             else if (stats && stats.count > 0) status = "ranked";
 
             const statusConfig = {
-              ranked: { label: "RANKED", className: "text-emerald-400 bg-emerald-500/15 border-emerald-500/20" },
-              processing: { label: "PROCESSING", className: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" },
+              ranked: { label: "RANKED", className: "text-success bg-success/10 border-success/20" },
+              processing: { label: "PROCESSING", className: "text-primary bg-primary/10 border-primary/30" },
               jd_analyzing: { label: "JD ANALYZING", className: "text-violet-400 bg-violet-500/10 border-violet-500/20" },
-              pending: { label: "PENDING", className: "text-amber-400 bg-amber-500/15 border-amber-500/20" },
-              closed: { label: "CLOSED", className: "text-slate-500 bg-slate-800/50 border-slate-700" },
+              pending: { label: "PENDING", className: "text-warning bg-warning/10 border-warning/20" },
+              closed: { label: "CLOSED", className: "text-muted-foreground bg-card border-border" },
             };
 
             const config = statusConfig[status];
@@ -189,14 +189,14 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
             return (
               <Card
                 key={drive.id}
-                className="group hover:ring-1 hover:ring-indigo-500 transition-all shadow-sm flex flex-col"
+                className="group hover:ring-1 hover:ring-primary transition-all shadow-sm flex flex-col"
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <div
                         className={cn(
-                          "h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold text-white uppercase shrink-0 shadow-sm",
+                          "h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold text-foreground uppercase shrink-0 shadow-sm",
                           getCompanyColor(drive.company)
                         )}
                       >
@@ -218,8 +218,8 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
                     >
                       {status === "processing" && (
                         <span className="relative flex h-2 w-2 mr-1.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/60 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
                         </span>
                       )}
                       {config.label}
@@ -233,7 +233,7 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
                     <Users className="h-3 w-3" />
                     <span>
                       Created by{" "}
-                      <span className="font-medium text-slate-300">
+                      <span className="font-medium text-muted-foreground">
                         {drive.creatorName ?? "Unknown"}
                       </span>
                     </span>
@@ -242,22 +242,22 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
                   {/* Info pills */}
                   <div className="flex flex-wrap gap-1.5">
                     {drive.location && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-card border border-border text-[10px] text-muted-foreground">
                         <MapPin className="h-3 w-3" /> {drive.location}
                       </div>
                     )}
                     {drive.packageOffered && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-card border border-border text-[10px] text-muted-foreground">
                         <IndianRupee className="h-3 w-3" /> {drive.packageOffered}
                       </div>
                     )}
                     {drive.deadline && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-card border border-border text-[10px] text-muted-foreground">
                         <Calendar className="h-3 w-3" />{" "}
                         {format(new Date(drive.deadline), "MMM d")}
                       </div>
                     )}
-                    <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-card border border-border text-[10px] text-muted-foreground">
                       <Calendar className="h-3 w-3" />{" "}
                       {format(new Date(drive.createdAt), "MMM d, yyyy")}
                     </div>
@@ -294,7 +294,7 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
                   <div className="flex items-center gap-3">
                     <Link
                       href={`/admin/drives/${drive.id}/rankings`}
-                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                      className="text-xs font-semibold text-primary hover:text-primary/80 flex items-center gap-1"
                     >
                       View Rankings <ExternalLink className="h-3 w-3" />
                     </Link>

@@ -64,7 +64,7 @@ const ROLE_CONFIG = {
   faculty: {
     label: "Faculty",
     icon: UserPlus,
-    badge: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    badge: "bg-primary/10 text-primary border-primary/20",
   },
   student: {
     label: "Student",
@@ -388,10 +388,10 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Create Staff Account Card */}
-      <Card className="border-t-4 border-t-indigo-500">
+      <Card className="border-t-4 border-t-primary">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <UserPlus className="h-5 w-5 text-indigo-600" />
+            <UserPlus className="h-5 w-5 text-primary" />
             Create Staff Account
           </CardTitle>
           <CardDescription>
@@ -470,7 +470,7 @@ export default function AdminUsersPage() {
                       className={cn(
                         "flex items-start gap-2.5 rounded-md border p-3 cursor-pointer transition-colors",
                         locked ? "opacity-60 cursor-not-allowed bg-muted" : "hover:bg-muted/50",
-                        (locked || newGrantedComponents.includes(key)) ? "border-indigo-300 bg-indigo-50/40" : ""
+                        (locked || newGrantedComponents.includes(key)) ? "border-primary/30 bg-primary/5" : ""
                       )}
                     >
                       <input
@@ -493,7 +493,7 @@ export default function AdminUsersPage() {
             <Button
               type="submit"
               disabled={creating || !newName.trim() || !newEmail.trim() || (!autoGeneratePassword && newPassword.length < 8)}
-              className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+              className="gap-2 bg-primary hover:bg-primary"
             >
               {creating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
               {creating ? "Creating..." : `Create ${newRole === "admin" ? "Admin" : "Faculty"}`}
@@ -522,29 +522,29 @@ export default function AdminUsersPage() {
               This password is shown <strong>ONCE</strong>. Copy it now and send to the user securely.
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-xl bg-slate-800 border border-slate-700 p-3">
-            <p className="text-xs text-slate-400 mb-2">Generated Password (shown once)</p>
+          <div className="rounded-md bg-card border border-border p-3">
+            <p className="text-xs text-muted-foreground mb-2">Generated Password (shown once)</p>
             <div className="flex items-center gap-3">
               <input
                 id="generated-pw-display"
                 type="text"
                 readOnly
                 value={generatedPassword ?? ""}
-                className="flex-1 font-mono text-sm text-white bg-transparent border-none outline-none select-all"
+                className="flex-1 font-mono text-sm text-foreground bg-transparent border-none outline-none select-all"
               />
               <Button
                 onClick={handleCopyPassword}
                 size="sm"
                 className={cn(
                   "transition-all",
-                  copied ? "bg-emerald-600 hover:bg-emerald-600" : "bg-slate-700 hover:bg-slate-600"
+                  copied ? "bg-success/10 hover:bg-success/10" : "bg-card hover:bg-muted"
                 )}
               >
                 {copied ? <><Check className="w-3.5 h-3.5 mr-1" /> Copied</> : <><Copy className="w-3.5 h-3.5 mr-1" /> Copy</>}
               </Button>
             </div>
           </div>
-          <p className="text-xs text-amber-400 mt-2">
+          <p className="text-xs text-warning mt-2">
             Save this password now. It cannot be recovered after closing this dialog. Send it securely.
           </p>
           <DialogFooter>
@@ -604,7 +604,7 @@ export default function AdminUsersPage() {
                     className={cn(
                       "flex items-start gap-2.5 rounded-md border p-3 cursor-pointer transition-colors",
                       locked ? "opacity-60 cursor-not-allowed bg-muted" : "hover:bg-muted/50",
-                      (locked || editComponents.includes(key)) ? "border-indigo-300 bg-indigo-50/40" : ""
+                      (locked || editComponents.includes(key)) ? "border-primary/30 bg-primary/5" : ""
                     )}
                   >
                     <input
@@ -635,7 +635,7 @@ export default function AdminUsersPage() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditUser(null)} disabled={editLoading}>Cancel</Button>
-            <Button onClick={handleSavePermissions} disabled={editLoading} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+            <Button onClick={handleSavePermissions} disabled={editLoading} className="gap-2 bg-primary hover:bg-primary">
               {editLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               {editLoading ? "Saving…" : "Save Permissions"}
             </Button>
@@ -646,13 +646,13 @@ export default function AdminUsersPage() {
       {/* User List */}
       <div className="flex items-center gap-3 mb-2">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or email..."
-            className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-indigo-500"
+            className="w-full bg-card border border-border text-foreground rounded-md pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-primary/30"
           />
         </div>
         <div className="flex gap-2">
@@ -660,10 +660,10 @@ export default function AdminUsersPage() {
             <button
               key={r}
               onClick={() => setFilterRole(r)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                 filterRole === r
-                  ? "bg-indigo-600/20 border border-indigo-500/30 text-indigo-400"
-                  : "bg-slate-800 border border-transparent text-slate-400 hover:text-white"
+                  ? "bg-primary/20 border border-primary/30 text-primary"
+                  : "bg-card border border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
               {r === "" ? "All" : r.charAt(0).toUpperCase() + r.slice(1)}
@@ -698,7 +698,7 @@ export default function AdminUsersPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="max-h-[600px] overflow-y-auto rounded-xl border border-white/5 divide-y">
+                  <div className="max-h-[600px] overflow-y-auto rounded-md border border-border divide-y">
                     {group.map((user: User) => {
                       const rs = resetState[user.email];
                       return (
@@ -767,7 +767,7 @@ export default function AdminUsersPage() {
                                     )}
                                     {rs?.loading ? "Resetting..." : "Reset"}
                                   </Button>
-                                  {rs?.success && <Check className="w-4 h-4 text-emerald-400" />}
+                                  {rs?.success && <Check className="w-4 h-4 text-success" />}
                                 </form>
                                 {rs?.error && <p className="text-[10px] text-rose-600">{rs.error}</p>}
                               </div>

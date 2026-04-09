@@ -129,33 +129,33 @@ export default function AdminSeasonsPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-8">
       <div>
-        <h1 className="text-3xl font-black tracking-tight text-white">Season Management</h1>
-        <p className="mt-1 text-sm text-slate-400">Create recruiting seasons and control which one is active for your college.</p>
+        <h1 className="text-3xl font-black tracking-tight text-foreground">Season Management</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Create recruiting seasons and control which one is active for your college.</p>
       </div>
 
       {message ? (
-        <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 text-sm text-slate-200">
+        <div className="rounded-md border border-border bg-card p-3 text-sm text-foreground">
           {message}
         </div>
       ) : null}
 
-      <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 space-y-4">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-slate-300">Create Season</h2>
+      <section className="rounded-md border border-border bg-card p-5 space-y-4">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Create Season</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
             <Label>Name</Label>
-            <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Placement 2026" className="border-white/10 bg-slate-950 text-slate-100" />
+            <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Placement 2026" className="border-border bg-muted/20 text-foreground" />
           </div>
           <div className="space-y-2">
             <Label>Starts At</Label>
-            <Input type="date" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} className="border-white/10 bg-slate-950 text-slate-100" />
+            <Input type="date" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} className="border-border bg-muted/20 text-foreground" />
           </div>
           <div className="space-y-2">
             <Label>Ends At</Label>
-            <Input type="date" value={endsAt} onChange={(event) => setEndsAt(event.target.value)} className="border-white/10 bg-slate-950 text-slate-100" />
+            <Input type="date" value={endsAt} onChange={(event) => setEndsAt(event.target.value)} className="border-border bg-muted/20 text-foreground" />
           </div>
         </div>
-        <label className="flex items-center gap-2 text-sm text-slate-300">
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <input
             type="checkbox"
             checked={isActive}
@@ -164,28 +164,28 @@ export default function AdminSeasonsPage() {
           />
           Set as active season
         </label>
-        <Button onClick={createSeason} disabled={saving} className="bg-indigo-600 hover:bg-indigo-500">
+        <Button onClick={createSeason} disabled={saving} className="bg-primary hover:bg-primary">
           {saving ? "Creating..." : "Create Season"}
         </Button>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-slate-300">Existing Seasons</h2>
+        <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Existing Seasons</h2>
         {loading ? (
-          <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-6 text-sm text-slate-400">Loading seasons...</div>
+          <div className="rounded-md border border-border bg-card p-6 text-sm text-muted-foreground">Loading seasons...</div>
         ) : null}
         {!loading && rows.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/50 p-6 text-sm text-slate-400">No seasons created yet.</div>
+          <div className="rounded-md border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">No seasons created yet.</div>
         ) : null}
         {!loading ? rows.map((row) => (
-          <article key={row.id} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <article key={row.id} className="rounded-md border border-border bg-card p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-white">{row.name}</h3>
-                  {row.isActive ? <Badge className="bg-emerald-600/20 text-emerald-300 border border-emerald-500/30">ACTIVE</Badge> : null}
+                  <h3 className="text-sm font-bold text-foreground">{row.name}</h3>
+                  {row.isActive ? <Badge className="bg-success/10 text-success border border-success/20">ACTIVE</Badge> : null}
                 </div>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {row.startsAt ? new Date(row.startsAt).toLocaleDateString() : "No start date"}
                   {" - "}
                   {row.endsAt ? new Date(row.endsAt).toLocaleDateString() : "No end date"}
@@ -193,16 +193,16 @@ export default function AdminSeasonsPage() {
               </div>
               <div className="flex items-center gap-2">
                 {row.isActive ? (
-                  <Button variant="outline" className="border-white/10 bg-slate-950 text-slate-200 hover:bg-slate-800" onClick={() => toggleSeason(row, false)}>
+                  <Button variant="outline" className="border-border bg-muted/20 text-foreground hover:bg-card" onClick={() => toggleSeason(row, false)}>
                     Deactivate
                   </Button>
                 ) : (
-                  <Button className="bg-indigo-600 hover:bg-indigo-500" onClick={() => toggleSeason(row, true)}>
+                  <Button className="bg-primary hover:bg-primary" onClick={() => toggleSeason(row, true)}>
                     Activate
                   </Button>
                 )}
                 {!row.isActive ? (
-                  <Button variant="outline" className="border-rose-500/40 bg-rose-900/20 text-rose-300 hover:bg-rose-900/30" onClick={() => deleteSeason(row)}>
+                  <Button variant="outline" className="border-destructive/20 bg-rose-900/20 text-destructive hover:bg-rose-900/30" onClick={() => deleteSeason(row)}>
                     Delete
                   </Button>
                 ) : null}

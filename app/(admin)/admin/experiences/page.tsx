@@ -145,91 +145,91 @@ export default function AdminExperiencesPage() {
   return (
     <div className="space-y-6 p-8">
       <div>
-        <h1 className="text-3xl font-black tracking-tight text-white">Company Experiences</h1>
-        <p className="mt-1 text-sm text-slate-400">Moderate student submissions and post admin-curated experience reports.</p>
+        <h1 className="text-3xl font-black tracking-tight text-foreground">Company Experiences</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Moderate student submissions and post admin-curated experience reports.</p>
       </div>
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-slate-900/60">
+        <TabsList className="bg-card">
           <TabsTrigger value="queue">Pending Queue</TabsTrigger>
           <TabsTrigger value="published">Published</TabsTrigger>
           <TabsTrigger value="admin-post">Admin Post</TabsTrigger>
         </TabsList>
         <TabsContent value="queue" className="space-y-4">
           {rows.map((row) => (
-            <div key={row.id} className={cn("space-y-4 rounded-2xl border p-6", row.status === "ai_flagged" ? "border-amber-500/30 bg-amber-500/5" : "border-white/5 bg-slate-900/60")}>
+            <div key={row.id} className={cn("space-y-4 rounded-md border p-6", row.status === "ai_flagged" ? "border-warning/20 bg-warning/10" : "border-border bg-card")}>
               {row.status === "ai_flagged" ? (
-                <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3">
-                  <AlertTriangle className="h-4 w-4 text-amber-400" />
-                  <span className="text-sm text-amber-300">AI flagged: {row.ai_screen_reason}</span>
-                  <span className="ml-auto text-xs text-amber-400">AI Score: {Math.round((Number(row.ai_screen_score) || 0) * 100)}%</span>
+                <div className="flex items-center gap-2 rounded-md border border-warning/20 bg-warning/10 p-3">
+                  <AlertTriangle className="h-4 w-4 text-warning" />
+                  <span className="text-sm text-warning">AI flagged: {row.ai_screen_reason}</span>
+                  <span className="ml-auto text-xs text-warning">AI Score: {Math.round((Number(row.ai_screen_score) || 0) * 100)}%</span>
                 </div>
               ) : null}
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-white">{row.student_name ?? "Unknown student"}</p>
-                  <p className="text-xs text-slate-400">{row.student_email ?? "No email stored"}</p>
-                  <p className="text-[11px] text-slate-500 mt-1">
+                  <p className="font-bold text-foreground">{row.student_name ?? "Unknown student"}</p>
+                  <p className="text-xs text-muted-foreground">{row.student_email ?? "No email stored"}</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
                     Author: {row.author_real_name ?? "System"} {row.author_email ? `(${row.author_email})` : ""}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-white">{row.company_name}</p>
-                  <p className="text-xs text-slate-400">{row.role_title ?? "Unknown role"}</p>
-                  <p className="text-[11px] text-slate-500 mt-1">
+                  <p className="text-sm text-foreground">{row.company_name}</p>
+                  <p className="text-xs text-muted-foreground">{row.role_title ?? "Unknown role"}</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
                     Created: {new Date(row.created_at).toLocaleString("en-IN")}
                   </p>
                 </div>
               </div>
-              {row.interview_process ? <div><p className="mb-1 text-xs font-bold uppercase text-slate-500">Interview Process</p><p className="line-clamp-4 text-sm text-slate-300">{row.interview_process}</p></div> : null}
-              {row.tips ? <div><p className="mb-1 text-xs font-bold uppercase text-slate-500">Tips</p><p className="line-clamp-4 text-sm text-slate-300">{row.tips}</p></div> : null}
+              {row.interview_process ? <div><p className="mb-1 text-xs font-bold uppercase text-muted-foreground">Interview Process</p><p className="line-clamp-4 text-sm text-muted-foreground">{row.interview_process}</p></div> : null}
+              {row.tips ? <div><p className="mb-1 text-xs font-bold uppercase text-muted-foreground">Tips</p><p className="line-clamp-4 text-sm text-muted-foreground">{row.tips}</p></div> : null}
               <div className="space-y-2">
                 <Label>Rejection Reason (optional)</Label>
-                <Input value={rejectionReason[row.id] ?? ""} onChange={(event) => setRejectionReason((current) => ({ ...current, [row.id]: event.target.value }))} className="border-white/10 bg-slate-950 text-slate-100" />
+                <Input value={rejectionReason[row.id] ?? ""} onChange={(event) => setRejectionReason((current) => ({ ...current, [row.id]: event.target.value }))} className="border-border bg-muted/20 text-foreground" />
               </div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => moderate(row.id, "approve")} className="flex-1 rounded-xl bg-emerald-600 py-2 text-sm font-bold text-white hover:bg-emerald-500">✓ Approve & Publish</button>
-                <button type="button" onClick={() => moderate(row.id, "reject")} className="flex-1 rounded-xl bg-slate-700 py-2 text-sm font-bold text-white hover:bg-slate-600">✗ Reject</button>
+                <button type="button" onClick={() => moderate(row.id, "approve")} className="flex-1 rounded-md bg-success/10 py-2 text-sm font-bold text-foreground hover:bg-success/10">✓ Approve & Publish</button>
+                <button type="button" onClick={() => moderate(row.id, "reject")} className="flex-1 rounded-md bg-card py-2 text-sm font-bold text-foreground hover:bg-muted">✗ Reject</button>
               </div>
             </div>
           ))}
-          {rows.length === 0 ? <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-8 text-sm text-slate-400">No experiences in the moderation queue.</div> : null}
+          {rows.length === 0 ? <div className="rounded-md border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">No experiences in the moderation queue.</div> : null}
         </TabsContent>
         <TabsContent value="published" className="space-y-4">
           {rows.map((row) => (
-            <Card key={row.id} className="border-white/10 bg-slate-900/60">
+            <Card key={row.id} className="border-border bg-card">
               <CardHeader>
-                <CardTitle className="text-white">{row.company_name} — {row.role_title ?? "Unknown role"}</CardTitle>
+                <CardTitle className="text-foreground">{row.company_name} — {row.role_title ?? "Unknown role"}</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 text-sm text-slate-300">
+              <CardContent className="space-y-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <p>{row.is_admin_posted ? "Admin Posted" : row.student_name ?? "Anonymous"}</p>
                   {row.is_admin_posted ? (
-                    <span className="rounded-full border border-indigo-400/40 bg-indigo-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-300">
+                    <span className="rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
                       Admin Posted
                     </span>
                   ) : null}
                 </div>
                 {!row.is_admin_posted && row.student_email ? (
-                  <p className="mt-1 text-xs text-slate-500">{row.student_email}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{row.student_email}</p>
                 ) : null}
-                <p className="mt-1 text-xs text-slate-500">Author: {row.author_real_name ?? "System"} {row.author_email ? `(${row.author_email})` : ""}</p>
-                <p className="mt-1 text-xs text-slate-500">Created: {new Date(row.created_at).toLocaleString("en-IN")}</p>
-                <p className="mt-1 text-xs text-slate-500">Updated: {new Date(row.updated_at).toLocaleString("en-IN")}</p>
-                {row.reviewed_by_name ? <p className="mt-1 text-xs text-slate-500">Reviewed by: {row.reviewed_by_name}</p> : null}
+                <p className="mt-1 text-xs text-muted-foreground">Author: {row.author_real_name ?? "System"} {row.author_email ? `(${row.author_email})` : ""}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Created: {new Date(row.created_at).toLocaleString("en-IN")}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Updated: {new Date(row.updated_at).toLocaleString("en-IN")}</p>
+                {row.reviewed_by_name ? <p className="mt-1 text-xs text-muted-foreground">Reviewed by: {row.reviewed_by_name}</p> : null}
                 {row.interview_process ? (
-                  <div className="rounded-xl border border-white/10 bg-slate-950/40 p-4">
-                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Interview Process</p>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-200">{row.interview_process}</p>
+                  <div className="rounded-md border border-border bg-muted/20 p-4">
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Interview Process</p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground">{row.interview_process}</p>
                   </div>
                 ) : null}
                 {row.tips ? (
-                  <div className="rounded-xl border border-white/10 bg-slate-950/40 p-4">
-                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Tips</p>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-200">{row.tips}</p>
+                  <div className="rounded-md border border-border bg-muted/20 p-4">
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Tips</p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground">{row.tips}</p>
                   </div>
                 ) : null}
                 {!row.interview_process && !row.tips ? (
-                  <p className="text-xs text-slate-500">No interview details were provided for this experience.</p>
+                  <p className="text-xs text-muted-foreground">No interview details were provided for this experience.</p>
                 ) : null}
                 <div className="flex justify-end pt-1">
                   <Button
@@ -245,27 +245,27 @@ export default function AdminExperiencesPage() {
           ))}
         </TabsContent>
         <TabsContent value="admin-post">
-          <Card className="border-white/10 bg-slate-900/60">
+          <Card className="border-border bg-card">
             <CardHeader>
-              <CardTitle className="text-white">Post on behalf of students</CardTitle>
+              <CardTitle className="text-foreground">Post on behalf of students</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2"><Label>Company Name</Label><Input value={form.companyName} onChange={(event) => setForm((current) => ({ ...current, companyName: event.target.value }))} className="border-white/10 bg-slate-950 text-slate-100" /></div>
-                <div className="space-y-2"><Label>Role Title</Label><Input value={form.roleTitle} onChange={(event) => setForm((current) => ({ ...current, roleTitle: event.target.value }))} className="border-white/10 bg-slate-950 text-slate-100" /></div>
+                <div className="space-y-2"><Label>Company Name</Label><Input value={form.companyName} onChange={(event) => setForm((current) => ({ ...current, companyName: event.target.value }))} className="border-border bg-muted/20 text-foreground" /></div>
+                <div className="space-y-2"><Label>Role Title</Label><Input value={form.roleTitle} onChange={(event) => setForm((current) => ({ ...current, roleTitle: event.target.value }))} className="border-border bg-muted/20 text-foreground" /></div>
               </div>
               <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2"><Label>Drive Type</Label><select value={form.driveType} onChange={(event) => setForm((current) => ({ ...current, driveType: event.target.value }))} className="h-10 w-full rounded-md border border-white/10 bg-slate-950 px-3 text-sm text-slate-100"><option value="placement">Placement</option><option value="internship">Internship</option><option value="ppo">PPO</option></select></div>
-                <div className="space-y-2"><Label>Outcome</Label><select value={form.outcome} onChange={(event) => setForm((current) => ({ ...current, outcome: event.target.value }))} className="h-10 w-full rounded-md border border-white/10 bg-slate-950 px-3 text-sm text-slate-100"><option value="selected">Selected</option><option value="rejected">Rejected</option><option value="not_disclosed">Prefer not to say</option></select></div>
-                <div className="space-y-2"><Label>Difficulty</Label><Input type="number" min={1} max={5} value={form.difficulty} onChange={(event) => setForm((current) => ({ ...current, difficulty: Number(event.target.value) }))} className="border-white/10 bg-slate-950 text-slate-100" /></div>
+                <div className="space-y-2"><Label>Drive Type</Label><select value={form.driveType} onChange={(event) => setForm((current) => ({ ...current, driveType: event.target.value }))} className="h-10 w-full rounded-md border border-border bg-muted/20 px-3 text-sm text-foreground"><option value="placement">Placement</option><option value="internship">Internship</option><option value="ppo">PPO</option></select></div>
+                <div className="space-y-2"><Label>Outcome</Label><select value={form.outcome} onChange={(event) => setForm((current) => ({ ...current, outcome: event.target.value }))} className="h-10 w-full rounded-md border border-border bg-muted/20 px-3 text-sm text-foreground"><option value="selected">Selected</option><option value="rejected">Rejected</option><option value="not_disclosed">Prefer not to say</option></select></div>
+                <div className="space-y-2"><Label>Difficulty</Label><Input type="number" min={1} max={5} value={form.difficulty} onChange={(event) => setForm((current) => ({ ...current, difficulty: Number(event.target.value) }))} className="border-border bg-muted/20 text-foreground" /></div>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2"><Label>Batch Year</Label><Input value={form.batchYear} onChange={(event) => setForm((current) => ({ ...current, batchYear: event.target.value }))} className="border-white/10 bg-slate-950 text-slate-100" /></div>
-                <div className="space-y-2"><Label>Category</Label><select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))} className="h-10 w-full rounded-md border border-white/10 bg-slate-950 px-3 text-sm text-slate-100"><option value="">Unknown</option><option value="alpha">Alpha</option><option value="beta">Beta</option><option value="gamma">Gamma</option></select></div>
+                <div className="space-y-2"><Label>Batch Year</Label><Input value={form.batchYear} onChange={(event) => setForm((current) => ({ ...current, batchYear: event.target.value }))} className="border-border bg-muted/20 text-foreground" /></div>
+                <div className="space-y-2"><Label>Category</Label><select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))} className="h-10 w-full rounded-md border border-border bg-muted/20 px-3 text-sm text-foreground"><option value="">Unknown</option><option value="alpha">Alpha</option><option value="beta">Beta</option><option value="gamma">Gamma</option></select></div>
               </div>
-              <div className="space-y-2"><Label>Interview Process</Label><Textarea rows={6} value={form.interviewProcess} onChange={(event) => setForm((current) => ({ ...current, interviewProcess: event.target.value }))} className="border-white/10 bg-slate-950 text-slate-100" /></div>
-              <div className="space-y-2"><Label>Tips</Label><Textarea rows={5} value={form.tips} onChange={(event) => setForm((current) => ({ ...current, tips: event.target.value }))} className="border-white/10 bg-slate-950 text-slate-100" /></div>
-              <Button onClick={createAdminPost} className="bg-indigo-600 hover:bg-indigo-500">Publish Admin Experience</Button>
+              <div className="space-y-2"><Label>Interview Process</Label><Textarea rows={6} value={form.interviewProcess} onChange={(event) => setForm((current) => ({ ...current, interviewProcess: event.target.value }))} className="border-border bg-muted/20 text-foreground" /></div>
+              <div className="space-y-2"><Label>Tips</Label><Textarea rows={5} value={form.tips} onChange={(event) => setForm((current) => ({ ...current, tips: event.target.value }))} className="border-border bg-muted/20 text-foreground" /></div>
+              <Button onClick={createAdminPost} className="bg-primary hover:bg-primary">Publish Admin Experience</Button>
             </CardContent>
           </Card>
         </TabsContent>

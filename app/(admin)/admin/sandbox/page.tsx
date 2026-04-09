@@ -71,7 +71,7 @@ export default function AdminSandboxPage() {
               <select
                 value={taskType}
                 onChange={(e) => setTaskType(e.target.value)}
-                className="h-10 w-full rounded-md border border-slate-700 bg-slate-900 px-3 text-sm text-slate-100"
+                className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground"
               >
                 <option value="career_advice">career_advice</option>
                 <option value="enhance_jd">enhance_jd</option>
@@ -80,7 +80,7 @@ export default function AdminSandboxPage() {
               </select>
             </div>
             <Input value={modelOverride} onChange={(e) => setModelOverride(e.target.value)} placeholder="Optional model override" />
-            <label className="flex items-center gap-2 text-sm text-slate-300">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
               <input
                 type="checkbox"
                 checked={diagnosticsOnly}
@@ -102,7 +102,7 @@ export default function AdminSandboxPage() {
               <Input value={studentDailyLimit} onChange={(e) => setStudentDailyLimit(e.target.value)} />
             </div>
             <Button onClick={saveConfig}>Save Config</Button>
-            <pre className="whitespace-pre-wrap text-xs text-slate-300">{JSON.stringify(config, null, 2)}</pre>
+            <pre className="whitespace-pre-wrap text-xs text-muted-foreground">{JSON.stringify(config, null, 2)}</pre>
           </CardContent>
         </Card>
       </div>
@@ -112,7 +112,7 @@ export default function AdminSandboxPage() {
           <CardTitle>Result</CardTitle>
         </CardHeader>
         <CardContent>
-          <pre className="whitespace-pre-wrap text-sm text-slate-300">{result || "No result yet."}</pre>
+          <pre className="whitespace-pre-wrap text-sm text-muted-foreground">{result || "No result yet."}</pre>
         </CardContent>
       </Card>
     </div>
