@@ -11,23 +11,23 @@ import { Briefcase, Users, Clock, TrendingUp, Activity, PlusCircle, ArrowRight }
 // Helpers
 function getActivityLabel(type: string, status: string) {
     if (status === "completed") {
-        if (type === "rank_students") return { text: "Rankings ready", color: "bg-emerald-400" };
-        if (type === "enhance_jd") return { text: "JD enhanced", color: "bg-emerald-400" };
-        if (type === "generate_embedding") return { text: "Embedding done", color: "bg-emerald-400" };
-        return { text: "Job completed", color: "bg-emerald-400" };
+        if (type === "rank_students") return { text: "Rankings ready", color: "bg-success/10" };
+        if (type === "enhance_jd") return { text: "JD enhanced", color: "bg-success/10" };
+        if (type === "generate_embedding") return { text: "Embedding done", color: "bg-success/10" };
+        return { text: "Job completed", color: "bg-success/10" };
     }
-    if (status === "processing") return { text: "Processing...", color: "bg-indigo-500/20 text-indigo-400" };
-    if (status === "failed") return { text: "Job failed", color: "bg-rose-500/20 text-rose-400" };
-    return { text: "Queued", color: "bg-amber-500/20 text-amber-400" };
+    if (status === "processing") return { text: "Processing...", color: "bg-primary/20 text-primary" };
+    if (status === "failed") return { text: "Job failed", color: "bg-destructive/10 text-destructive" };
+    return { text: "Queued", color: "bg-warning/10 text-warning" };
 }
 
 const StatCard = ({ label, value, icon: Icon, color = "indigo" }: any) => (
-  <div className="bg-slate-900/60 p-6 rounded-2xl border border-white/5 shadow-sm flex flex-col justify-between h-full">
+  <div className="bg-card p-6 rounded-md border border-border shadow-sm flex flex-col justify-between h-full">
     <div className="flex justify-between items-start mb-4">
-      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{label}</p>
+      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{label}</p>
       {Icon && <Icon className={`w-5 h-5 text-${color}-400`} />}
     </div>
-    <h3 className="text-3xl font-black text-white tracking-tighter">{value}</h3>
+    <h3 className="text-3xl font-black text-foreground tracking-tighter">{value}</h3>
   </div>
 );
 
@@ -87,14 +87,14 @@ export default async function FacultyDashboardPage({
         <div className="p-8 max-w-7xl w-full animate-in fade-in duration-500 min-h-screen">
             <header className="flex justify-between items-center mb-10">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight mb-1">Good morning, {firstName}</h1>
-                    <p className="text-sm text-slate-500">Faculty Dashboard — UPES Placement Portal</p>
+                    <h1 className="text-3xl font-bold text-foreground tracking-tight mb-1">Good morning, {firstName}</h1>
+                    <p className="text-sm text-muted-foreground">Faculty Dashboard — UPES Placement Portal</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 max-w-[420px] overflow-x-auto">
                         <Link
                             href="/faculty"
-                            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${selectedSeasonId === "all" ? "bg-indigo-600 text-white" : "bg-slate-900 text-slate-300 border border-white/10"}`}
+                            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${selectedSeasonId === "all" ? "bg-primary text-foreground" : "bg-card text-muted-foreground border border-border"}`}
                         >
                             All seasons
                         </Link>
@@ -102,23 +102,23 @@ export default async function FacultyDashboardPage({
                             <Link
                                 key={season.id}
                                 href={`/faculty?seasonId=${season.id}`}
-                                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${selectedSeasonId === season.id ? "bg-indigo-600 text-white" : "bg-slate-900 text-slate-300 border border-white/10"}`}
+                                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${selectedSeasonId === season.id ? "bg-primary text-foreground" : "bg-card text-muted-foreground border border-border"}`}
                             >
                                 {season.name}
                             </Link>
                         ))}
                     </div>
-                    <Link href="/faculty/drives/new" className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center space-x-2 hover:bg-indigo-700 transition-all shadow-sm">
+                    <Link href="/faculty/drives/new" className="bg-primary text-foreground px-5 py-2.5 rounded-lg font-bold text-sm flex items-center space-x-2 hover:bg-primary/90 transition-all shadow-sm">
                         <PlusCircle className="w-4 h-4" /><span>Create Drive</span>
                     </Link>
                 </div>
             </header>
 
-            <div className="mb-6 rounded-xl border border-white/10 bg-slate-900/50 p-4 text-sm text-slate-300">
-                <p className="font-semibold text-white mb-1">Bulk Eligibility Snapshot</p>
+            <div className="mb-6 rounded-md border border-border bg-card p-4 text-sm text-muted-foreground">
+                <p className="font-semibold text-foreground mb-1">Bulk Eligibility Snapshot</p>
                 <p>Select a drive in the rankings table and query <span className="font-mono">/api/faculty/bulk-eligibility?driveId=...</span> for batch eligibility counts.</p>
                 <div className="mt-2 flex gap-2 flex-wrap">
-                    <Link href="/faculty/drives" className="text-indigo-400 hover:text-indigo-300">Open Drives</Link>
+                    <Link href="/faculty/drives" className="text-primary hover:text-primary">Open Drives</Link>
                     <span>•</span>
                     <span>{filteredDrives.length} drives in current season scope</span>
                 </div>
@@ -133,9 +133,9 @@ export default async function FacultyDashboardPage({
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Activity Feed */}
-                <section className="bg-slate-900/60 rounded-2xl border border-white/5 p-6 shadow-sm">
-                    <h4 className="font-bold text-white mb-6 flex items-center justify-between text-sm">
-                        RECENT ACTIVITY <span className="text-[10px] text-slate-500 font-bold tracking-wider">LIVE FEED</span>
+                <section className="bg-card rounded-md border border-border p-6 shadow-sm">
+                    <h4 className="font-bold text-foreground mb-6 flex items-center justify-between text-sm">
+                        RECENT ACTIVITY <span className="text-[10px] text-muted-foreground font-bold tracking-wider">LIVE FEED</span>
                     </h4>
                     <div className="space-y-6">
                         {activityFeed.length === 0 ? (
@@ -146,8 +146,8 @@ export default async function FacultyDashboardPage({
                                 <div key={item.id} className="flex space-x-4">
                                     <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${label.color.split(" ")[0]}`} />
                                     <div>
-                                        <p className={`text-xs font-black uppercase ${label.color.split(" ")[1] || "text-slate-300"}`}>{label.text}</p>
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">{item.type.replace("_", " ")} • {formatDistanceToNow(item.updatedAt)} ago</p>
+                                        <p className={`text-xs font-black uppercase ${label.color.split(" ")[1] || "text-muted-foreground"}`}>{label.text}</p>
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase mt-0.5">{item.type.replace("_", " ")} • {formatDistanceToNow(item.updatedAt)} ago</p>
                                     </div>
                                 </div>
                             );
@@ -156,35 +156,35 @@ export default async function FacultyDashboardPage({
                 </section>
 
                 {/* Table */}
-                <section className="lg:col-span-2 bg-slate-900/60 rounded-2xl border border-white/5 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-white/5 flex justify-between items-center">
-                        <h4 className="font-bold text-white text-sm uppercase tracking-wider">Recent Drives</h4>
-                        <Link href="/faculty/drives" className="text-indigo-400 text-xs font-bold hover:text-indigo-300 transition-colors flex items-center">View all <ArrowRight className="w-3 h-3 ml-1" /></Link>
+                <section className="lg:col-span-2 bg-card rounded-md border border-border shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-border flex justify-between items-center">
+                        <h4 className="font-bold text-foreground text-sm uppercase tracking-wider">Recent Drives</h4>
+                        <Link href="/faculty/drives" className="text-primary text-xs font-bold hover:text-primary transition-colors flex items-center">View all <ArrowRight className="w-3 h-3 ml-1" /></Link>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-slate-950/50"><th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Details</th><th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th><th className="p-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Analytics</th></tr>
+                                <tr className="bg-muted/20"><th className="p-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Details</th><th className="p-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">Status</th><th className="p-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right">Analytics</th></tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {filteredDrives.slice(0, 5).map((drive) => {
                                     const analytics = rankingCounts.get(drive.id);
                                     return (
-                                        <tr key={drive.id} className="hover:bg-slate-800/50 transition-colors">
+                                        <tr key={drive.id} className="hover:bg-card transition-colors">
                                             <td className="p-4">
                                                 <Link href={`/faculty/drives/${drive.id}/rankings`} className="flex items-center space-x-3">
-                                                    <div className="w-8 h-8 rounded bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-[10px] uppercase shrink-0">{drive.company.slice(0,2)}</div>
-                                                    <div><p className="text-sm font-bold text-white">{drive.company}</p><p className="text-[10px] font-medium text-slate-500 uppercase mt-0.5">{drive.roleTitle}</p></div>
+                                                    <div className="w-8 h-8 rounded bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px] uppercase shrink-0">{drive.company.slice(0,2)}</div>
+                                                    <div><p className="text-sm font-bold text-foreground">{drive.company}</p><p className="text-[10px] font-medium text-muted-foreground uppercase mt-0.5">{drive.roleTitle}</p></div>
                                                 </Link>
                                             </td>
                                             <td className="p-4 text-center">
-                                                <span className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${drive.isActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-500'}`}>
+                                                <span className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${drive.isActive ? 'bg-success/10 text-success border border-success/20' : 'bg-card text-muted-foreground'}`}>
                                                     {drive.isActive ? 'Active' : 'Closed'}
                                                 </span>
                                             </td>
                                             <td className="p-4 text-right">
-                                                <p className="text-sm font-bold text-white">{analytics?.count ?? 0} <span className="text-[10px] text-slate-500 font-medium tracking-wide">RANKED</span></p>
-                                                {analytics?.avgScore && <p className="text-[10px] text-emerald-400 mt-1">{analytics.avgScore.toFixed(1)}% Avg</p>}
+                                                <p className="text-sm font-bold text-foreground">{analytics?.count ?? 0} <span className="text-[10px] text-muted-foreground font-medium tracking-wide">RANKED</span></p>
+                                                {analytics?.avgScore && <p className="text-[10px] text-success mt-1">{analytics.avgScore.toFixed(1)}% Avg</p>}
                                             </td>
                                         </tr>
                                     );

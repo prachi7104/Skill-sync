@@ -110,7 +110,7 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
         <div className="flex items-center gap-3">
           <DriveConflictsButton />
           {canCreateDrive && (
-            <Button asChild className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+            <Button asChild className="gap-2 bg-primary hover:bg-primary/90">
               <Link href="/faculty/drives/new">
                 <Plus className="h-4 w-4" /> Create Drive
               </Link>
@@ -121,10 +121,10 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
 
       {/* Grid */}
       {facultyDrives.length === 0 ? (
-        <div className="py-20 text-center border-2 border-dashed rounded-xl">
+        <div className="py-20 text-center border-2 border-dashed rounded-md">
           <p className="text-muted-foreground">No drives created yet.</p>
           {canCreateDrive && (
-            <Button asChild variant="link" className="text-indigo-400 mt-2">
+            <Button asChild variant="link" className="text-primary mt-2">
               <Link href="/faculty/drives/new">Create your first drive &rarr;</Link>
             </Button>
           )}
@@ -143,22 +143,22 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
             else if (stats && Number(stats.count) > 0) status = "ranked";
 
             const statusConfig = {
-              ranked: { label: "RANKED", className: "text-emerald-400 bg-emerald-500/15 border-emerald-500/20" },
-              processing: { label: "PROCESSING", className: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" },
+              ranked: { label: "RANKED", className: "text-success bg-success/10 border-success/20" },
+              processing: { label: "PROCESSING", className: "text-primary bg-primary/10 border-primary/30" },
               jd_analyzing: { label: "JD ANALYZING", className: "text-violet-400 bg-violet-500/10 border-violet-500/20" },
-              pending: { label: "PENDING", className: "text-amber-400 bg-amber-500/15 border-amber-500/20" },
-              closed: { label: "CLOSED", className: "text-slate-500 bg-slate-800/50 border-slate-700" },
+              pending: { label: "PENDING", className: "text-warning bg-warning/10 border-warning/20" },
+              closed: { label: "CLOSED", className: "text-muted-foreground bg-card border-border" },
             };
 
             const config = statusConfig[status];
 
             return (
-              <Card key={drive.id} className="group hover:ring-1 hover:ring-indigo-500 transition-all shadow-sm flex flex-col">
+              <Card key={drive.id} className="group hover:ring-1 hover:ring-primary transition-all shadow-sm flex flex-col">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <div className={cn(
-                        "h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold text-white uppercase shrink-0 shadow-sm",
+                        "h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold text-foreground uppercase shrink-0 shadow-sm",
                         getCompanyColor(drive.company)
                       )}>
                         {drive.company.slice(0, 2)}
@@ -171,8 +171,8 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
                     <Badge variant="outline" className={cn("rounded px-1.5 py-0 text-[10px] font-bold tracking-wider", config.className)}>
                       {status === "processing" && (
                         <span className="relative flex h-2 w-2 mr-1.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/60 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                         </span>
                       )}
                       {config.label}
@@ -184,17 +184,17 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
                   {/* Info Pills */}
                   <div className="flex flex-wrap gap-1.5">
                     {drive.location && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-card border border-border text-[10px] text-muted-foreground">
                         <MapPin className="h-3 w-3" /> {drive.location}
                       </div>
                     )}
                     {drive.packageOffered && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-card border border-border text-[10px] text-muted-foreground">
                         <IndianRupee className="h-3 w-3" /> {drive.packageOffered}
                       </div>
                     )}
                     {drive.deadline && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700 text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-card border border-border text-[10px] text-muted-foreground">
                         <Calendar className="h-3 w-3" /> {format(new Date(drive.deadline), "MMM d")}
                       </div>
                     )}
@@ -220,7 +220,7 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
                 <CardFooter className="pt-0 flex items-center justify-between gap-4">
                   <Link
                     href={`/faculty/drives/${drive.id}/rankings`}
-                    className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
+                    className="text-xs font-semibold text-primary hover:text-primary flex items-center gap-1 transition-colors"
                   >
                     View Rankings <ExternalLink className="h-3 w-3" />
                   </Link>
