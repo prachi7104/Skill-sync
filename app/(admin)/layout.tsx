@@ -5,6 +5,7 @@ import Link from "next/link";
 import SignOutButton from "@/components/shared/sign-out-button";
 import MobileNav from "@/components/shared/mobile-nav";
 import AdminNav from "@/components/admin/admin-nav";
+import SidebarShell from "@/components/shared/sidebar-shell";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -42,11 +43,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       {/* ── Body ── */}
       <div className='flex flex-1 overflow-hidden' style={{ height: 'calc(100vh - 56px)' }}>
 
-        {/* Sidebar slot — SidebarShell renders AdminNav inside */}
-        <aside className='hidden md:block shrink-0 relative z-10'>
-          {/* Phase 05 inserts: <AdminSidebarShell /> here */}
+        <SidebarShell label='Admin'>
           <AdminNav />
-        </aside>
+        </SidebarShell>
 
         {/* Main scrollable content */}
         <main className='flex-1 overflow-y-auto'>

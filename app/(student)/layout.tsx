@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import StudentSidebarNav from "@/components/student/student-sidebar-nav";
+import SidebarShell from "@/components/shared/sidebar-shell";
 import OnboardingBanner from "@/components/student/onboarding-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TriangleAlert } from "lucide-react";
@@ -132,10 +133,9 @@ export default async function StudentLayout({
                 <div className='flex flex-1 overflow-hidden' style={{ height: 'calc(100vh - 56px)' }}>
 
                     {/* Sidebar slot */}
-                    <aside className='hidden md:block shrink-0 relative z-10'>
-                        {/* Phase 05 inserts: <StudentSidebarShell /> here */}
+                    <SidebarShell label='Student Menu'>
                         <StudentSidebarNav />
-                    </aside>
+                    </SidebarShell>
 
                     {/* Main scrollable content */}
                     <main className='flex-1 overflow-y-auto'>

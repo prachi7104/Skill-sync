@@ -1,48 +1,42 @@
-"use client";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, FolderOpen, Settings, LibraryBig, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
+'use client';
 
-const links = [
-  { href: "/faculty", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/faculty/drives", label: "Drives", icon: FolderOpen },
-  { href: "/faculty/students", label: "Students", icon: Users },
-  { href: "/faculty/resources", label: "Resources", icon: LibraryBig },
-  { href: "/faculty/settings", label: "Settings", icon: Settings },
+import { usePathname } from 'next/navigation';
+import {
+  LayoutDashboard, FolderOpen,
+  Users, LibraryBig, Settings, Box
+} from 'lucide-react';
+import NavItem from '@/components/shared/nav-item';
+
+const facultyLinks = [
+  { href: '/faculty',                   label: 'Dashboard',  icon: LayoutDashboard },
+  { href: '/faculty/drives',            label: 'My Drives',  icon: FolderOpen },
+  { href: '/faculty/drives/new',        label: 'New Drive',  icon: FolderOpen }, // shown only when creating
+  { href: '/faculty/students',          label: 'Students',   icon: Users },
+  { href: '/faculty/resources',         label: 'Resources',  icon: LibraryBig },
+  { href: '/faculty/sandbox',           label: 'Sandbox',    icon: Box },
+  { href: '/faculty/settings',          label: 'Settings',   icon: Settings },
 ];
 
-export default function SidebarNav({ name }: { name: string }) {
+// Filter out the 'New Drive' link from the persistent nav — it appears contextually
+const persistentLinks = facultyLinks.filter(l => l.href !== '/faculty/drives/new');
+
+export default function SidebarNav() {
   const pathname = usePathname();
   return (
-    <nav className="space-y-2">
-      {links.map((link) => {
-        const isActive = link.exact
-          ? pathname === link.href
-          : pathname.startsWith(link.href) && link.href !== "/faculty";
-        return (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={cn(
-              "group flex items-center gap-3 px-4 py-3.5 rounded-md transition-all duration-300 font-semibold text-sm",
-              isActive
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            )}
-          >
-            <link.icon className={cn(
-              "w-5 h-5 transition-all",
-              isActive ? "text-primary" : "opacity-60 group-hover:opacity-100"
-            )} />
-            {link.label}
-          </Link>
-        );
-      })}
-      <div className="mt-8 px-4 pt-6 border-t border-border">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Signed in as</p>
-        <p className="text-xs text-muted-foreground mt-1 font-medium truncate">{name}</p>
-      </div>
+    <nav aria-label='Faculty navigation'>
+      {persistentLinks.map(link => (
+        <NavItem
+          key={link.href}
+          href={link.href}
+          icon={link.icon}
+          label={link.label}
+          isActive={
+            link.href === '/faculty'
+              ? pathname === '/faculty'        // exact match for dashboard only
+              : pathname.startsWith(link.href) // prefix match for sub-routes
+          }
+        />
+      ))}
     </nav>
   );
 }

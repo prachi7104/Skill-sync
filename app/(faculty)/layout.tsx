@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import Link from "next/link";
 import SidebarNav from "@/components/faculty/sidebar-nav";
+import SidebarShell from "@/components/shared/sidebar-shell";
 import SignOutButton from "@/components/shared/sign-out-button";
 import MobileNav from "@/components/shared/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -40,10 +41,9 @@ export default async function FacultyLayout({ children }: { children: React.Reac
       <div className='flex flex-1 overflow-hidden' style={{ height: 'calc(100vh - 56px)' }}>
 
         {/* Sidebar slot */}
-        <aside className='hidden md:block shrink-0 relative z-10'>
-          {/* Phase 05 inserts: <FacultySidebarShell /> here */}
-          <SidebarNav name={name} />
-        </aside>
+        <SidebarShell label='Faculty'>
+          <SidebarNav />
+        </SidebarShell>
 
         {/* Main scrollable content */}
         <main className='flex-1 overflow-y-auto'>

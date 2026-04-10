@@ -1,20 +1,24 @@
-"use client";
-import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, UserCircle, Briefcase, Box, Settings, Trophy, Building2, LibraryBig, Sparkles, Lock } from "lucide-react";
-import { toast } from "sonner";
-import { useStudent } from "@/app/(student)/providers/student-provider";
-import { cn } from "@/lib/utils";
+'use client';
+
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  LayoutDashboard, UserCircle, Briefcase, Box, Settings,
+  Trophy, Building2, LibraryBig, Sparkles
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { useStudent } from '@/app/(student)/providers/student-provider';
+import NavItem from '@/components/shared/nav-item';
 
 const studentLinks = [
-  { href: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/student/profile", label: "My Profile", icon: UserCircle },
-  { href: "/student/drives", label: "Drives", icon: Briefcase },
-  { href: "/student/companies", label: "Companies", icon: Building2 },
-  { href: "/student/resources", label: "Resources", icon: LibraryBig },
-  { href: "/student/career-coach", label: "Career Coach", icon: Sparkles },
-  { href: "/student/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/student/sandbox", label: "AI Sandbox", icon: Box },
-  { href: "/student/settings", label: "Settings", icon: Settings },
+  { href: '/student/dashboard', label: 'Dashboard',    icon: LayoutDashboard, alwaysUnlocked: true },
+  { href: '/student/profile',   label: 'My Profile',   icon: UserCircle,      alwaysUnlocked: false },
+  { href: '/student/drives',    label: 'Drives',       icon: Briefcase,       alwaysUnlocked: false },
+  { href: '/student/companies', label: 'Companies',    icon: Building2,       alwaysUnlocked: false },
+  { href: '/student/resources', label: 'Resources',    icon: LibraryBig,      alwaysUnlocked: false },
+  { href: '/student/career-coach', label: 'Career Coach', icon: Sparkles,     alwaysUnlocked: false },
+  { href: '/student/leaderboard',  label: 'Leaderboard',  icon: Trophy,       alwaysUnlocked: false },
+  { href: '/student/sandbox',   label: 'AI Sandbox',   icon: Box,             alwaysUnlocked: false },
+  { href: '/student/settings',  label: 'Settings',     icon: Settings,        alwaysUnlocked: true },
 ];
 
 export default function StudentSidebarNav() {
@@ -23,42 +27,31 @@ export default function StudentSidebarNav() {
   const { onboardingRequired } = useStudent();
 
   return (
-    <nav className="space-y-2">
-      {studentLinks.map((link) => {
+    <nav aria-label='Student navigation'>
+      {studentLinks.map(link => {
+        const isBlocked = onboardingRequired && !link.alwaysUnlocked;
         const isActive = pathname.startsWith(link.href);
-        const isBlocked = onboardingRequired && link.href !== "/student/onboarding";
+
+        const handleBlockedClick = () => {
+          toast.info('Complete your profile setup first', {
+            description: 'Fill in your SAP ID, roll number, academic details to unlock all features.',
+            action: {
+              label: 'Go to Onboarding',
+              onClick: () => router.push('/student/onboarding'),
+            },
+          });
+        };
+
         return (
-          <button
+          <NavItem
             key={link.href}
-            type="button"
-            onClick={() => {
-              if (isBlocked) {
-                toast.info("Complete your profile setup first", {
-                  description: "Fill in your SAP ID, roll number, academic details, and more.",
-                  action: { label: "Go to Onboarding", onClick: () => router.push("/student/onboarding") },
-                });
-                return;
-              }
-              router.push(link.href);
-            }}
-            className={cn(
-              "group flex w-full items-center space-x-3 px-4 py-3.5 rounded-md transition-all duration-300 font-semibold text-sm text-left",
-              isActive && !isBlocked
-                ? "bg-primary/10 text-primary"
-                : isBlocked
-                  ? "text-muted-foreground cursor-not-allowed opacity-50"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            )}
-          >
-            <link.icon
-              className={cn(
-                "w-5 h-5 transition-all",
-                isActive && !isBlocked ? "text-primary" : "opacity-60 group-hover:opacity-100"
-              )}
-            />
-            <span>{link.label}</span>
-            {isBlocked && <Lock className="w-3 h-3 ml-auto text-muted-foreground" />}
-          </button>
+            href={isBlocked ? undefined : link.href}
+            onClick={isBlocked ? handleBlockedClick : undefined}
+            icon={link.icon}
+            label={link.label}
+            isActive={isActive}
+            isBlocked={isBlocked}
+          />
         );
       })}
     </nav>
