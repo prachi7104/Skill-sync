@@ -95,6 +95,6 @@ describe("Phase 3 — Career Coach UI", () => {
 
     const badge = await screen.findByText("YouTube");
     expect(badge).toBeInTheDocument();
-    expect(badge.className).toContain("rose");
+    expect(badge.className).toContain("text-destructive");
   });
 });

@@ -137,7 +137,7 @@ describe("Phase 4 - Career Advisor multi-turn", () => {
     const { default: CareerCoachPage } = await import("@/app/(student)/student/career-coach/page");
     render(<CareerCoachPage />);
 
-    await waitFor(() => expect(screen.getByText("Career Advisor")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Career Coach")).toBeInTheDocument());
     expect(screen.getByText("PyTorch")).toBeInTheDocument();
     expect(screen.queryByText("**Critical**")).not.toBeInTheDocument();
     expect(screen.getByText(/Critical for target drives/i)).toBeInTheDocument();
