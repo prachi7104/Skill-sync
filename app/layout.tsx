@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 
@@ -12,10 +12,8 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 
 export const metadata: Metadata = {
   title: 'SkillSync — Placement Intelligence Hub',
-  description: 'Placement Intelligence Hub',
-  icons: {
-    icon: '/favicon.ico',
-  },
+  description: 'AI-Native Placement Ecosystem for UPES students, faculty, and administrators.',
+  icons: { icon: '/favicon.ico' },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -23,17 +21,18 @@ export const metadata: Metadata = {
     title: 'SkillSync',
   },
   formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#5A77DF' },
     { media: '(prefers-color-scheme: dark)', color: '#08112F' },
   ],
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1, // prevents auto-zoom on iOS inputs
-    userScalable: false,
-  },
-}
+};
 
 export default function RootLayout({
   children,
@@ -48,13 +47,7 @@ export default function RootLayout({
           <ClientToaster />
           <script
             dangerouslySetInnerHTML={{
-              __html: `
-                if ('serviceWorker' in navigator) {
-                  window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('/sw.js');
-                  });
-                }
-              `,
+              __html: `if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});})}`,
             }}
           />
         </ThemeProvider>
