@@ -9,7 +9,6 @@ import { students } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import StudentSidebarNav from "@/components/student/student-sidebar-nav";
 import SidebarShell from "@/components/shared/sidebar-shell";
-import OnboardingBanner from "@/components/student/onboarding-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TriangleAlert } from "lucide-react";
 
@@ -125,9 +124,6 @@ export default async function StudentLayout({
                         <SignOutButton />
                     </div>
                 </header>
-
-                {/* Onboarding banner renders here if onboarding is required */}
-                <OnboardingBanner />
 
                 {/* ── Body ── */}
                 <div className='flex flex-1 overflow-hidden' style={{ height: 'calc(100vh - 56px)' }}>
