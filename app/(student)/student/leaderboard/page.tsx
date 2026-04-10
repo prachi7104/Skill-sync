@@ -1,6 +1,10 @@
-"use client";
+export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
+import { Download, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -16,10 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Download, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 type LeaderboardSession = {
   id: string;
@@ -144,12 +144,15 @@ export default function StudentLeaderboardPage() {
     fetchLeaderboard(undefined, "all");
   }, []);
 
-  const stats = useMemo(() => ({
-    total: Number(session?.total_students ?? 0),
-    alpha: Number(session?.alpha_count ?? 0),
-    beta: Number(session?.beta_count ?? 0),
-    gamma: Number(session?.gamma_count ?? 0),
-  }), [session]);
+  const stats = useMemo(
+    () => ({
+      total: Number(session?.total_students ?? 0),
+      alpha: Number(session?.alpha_count ?? 0),
+      beta: Number(session?.beta_count ?? 0),
+      gamma: Number(session?.gamma_count ?? 0),
+    }),
+    [session],
+  );
 
   function downloadCsv() {
     const rows = [
@@ -162,7 +165,9 @@ export default function StudentLeaderboardPage() {
       rows.push([myRank.rank, "You", "", myRank.score, myRank.category]);
     }
 
-    const csv = rows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = rows
+      .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -175,82 +180,90 @@ export default function StudentLeaderboardPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-8 md:p-10 pb-32 space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-foreground">AMCAT Leaderboard</h1>
-          <p className="text-muted-foreground mt-1">Top performers from published AMCAT sessions</p>
+    <div className="mx-auto max-w-6xl space-y-8 px-4 pb-32 pt-6 text-zinc-900 animate-in fade-in duration-500 sm:px-6 md:p-10 dark:text-slate-100">
+      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-slate-400">AMCAT Leaderboard</p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-zinc-900 dark:text-slate-100 md:text-4xl">Published session rankings</h1>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-slate-300">Top performers from published AMCAT sessions, with branch filters and CSV export.</p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Select
+              value={selectedSessionId}
+              onValueChange={(value) => {
+                setSelectedSessionId(value);
+                setSelectedBranch("all");
+                fetchLeaderboard(value, "all");
+              }}
+              disabled={!hasData || loading}
+            >
+              <SelectTrigger className="w-[260px] border-zinc-200 bg-white text-zinc-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
+                <SelectValue placeholder="Select session" />
+              </SelectTrigger>
+              <SelectContent>
+                {sessions.map((sessionRow) => (
+                  <SelectItem key={sessionRow.id} value={sessionRow.id}>
+                    {sessionRow.session_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={selectedBranch}
+              onValueChange={(value) => {
+                setSelectedBranch(value);
+                fetchLeaderboard(selectedSessionId || undefined, value);
+              }}
+              disabled={!hasData || loading || branches.length === 0}
+            >
+              <SelectTrigger className="w-[180px] border-zinc-200 bg-white text-zinc-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
+                <SelectValue placeholder="All branches" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All branches</SelectItem>
+                {branches.map((branch) => (
+                  <SelectItem key={branch} value={branch}>
+                    {branch}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="outline"
+              className="gap-2 border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+              onClick={downloadCsv}
+              disabled={!hasData || loading || top50.length === 0}
+            >
+              <Download className="h-4 w-4" /> Download CSV
+            </Button>
+          </div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Select
-            value={selectedSessionId}
-            onValueChange={(value) => {
-              setSelectedSessionId(value);
-              setSelectedBranch("all");
-              fetchLeaderboard(value, "all");
-            }}
-            disabled={!hasData || loading}
-          >
-            <SelectTrigger className="w-[260px] bg-card border-border text-foreground">
-              <SelectValue placeholder="Select session" />
-            </SelectTrigger>
-            <SelectContent>
-              {sessions.map((sessionRow) => (
-                <SelectItem key={sessionRow.id} value={sessionRow.id}>
-                  {sessionRow.session_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={selectedBranch}
-            onValueChange={(value) => {
-              setSelectedBranch(value);
-              fetchLeaderboard(selectedSessionId || undefined, value);
-            }}
-            disabled={!hasData || loading || branches.length === 0}
-          >
-            <SelectTrigger className="w-[180px] bg-card border-border text-foreground">
-              <SelectValue placeholder="All branches" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All branches</SelectItem>
-              {branches.map((branch) => (
-                <SelectItem key={branch} value={branch}>
-                  {branch}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button variant="outline" className="gap-2" onClick={downloadCsv} disabled={!hasData || loading || top50.length === 0}>
-            <Download className="h-4 w-4" /> Download CSV
-          </Button>
-        </div>
-      </div>
+      </section>
 
       {loading ? (
-        <div className="flex items-center justify-center min-h-[240px]">
+        <div className="flex min-h-[240px] items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : error ? (
-        <div className="rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-rose-300">{error}</div>
+        <div className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive dark:bg-destructive/10">{error}</div>
       ) : !hasData ? (
-        <div className="rounded-md border border-border bg-card px-4 py-6 text-sm text-muted-foreground">
+        <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-6 text-sm text-zinc-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
           No published AMCAT data is available yet.
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <Stat title="Total Participants" value={stats.total} />
             <Stat title="Alpha" value={stats.alpha} />
             <Stat title="Beta" value={stats.beta} />
             <Stat title="Gamma" value={stats.gamma} />
           </div>
 
-          <div className="rounded-md border border-border bg-card overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -279,7 +292,7 @@ export default function StudentLeaderboardPage() {
                 {!isInTop50 && myRank && (
                   <>
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">...</TableCell>
+                      <TableCell colSpan={5} className="text-center text-zinc-500 dark:text-slate-400">...</TableCell>
                     </TableRow>
                     <TableRow className="bg-primary/10">
                       <TableCell className="font-semibold">#{myRank.rank}</TableCell>
@@ -305,9 +318,9 @@ export default function StudentLeaderboardPage() {
 
 function Stat({ title, value }: { title: string; value: number }) {
   return (
-    <div className="rounded-md border border-border bg-card p-5">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{title}</p>
-      <p className="text-2xl font-black text-foreground mt-2">{value}</p>
+    <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-slate-400">{title}</p>
+      <p className="mt-2 text-2xl font-black text-zinc-900 dark:text-slate-100">{value}</p>
     </div>
   );
 }

@@ -203,20 +203,25 @@ export default function CareerCoachPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/20 px-4 py-8 text-foreground sm:px-6 lg:px-10">
+    <div className="min-h-screen bg-zinc-50 px-4 py-8 text-zinc-900 sm:px-6 lg:px-10 dark:bg-slate-950 dark:text-slate-100">
       <div className="mx-auto w-full max-w-7xl space-y-8">
-        <header className="flex flex-col gap-4 rounded-md border border-border bg-card/40 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <header className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900">
           <div>
-            <h1 className="text-3xl font-black tracking-tight">Career Advisor</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Personalized upskilling roadmap based on your eligible drives
+            <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-slate-400">
+              Career Coach
             </p>
-            <p className="mt-2 text-xs text-muted-foreground">{generatedLabel}</p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-zinc-900 dark:text-slate-100">
+              Personalized upskilling roadmap
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600 dark:text-slate-300">
+              Focus on the skills, resources, and AMCAT signals that move you closer to eligible drives.
+            </p>
+            <p className="mt-2 text-xs text-zinc-500 dark:text-slate-400">{generatedLabel}</p>
           </div>
           <Button
             type="button"
             variant="outline"
-            className="border-border bg-card text-foreground hover:bg-muted/50"
+            className="border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
             onClick={() => void fetchRoadmap(true)}
             disabled={refreshing}
           >
@@ -225,9 +230,9 @@ export default function CareerCoachPage() {
           </Button>
         </header>
 
-        <Card className="border-none bg-gradient-to-r from-primary/15 via-primary/10 to-muted/20">
+        <Card className="border border-zinc-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground">
+            <CardTitle className="flex items-center gap-2 text-zinc-900 dark:text-slate-100">
               <Sparkles className="h-5 w-5" />
               Snapshot Summary
             </CardTitle>
@@ -238,35 +243,35 @@ export default function CareerCoachPage() {
                 <div className="h-4 w-11/12 animate-pulse rounded bg-muted/50" />
                 <div className="h-4 w-9/12 animate-pulse rounded bg-muted/50" />
                 <div className="h-4 w-8/12 animate-pulse rounded bg-muted/50" />
-                <p className="pt-2 text-xs text-muted-foreground">Analyzing your profile...</p>
+                <p className="pt-2 text-xs text-zinc-500 dark:text-slate-400">Analyzing your profile...</p>
               </div>
             ) : (
-              <p className="text-sm leading-relaxed text-muted-foreground">
+              <p className="text-sm leading-relaxed text-zinc-600 dark:text-slate-300">
                 {payload?.summary || "No summary available yet."}
               </p>
             )}
           </CardContent>
         </Card>
 
-        <Card className="border-border bg-card">
+        <Card className="border border-zinc-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <CardHeader className="flex flex-row items-center justify-between gap-3">
-            <CardTitle className="flex items-center gap-2 text-foreground">
+            <CardTitle className="flex items-center gap-2 text-zinc-900 dark:text-slate-100">
               <MessageSquare className="h-5 w-5" />
               Conversation
             </CardTitle>
-            <p className="text-xs text-muted-foreground">{messages.length}/{MAX_MESSAGES} messages</p>
+            <p className="text-xs text-zinc-500 dark:text-slate-400">{messages.length}/{MAX_MESSAGES} messages</p>
           </CardHeader>
           <CardContent className="space-y-4">
             {messages.length === 0 ? (
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Quick start</p>
+                <p className="text-sm text-zinc-500 dark:text-slate-400">Quick start</p>
                 <div className="flex flex-wrap gap-2">
                   {quickStarts.map((chip) => (
                     <Button
                       key={chip}
                       type="button"
                       variant="outline"
-                      className="border-border bg-muted/20 text-foreground hover:bg-muted/50"
+                      className="border-zinc-200 bg-zinc-50 text-zinc-900 hover:bg-zinc-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-800"
                       onClick={() => void sendMessage(chip)}
                       disabled={!canSend}
                     >
@@ -277,15 +282,15 @@ export default function CareerCoachPage() {
               </div>
             ) : null}
 
-            <div className="max-h-[420px] space-y-3 overflow-y-auto rounded-md border border-border bg-muted/20 p-3">
+            <div className="max-h-[420px] space-y-3 overflow-y-auto rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-slate-800 dark:bg-slate-950">
               {messages.map((message, index) => (
                 <div key={`${message.role}-${index}`} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div
                     className={[
                       "max-w-[85%] rounded-md px-4 py-2 text-sm leading-relaxed",
                       message.role === "user"
-                        ? "bg-primary text-foreground"
-                        : "border border-border bg-muted/50 text-foreground",
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-zinc-200 bg-white text-zinc-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100",
                     ].join(" ")}
                   >
                     {message.role === "assistant" ? (
@@ -305,7 +310,7 @@ export default function CareerCoachPage() {
                 <div className="flex justify-start">
                   <div
                     data-testid="typing-indicator"
-                    className="flex items-center gap-1 rounded-md border border-border bg-muted/50 px-3 py-2"
+                    className="flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900"
                   >
                     <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:0ms]" />
                     <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:120ms]" />
@@ -327,13 +332,13 @@ export default function CareerCoachPage() {
                 placeholder={sessionComplete ? "Session complete" : "Ask a question..."}
                 disabled={!canSend}
                 rows={3}
-                className="w-full resize-none rounded-md border border-border bg-muted/20/60 px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/30"
+                className="w-full resize-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-primary/30 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
               />
               <div className="flex justify-end">
                 <Button
                   type="button"
                   onClick={() => void sendMessage()}
-                  className="bg-primary hover:bg-primary"
+                  className="bg-primary text-primary-foreground hover:bg-primary-hover"
                   disabled={!canSend || !chatInput.trim()}
                 >
                   Send
@@ -346,16 +351,16 @@ export default function CareerCoachPage() {
         {loading ? (
           <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} data-testid="skill-skeleton" className="space-y-3 rounded-md border border-border bg-card p-5">
-                <div className="h-6 w-1/2 animate-pulse rounded bg-muted/50" />
-                <div className="h-4 w-full animate-pulse rounded bg-muted/50" />
-                <div className="h-4 w-10/12 animate-pulse rounded bg-muted/50" />
-                <div className="h-16 w-full animate-pulse rounded bg-muted/50" />
+              <div key={i} data-testid="skill-skeleton" className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="h-6 w-1/2 animate-pulse rounded bg-zinc-200 dark:bg-slate-800" />
+                <div className="h-4 w-full animate-pulse rounded bg-zinc-200 dark:bg-slate-800" />
+                <div className="h-4 w-10/12 animate-pulse rounded bg-zinc-200 dark:bg-slate-800" />
+                <div className="h-16 w-full animate-pulse rounded bg-zinc-200 dark:bg-slate-800" />
               </div>
             ))}
           </section>
         ) : errorText ? (
-          <Card className="border border-warning/20 bg-warning/10">
+          <Card className="border border-warning/20 bg-warning/10 dark:bg-warning/10">
             <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
               <BookOpen className="h-10 w-10 text-warning" />
               <h2 className="text-xl font-bold text-warning">No drives to analyze</h2>
@@ -363,7 +368,7 @@ export default function CareerCoachPage() {
                 {payload?.suggestion || "Complete your profile and wait for active drives to be posted"}
               </p>
               <p className="text-xs text-warning/80">{errorText}</p>
-              <Button type="button" className="mt-2 bg-warning/10 text-slate-950 hover:bg-warning/10" onClick={() => void fetchRoadmap(true)}>
+              <Button type="button" className="mt-2 bg-warning/10 text-zinc-900 hover:bg-warning/10 dark:text-slate-100" onClick={() => void fetchRoadmap(true)}>
                 Retry
               </Button>
             </CardContent>
@@ -371,7 +376,7 @@ export default function CareerCoachPage() {
         ) : (
           <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {skills.map((skill, index) => (
-              <Card key={`${skill.skill}-${index}`} className="rounded-md border border-border bg-card">
+              <Card key={`${skill.skill}-${index}`} className="rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <CardHeader className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <CardTitle className="text-xl font-black text-primary">{skill.skill}</CardTitle>
@@ -379,26 +384,26 @@ export default function CareerCoachPage() {
                       {impactLabel(index)}
                     </span>
                   </div>
-                  <span className="inline-flex w-fit items-center rounded-full border border-border bg-muted/50/80 px-2.5 py-1 text-xs text-foreground">
+                  <span className="inline-flex w-fit items-center rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
                     Start Week {skill.week_start ?? "?"} · {skill.hours_needed ?? "?"} hours
                   </span>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="rounded-md border border-border bg-muted/20 p-3">
-                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-slate-800 dark:bg-slate-950">
+                    <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-slate-400">
                       <Target className="h-3.5 w-3.5" /> Why it matters
                     </p>
-                    <p className="text-sm text-foreground">{skill.why_critical}</p>
+                    <p className="text-sm text-zinc-900 dark:text-slate-100">{skill.why_critical}</p>
                   </div>
 
-                  <div className="rounded-md border border-border bg-muted/20 p-3">
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-slate-800 dark:bg-slate-950">
                     <div className="mb-2 flex items-center justify-between">
                       <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${resourceTypeClass(skill.resource?.type)}`}>
                         {skill.resource?.type || "Resource"}
                       </span>
                     </div>
-                    <p className="text-sm font-bold text-foreground">{skill.resource?.name || "Recommended Resource"}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Search: {skill.resource?.url_description || "Find an official resource"}</p>
+                    <p className="text-sm font-bold text-zinc-900 dark:text-slate-100">{skill.resource?.name || "Recommended Resource"}</p>
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-slate-400">Search: {skill.resource?.url_description || "Find an official resource"}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -407,7 +412,7 @@ export default function CareerCoachPage() {
         )}
 
         {!loading && payload?.amcat_tip && !errorText ? (
-          <Card className="border border-warning/20 bg-warning/10">
+          <Card className="border border-warning/20 bg-warning/10 dark:bg-warning/10">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-warning">
                 <AlertTriangle className="h-5 w-5" />
