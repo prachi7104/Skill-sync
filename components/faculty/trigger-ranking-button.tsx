@@ -123,7 +123,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (!jdReady) {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 text-violet-400 bg-violet-500/10 border-violet-500/20">
+            <Button variant="outline" size="sm" disabled className="gap-2 border-violet-500/20 bg-violet-500/10 text-violet-400">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Analyzing JD... (~3 min)
             </Button>
@@ -132,7 +132,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (state === "ranked") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 bg-card text-muted-foreground border-border">
+            <Button variant="outline" size="sm" disabled className="gap-2 border-border bg-background text-muted-foreground dark:bg-slate-950/60">
                 Ranked <CheckCircle2 className="h-4 w-4" />
             </Button>
         );
@@ -140,7 +140,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (state === "already_processing") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 text-primary bg-primary/10 border-primary/30">
+            <Button variant="outline" size="sm" disabled className="gap-2 border-primary/30 bg-primary/10 text-primary">
                 <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/10 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
@@ -152,7 +152,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (state === "queued") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 bg-success/10 text-success border-success/20">
+            <Button variant="outline" size="sm" disabled className="gap-2 border-success/20 bg-success/10 text-success">
                 Queued <CheckCircle2 className="h-4 w-4" />
             </Button>
         );

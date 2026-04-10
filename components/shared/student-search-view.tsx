@@ -51,9 +51,9 @@ interface StudentSearchViewProps {
 
 export function ProfileModal({ student, onClose }: { student: StudentProfile; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/50  flex items-center justify-center p-4 z-50">
-      <div className="bg-card border border-border rounded-md max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-card border-b border-border px-8 py-6 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-card shadow-2xl dark:bg-slate-950/95">
+        <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-8 py-6 dark:bg-slate-950/95">
           <div>
             <h2 className="text-2xl font-bold text-foreground">{student.name}</h2>
             <p className="text-sm text-warning mt-1">
@@ -62,7 +62,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-card rounded-lg transition"
+            className="rounded-lg p-2 transition hover:bg-muted/40"
           >
             <X className="h-5 w-5 text-muted-foreground" />
           </button>
@@ -359,15 +359,18 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-black text-foreground mb-2">Student Profiles</h1>
-          <p className="text-muted-foreground">Search and view student profiles for your college</p>
+    <div className="min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 space-y-2">
+          <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
+            Student profiles
+          </div>
+          <h1 className="text-4xl font-black text-foreground">Search and view student profiles</h1>
+          <p className="text-sm text-muted-foreground">Filter by branch, batch, and search terms to review college profiles quickly.</p>
         </div>
 
-        <div className="bg-card  border border-border rounded-md p-6 mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="mb-8 rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
+          <div className="flex flex-col gap-4 md:flex-row">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
               <input
@@ -375,7 +378,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                 placeholder="Search by name, email, or SAP ID..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-muted/20 border border-border rounded-md text-foreground placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl border border-border bg-background py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-950/60"
               />
             </div>
 
@@ -385,7 +388,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                 setSelectedBranch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="px-4 py-3 bg-muted/20 border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-950/60"
             >
               <option value="all">All Branches</option>
               {branches.map((branch) => (
@@ -401,7 +404,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                 setSelectedBatchYear(e.target.value);
                 setCurrentPage(1);
               }}
-              className="px-4 py-3 bg-muted/20 border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-950/60"
             >
               <option value="all">All Batch Years</option>
               {batchYears.map((year) => (
@@ -421,14 +424,14 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
         )}
 
         {error && (
-          <div className="flex items-start gap-3 bg-destructive/10 border border-destructive/20 rounded-md p-4 mb-6">
+          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-destructive/20 bg-destructive/10 p-4">
             <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
             <div className="text-destructive">{error}</div>
           </div>
         )}
 
         {!loading && results.length === 0 && !error && (
-          <div className="text-center py-12">
+          <div className="py-12 text-center">
             <Filter className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground text-lg">
               {searchQuery || selectedBranch !== "all" || selectedBatchYear !== "all"
@@ -448,7 +451,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
               {results.map((student) => (
                 <div
                   key={student.id}
-                  className="bg-card border border-border rounded-md p-4 flex items-center justify-between hover:bg-card transition"
+                  className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm transition hover:bg-muted/30 dark:bg-slate-950/60"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -457,7 +460,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                         <p className="text-sm text-muted-foreground">{student.email}</p>
                       </div>
                       <div className="text-sm">
-                        <span className="px-2.5 py-1 bg-card rounded-lg text-muted-foreground">
+                        <span className="rounded-lg bg-background px-2.5 py-1 text-muted-foreground dark:bg-slate-950/60">
                           {student.branch || "—"}
                         </span>
                       </div>
@@ -473,7 +476,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
 
                   <button
                     onClick={() => setSelectedStudent(student)}
-                    className="ml-4 px-4 py-2 bg-primary hover:bg-primary text-foreground rounded-lg text-sm font-semibold transition shrink-0"
+                    className="ml-4 shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
                   >
                     View Profile
                   </button>
@@ -486,7 +489,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                 <button
                   onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 bg-card disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-foreground hover:bg-card transition"
+                  className="rounded-lg bg-background px-4 py-2 text-foreground transition hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-950/60"
                 >
                   Previous
                 </button>
@@ -496,7 +499,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage >= Math.ceil(total / 20)}
-                  className="px-4 py-2 bg-card disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-foreground hover:bg-card transition"
+                  className="rounded-lg bg-background px-4 py-2 text-foreground transition hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-950/60"
                 >
                   Next
                 </button>

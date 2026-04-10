@@ -35,11 +35,11 @@ export function DriveConflictsButton() {
 
   return (
     <>
-      <Button variant="outline" className="border-border bg-card text-foreground hover:bg-card" onClick={loadConflicts}>
+      <Button variant="outline" className="border-border bg-background text-foreground hover:bg-muted/40 dark:bg-slate-950/60" onClick={loadConflicts}>
         Check Conflicts
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl border-border bg-muted/20 text-foreground">
+        <DialogContent className="max-w-3xl border-border bg-card text-foreground dark:bg-slate-950/95">
           <DialogHeader>
             <DialogTitle>Drive Conflicts</DialogTitle>
             <DialogDescription>Detect overlapping eligible student pools within the next 7 days.</DialogDescription>

@@ -7,6 +7,7 @@ import { eq, count, avg, sql, and, inArray } from "drizzle-orm";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { Briefcase, Users, Clock, TrendingUp, Activity, PlusCircle, ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Helpers
 function getActivityLabel(type: string, status: string) {
@@ -21,14 +22,24 @@ function getActivityLabel(type: string, status: string) {
     return { text: "Queued", color: "bg-warning/10 text-warning" };
 }
 
+const statTone = {
+    indigo: "text-primary bg-primary/10",
+    emerald: "text-success bg-success/10",
+    amber: "text-warning bg-warning/10",
+} as const;
+
 const StatCard = ({ label, value, icon: Icon, color = "indigo" }: any) => (
-  <div className="bg-card p-6 rounded-md border border-border shadow-sm flex flex-col justify-between h-full">
-    <div className="flex justify-between items-start mb-4">
-      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{label}</p>
-      {Icon && <Icon className={`w-5 h-5 text-${color}-400`} />}
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
+        <div className="mb-4 flex items-start justify-between gap-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
+            {Icon && (
+                <div className={cn("rounded-full p-2", statTone[color as keyof typeof statTone] ?? statTone.indigo)}>
+                    <Icon className="h-4 w-4" />
+                </div>
+            )}
+        </div>
+        <h3 className="text-3xl font-black tracking-tight text-foreground">{value}</h3>
     </div>
-    <h3 className="text-3xl font-black text-foreground tracking-tighter">{value}</h3>
-  </div>
 );
 
 export default async function FacultyDashboardPage({
@@ -84,67 +95,83 @@ export default async function FacultyDashboardPage({
     }
 
     return (
-        <div className="p-8 max-w-7xl w-full animate-in fade-in duration-500 min-h-screen">
-            <header className="flex justify-between items-center mb-10">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground tracking-tight mb-1">Good morning, {firstName}</h1>
-                    <p className="text-sm text-muted-foreground">Faculty Dashboard — UPES Placement Portal</p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 max-w-[420px] overflow-x-auto">
-                        <Link
-                            href="/faculty"
-                            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${selectedSeasonId === "all" ? "bg-primary text-foreground" : "bg-card text-muted-foreground border border-border"}`}
-                        >
-                            All seasons
-                        </Link>
-                        {seasonRows.map((season) => (
-                            <Link
-                                key={season.id}
-                                href={`/faculty?seasonId=${season.id}`}
-                                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${selectedSeasonId === season.id ? "bg-primary text-foreground" : "bg-card text-muted-foreground border border-border"}`}
-                            >
-                                {season.name}
+        <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 px-4 py-8 animate-in fade-in duration-500 sm:px-6 lg:px-8">
+            <header className="rounded-3xl border border-border bg-card/95 p-6 shadow-sm backdrop-blur dark:bg-slate-950/60 sm:p-8">
+                <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+                    <div className="max-w-2xl space-y-4">
+                        <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
+                            Faculty dashboard
+                        </div>
+                        <div className="space-y-2">
+                            <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">Good morning, {firstName}</h1>
+                            <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+                                Track live drives, queued ranking jobs, and college-wide placement activity from one neutral shell.
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <Link href="/faculty" className={cn("rounded-full px-3 py-1.5 text-xs font-semibold transition-colors", selectedSeasonId === "all" ? "bg-primary text-primary-foreground" : "border border-border bg-background text-muted-foreground hover:text-foreground")}>
+                                All seasons
                             </Link>
-                        ))}
+                            {seasonRows.map((season) => (
+                                <Link
+                                    key={season.id}
+                                    href={`/faculty?seasonId=${season.id}`}
+                                    className={cn("whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors", selectedSeasonId === season.id ? "bg-primary text-primary-foreground" : "border border-border bg-background text-muted-foreground hover:text-foreground")}
+                                >
+                                    {season.name}
+                                </Link>
+                            ))}
+                        </div>
                     </div>
-                    <Link href="/faculty/drives/new" className="bg-primary text-foreground px-5 py-2.5 rounded-lg font-bold text-sm flex items-center space-x-2 hover:bg-primary/90 transition-all shadow-sm">
-                        <PlusCircle className="w-4 h-4" /><span>Create Drive</span>
-                    </Link>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="rounded-2xl border border-border bg-background px-4 py-3 text-sm shadow-sm dark:bg-slate-950/70">
+                            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">Season scope</p>
+                            <p className="mt-1 font-semibold text-foreground">{filteredDrives.length} drives visible</p>
+                        </div>
+                        <Link href="/faculty/drives/new" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+                            <PlusCircle className="h-4 w-4" /> Create Drive
+                        </Link>
+                    </div>
                 </div>
             </header>
 
-            <div className="mb-6 rounded-md border border-border bg-card p-4 text-sm text-muted-foreground">
-                <p className="font-semibold text-foreground mb-1">Bulk Eligibility Snapshot</p>
-                <p>Select a drive in the rankings table and query <span className="font-mono">/api/faculty/bulk-eligibility?driveId=...</span> for batch eligibility counts.</p>
-                <div className="mt-2 flex gap-2 flex-wrap">
-                    <Link href="/faculty/drives" className="text-primary hover:text-primary">Open Drives</Link>
+            <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground shadow-sm dark:bg-slate-950/60">
+                <p className="mb-1 font-semibold text-foreground">Bulk eligibility snapshot</p>
+                <p>
+                    Select a drive in the rankings table and query <span className="font-mono">/api/faculty/bulk-eligibility?driveId=...</span> for batch eligibility counts.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                    <Link href="/faculty/drives" className="font-semibold text-primary hover:underline">Open drives</Link>
                     <span>•</span>
                     <span>{filteredDrives.length} drives in current season scope</span>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <StatCard label="Active Drives" value={activeDriveCount} icon={Briefcase} color="indigo" />
                 <StatCard label="Students Ranked" value={totalRanked} icon={Users} color="emerald" />
                 <StatCard label="Pending Jobs" value={pendingJobCount} icon={Clock} color="amber" />
                 <StatCard label="Avg Match Score" value={avgScore ? `${avgScore}%` : "—"} icon={TrendingUp} color="indigo" />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                 {/* Activity Feed */}
-                <section className="bg-card rounded-md border border-border p-6 shadow-sm">
-                    <h4 className="font-bold text-foreground mb-6 flex items-center justify-between text-sm">
-                        RECENT ACTIVITY <span className="text-[10px] text-muted-foreground font-bold tracking-wider">LIVE FEED</span>
+                <section className="rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
+                    <h4 className="mb-6 flex items-center justify-between text-sm font-bold text-foreground">
+                        Recent activity <span className="text-[10px] font-black tracking-[0.24em] text-muted-foreground">LIVE FEED</span>
                     </h4>
                     <div className="space-y-6">
                         {activityFeed.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center opacity-40 py-8"><Activity className="w-8 h-8 mb-2"/><p className="text-xs">No activity yet</p></div>
+                            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground/60">
+                                <Activity className="mb-2 h-8 w-8" />
+                                <p className="text-xs">No activity yet</p>
+                            </div>
                         ) : activityFeed.map((item) => {
                             const label = getActivityLabel(item.type, item.status);
                             return (
                                 <div key={item.id} className="flex space-x-4">
-                                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${label.color.split(" ")[0]}`} />
+                                    <div className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", label.color.split(" ")[0])} />
                                     <div>
                                         <p className={`text-xs font-black uppercase ${label.color.split(" ")[1] || "text-muted-foreground"}`}>{label.text}</p>
                                         <p className="text-[10px] font-bold text-muted-foreground uppercase mt-0.5">{item.type.replace("_", " ")} • {formatDistanceToNow(item.updatedAt)} ago</p>
@@ -156,35 +183,39 @@ export default async function FacultyDashboardPage({
                 </section>
 
                 {/* Table */}
-                <section className="lg:col-span-2 bg-card rounded-md border border-border shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-border flex justify-between items-center">
-                        <h4 className="font-bold text-foreground text-sm uppercase tracking-wider">Recent Drives</h4>
-                        <Link href="/faculty/drives" className="text-primary text-xs font-bold hover:text-primary transition-colors flex items-center">View all <ArrowRight className="w-3 h-3 ml-1" /></Link>
+                <section className="lg:col-span-2 overflow-hidden rounded-2xl border border-border bg-card shadow-sm dark:bg-slate-950/60">
+                    <div className="flex items-center justify-between border-b border-border p-6">
+                        <h4 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">Recent drives</h4>
+                        <Link href="/faculty/drives" className="flex items-center text-xs font-bold text-primary transition-colors hover:underline">View all <ArrowRight className="ml-1 h-3 w-3" /></Link>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-muted/20"><th className="p-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Details</th><th className="p-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">Status</th><th className="p-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right">Analytics</th></tr>
+                                <tr className="bg-muted/30">
+                                    <th className="p-4 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">Details</th>
+                                    <th className="p-4 text-center text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">Status</th>
+                                    <th className="p-4 text-right text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">Analytics</th>
+                                </tr>
                             </thead>
-                            <tbody className="divide-y divide-white/5">
+                            <tbody className="divide-y divide-border">
                                 {filteredDrives.slice(0, 5).map((drive) => {
                                     const analytics = rankingCounts.get(drive.id);
                                     return (
-                                        <tr key={drive.id} className="hover:bg-card transition-colors">
+                                        <tr key={drive.id} className="transition-colors hover:bg-muted/30">
                                             <td className="p-4">
                                                 <Link href={`/faculty/drives/${drive.id}/rankings`} className="flex items-center space-x-3">
-                                                    <div className="w-8 h-8 rounded bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px] uppercase shrink-0">{drive.company.slice(0,2)}</div>
+                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[10px] font-bold uppercase text-primary">{drive.company.slice(0,2)}</div>
                                                     <div><p className="text-sm font-bold text-foreground">{drive.company}</p><p className="text-[10px] font-medium text-muted-foreground uppercase mt-0.5">{drive.roleTitle}</p></div>
                                                 </Link>
                                             </td>
                                             <td className="p-4 text-center">
-                                                <span className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${drive.isActive ? 'bg-success/10 text-success border border-success/20' : 'bg-card text-muted-foreground'}`}>
-                                                    {drive.isActive ? 'Active' : 'Closed'}
+                                                <span className={cn("rounded px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border", drive.isActive ? "border-success/20 bg-success/10 text-success" : "border-border bg-background text-muted-foreground")}>
+                                                    {drive.isActive ? "Active" : "Closed"}
                                                 </span>
                                             </td>
                                             <td className="p-4 text-right">
-                                                <p className="text-sm font-bold text-foreground">{analytics?.count ?? 0} <span className="text-[10px] text-muted-foreground font-medium tracking-wide">RANKED</span></p>
-                                                {analytics?.avgScore && <p className="text-[10px] text-success mt-1">{analytics.avgScore.toFixed(1)}% Avg</p>}
+                                                <p className="text-sm font-bold text-foreground">{analytics?.count ?? 0} <span className="text-[10px] font-medium tracking-wide text-muted-foreground">RANKED</span></p>
+                                                {analytics?.avgScore && <p className="mt-1 text-[10px] text-success">{analytics.avgScore.toFixed(1)}% Avg</p>}
                                             </td>
                                         </tr>
                                     );

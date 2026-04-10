@@ -126,7 +126,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
         <div className="space-y-6">
             {/* ── Histogram ────────────────────────────────────────────────────────── */}
             {maxCount > 0 && (
-                <Card className="bg-muted/30 border-dashed">
+                <Card className="border-dashed border-border bg-card shadow-sm dark:bg-slate-950/60">
                     <CardContent className="pt-6">
                         <div className="flex items-end justify-around h-24 gap-2 px-4">
                             {distribution.map((d, i) => {
@@ -159,19 +159,19 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
             )}
 
             {/* ── Filter Row ───────────────────────────────────────────────────────── */}
-            <div className="flex flex-wrap items-center gap-3 bg-card p-3 rounded-lg border shadow-sm">
+            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm dark:bg-slate-950/60">
                 <div className="relative flex-1 min-w-[200px]">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search by name..."
                         value={nameSearch}
                         onChange={(e) => setNameSearch(e.target.value)}
-                        className="pl-9 bg-muted/50 border-none h-9 text-sm"
+                        className="h-9 border-border bg-background pl-9 text-sm dark:bg-slate-950/60"
                     />
                 </div>
 
                 <Select value={branchFilter} onValueChange={setBranchFilter}>
-                    <SelectTrigger className="w-[180px] h-9 bg-muted/50 border-none text-sm">
+                    <SelectTrigger className="h-9 w-[180px] border-border bg-background text-sm dark:bg-slate-950/60">
                         <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                         <SelectValue placeholder="All Branches" />
                     </SelectTrigger>
@@ -189,7 +189,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                         max="100"
                         value={minScore}
                         onChange={(e) => setMinScore(Number(e.target.value))}
-                        className="w-12 bg-transparent text-sm font-mono font-bold focus:outline-none"
+                        className="w-12 bg-transparent text-sm font-mono font-bold text-foreground focus:outline-none"
                     />
                 </div>
 
@@ -221,9 +221,9 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
             </div>
 
             {/* ── Table ────────────────────────────────────────────────────────────── */}
-            <div className="rounded-md border shadow-sm bg-card overflow-hidden">
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm dark:bg-slate-950/60">
                 <Table>
-                    <TableHeader className="bg-muted/40">
+                    <TableHeader className="bg-muted/30">
                         <TableRow className="hover:bg-transparent border-b">
                             <TableHead className="w-16 text-center font-bold text-xs uppercase tracking-wider">Rank</TableHead>
                             <TableHead className="font-bold text-xs uppercase tracking-wider">Candidate Details</TableHead>
@@ -260,7 +260,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                             className={cn(
                                                 "cursor-pointer transition-colors group border-b last:border-0",
                                                 isExpanded ? "bg-primary/5" : "hover:bg-muted/50",
-                                                isShortlisted && "bg-emerald-50/20"
+                                                isShortlisted && "bg-success/10"
                                             )}
                                             onClick={() => setExpandedId(isExpanded ? null : r.studentId)}
                                         >
@@ -316,12 +316,12 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                             <TableCell>
                                                 <div className="flex flex-wrap gap-1">
                                                     {r.matchedSkills.slice(0, 3).map(s => (
-                                                        <Badge key={s} variant="secondary" className="px-1.5 py-0 text-[10px] bg-emerald-50 text-success border-success/20">
+                                                        <Badge key={s} variant="secondary" className="px-1.5 py-0 text-[10px] bg-success/10 text-success border-success/20">
                                                             {s}
                                                         </Badge>
                                                     ))}
                                                     {r.missingSkills.slice(0, 1).map(s => (
-                                                        <Badge key={s} variant="outline" className="px-1.5 py-0 text-[10px] text-destructive border-destructive/20 bg-rose-50/30">
+                                                        <Badge key={s} variant="outline" className="px-1.5 py-0 text-[10px] text-destructive border-destructive/20 bg-destructive/10">
                                                             {s}
                                                         </Badge>
                                                     ))}
@@ -342,8 +342,8 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                         className={cn(
                                                             "p-2 rounded-full transition-all duration-200 hover:scale-110 active:scale-95",
                                                             isShortlisted
-                                                                ? "text-warning bg-amber-50 border border-warning/20 shadow-sm"
-                                                                : "text-gray-300 hover:text-warning"
+                                                                ? "text-warning bg-warning/10 border border-warning/20 shadow-sm"
+                                                                : "text-muted-foreground hover:text-warning"
                                                         )}
                                                     >
                                                         <Star className={cn("h-5 w-5", isShortlisted && "fill-current")} />
@@ -390,7 +390,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                                             <p className="text-[10px] font-bold text-muted-foreground mb-1.5 uppercase tracking-wide">Missing / Weak Skills</p>
                                                                             <div className="flex flex-wrap gap-1.5">
                                                                                 {r.missingSkills.map(s => (
-                                                                                    <Badge key={s} variant="outline" className="border-destructive/20 text-destructive bg-rose-50 px-2 py-0.5 text-xs font-semibold">
+                                                                                            <Badge key={s} variant="outline" className="border-destructive/20 text-destructive bg-destructive/10 px-2 py-0.5 text-xs font-semibold">
                                                                                         {s}
                                                                                     </Badge>
                                                                                 ))}
@@ -407,7 +407,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                                     <div className="h-1 w-4 bg-card rounded-full" />
                                                                     Score Breakdown & Analysis
                                                                 </h4>
-                                                                <div className="p-4 bg-white rounded-lg border border-primary/30 text-sm leading-relaxed text-muted-foreground shadow-sm max-h-[250px] overflow-y-auto">
+                                                                <div className="max-h-[250px] overflow-y-auto rounded-lg border border-border bg-background p-4 text-sm leading-relaxed text-muted-foreground shadow-sm dark:bg-slate-950/70">
                                                                     {r.detailedExplanation.split('\n').map((line, i) => (
                                                                         <p key={i} className={cn(line.trim() ? "mb-3 last:mb-0" : "h-2")}>
                                                                             {line}
@@ -438,7 +438,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                                         onClick={() => passCandidate(r.studentId, currentShortlistState)}
                                                                         className={cn(
                                                                             "h-9 px-4 font-semibold transition-all",
-                                                                            isPassed ? "text-destructive bg-rose-50 hover:bg-destructive/10" : "text-muted-foreground hover:text-destructive hover:bg-rose-50"
+                                                                            isPassed ? "text-destructive bg-destructive/10 hover:bg-destructive/10" : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                                                         )}
                                                                     >
                                                                         <XCircle className="h-4 w-4 mr-2" />

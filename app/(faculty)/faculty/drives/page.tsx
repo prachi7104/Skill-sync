@@ -14,6 +14,7 @@ import { getCompanyColor } from "@/lib/utils/company-color";
 import { DriveConflictsButton } from "@/components/faculty/drive-conflicts-button";
 import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
+import { FolderOpen, Sparkles } from "lucide-react";
 
 export default async function FacultyDrivesPage({ searchParams }: { searchParams: { page?: string } }) {
   const user = await requireRole(["faculty", "admin"]);
@@ -98,39 +99,53 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
   );
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Drives</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Managing {totalDrives} total placement drives
-          </p>
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
+              <Sparkles className="h-3.5 w-3.5" /> Drive workspace
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-3xl font-black tracking-tight text-foreground">Drives</h1>
+              <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+                Manage {totalDrives} placement drives from one responsive list with clear status, ranking, and deadline context.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="rounded-2xl border border-border bg-background px-4 py-3 text-sm shadow-sm dark:bg-slate-950/70">
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">Total drives</p>
+              <p className="mt-1 font-semibold text-foreground">{totalDrives}</p>
+            </div>
+            <DriveConflictsButton />
+            {canCreateDrive && (
+              <Button asChild className="gap-2 bg-primary hover:bg-primary/90">
+                <Link href="/faculty/drives/new">
+                  <Plus className="h-4 w-4" /> Create Drive
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <DriveConflictsButton />
-          {canCreateDrive && (
-            <Button asChild className="gap-2 bg-primary hover:bg-primary/90">
-              <Link href="/faculty/drives/new">
-                <Plus className="h-4 w-4" /> Create Drive
-              </Link>
-            </Button>
-          )}
-        </div>
-      </div>
+      </header>
 
       {/* Grid */}
       {facultyDrives.length === 0 ? (
-        <div className="py-20 text-center border-2 border-dashed rounded-md">
-          <p className="text-muted-foreground">No drives created yet.</p>
+        <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center shadow-sm dark:bg-slate-950/60">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <FolderOpen className="h-5 w-5" />
+          </div>
+          <p className="text-sm font-semibold text-foreground">No drives created yet.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Create the first drive to start ranking students and tracking eligibility.</p>
           {canCreateDrive && (
-            <Button asChild variant="link" className="text-primary mt-2">
+            <Button asChild variant="link" className="mt-2 text-primary">
               <Link href="/faculty/drives/new">Create your first drive &rarr;</Link>
             </Button>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {facultyDrives.map((drive) => {
             const stats = statsMap.get(drive.id);
             const isProcessing = processingDriveIds.has(drive.id);
@@ -153,12 +168,12 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
             const config = statusConfig[status];
 
             return (
-              <Card key={drive.id} className="group hover:ring-1 hover:ring-primary transition-all shadow-sm flex flex-col">
+              <Card key={drive.id} className="group flex flex-col overflow-hidden border-border bg-card shadow-sm transition-all hover:border-primary/30 hover:shadow-md dark:bg-slate-950/60">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <div className={cn(
-                        "h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold text-foreground uppercase shrink-0 shadow-sm",
+                        "h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-xs font-bold uppercase shadow-sm text-foreground",
                         getCompanyColor(drive.company)
                       )}>
                         {drive.company.slice(0, 2)}
@@ -184,24 +199,24 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
                   {/* Info Pills */}
                   <div className="flex flex-wrap gap-1.5">
                     {drive.location && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-card border border-border text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-slate-950/60">
                         <MapPin className="h-3 w-3" /> {drive.location}
                       </div>
                     )}
                     {drive.packageOffered && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-card border border-border text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-slate-950/60">
                         <IndianRupee className="h-3 w-3" /> {drive.packageOffered}
                       </div>
                     )}
                     {drive.deadline && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-card border border-border text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-slate-950/60">
                         <Calendar className="h-3 w-3" /> {format(new Date(drive.deadline), "MMM d")}
                       </div>
                     )}
                   </div>
 
                   {/* Stats Row */}
-                  <div className="grid grid-cols-3 gap-2 py-3 border-y border-dashed">
+                  <div className="grid grid-cols-3 gap-2 border-y border-dashed border-border py-3">
                     <div className="text-center">
                       <p className="text-[10px] text-muted-foreground uppercase font-medium">Ranked</p>
                       <p className="text-lg font-mono font-bold">{stats ? Number(stats.count) : "—"}</p>
@@ -217,7 +232,7 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
                   </div>
                 </CardContent>
 
-                <CardFooter className="pt-0 flex items-center justify-between gap-4">
+                <CardFooter className="flex items-center justify-between gap-4 pt-0">
                   <Link
                     href={`/faculty/drives/${drive.id}/rankings`}
                     className="text-xs font-semibold text-primary hover:text-primary flex items-center gap-1 transition-colors"
