@@ -103,7 +103,7 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
   const headerTitle = useMemo(() => companySlug ? slugToTitle(companySlug) : "Company Experience Wall", [companySlug]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-8">
+    <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-foreground">{headerTitle}</h1>
@@ -118,30 +118,30 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
         ) : null}
       </div>
 
-      <div className="grid gap-4 rounded-md border border-border bg-card p-5 md:grid-cols-[1fr_auto_auto]">
+      <div className="grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm md:grid-cols-[1fr_auto_auto] dark:bg-slate-950/60">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by company name" className="border-border bg-muted/20 pl-10 text-foreground" />
+          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by company name" className="border-border bg-background pl-10 text-foreground dark:bg-slate-950/60" />
         </div>
         <div className="flex items-center gap-2 overflow-x-auto">
           {["all", "placement", "internship", "ppo"].map((type) => (
-            <button key={type} type="button" onClick={() => setDriveType(type)} className={cn("rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide", driveType === type ? "bg-primary text-foreground" : "bg-card text-muted-foreground")}>{formatCategoryLabel(type)}</button>
+            <button key={type} type="button" onClick={() => setDriveType(type)} className={cn("rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide", driveType === type ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground border border-border dark:bg-slate-950/60")}>{formatCategoryLabel(type)}</button>
           ))}
         </div>
         <div className="flex items-center gap-2 overflow-x-auto">
           {["all", "1", "2", "3", "4", "5"].map((value) => (
-            <button key={value} type="button" onClick={() => setDifficulty(value)} className={cn("rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide", difficulty === value ? "bg-warning/10 text-slate-950" : "bg-card text-muted-foreground")}>{value === "all" ? "All levels" : `${value}★+`}</button>
+            <button key={value} type="button" onClick={() => setDifficulty(value)} className={cn("rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide", difficulty === value ? "bg-warning/10 text-foreground" : "bg-background text-muted-foreground border border-border dark:bg-slate-950/60")}>{value === "all" ? "All levels" : `${value}★+`}</button>
           ))}
         </div>
       </div>
 
-      {loading ? <div className="rounded-md border border-border bg-card p-8 text-sm text-muted-foreground">Loading experiences...</div> : null}
+      {loading ? <div className="rounded-2xl border border-border bg-card p-8 text-sm text-muted-foreground shadow-sm dark:bg-slate-950/60">Loading experiences...</div> : null}
 
       {!loading && !isDetailView ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {companies.map((company) => (
             <Link key={company.company_normalized} href={`/student/companies/${company.company_normalized}`}>
-              <Card className="h-full border-border bg-card transition-all hover:border-border hover:bg-card">
+              <Card className="h-full border-border bg-card transition-all hover:border-border hover:bg-card dark:bg-slate-950/60">
                 <CardHeader className="space-y-2">
                   <CardTitle className="text-lg text-foreground">{company.company_name}</CardTitle>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -151,19 +151,19 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
                   </div>
                 </CardHeader>
                 <CardContent className="flex items-center gap-1 text-warning">
-                  {[1, 2, 3, 4, 5].map((star) => <Star key={star} className={cn("h-4 w-4", star <= Math.round(Number(company.avg_difficulty)) ? "fill-amber-400" : "text-muted-foreground")} />)}
+                  {[1, 2, 3, 4, 5].map((star) => <Star key={star} className={cn("h-4 w-4", star <= Math.round(Number(company.avg_difficulty)) ? "fill-warning text-warning" : "text-muted-foreground")} />)}
                 </CardContent>
               </Card>
             </Link>
           ))}
-          {companies.length === 0 ? <div className="rounded-md border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">No published experiences found for that search yet.</div> : null}
+          {companies.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-sm text-muted-foreground shadow-sm dark:bg-slate-950/60">No published experiences found for that search yet.</div> : null}
         </div>
       ) : null}
 
       {!loading && isDetailView ? (
         <div className="space-y-4">
           {experiences.map((experience) => (
-            <article key={experience.id} className="space-y-4 rounded-md border border-border bg-card p-6">
+            <article key={experience.id} className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-bold text-foreground">{experience.show_name ? experience.student_name : experience.is_admin_posted ? "Anonymous — Shared by Admin" : "Anonymous"}</p>
@@ -177,7 +177,7 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
 
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((value) => (
-                  <Star key={value} className={cn("h-4 w-4", value <= experience.difficulty ? "fill-amber-400 text-warning" : "text-muted-foreground")} />
+                  <Star key={value} className={cn("h-4 w-4", value <= experience.difficulty ? "fill-warning text-warning" : "text-muted-foreground")} />
                 ))}
                 <span className="ml-2 text-xs text-muted-foreground">Difficulty {experience.difficulty}/5</span>
               </div>
@@ -204,7 +204,7 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
               </div>
             </article>
           ))}
-          {experiences.length === 0 ? <div className="rounded-md border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">No published experiences for this company yet.</div> : null}
+          {experiences.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-sm text-muted-foreground shadow-sm dark:bg-slate-950/60">No published experiences for this company yet.</div> : null}
         </div>
       ) : null}
     </div>

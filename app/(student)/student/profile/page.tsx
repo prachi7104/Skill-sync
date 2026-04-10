@@ -9,8 +9,8 @@ export default function StudentProfilePage() {
 
     if (isLoading || !student || !user) {
         return (
-            <div className="flex items-center justify-center h-full min-h-[60vh]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary/30"></div>
+            <div className="flex min-h-[60vh] items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary/30"></div>
             </div>
         );
     }
@@ -42,5 +42,9 @@ export default function StudentProfilePage() {
     // For now, we cast to any to pass to View if types mismatch, but ideally we match types.
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return <ProfileView user={serializedUser as any} profile={serializedProfile} />;
+    return (
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <ProfileView user={serializedUser as any} profile={serializedProfile} />
+        </div>
+    );
 }

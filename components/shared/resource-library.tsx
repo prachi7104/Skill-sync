@@ -285,7 +285,7 @@ export default function ResourceLibrary() {
   const editCategoryOptions = useMemo(() => CATEGORY_MAP[editForm.section], [editForm.section]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-8">
+    <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-foreground">Resource Library</h1>
