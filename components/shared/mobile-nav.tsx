@@ -1,23 +1,25 @@
-"use client";
-import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  UserCircle, 
-  Briefcase, 
-  Box, 
-  FolderOpen, 
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  LayoutDashboard,
+  UserCircle,
+  Briefcase,
+  Box,
+  FolderOpen,
   Plus,
-  Menu, 
-  X, 
+  Menu,
+  X,
   LucideIcon,
   Activity,
   Users,
-  CalendarDays
-} from "lucide-react";
-import SignOutButton from "./sign-out-button";
-import { cn } from "@/lib/utils";
+  CalendarDays,
+} from 'lucide-react';
+import SignOutButton from './sign-out-button';
+import { cn } from '@/lib/utils';
 
 export interface NavLink {
   href: string;
@@ -28,98 +30,123 @@ export interface NavLink {
 
 const ROLE_LINKS: Record<string, NavLink[]> = {
   student: [
-    { href: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/student/profile", label: "My Profile", icon: UserCircle },
-    { href: "/student/drives", label: "Drives", icon: Briefcase },
-    { href: "/student/sandbox", label: "AI Sandbox", icon: Box },
+    { href: '/student/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/student/profile', label: 'My Profile', icon: UserCircle },
+    { href: '/student/drives', label: 'Drives', icon: Briefcase },
+    { href: '/student/sandbox', label: 'AI Sandbox', icon: Box },
   ],
   faculty: [
-    { href: "/faculty", label: "Dashboard", icon: LayoutDashboard, exact: true },
-    { href: "/faculty/drives", label: "My Drives", icon: FolderOpen },
-    { href: "/faculty/drives/new", label: "New Drive", icon: Plus },
+    { href: '/faculty', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+    { href: '/faculty/drives', label: 'My Drives', icon: FolderOpen },
+    { href: '/faculty/drives/new', label: 'New Drive', icon: Plus },
   ],
   admin: [
-    { href: "/admin/health", label: "System Health", icon: Activity },
-    { href: "/admin/drives", label: "All Drives", icon: Briefcase },
-    { href: "/admin/users", label: "User Management", icon: Users },
-    { href: "/admin/seasons", label: "Seasons", icon: CalendarDays },
+    { href: '/admin/health', label: 'System Health', icon: Activity },
+    { href: '/admin/drives', label: 'All Drives', icon: Briefcase },
+    { href: '/admin/users', label: 'User Management', icon: Users },
+    { href: '/admin/seasons', label: 'Seasons', icon: CalendarDays },
   ],
 };
 
-export default function MobileNav({ 
-  userName, 
-  role = "student"
-}: { 
-  userName: string; 
-  role?: "student" | "faculty" | "admin";
+export default function MobileNav({
+  userName,
+  role = 'student',
+}: {
+  userName: string;
+  role?: 'student' | 'faculty' | 'admin';
 }) {
   const links = ROLE_LINKS[role] || [];
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  const activeColor = "bg-primary/10 text-primary border border-primary/20";
-
   return (
     <>
-      {/* Mobile hamburger button — only shows on mobile */}
+      {/* Hamburger — mobile only */}
       <button
         onClick={() => setOpen(true)}
-        className="md:hidden p-2 text-muted-foreground hover:text-foreground"
-        aria-label="Open navigation"
+        className='md:hidden flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150'
+        aria-label='Open navigation menu'
       >
-        <Menu className="w-6 h-6" />
+        <Menu size={20} />
       </button>
 
-      {/* Overlay + Drawer */}
-      {open && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/60 z-40 md:hidden"
-            onClick={() => setOpen(false)}
-          />
-          <div className="fixed inset-y-0 left-0 w-72 bg-background border-r border-border z-50 flex flex-col p-6 md:hidden">
-            <div className="flex items-center justify-between mb-8">
-              <span className="font-heading text-xl font-black text-foreground">
-                Skill<span className="text-primary">Sync.</span>
-              </span>
-              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+      <AnimatePresence>
+        {open && (
+          <>
+            {/* Overlay */}
+            <motion.div
+              key='overlay'
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className='fixed inset-0 bg-black/50 z-40 md:hidden'
+              onClick={() => setOpen(false)}
+              aria-hidden='true'
+            />
 
-            <nav className="space-y-2 flex-1">
-              {links.map((link) => {
-                const isActive = link.exact
-                  ? pathname === link.href
-                  : pathname.startsWith(link.href) && (link.href !== "/faculty" && link.href !== "/admin");
-                
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3.5 rounded-md font-semibold text-sm transition-all",
-                      isActive
-                        ? activeColor
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    )}
-                  >
-                    {link.icon && <link.icon className="w-5 h-5" />}
-                    {link.label}
-                  </Link>
-                );
-              })}
-            </nav>
+            {/* Drawer */}
+            <motion.div
+              key='drawer'
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+              className='fixed inset-y-0 left-0 w-[280px] bg-card border-r border-border z-50 flex flex-col md:hidden'
+            >
+              {/* Drawer header */}
+              <div className='h-14 shrink-0 flex items-center justify-between px-5 border-b border-border'>
+                <span className='font-sans text-base font-black tracking-tight text-foreground select-none'>
+                  Skill<span className='text-primary'>Sync.</span>
+                </span>
+                <button
+                  onClick={() => setOpen(false)}
+                  className='flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150'
+                  aria-label='Close navigation menu'
+                >
+                  <X size={18} />
+                </button>
+              </div>
 
-            <div className="pt-6 border-t border-border space-y-3">
-              <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Signed in as</p>
-              <p className="text-sm text-foreground font-medium">{userName}</p>
-              <SignOutButton />
-            </div>
-          </div>
-        </>
-      )}
+              {/* Nav links */}
+              <nav className='flex-1 overflow-y-auto py-3 px-3' aria-label='Mobile navigation'>
+                {links.map((link) => {
+                  const isActive = link.exact
+                    ? pathname === link.href
+                    : pathname.startsWith(link.href);
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      className={cn(
+                        'flex items-center gap-3 h-11 px-3 rounded-md text-sm font-semibold transition-colors duration-150 mb-0.5',
+                        isActive
+                          ? 'bg-primary/10 text-primary border border-primary/20'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      )}
+                    >
+                      {link.icon && <link.icon size={18} aria-hidden='true' />}
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+
+              {/* Drawer footer */}
+              <div className='shrink-0 border-t border-border px-5 py-4 space-y-3'>
+                <div>
+                  <p className='text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-1'>
+                    Signed in as
+                  </p>
+                  <p className='text-sm font-semibold text-foreground truncate'>{userName}</p>
+                </div>
+                <SignOutButton />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }

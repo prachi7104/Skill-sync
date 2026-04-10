@@ -120,7 +120,7 @@ export default async function StudentLayout({
                             {user.name}
                             <span className='text-primary/60 font-normal ml-1'>(student)</span>
                         </span>
-                        <MobileNav userName={user.name!} />
+                        <MobileNav userName={user.name!} role='student' />
                         <ThemeToggle />
                         <SignOutButton />
                     </div>

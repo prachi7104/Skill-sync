@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useSidebarStore } from '@/lib/stores/sidebar-store';
 import { cn } from '@/lib/utils';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { SIDEBAR_ANIM_MS, BREAKPOINT_MD } from '@/lib/constants/layout';
 
 interface SidebarShellProps {
@@ -13,17 +13,26 @@ interface SidebarShellProps {
 }
 
 export default function SidebarShell({ children, label }: SidebarShellProps) {
-  const { isCollapsed, toggle, collapse } = useSidebarStore();
+  const [isMounted, setIsMounted] = useState(false);
+  const storeIsCollapsed = useSidebarStore(state => state.isCollapsed);
+  const { toggle, collapse } = useSidebarStore();
+  const isCollapsed = isMounted ? storeIsCollapsed : false;
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // On mount: if viewport is mobile, ensure sidebar is collapsed
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth < BREAKPOINT_MD) {
       collapse();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <motion.div
+      initial={false}
       animate={{ width: isCollapsed ? 64 : 200 }}
       transition={{ duration: SIDEBAR_ANIM_MS / 1000, ease: [0.4, 0, 0.2, 1] }}
       className='hidden md:flex flex-col h-full bg-sidebar border-r border-sidebar-border overflow-hidden shrink-0'

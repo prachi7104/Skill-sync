@@ -10,6 +10,7 @@ import LoginBrandPanel from '@/components/auth/login-brand-panel';
 const AUTH_ERRORS: Record<string, string> = {
   AccessDenied: "Access denied. Your account is not authorized.",
   NotAuthorized: "Use your @stu.upes.ac.in account for student login.",
+  Configuration: "Server configuration error. Please contact your placement coordinator.",
   CredentialsSignin: "Incorrect email or password.",
   Default: "An authentication error occurred. Please try again.",
 };

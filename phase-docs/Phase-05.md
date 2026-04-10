@@ -414,82 +414,82 @@
 
 ---
 
-## Sub-Phase 05.5: Faculty Sidebar — Wire SidebarShell + Sign-Out Link
+    ## Sub-Phase 05.5: Faculty Sidebar — Wire SidebarShell + Sign-Out Link
 
-**File to Target:** `components/faculty/sidebar-nav.tsx` + `app/(faculty)/layout.tsx`  
-**Context for Copilot:** The faculty sidebar has a slightly different existing pattern — it receives `name` as a prop. This prop was used for the old logout button inside the sidebar. In the new design, the sign-out button is in the header (not the sidebar), so the `name` prop is no longer needed by `SidebarNav`. Remove it to simplify the component signature. The faculty nav links stay the same. At the bottom of the faculty sidebar, add a `LogOut` nav item that calls `signOut` from `next-auth/react`.
+    **File to Target:** `components/faculty/sidebar-nav.tsx` + `app/(faculty)/layout.tsx`  
+    **Context for Copilot:** The faculty sidebar has a slightly different existing pattern — it receives `name` as a prop. This prop was used for the old logout button inside the sidebar. In the new design, the sign-out button is in the header (not the sidebar), so the `name` prop is no longer needed by `SidebarNav`. Remove it to simplify the component signature. The faculty nav links stay the same. At the bottom of the faculty sidebar, add a `LogOut` nav item that calls `signOut` from `next-auth/react`.
 
-**The Copilot Prompt:**
-> "**Step 1 — Rewrite `components/faculty/sidebar-nav.tsx`:**
->
-> ```tsx
-> 'use client';
-> import { usePathname } from 'next/navigation';
-> import {
->   LayoutDashboard, FolderOpen, ListOrdered,
->   Users, LibraryBig, Settings, Box
-> } from 'lucide-react';
-> import NavItem from '@/components/shared/nav-item';
->
-> const facultyLinks = [
->   { href: '/faculty',                   label: 'Dashboard',  icon: LayoutDashboard },
->   { href: '/faculty/drives',            label: 'My Drives',  icon: FolderOpen },
->   { href: '/faculty/drives/new',        label: 'New Drive',  icon: FolderOpen }, // shown only when creating
->   { href: '/faculty/students',          label: 'Students',   icon: Users },
->   { href: '/faculty/resources',         label: 'Resources',  icon: LibraryBig },
->   { href: '/faculty/sandbox',           label: 'Sandbox',    icon: Box },
->   { href: '/faculty/settings',          label: 'Settings',   icon: Settings },
-> ];
->
-> // Filter out the 'New Drive' link from the persistent nav — it appears contextually
-> const persistentLinks = facultyLinks.filter(l => l.href !== '/faculty/drives/new');
->
-> export default function SidebarNav() {  // keep the export name for backward compat
->   const pathname = usePathname();
->   return (
->     <nav aria-label='Faculty navigation'>
->       {persistentLinks.map(link => (
->         <NavItem
->           key={link.href}
->           href={link.href}
->           icon={link.icon}
->           label={link.label}
->           isActive={
->             link.href === '/faculty'
->               ? pathname === '/faculty'        // exact match for dashboard only
->               : pathname.startsWith(link.href) // prefix match for sub-routes
->           }
->         />
->       ))}
->     </nav>
->   );
-> }
-> ```
->
-> Notes:
-> - Remove the `name` prop — it is no longer needed.
-> - The `/faculty` dashboard link uses exact match (`pathname === '/faculty'`) to avoid being active on all faculty sub-routes.
-> - `FolderOpen` replaces `FolderOpen` for 'My Drives' — the icon stays the same. Check if a more distinct icon is available: `BookOpen`, `ClipboardList`, or `LayoutList` may be clearer for 'My Drives'.
->
-> **Step 2 — Update `app/(faculty)/layout.tsx`:**
->
-> Add import: `import SidebarShell from '@/components/shared/sidebar-shell';`
->
-> Update the `<SidebarNav name={name} />` call to `<SidebarNav />` (prop removed).
->
-> Replace the `<aside>` block with:
-> ```tsx
-> <SidebarShell label='Faculty'>
->   <SidebarNav />
-> </SidebarShell>
-> ```
-> Remove the wrapping `<aside className='hidden md:block shrink-0 relative z-10'>` and the Phase 05 marker comment.
->
-> **Step 3 — Verify the full sidebar renders correctly on all three portals:**
-> - Admin: 10 nav items, collapse toggle at bottom, label 'Admin'
-> - Faculty: 6 persistent nav items, label 'Faculty'
-> - Student: 9 nav items with lock behavior, label 'Student Menu'
-> - All three: 200px expanded width, 64px collapsed, `bg-sidebar` (#08112F) always-dark background
-> - All three: active item shows left accent bar + `bg-sidebar-active-bg` fill
-> - All three: collapsed mode shows icon-only + tooltip on hover
-> - Mobile (< 768px): `SidebarShell` is `hidden md:flex` — sidebar is invisible, `MobileNav` drawer handles navigation"
+    **The Copilot Prompt:**
+    > "**Step 1 — Rewrite `components/faculty/sidebar-nav.tsx`:**
+    >
+    > ```tsx
+    > 'use client';
+    > import { usePathname } from 'next/navigation';
+    > import {
+    >   LayoutDashboard, FolderOpen, ListOrdered,
+    >   Users, LibraryBig, Settings, Box
+    > } from 'lucide-react';
+    > import NavItem from '@/components/shared/nav-item';
+    >
+    > const facultyLinks = [
+    >   { href: '/faculty',                   label: 'Dashboard',  icon: LayoutDashboard },
+    >   { href: '/faculty/drives',            label: 'My Drives',  icon: FolderOpen },
+    >   { href: '/faculty/drives/new',        label: 'New Drive',  icon: FolderOpen }, // shown only when creating
+    >   { href: '/faculty/students',          label: 'Students',   icon: Users },
+    >   { href: '/faculty/resources',         label: 'Resources',  icon: LibraryBig },
+    >   { href: '/faculty/sandbox',           label: 'Sandbox',    icon: Box },
+    >   { href: '/faculty/settings',          label: 'Settings',   icon: Settings },
+    > ];
+    >
+    > // Filter out the 'New Drive' link from the persistent nav — it appears contextually
+    > const persistentLinks = facultyLinks.filter(l => l.href !== '/faculty/drives/new');
+    >
+    > export default function SidebarNav() {  // keep the export name for backward compat
+    >   const pathname = usePathname();
+    >   return (
+    >     <nav aria-label='Faculty navigation'>
+    >       {persistentLinks.map(link => (
+    >         <NavItem
+    >           key={link.href}
+    >           href={link.href}
+    >           icon={link.icon}
+    >           label={link.label}
+    >           isActive={
+    >             link.href === '/faculty'
+    >               ? pathname === '/faculty'        // exact match for dashboard only
+    >               : pathname.startsWith(link.href) // prefix match for sub-routes
+    >           }
+    >         />
+    >       ))}
+    >     </nav>
+    >   );
+    > }
+    > ```
+    >
+    > Notes:
+    > - Remove the `name` prop — it is no longer needed.
+    > - The `/faculty` dashboard link uses exact match (`pathname === '/faculty'`) to avoid being active on all faculty sub-routes.
+    > - `FolderOpen` replaces `FolderOpen` for 'My Drives' — the icon stays the same. Check if a more distinct icon is available: `BookOpen`, `ClipboardList`, or `LayoutList` may be clearer for 'My Drives'.
+    >
+    > **Step 2 — Update `app/(faculty)/layout.tsx`:**
+    >
+    > Add import: `import SidebarShell from '@/components/shared/sidebar-shell';`
+    >
+    > Update the `<SidebarNav name={name} />` call to `<SidebarNav />` (prop removed).
+    >
+    > Replace the `<aside>` block with:
+    > ```tsx
+    > <SidebarShell label='Faculty'>
+    >   <SidebarNav />
+    > </SidebarShell>
+    > ```
+    > Remove the wrapping `<aside className='hidden md:block shrink-0 relative z-10'>` and the Phase 05 marker comment.
+    >
+    > **Step 3 — Verify the full sidebar renders correctly on all three portals:**
+    > - Admin: 10 nav items, collapse toggle at bottom, label 'Admin'
+    > - Faculty: 6 persistent nav items, label 'Faculty'
+    > - Student: 9 nav items with lock behavior, label 'Student Menu'
+    > - All three: 200px expanded width, 64px collapsed, `bg-sidebar` (#08112F) always-dark background
+    > - All three: active item shows left accent bar + `bg-sidebar-active-bg` fill
+    > - All three: collapsed mode shows icon-only + tooltip on hover
+    > - Mobile (< 768px): `SidebarShell` is `hidden md:flex` — sidebar is invisible, `MobileNav` drawer handles navigation"

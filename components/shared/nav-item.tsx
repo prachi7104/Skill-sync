@@ -5,7 +5,7 @@ import { Lock } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useSidebarStore } from '@/lib/stores/sidebar-store';
-import { useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 interface NavItemProps {
   href?: string;            // if provided, renders as Next.js Link
@@ -18,9 +18,14 @@ interface NavItemProps {
 }
 
 export default function NavItem({ href, onClick, icon: Icon, label, isActive, isBlocked, badge }: NavItemProps) {
-  const { isCollapsed } = useSidebarStore();
+  const [isMounted, setIsMounted] = useState(false);
+  const storeIsCollapsed = useSidebarStore(state => state.isCollapsed);
+  const isCollapsed = isMounted ? storeIsCollapsed : false;
   const [showTooltip, setShowTooltip] = useState(false);
-  const itemRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const baseClasses = cn(
     'group relative flex items-center w-full h-10 rounded-md transition-colors duration-150 select-none',
@@ -92,7 +97,6 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
   );
 
   const sharedHandlers = {
-    ref: itemRef as React.RefObject<any>,
     onMouseEnter: () => isCollapsed && setShowTooltip(true),
     onMouseLeave: () => setShowTooltip(false),
     onFocus: () => isCollapsed && setShowTooltip(true),
