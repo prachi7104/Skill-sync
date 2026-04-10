@@ -35,7 +35,7 @@ export default function SidebarShell({ children, label }: SidebarShellProps) {
       initial={false}
       animate={{ width: isCollapsed ? 64 : 200 }}
       transition={{ duration: SIDEBAR_ANIM_MS / 1000, ease: [0.4, 0, 0.2, 1] }}
-      className='hidden lg:flex flex-col h-full bg-sidebar border-r border-sidebar-border overflow-hidden shrink-0'
+      className='hidden md:flex flex-col h-full bg-sidebar border-r border-sidebar-border overflow-hidden shrink-0'
     >
       {/* Top: logo row (collapsed = icon only, expanded = label) */}
       <div className={cn(

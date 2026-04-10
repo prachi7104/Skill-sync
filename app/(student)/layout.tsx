@@ -10,8 +10,6 @@ import { eq } from "drizzle-orm";
 import StudentSidebarNav from "@/components/student/student-sidebar-nav";
 import SidebarShell from "@/components/shared/sidebar-shell";
 import { ThemeToggle } from "@/components/theme-toggle";
-import HeaderSearchTrigger from "@/components/shared/header-search-trigger";
-import BottomTabBar from "@/components/shared/bottom-tab-bar";
 import { TriangleAlert } from "lucide-react";
 
 function deriveSapFromEmail(email: string): string | null {
@@ -111,27 +109,16 @@ export default async function StudentLayout({
 
                 {/* ── Header ── */}
                 <header className='h-14 shrink-0 sticky top-0 z-50 bg-background border-b border-border flex items-center justify-between px-4 sm:px-6'>
-                    {/* Left: Logo + badge */}
                     <div className='flex items-center gap-3'>
                         <span className='font-sans text-base font-black tracking-tight text-foreground select-none'>
                             Skill<span className='text-primary'>Sync.</span>
                         </span>
                     </div>
-
-                    {/* Center: Search trigger — grows to fill space on desktop */}
-                    <div className='hidden sm:flex flex-1 justify-center px-4 max-w-xs lg:max-w-sm mx-auto'>
-                        <HeaderSearchTrigger role='student' />
-                    </div>
-
-                    {/* Right: User info + controls */}
                     <div className='flex items-center gap-2 sm:gap-3'>
                         <span className='hidden md:block text-[13px] font-medium text-muted-foreground'>
                             {user.name}
                             <span className='text-primary/60 font-normal ml-1'>(student)</span>
                         </span>
-                        <div className='sm:hidden'>
-                            <HeaderSearchTrigger role='student' />
-                        </div>
                         <MobileNav userName={user.name!} role='student' />
                         <ThemeToggle />
                         <SignOutButton />
@@ -148,13 +135,12 @@ export default async function StudentLayout({
 
                     {/* Main scrollable content */}
                     <main className='flex-1 overflow-y-auto'>
-                        <div className='px-4 sm:px-6 py-6 md:pb-6 pb-[calc(56px+max(env(safe-area-inset-bottom),8px))]'>
+                        <div className='px-4 sm:px-6 py-6'>
                             {children}
                         </div>
                     </main>
 
                 </div>
-                <BottomTabBar role='student' userName={user.name ?? ''} />
             </div>
         </StudentProvider>
     );
