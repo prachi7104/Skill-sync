@@ -1,0 +1,28 @@
+{
+  "name": "SkillSync — Placement Intelligence Hub",
+  "short_name": "SkillSync",
+  "description": "AI-Native Placement Ecosystem for UPES students and faculty",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ECEEF0",
+  "theme_color": "#5A77DF",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-IN",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "screenshots": []
+}

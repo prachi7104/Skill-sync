@@ -16,6 +16,23 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico',
   },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'SkillSync',
+  },
+  formatDetection: { telephone: false },
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#5A77DF' },
+    { media: '(prefers-color-scheme: dark)', color: '#08112F' },
+  ],
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1, // prevents auto-zoom on iOS inputs
+    userScalable: false,
+  },
 }
 
 export default function RootLayout({
@@ -29,6 +46,17 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>{children}</AuthProvider>
           <ClientToaster />
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                if ('serviceWorker' in navigator) {
+                  window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js');
+                  });
+                }
+              `,
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>

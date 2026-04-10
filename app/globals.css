@@ -4,74 +4,100 @@
 
 @layer base {
   :root {
-    --background: 220 14% 97%;
-    --foreground: 220 20% 16%;
+    --background: 210 12% 93%;
+    --foreground: 226 71% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 16%;
+    --card-foreground: 226 71% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 16%;
-    --primary: 224 76% 53%;
+    --popover-foreground: 226 71% 11%;
+    --primary: 227 68% 61%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 20% 16%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 220 14% 96%;
-    --accent-foreground: 220 20% 16%;
+    --secondary: 214 22% 84%;
+    --secondary-foreground: 226 71% 11%;
+    --muted: 214 22% 89%;
+    --muted-foreground: 227 25% 40%;
+    --accent: 227 68% 96%;
+    --accent-foreground: 226 71% 11%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 224 76% 53%;
-    --radius: 6px;
-
-    /* Semantic Status Colors */
+    --border: 214 22% 84%;
+    --input: 214 22% 84%;
+    --ring: 227 68% 61%;
+    --radius: 12px;
     --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 224 76% 53%;
+    --info: 227 68% 61%;
     --info-foreground: 0 0% 100%;
+    /* Sidebar tokens — invariant, always dark */
+    --sidebar: 226 71% 11%;
+    --sidebar-surface: 227 25% 26%;
+    --sidebar-fg: 210 12% 93%;
+    --sidebar-fg-muted: 214 22% 55%;
+    --sidebar-primary: 227 68% 61%;
+    --sidebar-primary-hover: 227 44% 44%;
+    --sidebar-border: 227 20% 18%;
+    --sidebar-active-bg: 227 25% 26%;
   }
 
   .dark {
-    --background: 240 20% 7%;
-    --foreground: 220 13% 91%;
-    --card: 240 18% 11%;
-    --card-foreground: 220 13% 91%;
-    --popover: 240 18% 11%;
-    --popover-foreground: 220 13% 91%;
-    --primary: 239 84% 67%;
+    --background: 226 71% 7%;
+    --foreground: 210 12% 93%;
+    --card: 227 25% 14%;
+    --card-foreground: 210 12% 93%;
+    --popover: 227 25% 14%;
+    --popover-foreground: 210 12% 93%;
+    --primary: 227 68% 61%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 10% 16%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 240 10% 16%;
-    --muted-foreground: 218 11% 65%;
-    --accent: 240 10% 16%;
-    --accent-foreground: 220 13% 91%;
+    --secondary: 227 25% 26%;
+    --secondary-foreground: 210 12% 93%;
+    --muted: 227 25% 20%;
+    --muted-foreground: 214 22% 60%;
+    --accent: 227 44% 30%;
+    --accent-foreground: 210 12% 93%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 10% 20%;
-    --input: 240 10% 20%;
-    --ring: 239 84% 67%;
-    --radius: 6px;
-
-    /* Semantic Status Colors */
+    --border: 227 25% 22%;
+    --input: 227 25% 20%;
+    --ring: 227 68% 61%;
+    --radius: 12px;
     --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 239 84% 67%;
+    --info: 227 68% 61%;
     --info-foreground: 0 0% 100%;
+    /* Sidebar tokens — identical to light mode, sidebar never changes */
+    --sidebar: 226 71% 11%;
+    --sidebar-surface: 227 25% 26%;
+    --sidebar-fg: 210 12% 93%;
+    --sidebar-fg-muted: 214 22% 55%;
+    --sidebar-primary: 227 68% 61%;
+    --sidebar-primary-hover: 227 44% 44%;
+    --sidebar-border: 227 20% 18%;
+    --sidebar-active-bg: 227 25% 26%;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+}
+
+@layer utilities {
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+  * { scrollbar-width: thin; scrollbar-color: hsl(var(--border)) transparent; }
 }
