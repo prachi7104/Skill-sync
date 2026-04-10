@@ -51,24 +51,57 @@ const ROLE_LINKS: Record<string, NavLink[]> = {
 export default function MobileNav({
   userName,
   role = 'student',
+  forceOpen,
+  onClose,
 }: {
   userName: string;
   role?: 'student' | 'faculty' | 'admin';
+  forceOpen?: boolean;
+  onClose?: () => void;
 }) {
   const links = ROLE_LINKS[role] || [];
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = forceOpen !== undefined ? forceOpen : internalOpen;
   const pathname = usePathname();
+
+  const close = () => {
+    if (onClose) onClose();
+    else setInternalOpen(false);
+  };
 
   return (
     <>
-      {/* Hamburger — mobile only */}
-      <button
-        onClick={() => setOpen(true)}
-        className='md:hidden flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150'
-        aria-label='Open navigation menu'
-      >
-        <Menu size={20} />
-      </button>
+      {/* Hamburger — tablet only */}
+      {forceOpen === undefined && (
+        <button
+          onClick={() => setInternalOpen(true)}
+          className='hidden md:flex lg:hidden items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150'
+          aria-label='Open navigation menu'
+        >
+          <Menu size={20} />
+        </button>
+      )}
+
+      {/* Left edge swipe target — touch only, opens drawer */}
+      {forceOpen === undefined && (
+        <div
+          className='lg:hidden fixed left-0 top-0 bottom-0 w-4 z-30 touch-pan-y'
+          onTouchStart={(e) => {
+            const startX = e.touches[0].clientX;
+            const handleTouchMove = (e: TouchEvent) => {
+              if (e.touches[0].clientX - startX > 60) {
+                setInternalOpen(true);
+                document.removeEventListener('touchmove', handleTouchMove);
+              }
+            };
+            document.addEventListener('touchmove', handleTouchMove, { passive: true });
+            document.addEventListener('touchend', () => {
+              document.removeEventListener('touchmove', handleTouchMove);
+            }, { once: true });
+          }}
+          aria-hidden='true'
+        />
+      )}
 
       <AnimatePresence>
         {open && (
@@ -80,8 +113,8 @@ export default function MobileNav({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
-              className='fixed inset-0 bg-black/50 z-40 md:hidden'
-              onClick={() => setOpen(false)}
+              className='fixed inset-0 bg-black/50 z-40 lg:hidden'
+              onClick={() => close()}
               aria-hidden='true'
             />
 
@@ -92,7 +125,13 @@ export default function MobileNav({
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-              className='fixed inset-y-0 left-0 w-[280px] bg-card border-r border-border z-50 flex flex-col md:hidden'
+              drag='x'
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={{ left: 0.3, right: 0 }}
+              onDragEnd={(_, info) => {
+                if (info.offset.x < -80) close(); // swipe left 80px = close
+              }}
+              className='fixed inset-y-0 left-0 w-[280px] bg-card border-r border-border z-50 flex flex-col lg:hidden touch-pan-y'
             >
               {/* Drawer header */}
               <div className='h-14 shrink-0 flex items-center justify-between px-5 border-b border-border'>
@@ -100,7 +139,7 @@ export default function MobileNav({
                   Skill<span className='text-primary'>Sync.</span>
                 </span>
                 <button
-                  onClick={() => setOpen(false)}
+                  onClick={() => close()}
                   className='flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150'
                   aria-label='Close navigation menu'
                 >
@@ -118,7 +157,7 @@ export default function MobileNav({
                     <Link
                       key={link.href}
                       href={link.href}
-                      onClick={() => setOpen(false)}
+                      onClick={() => close()}
                       className={cn(
                         'flex items-center gap-3 h-11 px-3 rounded-md text-sm font-semibold transition-colors duration-150 mb-0.5',
                         isActive
