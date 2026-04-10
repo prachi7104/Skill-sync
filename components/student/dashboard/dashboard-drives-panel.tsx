@@ -23,15 +23,15 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
   }, [studentId]);
 
   return (
-    <div className='bg-card border border-border rounded-xl p-5 h-full flex flex-col'>
-      <div className='flex items-center justify-between mb-4'>
+    <div className='flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900'>
+      <div className='mb-4 flex items-center justify-between'>
         <div className='flex items-center gap-2'>
-          <div className='w-8 h-8 rounded-md bg-success/10 flex items-center justify-center'>
+          <div className='flex h-8 w-8 items-center justify-center rounded-md bg-success/10'>
             <Briefcase size={16} className='text-success' />
           </div>
-          <p className='text-[13px] font-bold text-foreground'>Active Drives</p>
+          <p className='text-[13px] font-bold text-zinc-900 dark:text-slate-100'>Active Drives</p>
         </div>
-        <Link href='/student/drives' className='flex items-center gap-1 text-[12px] font-semibold text-primary hover:text-[#3E53A0] transition-colors duration-150'>
+        <Link href='/student/drives' className='flex items-center gap-1 text-[12px] font-semibold text-primary transition-colors duration-150 hover:text-primary-hover'>
           All <ArrowUpRight size={13} />
         </Link>
       </div>
@@ -46,17 +46,17 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
             <Link
               key={drive.id}
               href={`/student/drives`}
-              className='flex items-start justify-between p-3 rounded-lg border border-border hover:border-primary/30 hover:bg-primary/5 transition-all duration-150 group'
+              className='group flex items-start justify-between rounded-lg border border-zinc-200 p-3 transition-all duration-150 hover:border-primary/30 hover:bg-primary/5 dark:border-slate-800 dark:hover:border-primary/30 dark:hover:bg-primary/10'
             >
               <div className='min-w-0 flex-1'>
-                <p className='text-[13px] font-bold text-foreground truncate'>{drive.companyName}</p>
-                <p className='text-[11px] text-muted-foreground truncate mt-0.5'>{drive.role}</p>
+                <p className='truncate text-[13px] font-bold text-zinc-900 dark:text-slate-100'>{drive.companyName}</p>
+                <p className='mt-0.5 truncate text-[11px] text-zinc-500 dark:text-slate-400'>{drive.role}</p>
               </div>
               <div className='ml-3 shrink-0 flex flex-col items-end gap-1'>
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${drive.isEligible ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
                   {drive.isEligible ? 'Eligible' : 'Ineligible'}
                 </span>
-                <span className='flex items-center gap-1 text-[10px] text-muted-foreground'>
+                <span className='flex items-center gap-1 text-[10px] text-zinc-500 dark:text-slate-400'>
                   <Clock size={9} /> {new Date(drive.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                 </span>
               </div>
@@ -64,8 +64,8 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
           ))
         ) : (
           <div className='flex flex-col items-center justify-center h-full py-8 text-center'>
-            <Briefcase size={28} className='text-muted-foreground opacity-40 mb-2' />
-            <p className='text-[12px] text-muted-foreground'>No active drives at the moment.</p>
+            <Briefcase size={28} className='mb-2 text-zinc-400 opacity-40 dark:text-slate-500' />
+            <p className='text-[12px] text-zinc-500 dark:text-slate-400'>No active drives at the moment.</p>
           </div>
         )}
       </div>

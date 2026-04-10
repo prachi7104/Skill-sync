@@ -30,6 +30,12 @@ const item = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.28, ease: 'easeOut' } },
 };
 
+const LOGIN_HIGHLIGHTS = [
+  'AI Sandbox',
+  'AMCAT Leaderboard',
+  'Career Coach',
+] as const;
+
 export default function LoginFormPanel({
   errorMessage,
   isStudentLoading,
@@ -49,27 +55,37 @@ export default function LoginFormPanel({
   const shouldAnimate = !useReducedMotion();
 
   return (
-    <div className='flex flex-col justify-center min-h-[100dvh] lg:min-h-0 lg:h-full px-6 sm:px-10 lg:px-14 py-12 bg-background'>
-      <div className='w-full max-w-[420px] mx-auto lg:mx-0'>
+    <div className='flex min-h-[100dvh] flex-col justify-center bg-zinc-50 px-4 py-10 sm:px-8 sm:py-12 lg:h-full lg:min-h-0 lg:px-10 xl:px-12 dark:bg-slate-950'>
+      <div className='mx-auto w-full max-w-[460px] lg:mx-0'>
 
         {/* 1. Live badge */}
-        <div className='inline-flex items-center gap-2 h-7 px-3 mb-8 rounded-sm bg-primary/10 border border-primary/20'>
+        <div className='mb-7 inline-flex h-7 items-center gap-2 rounded-sm border border-zinc-200 bg-white px-3 dark:border-slate-800 dark:bg-slate-900'>
           <span className='relative flex h-2 w-2'>
             <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-60' />
             <span className='relative inline-flex h-2 w-2 rounded-full bg-primary' />
           </span>
-          <span className='text-[11px] font-bold text-primary uppercase tracking-[0.12em]'>
-            Placement Season 2026 Live
+          <span className='text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-600 dark:text-slate-300'>
+            Platform Live
           </span>
         </div>
 
         {/* 2. Logotype */}
-        <h1 className='text-5xl font-black tracking-tight text-foreground leading-none select-none mb-2'>
+        <h1 className='mb-2 select-none text-4xl font-black leading-none tracking-tight text-zinc-900 sm:text-5xl dark:text-slate-100'>
           Skill<span className='text-primary'>Sync.</span>
         </h1>
-        <p className='text-sm text-muted-foreground mb-8 font-normal leading-relaxed'>
-          AI-native placement ecosystem. Sign in to continue.
+        <p className='mb-4 text-sm font-medium leading-relaxed text-zinc-600 dark:text-slate-300'>
+          SkillSync — Where your skills meet the right opportunity.
         </p>
+        <div className='mb-8 flex flex-wrap gap-2'>
+          {LOGIN_HIGHLIGHTS.map((label) => (
+            <span
+              key={label}
+              className='inline-flex h-7 items-center rounded-md border border-zinc-200 bg-white px-2.5 text-[11px] font-semibold text-zinc-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
+            >
+              {label}
+            </span>
+          ))}
+        </div>
 
         {/* 3. Error message — AnimatePresence with slide-down */}
         <AnimatePresence>
@@ -105,7 +121,7 @@ export default function LoginFormPanel({
             <button
               onClick={onStudentLogin}
               disabled={isStudentLoading || isStaffLoading}
-              className='group w-full flex items-center justify-between px-5 py-4 rounded-lg border border-border bg-card hover:border-primary/50 hover:bg-primary/5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed'
+              className='group flex w-full items-center justify-between rounded-lg border border-zinc-200 bg-white px-5 py-4 transition-all duration-150 hover:border-primary/50 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900'
             >
               <div className='flex items-center gap-4'>
                 <svg className='w-6 h-6 shrink-0' viewBox='0 0 21 21' fill='none' aria-hidden='true'>
@@ -115,15 +131,15 @@ export default function LoginFormPanel({
                   <rect x='11' y='11' width='9' height='9' fill='#FFB900' />
                 </svg>
                 <div className='text-left'>
-                  <p className='text-sm font-bold text-foreground'>Student Login</p>
-                  <p className='text-[11px] text-muted-foreground font-medium mt-0.5'>
-                    @stu.upes.ac.in Microsoft account
+                  <p className='text-sm font-bold text-zinc-900 dark:text-slate-100'>Student Login</p>
+                  <p className='mt-0.5 text-[11px] font-medium text-zinc-500 dark:text-slate-400'>
+                    Continue with UPES Microsoft SSO
                   </p>
                 </div>
               </div>
               {isStudentLoading
                 ? <Loader2 size={18} className='text-primary animate-spin' />
-                : <ChevronRight size={18} className='text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-150' />
+                : <ChevronRight size={18} className='text-zinc-500 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-primary dark:text-slate-400' />
               }
             </button>
           </motion.div>
@@ -134,18 +150,18 @@ export default function LoginFormPanel({
               <button
                 onClick={onShowStaffForm}
                 disabled={isStudentLoading}
-                className='group w-full flex items-center justify-between px-5 py-4 rounded-lg border border-border bg-background hover:border-border hover:bg-muted/60 transition-all duration-150 disabled:opacity-50'
+                className='group flex w-full items-center justify-between rounded-lg border border-zinc-200 bg-white px-5 py-4 transition-all duration-150 hover:bg-zinc-100 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800'
               >
                 <div className='flex items-center gap-4'>
                   <div className='w-6 h-6 flex items-center justify-center shrink-0'>
-                    <Lock size={18} className='text-muted-foreground group-hover:text-foreground transition-colors' />
+                    <Lock size={18} className='text-zinc-500 transition-colors group-hover:text-zinc-900 dark:text-slate-400 dark:group-hover:text-slate-100' />
                   </div>
                   <div className='text-left'>
-                    <p className='text-sm font-bold text-foreground'>Faculty / Admin Login</p>
-                    <p className='text-[11px] text-muted-foreground font-medium mt-0.5'>Email &amp; password</p>
+                    <p className='text-sm font-bold text-zinc-900 dark:text-slate-100'>Faculty / Admin Login</p>
+                    <p className='mt-0.5 text-[11px] font-medium text-zinc-500 dark:text-slate-400'>Email &amp; password</p>
                   </div>
                 </div>
-                <ChevronRight size={18} className='text-muted-foreground' />
+                <ChevronRight size={18} className='text-zinc-500 dark:text-slate-400' />
               </button>
             ) : null}
 
@@ -161,15 +177,15 @@ export default function LoginFormPanel({
                 >
                   <form
                     onSubmit={onStaffSubmit}
-                    className='rounded-lg border border-border bg-card p-5 space-y-3'
+                    className='space-y-3 rounded-lg border border-zinc-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900'
                   >
                     {/* Header row */}
                     <div className='flex items-center justify-between mb-1'>
-                      <p className='text-xs font-bold text-foreground uppercase tracking-wider'>Staff Login</p>
+                      <p className='text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-slate-100'>Staff Login</p>
                       <button
                         type='button'
                         onClick={onHideStaffForm}
-                        className='text-[11px] text-muted-foreground hover:text-foreground transition-colors'
+                        className='text-[11px] text-zinc-500 transition-colors hover:text-zinc-900 dark:text-slate-400 dark:hover:text-slate-100'
                       >
                         Cancel
                       </button>
@@ -213,7 +229,7 @@ export default function LoginFormPanel({
                     <button
                       type='submit'
                       disabled={isStaffLoading}
-                      className='w-full h-11 rounded-md bg-primary text-primary-foreground text-sm font-bold hover:bg-[#3E53A0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center gap-2'
+                      className='w-full h-11 rounded-md bg-primary text-primary-foreground text-sm font-bold hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center gap-2'
                     >
                       {isStaffLoading
                         ? <><Loader2 size={15} className='animate-spin' /> Signing in...</>
@@ -228,9 +244,9 @@ export default function LoginFormPanel({
         </motion.div>
 
         {/* 5. Footnote */}
-        <p className='mt-6 text-[11px] text-muted-foreground leading-relaxed'>
-          Students use UPES Microsoft SSO. Faculty and staff use their assigned SkillSync credentials.
-          Contact your placement coordinator for access issues.
+        <p className='mt-6 text-[11px] leading-relaxed text-zinc-500 dark:text-slate-400'>
+          One platform for drives, AMCAT scoring, sandbox analysis, and career coaching.
+          Students use UPES Microsoft SSO, while faculty and staff use assigned SkillSync credentials.
         </p>
 
       </div>

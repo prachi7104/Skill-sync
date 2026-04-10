@@ -1,58 +1,86 @@
-import { MonitorSmartphone, Sparkles, Shield, BarChart3 } from 'lucide-react';
+import {
+  BarChart3,
+  Box,
+  Briefcase,
+  Shield,
+  Sparkles,
+} from 'lucide-react';
 
-const CAPABILITIES = [
-  { icon: BarChart3,        label: 'AMCAT Score Integration' },
-  { icon: Sparkles,         label: 'AI-Native Drive Matching' },
-  { icon: Shield,           label: 'Role-Gated Access Control' },
+const PLATFORM_FEATURES = [
+  {
+    icon: Box,
+    title: 'AI Sandbox',
+    detail: 'Run resume-to-JD analysis with instant score breakdowns.',
+  },
+  {
+    icon: BarChart3,
+    title: 'AMCAT Scoring',
+    detail: 'Track session scores, categories, and leaderboard rank.',
+  },
+  {
+    icon: Sparkles,
+    title: 'Career Coach',
+    detail: 'Get personalized upskilling suggestions by drive eligibility.',
+  },
+  {
+    icon: Briefcase,
+    title: 'Drive Hub',
+    detail: 'Manage applications, rankings, and placement operations in one place.',
+  },
+] as const;
+
+const ACCESS_RULES = [
+  'Students: Microsoft SSO (@stu.upes.ac.in)',
+  'Faculty/Admin: Credentials-based access',
 ] as const;
 
 export default function LoginBrandPanel() {
   return (
-    <div className='hidden lg:flex flex-col justify-between h-full min-h-screen bg-sidebar px-12 py-12 relative overflow-hidden'>
-
-      {/* Decorative background circle — subtle, not glassy */}
+    <aside className='relative hidden min-h-screen flex-col justify-between overflow-hidden border-l border-zinc-200 bg-zinc-100 px-10 py-10 text-zinc-900 lg:flex dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100'>
       <div
         aria-hidden='true'
-        className='absolute -top-24 -right-24 w-64 h-64 rounded-full bg-sidebar-primary opacity-[0.06] pointer-events-none'
+        className='pointer-events-none absolute -top-28 -right-24 h-72 w-72 rounded-full bg-primary/15 blur-3xl dark:bg-primary/20'
       />
 
-      {/* Top: branding */}
-      <div>
-        <span className='font-sans text-2xl font-black tracking-tight text-sidebar-fg select-none'>
-          Skill<span className='text-sidebar-primary'>Sync.</span>
+      <div className='relative z-10'>
+        <span className='select-none font-sans text-2xl font-black tracking-tight'>
+          Skill<span className='text-primary'>Sync.</span>
         </span>
-        <p className='mt-3 text-sm text-sidebar-fg-muted font-normal leading-relaxed max-w-[280px]'>
-          The placement intelligence hub for UPES — connecting students, faculty, and administrators through AI-native workflows.
+        <h2 className='mt-5 max-w-[18ch] text-3xl font-black leading-tight tracking-tight text-zinc-900 dark:text-slate-100'>
+          One-stop complete placement platform
+        </h2>
+        <p className='mt-3 max-w-[38ch] text-sm leading-relaxed text-zinc-600 dark:text-slate-300'>
+          SkillSync brings scoring, sandbox analysis, drive workflows, and career guidance into one connected system.
         </p>
       </div>
 
-      {/* Middle: illustration placeholder */}
-      <div className='flex-1 flex items-center justify-center py-8'>
-        <div className='w-full max-w-[340px] aspect-[4/3] rounded-xl border border-sidebar-border bg-sidebar-surface flex flex-col items-center justify-center gap-4'>
-          <MonitorSmartphone size={48} className='text-sidebar-primary opacity-60' />
-          {/* TODO Phase-assets: Replace with <Image src='/illustrations/login-hero.png' alt='SkillSync dashboard' fill className='object-cover rounded-xl' /> */}
-          <p className='text-[12px] text-sidebar-fg-muted font-medium text-center px-6'>
-            Dashboard illustration goes here
-          </p>
-        </div>
-      </div>
-
-      {/* Bottom: capability pills */}
-      <div className='flex flex-col gap-2.5'>
-        <p className='text-[11px] font-bold text-sidebar-fg-muted uppercase tracking-[0.12em] mb-1'>
-          Platform capabilities
-        </p>
-        {CAPABILITIES.map(({ icon: Icon, label }) => (
-          <div
-            key={label}
-            className='flex items-center gap-3 h-9 px-3 rounded-md bg-sidebar-surface/60 border border-sidebar-border'
-          >
-            <Icon size={14} className='text-sidebar-primary shrink-0' />
-            <span className='text-[12px] font-semibold text-sidebar-fg'>{label}</span>
+      <div className='relative z-10 my-8 grid gap-3'>
+        {PLATFORM_FEATURES.map(({ icon: Icon, title, detail }) => (
+          <div key={title} className='rounded-xl border border-zinc-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80'>
+            <div className='mb-2 flex items-center gap-2'>
+              <span className='flex h-8 w-8 items-center justify-center rounded-md bg-primary/15 text-primary'>
+                <Icon size={16} />
+              </span>
+              <p className='text-sm font-bold text-zinc-900 dark:text-slate-100'>{title}</p>
+            </div>
+            <p className='text-xs leading-relaxed text-zinc-600 dark:text-slate-300'>{detail}</p>
           </div>
         ))}
       </div>
 
-    </div>
+      <div className='relative z-10 rounded-xl border border-zinc-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80'>
+        <p className='mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-500 dark:text-slate-400'>
+          Access Modes
+        </p>
+        <div className='space-y-2'>
+          {ACCESS_RULES.map((rule) => (
+            <div key={rule} className='flex items-center gap-2 text-xs text-zinc-700 dark:text-slate-300'>
+              <Shield size={13} className='text-primary' />
+              <span>{rule}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </aside>
   );
 }

@@ -39,8 +39,8 @@ const getStats = (props: DashboardStatsRowProps) => [
     label: 'Profile Complete',
     value: String(props.profileCompletion),
     icon: UserCircle,
-    iconColor: 'text-[#3E53A0]',
-    iconBg: 'bg-[#3E53A0]/10',
+    iconColor: 'text-primary-hover',
+    iconBg: 'bg-primary-hover/10',
     suffix: '%',
   },
 ];
@@ -62,22 +62,22 @@ export default function DashboardStatsRow(props: DashboardStatsRowProps) {
       variants={container}
       initial='hidden'
       animate='visible'
-      className='grid grid-cols-2 xl:grid-cols-4 gap-3'
+      className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4'
     >
       {stats.map(stat => (
         <motion.div
           key={stat.label}
           variants={item}
-          className='bg-card border border-border rounded-lg p-4 flex items-start gap-3'
+          className='flex items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900'
         >
           <div className={`w-9 h-9 rounded-md ${stat.iconBg} flex items-center justify-center shrink-0`}>
             <stat.icon size={18} className={stat.iconColor} />
           </div>
           <div className='min-w-0'>
-            <p className='text-[11px] text-muted-foreground font-medium truncate'>{stat.label}</p>
+            <p className='truncate text-[11px] font-medium text-zinc-500 dark:text-slate-400'>{stat.label}</p>
             {stat.value !== null ? (
-              <p className='text-xl font-black text-foreground leading-tight mt-0.5'>
-                {stat.value}<span className='text-sm font-semibold text-muted-foreground'>{stat.suffix}</span>
+              <p className='mt-0.5 text-xl font-black leading-tight text-zinc-900 dark:text-slate-100'>
+                {stat.value}<span className='text-sm font-semibold text-zinc-500 dark:text-slate-400'>{stat.suffix}</span>
               </p>
             ) : (
               <div className='h-7 w-16 mt-1 rounded-sm bg-muted overflow-hidden'>

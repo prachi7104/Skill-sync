@@ -78,24 +78,31 @@ function LoginForm() {
   };
 
   return (
-    <div className='min-h-screen bg-background font-sans grid grid-cols-1 lg:grid-cols-[1fr_1fr]'>
-      <LoginFormPanel
-        errorMessage={errorMessage}
-        isStudentLoading={isStudentLoading}
-        isStaffLoading={isStaffLoading}
-        showStaffForm={showStaffForm}
-        staffEmail={staffEmail}
-        staffPassword={staffPassword}
-        showPassword={showPassword}
-        onStudentLogin={handleStudentLogin}
-        onShowStaffForm={() => setShowStaffForm(true)}
-        onHideStaffForm={() => { setShowStaffForm(false); setErrorMessage(null); }}
-        onStaffEmailChange={(v) => setStaffEmail(v)}
-        onStaffPasswordChange={(v) => setStaffPassword(v)}
-        onTogglePassword={() => setShowPassword(v => !v)}
-        onStaffSubmit={handleStaffLogin}
-      />
-      <LoginBrandPanel />
+    <div className='relative min-h-screen overflow-x-clip bg-zinc-50 font-sans text-zinc-900 dark:bg-slate-950 dark:text-slate-100'>
+      <div className='pointer-events-none absolute inset-0 -z-10'>
+        <div className='absolute -top-24 left-[15%] h-64 w-64 rounded-full bg-primary/10 blur-3xl' />
+        <div className='absolute bottom-0 right-[10%] h-72 w-72 rounded-full bg-zinc-200/60 blur-3xl dark:bg-slate-900/50' />
+      </div>
+
+      <div className='grid min-h-screen grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]'>
+        <LoginFormPanel
+          errorMessage={errorMessage}
+          isStudentLoading={isStudentLoading}
+          isStaffLoading={isStaffLoading}
+          showStaffForm={showStaffForm}
+          staffEmail={staffEmail}
+          staffPassword={staffPassword}
+          showPassword={showPassword}
+          onStudentLogin={handleStudentLogin}
+          onShowStaffForm={() => setShowStaffForm(true)}
+          onHideStaffForm={() => { setShowStaffForm(false); setErrorMessage(null); }}
+          onStaffEmailChange={(v) => setStaffEmail(v)}
+          onStaffPasswordChange={(v) => setStaffPassword(v)}
+          onTogglePassword={() => setShowPassword(v => !v)}
+          onStaffSubmit={handleStaffLogin}
+        />
+        <LoginBrandPanel />
+      </div>
     </div>
   );
 }
@@ -103,7 +110,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-slate-950">
         <Loader2 className="h-10 w-10 animate-spin text-primary opacity-20" />
       </div>
     }>

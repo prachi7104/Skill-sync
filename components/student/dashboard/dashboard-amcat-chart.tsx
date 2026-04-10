@@ -36,7 +36,7 @@ export default function DashboardAMCATChart({ data }: DashboardAMCATChartProps) 
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={prefersReducedMotion ? {} : { rotateX, rotateY, transformPerspective: 800 }}
-      className='bg-card border border-border rounded-xl p-5 h-full flex flex-col'
+      className='flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900'
     >
       {/* Header row */}
       <div className='flex items-center justify-between mb-4'>
@@ -45,13 +45,13 @@ export default function DashboardAMCATChart({ data }: DashboardAMCATChartProps) 
             <BarChart3 size={16} className='text-primary' />
           </div>
           <div>
-            <p className='text-[13px] font-bold text-foreground'>AMCAT Score History</p>
-            <p className='text-[11px] text-muted-foreground'>Last 6 sessions</p>
+            <p className='text-[13px] font-bold text-zinc-900 dark:text-slate-100'>AMCAT Score History</p>
+            <p className='text-[11px] text-zinc-500 dark:text-slate-400'>Last 6 sessions</p>
           </div>
         </div>
         <Link
           href='/student/leaderboard'
-          className='flex items-center gap-1 text-[12px] font-semibold text-primary hover:text-[#3E53A0] transition-colors duration-150'
+          className='flex items-center gap-1 text-[12px] font-semibold text-primary transition-colors duration-150 hover:text-primary-hover'
         >
           View all <ArrowUpRight size={13} />
         </Link>
@@ -63,10 +63,10 @@ export default function DashboardAMCATChart({ data }: DashboardAMCATChartProps) 
           <>
             {/* Best score callout */}
             <div className='mb-3 flex items-baseline gap-1.5'>
-              <span className='text-3xl font-black text-foreground'>
+              <span className='text-3xl font-black text-zinc-900 dark:text-slate-100'>
                 {Math.max(...data.map(d => d.score))}
               </span>
-              <span className='text-[12px] text-muted-foreground font-medium'>best score</span>
+              <span className='text-[12px] font-medium text-zinc-500 dark:text-slate-400'>best score</span>
             </div>
             <ResponsiveContainer width='100%' height={140}>
               <BarChart data={data} barSize={28}>
@@ -96,7 +96,7 @@ export default function DashboardAMCATChart({ data }: DashboardAMCATChartProps) 
                     return (
                       <Cell
                         key={`cell-${index}`}
-                        fill={isHighest ? '#3E53A0' : '#5A77DF'}
+                        fill={isHighest ? 'hsl(var(--primary-hover))' : 'hsl(var(--primary))'}
                         opacity={isHighest ? 1 : 0.75}
                       />
                     );

@@ -51,7 +51,29 @@ export default async function StudentDashboardPage() {
   }
 
   return (
-    <div className='space-y-5'>
+    <div className='space-y-5 text-zinc-900 dark:text-slate-100'>
+      <section className='rounded-2xl border border-zinc-200 bg-white px-5 py-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-6'>
+        <div className='flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
+          <div className='max-w-2xl'>
+            <p className='text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-slate-400'>
+              Student Workspace
+            </p>
+            <h1 className='mt-2 text-3xl font-black tracking-tight text-zinc-900 dark:text-slate-100 sm:text-4xl'>
+              Your placement activity at a glance
+            </h1>
+            <p className='mt-2 text-sm leading-relaxed text-zinc-600 dark:text-slate-300'>
+              Track AMCAT scoring, active drives, your profile status, and quick links to Sandbox and Career Coach.
+            </p>
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            {['AMCAT scoring', 'AI Sandbox', 'Career Coach'].map((chip) => (
+              <span key={chip} className='inline-flex h-7 items-center rounded-md border border-zinc-200 bg-zinc-50 px-2.5 text-[11px] font-semibold text-zinc-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300'>
+                {chip}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Onboarding card — only when incomplete */}
       {onboardingRequired && (
@@ -67,7 +89,7 @@ export default async function StudentDashboardPage() {
       />
 
       {/* 3-column bento grid */}
-      <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'>
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'>
 
         {/* Left: AMCAT chart */}
         <div className='xl:col-span-1 md:col-span-2'>
