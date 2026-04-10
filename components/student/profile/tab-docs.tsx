@@ -1,0 +1,295 @@
+'use client';
+
+import { UseFormReturn } from 'react-hook-form';
+import { FormField, FormControl, FormItem } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Plus, Trash2, FileText, Upload, Download, Loader2, Award, Code2, BookOpen, Trophy, ExternalLink } from 'lucide-react';
+import type { StudentProfileInput } from '@/lib/validations/student-profile';
+
+interface TabDocsProps {
+  form: UseFormReturn<StudentProfileInput>;
+  isEditing: boolean;
+  resumeUrl?: string | null;
+  resumeFilename?: string | null;
+  resumeMime?: string | null;
+  resumeDownloadUrl: string | null;
+  resumeDownloadLabel: string;
+  isUploading: boolean;
+  isPollingParse: boolean;
+  onResumeFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  certFields: any[];
+  appendCert: (v: any) => void;
+  removeCert: (i: number) => void;
+  codingFields: any[];
+  appendCoding: (v: any) => void;
+  removeCoding: (i: number) => void;
+  achievementFields: any[];
+  appendAchievement: (v: any) => void;
+  removeAchievement: (i: number) => void;
+  researchFields: any[];
+  appendResearch: (v: any) => void;
+  removeResearch: (i: number) => void;
+  profile: {
+    certifications?: any[];
+    codingProfiles?: any[];
+    achievements?: any[];
+    researchPapers?: any[];
+  };
+}
+
+export default function TabDocs({
+  form,
+  isEditing,
+  resumeUrl,
+  resumeFilename,
+  resumeDownloadUrl,
+  resumeDownloadLabel,
+  isUploading,
+  isPollingParse,
+  onResumeFileChange,
+  certFields,
+  appendCert,
+  removeCert,
+  codingFields,
+  appendCoding,
+  removeCoding,
+  achievementFields,
+  appendAchievement,
+  removeAchievement,
+  researchFields,
+  appendResearch,
+  removeResearch,
+  profile
+}: TabDocsProps) {
+  const inputClass = "bg-muted/40 border-border text-foreground rounded-md focus:ring-primary w-full";
+
+  return (
+    <div className='space-y-10'>
+      
+      {/* Resume Section */}
+      <div className='bg-muted/40 border border-border rounded-lg p-4'>
+        <div className='flex items-center justify-between mb-3'>
+          <h4 className='text-xs font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2'>
+            <FileText size={12} /> Resume
+          </h4>
+          {isEditing && (
+            <label className={`inline-flex items-center gap-2 h-7 px-3 rounded text-xs font-medium cursor-pointer transition-colors ${
+              isUploading || isPollingParse
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                : 'border border-border hover:bg-muted/60 text-muted-foreground hover:text-foreground'
+            }`}>
+              {isUploading ? <><Loader2 size={11} className='animate-spin' /> Uploading...</> :
+              isPollingParse ? <><Loader2 size={11} className='animate-spin' /> Parsing...</> :
+              <><Upload size={11} /> {resumeUrl ? 'Replace' : 'Upload'}</>}
+              <input type='file' accept='.pdf,.docx' className='sr-only' onChange={onResumeFileChange} disabled={isUploading || isPollingParse} />
+            </label>
+          )}
+        </div>
+        {resumeUrl ? (
+          <div className='flex items-center justify-between'>
+            <p className='text-sm font-medium text-foreground truncate'>{resumeFilename || 'resume'}</p>
+            {resumeDownloadUrl && (
+              <a href={resumeDownloadUrl} target='_blank' rel='noreferrer'
+                className='inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline'>
+                <Download size={11} /> {resumeDownloadLabel}
+              </a>
+            )}
+          </div>
+        ) : (
+          <p className='text-xs text-muted-foreground italic'>No resume uploaded. Upload a PDF or DOCX (max 5MB).</p>
+        )}
+      </div>
+
+      {/* Certifications Container */}
+      <div>
+        <div className='flex items-center justify-between mb-4'>
+          <h3 className='text-xs font-semibold text-foreground flex items-center gap-2 uppercase tracking-widest'>
+            <Award className='w-4 h-4 text-yellow-500' /> Certifications
+          </h3>
+        </div>
+
+        {!isEditing ? (
+          <div className='space-y-3'>
+            {(!profile.certifications || profile.certifications.length === 0) ? (
+              <p className='text-xs text-muted-foreground italic'>No certifications added.</p>
+            ) : (
+              profile.certifications.map((cert: any, i: number) => (
+                <div key={i} className='bg-muted/40 border border-border rounded-lg p-4 flex justify-between items-center'>
+                  <div>
+                    <h4 className='text-sm font-semibold text-foreground'>{cert.title}</h4>
+                    <p className='text-xs text-muted-foreground mt-1'>{cert.issuer} • {cert.dateIssued}</p>
+                  </div>
+                  {cert.url && (
+                    <a href={cert.url} target='_blank' rel='noreferrer' className='p-2 hover:bg-muted/60 rounded-md transition-colors'>
+                      <ExternalLink className='w-4 h-4 text-muted-foreground hover:text-foreground' />
+                    </a>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className='space-y-4'>
+            {certFields.map((field, idx) => (
+              <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-md relative space-y-4'>
+                <button type='button' onClick={() => removeCert(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
+                  <FormField control={form.control} name={`certifications.${idx}.title`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Title' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  <FormField control={form.control} name={`certifications.${idx}.issuer`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Issuer' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  <FormField control={form.control} name={`certifications.${idx}.dateIssued`} render={({field: f}) => <FormItem><FormControl><Input type='month' className={inputClass} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  <FormField control={form.control} name={`certifications.${idx}.url`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='URL' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                </div>
+              </div>
+            ))}
+            <button type='button' onClick={() => appendCert({ title: '', issuer: '', url: '', dateIssued: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-yellow-500 hover:text-yellow-600 transition-colors'>
+              <Plus className='w-3 h-3' /> Add Certification
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Coding Profiles Container */}
+      <div>
+        <div className='flex items-center justify-between mb-4'>
+          <h3 className='text-xs font-semibold text-foreground flex items-center gap-2 uppercase tracking-widest'>
+            <Code2 className='w-4 h-4 text-cyan-500' /> Coding Profiles
+          </h3>
+        </div>
+
+        {!isEditing ? (
+          <div className='space-y-3'>
+            {(!profile.codingProfiles || profile.codingProfiles.length === 0) ? (
+              <p className='text-xs text-muted-foreground italic'>No profiles linked.</p>
+            ) : (
+              profile.codingProfiles.map((cp: any, i: number) => (
+                <div key={i} className='bg-muted/40 border border-border rounded-lg p-4'>
+                  <a href={cp.url || '#'} target='_blank' rel='noreferrer' className='flex items-center justify-between group'>
+                    <div>
+                      <h4 className='text-sm font-semibold text-foreground group-hover:text-primary transition-colors'>{cp.platform}</h4>
+                      {cp.username && <p className='text-xs text-muted-foreground mt-0.5'>{cp.username}</p>}
+                    </div>
+                    {cp.url && <ExternalLink className='w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors' />}
+                  </a>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className='space-y-4'>
+            {codingFields.map((field, idx) => (
+              <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-md relative space-y-4'>
+                <button type='button' onClick={() => removeCoding(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
+                  <FormField control={form.control} name={`codingProfiles.${idx}.platform`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Platform (e.g. GitHub, LeetCode)' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  <FormField control={form.control} name={`codingProfiles.${idx}.username`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Username' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  <div className='md:col-span-2'>
+                    <FormField control={form.control} name={`codingProfiles.${idx}.url`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Profile URL' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button type='button' onClick={() => appendCoding({ platform: '', username: '', url: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-cyan-500 hover:text-cyan-600 transition-colors'>
+              <Plus className='w-3 h-3' /> Add Profile
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Achievements Container */}
+      <div>
+        <div className='flex items-center justify-between mb-4'>
+          <h3 className='text-xs font-semibold text-foreground flex items-center gap-2 uppercase tracking-widest'>
+            <Trophy className='w-4 h-4 text-orange-500' /> Achievements
+          </h3>
+        </div>
+
+        {!isEditing ? (
+          <div className='space-y-3'>
+            {(!profile.achievements || profile.achievements.length === 0) ? (
+              <p className='text-xs text-muted-foreground italic'>No achievements added.</p>
+            ) : (
+              profile.achievements.map((ach: any, i: number) => (
+                <div key={i} className='bg-muted/40 border border-border rounded-lg p-4'>
+                  <h4 className='text-sm font-semibold text-foreground'>{ach.title}</h4>
+                  <p className='text-[11px] text-muted-foreground mt-1 mb-2 uppercase tracking-wide'>{ach.issuer} • {ach.date}</p>
+                  <p className='text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap'>{ach.description}</p>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className='space-y-4'>
+            {achievementFields.map((field, idx) => (
+              <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-md relative space-y-4'>
+                <button type='button' onClick={() => removeAchievement(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
+                  <FormField control={form.control} name={`achievements.${idx}.title`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Title' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  <FormField control={form.control} name={`achievements.${idx}.issuer`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Issuer/Organization' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  <div className='md:col-span-2'>
+                    <FormField control={form.control} name={`achievements.${idx}.date`} render={({field: f}) => <FormItem><FormControl><Input type='month' className={inputClass} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  </div>
+                </div>
+                <FormField control={form.control} name={`achievements.${idx}.description`} render={({field: f}) => <FormItem><FormControl><textarea className={`${inputClass} min-h-[80px] py-3 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary bg-muted/40 border`} placeholder='Description' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+              </div>
+            ))}
+            <button type='button' onClick={() => appendAchievement({ title: '', description: '', date: '', issuer: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-orange-500 hover:text-orange-600 transition-colors'>
+              <Plus className='w-3 h-3' /> Add Achievement
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Research Papers Container */}
+      <div>
+        <div className='flex items-center justify-between mb-4'>
+          <h3 className='text-xs font-semibold text-foreground flex items-center gap-2 uppercase tracking-widest'>
+            <BookOpen className='w-4 h-4 text-sky-500' /> Research Papers
+          </h3>
+        </div>
+
+        {!isEditing ? (
+          <div className='space-y-3'>
+            {(!profile.researchPapers || profile.researchPapers.length === 0) ? (
+              <p className='text-xs text-muted-foreground italic'>No research papers added.</p>
+            ) : (
+              profile.researchPapers.map((paper: any, i: number) => (
+                <div key={i} className='bg-muted/40 border border-border rounded-lg p-4'>
+                  <div className='flex justify-between items-start mb-2'>
+                    <h4 className='text-sm font-semibold text-foreground'>{paper.title}</h4>
+                    {paper.url && (
+                      <a href={paper.url} target='_blank' rel='noreferrer' className='hover:text-primary transition-colors'>
+                        <ExternalLink className='w-4 h-4 text-muted-foreground hover:text-foreground' />
+                      </a>
+                    )}
+                  </div>
+                  <p className='text-[10px] text-muted-foreground font-medium uppercase tracking-wide mb-3'>Published: {paper.datePublished}</p>
+                  <p className='text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap'>{paper.abstract}</p>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className='space-y-4'>
+            {researchFields.map((field, idx) => (
+              <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-md relative space-y-4'>
+                <button type='button' onClick={() => removeResearch(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
+                  <FormField control={form.control} name={`researchPapers.${idx}.title`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Paper Title' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  <FormField control={form.control} name={`researchPapers.${idx}.datePublished`} render={({field: f}) => <FormItem><FormControl><Input type='month' className={inputClass} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  <div className='md:col-span-2'>
+                    <FormField control={form.control} name={`researchPapers.${idx}.url`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='URL to paper' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  </div>
+                </div>
+                <FormField control={form.control} name={`researchPapers.${idx}.abstract`} render={({field: f}) => <FormItem><FormControl><textarea className={`${inputClass} min-h-[80px] py-3 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary border bg-muted/40`} placeholder='Abstract' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+              </div>
+            ))}
+            <button type='button' onClick={() => appendResearch({ title: '', abstract: '', url: '', datePublished: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-sky-500 hover:text-sky-600 transition-colors'>
+              <Plus className='w-3 h-3' /> Add Research Paper
+            </button>
+          </div>
+        )}
+      </div>
+
+    </div>
+  );
+}
