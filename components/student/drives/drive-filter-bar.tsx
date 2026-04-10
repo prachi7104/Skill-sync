@@ -15,21 +15,21 @@ export default function DriveFilterBar({
   query, onQueryChange, urgentOnly, onUrgentToggle, totalCount, filteredCount
 }: DriveFilterBarProps) {
   return (
-    <div className='flex flex-col sm:flex-row items-start sm:items-center gap-3'>
+    <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
       {/* Search input */}
       <div className='relative w-full sm:w-72 lg:w-80'>
-        <Search size={13} className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none' />
+        <Search size={13} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-slate-400' />
         <input
           type='text'
           value={query}
           onChange={e => onQueryChange(e.target.value)}
           placeholder='Search by company or role...'
-          className='w-full h-8 pl-8 pr-8 text-sm bg-muted/60 border border-border rounded placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-colors'
+          className='w-full h-9 rounded-md border border-zinc-200 bg-white pl-8 pr-8 text-sm text-zinc-900 placeholder:text-zinc-400 transition-colors focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500'
         />
         {query && (
           <button
             onClick={() => onQueryChange('')}
-            className='absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors'
+            className='absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 transition-colors hover:text-zinc-900 dark:text-slate-400 dark:hover:text-slate-100'
           >
             <X size={12} />
           </button>
@@ -39,17 +39,17 @@ export default function DriveFilterBar({
       {/* Urgent toggle */}
       <button
         onClick={onUrgentToggle}
-        className={`inline-flex items-center gap-1.5 h-8 px-3 rounded border text-xs font-medium transition-colors ${
+        className={`inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-xs font-medium transition-colors ${
           urgentOnly
-            ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400'
-            : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted/60'
+            ? 'bg-warning/15 border-warning/40 text-warning'
+            : 'border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100'
         }`}
       >
         <Clock size={12} /> Closing Soon
       </button>
 
       {/* Result count — spacer pushes it to the right */}
-      <p className='text-xs text-muted-foreground ml-auto'>
+      <p className='ml-auto text-xs text-zinc-500 dark:text-slate-400'>
         {filteredCount === totalCount
           ? `${totalCount} drive${totalCount !== 1 ? 's' : ''}`
           : `${filteredCount} of ${totalCount}`}

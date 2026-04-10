@@ -38,7 +38,7 @@ export default function DriveCard({ drive, ranking }: DriveCardProps) {
     <motion.div
       whileHover={shouldReduceMotion ? undefined : { y: -1 }}
       transition={{ duration: 0.15 }}
-      className='group relative bg-card rounded-lg border border-border hover:border-primary/40 hover:shadow-sm transition-[border-color,box-shadow] duration-200 flex flex-col overflow-hidden'
+      className='group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-[border-color,box-shadow] duration-200 hover:border-primary/40 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900'
     >
       {/* Rank badge — absolute top-right */}
       {ranking && (
@@ -47,10 +47,10 @@ export default function DriveCard({ drive, ranking }: DriveCardProps) {
           className='absolute top-3 right-3 z-10'
         >
           <span className={cn(
-            'inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-bold border',
+            'inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-bold',
             hasRankPosition
               ? 'bg-primary/10 border-primary/30 text-primary'
-              : 'bg-muted/60 border-border text-muted-foreground'
+              : 'bg-zinc-100 border-zinc-200 text-zinc-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400'
           )}>
             <Award size={10} />
             {hasRankPosition ? `#${ranking.rankPosition} · ${Math.round(ranking.matchScore)}%` : 'Pending'}
@@ -58,41 +58,41 @@ export default function DriveCard({ drive, ranking }: DriveCardProps) {
         </Link>
       )}
 
-      <div className='p-4 flex-1 space-y-3'>
+      <div className='flex-1 space-y-3 p-4'>
         {/* Company initials + name + role */}
         <div className='flex items-start gap-3 pr-20'>
-          <div className='w-10 h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0'>
+          <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10'>
             <span className='text-xs font-bold text-primary'>{companyInitials(drive.company)}</span>
           </div>
           <div className='min-w-0'>
-            <h3 className='text-sm font-semibold text-foreground leading-snug truncate'>{drive.company}</h3>
-            <p className='text-xs text-muted-foreground mt-0.5 truncate'>{drive.roleTitle}</p>
+            <h3 className='truncate text-sm font-semibold leading-snug text-zinc-900 dark:text-slate-100'>{drive.company}</h3>
+            <p className='mt-0.5 truncate text-xs text-zinc-500 dark:text-slate-400'>{drive.roleTitle}</p>
           </div>
         </div>
 
         {/* Info pills */}
         <div className='flex flex-wrap gap-1.5'>
           {drive.location && (
-            <span className='inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/60 border border-border rounded px-2 py-0.5'>
+            <span className='inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400'>
               <MapPin size={9} /> {drive.location}
             </span>
           )}
           {drive.packageOffered && (
-            <span className='inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/60 border border-border rounded px-2 py-0.5'>
+            <span className='inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400'>
               <IndianRupee size={9} /> {drive.packageOffered}
             </span>
           )}
           {drive.minCgpa && (
-            <span className='inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/60 border border-border rounded px-2 py-0.5'>
+            <span className='inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400'>
               <GraduationCap size={9} /> Min {drive.minCgpa} CGPA
             </span>
           )}
           {drive.deadlineFormatted && (
             <span className={cn(
-              'inline-flex items-center gap-1 text-[10px] font-medium rounded px-2 py-0.5',
+              'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-medium',
               drive.isDeadlineSoon
-                ? 'bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400'
-                : 'bg-muted/60 border border-border text-muted-foreground'
+                ? 'bg-warning/10 border border-warning/30 text-warning'
+                : 'bg-zinc-50 border-zinc-200 text-zinc-500 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400'
             )}>
               <Clock size={9} />
               {drive.isDeadlineSoon ? 'Closing ' : ''}{drive.deadlineFormatted}
@@ -102,9 +102,9 @@ export default function DriveCard({ drive, ranking }: DriveCardProps) {
 
         {/* Ranking result section */}
         {ranking ? (
-          <div className='space-y-2 pt-1 border-t border-border'>
+          <div className='space-y-2 border-t border-zinc-200 pt-1 dark:border-slate-800'>
             {ranking.shortExplanation && (
-              <p className='text-[11px] text-muted-foreground leading-relaxed line-clamp-2'>
+              <p className='line-clamp-2 text-[11px] leading-relaxed text-zinc-500 dark:text-slate-400'>
                 {ranking.shortExplanation}
               </p>
             )}
@@ -112,7 +112,7 @@ export default function DriveCard({ drive, ranking }: DriveCardProps) {
               {ranking.matchedSkills.slice(0, 4).map(skill => (
                 <span
                   key={skill}
-                  className='inline-flex items-center text-[9px] font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded px-1.5 py-0.5'
+                  className='inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold bg-success/10 border border-success/20 text-success'
                 >
                   + {skill}
                 </span>
@@ -120,7 +120,7 @@ export default function DriveCard({ drive, ranking }: DriveCardProps) {
               {ranking.missingSkills.slice(0, 2).map(skill => (
                 <span
                   key={skill}
-                  className='inline-flex items-center text-[9px] font-bold bg-destructive/10 border border-destructive/20 text-destructive rounded px-1.5 py-0.5'
+                  className='inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold bg-destructive/10 border border-destructive/20 text-destructive'
                 >
                   − {skill}
                 </span>
@@ -128,7 +128,7 @@ export default function DriveCard({ drive, ranking }: DriveCardProps) {
             </div>
           </div>
         ) : (
-          <p className='text-[11px] text-muted-foreground italic pt-1 border-t border-border'>
+          <p className='border-t border-zinc-200 pt-1 text-[11px] italic text-zinc-500 dark:border-slate-800 dark:text-slate-400'>
             Ranking not yet generated.
           </p>
         )}
@@ -138,7 +138,7 @@ export default function DriveCard({ drive, ranking }: DriveCardProps) {
       {ranking && (
         <Link
           href={`/student/drives/${drive.id}/ranking`}
-          className='flex items-center justify-between px-4 py-2.5 border-t border-border text-[11px] font-semibold text-primary hover:bg-primary/5 transition-colors'
+          className='flex items-center justify-between border-t border-zinc-200 px-4 py-2.5 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/5 dark:border-slate-800 dark:hover:bg-primary/10'
         >
           View Full Ranking
           <ChevronRight size={13} />
