@@ -39,8 +39,8 @@ const TASK_TYPE_LABELS: Record<string, string> = {
 };
 
 const PROVIDER_COLORS = {
-  google: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-  groq: "bg-orange-500/15 text-orange-400 border-orange-500/20",
+  google: "bg-primary/15 text-primary border-primary/20",
+  groq: "bg-warning/15 text-warning border-warning/20",
 };
 
 export default function AIModelsPage() {
@@ -144,29 +144,31 @@ export default function AIModelsPage() {
   const unhealthyCount = models.filter((m) => m.last_ping_ok === false).length;
 
   return (
-    <div className="max-w-7xl mx-auto p-8 pb-32 space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-black text-foreground tracking-tight">AI Model Registry</h1>
-          <p className="text-muted-foreground mt-1">
-            {activeCount} active · {deprecatedCount} deprecated · {unhealthyCount} unhealthy
-          </p>
+    <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-2">
+            <h1 className="text-3xl font-black tracking-tight text-foreground">AI Model Registry</h1>
+            <p className="text-sm leading-6 text-muted-foreground">
+              {activeCount} active · {deprecatedCount} deprecated · {unhealthyCount} unhealthy
+            </p>
+          </div>
+          <div className="flex gap-3 self-start">
+            <button
+              onClick={fetchModels}
+              className="flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-bold text-muted-foreground transition-all hover:bg-muted/40"
+            >
+              <RefreshCw className="w-4 h-4" /> Refresh
+            </button>
+            <button
+              onClick={() => setShowAddForm((s) => !s)}
+              className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90"
+            >
+              <Plus className="w-4 h-4" /> Add Model
+            </button>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={fetchModels}
-            className="flex items-center gap-2 px-4 py-2 bg-card hover:bg-card rounded-md text-sm font-bold text-muted-foreground transition-all"
-          >
-            <RefreshCw className="w-4 h-4" /> Refresh
-          </button>
-          <button
-            onClick={() => setShowAddForm((s) => !s)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary rounded-md text-sm font-bold text-foreground transition-all"
-          >
-            <Plus className="w-4 h-4" /> Add Model
-          </button>
-        </div>
-      </div>
+      </header>
 
       {showAddForm && (
         <form onSubmit={createModel} className="bg-card rounded-md border border-border p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

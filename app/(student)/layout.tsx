@@ -11,6 +11,8 @@ import StudentSidebarNav from "@/components/student/student-sidebar-nav";
 import SidebarShell from "@/components/shared/sidebar-shell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TriangleAlert } from "lucide-react";
+import HeaderSearchTrigger from "@/components/shared/header-search-trigger";
+import BottomTabBar from "@/components/shared/bottom-tab-bar";
 
 function deriveSapFromEmail(email: string): string | null {
     if (!email.toLowerCase().includes("stu.upes.ac.in")) return null;
@@ -114,11 +116,17 @@ export default async function StudentLayout({
                             Skill<span className='text-primary'>Sync.</span>
                         </span>
                     </div>
+                    <div className='hidden sm:flex flex-1 justify-center px-4 max-w-xs lg:max-w-sm mx-auto'>
+                        <HeaderSearchTrigger role='student' />
+                    </div>
                     <div className='flex items-center gap-2 sm:gap-3'>
                         <span className='hidden md:block text-[13px] font-medium text-muted-foreground'>
                             {user.name}
                             <span className='text-primary/60 font-normal ml-1'>(student)</span>
                         </span>
+                        <div className='sm:hidden'>
+                            <HeaderSearchTrigger role='student' />
+                        </div>
                         <MobileNav userName={user.name!} role='student' />
                         <ThemeToggle />
                         <SignOutButton />
@@ -135,12 +143,13 @@ export default async function StudentLayout({
 
                     {/* Main scrollable content */}
                     <main className='flex-1 overflow-y-auto'>
-                        <div className='px-4 sm:px-6 py-6'>
+                        <div className='px-4 sm:px-6 py-6 md:pb-6 pb-[calc(56px+max(env(safe-area-inset-bottom),8px))]'>
                             {children}
                         </div>
                     </main>
 
                 </div>
+                <BottomTabBar role='student' userName={user.name ?? ''} />
             </div>
         </StudentProvider>
     );

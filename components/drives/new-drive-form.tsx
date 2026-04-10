@@ -189,13 +189,13 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                       Company Name *
                     </Label>
                     <Input id="company" {...register("company")} placeholder="e.g. Google" />
-                    {errors.company && <p className="text-xs text-red-500">{errors.company.message}</p>}
+                    {errors.company && <p className="text-xs text-destructive">{errors.company.message}</p>}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="roleTitle">Role Title *</Label>
                     <Input id="roleTitle" {...register("roleTitle")} placeholder="e.g. SDE Intern" />
-                    {errors.roleTitle && <p className="text-xs text-red-500">{errors.roleTitle.message}</p>}
+                    {errors.roleTitle && <p className="text-xs text-destructive">{errors.roleTitle.message}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -268,7 +268,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
 
             {step === 2 && (
               <div className="space-y-8 animate-in fade-in duration-300">
-                {error && <div className="rounded-md border border-destructive/20 bg-rose-50 p-3 text-sm font-medium text-destructive">{error}</div>}
+                {error && <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm font-medium text-destructive">{error}</div>}
 
                 <div className="space-y-3">
                   <Label htmlFor="rawJd" className="text-base font-semibold">Job Description *</Label>
@@ -277,7 +277,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                     <p className={cn("font-medium", jdValue.length < 200 || jdValue.length > 5000 ? "text-warning" : "text-success")}>
                       {jdValue.length.toLocaleString()} characters
                     </p>
-                    {errors.rawJd && <p className="font-medium text-red-500">{errors.rawJd.message}</p>}
+                    {errors.rawJd && <p className="font-medium text-destructive">{errors.rawJd.message}</p>}
                   </div>
                 </div>
 

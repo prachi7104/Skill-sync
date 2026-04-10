@@ -104,7 +104,7 @@ export default function TabDocs({
       <div>
         <div className='flex items-center justify-between mb-4'>
           <h3 className='text-xs font-semibold text-foreground flex items-center gap-2 uppercase tracking-widest'>
-            <Award className='w-4 h-4 text-yellow-500' /> Certifications
+            <Award className='w-4 h-4 text-warning' /> Certifications
           </h3>
         </div>
 
@@ -141,7 +141,7 @@ export default function TabDocs({
                 </div>
               </div>
             ))}
-            <button type='button' onClick={() => appendCert({ title: '', issuer: '', url: '', dateIssued: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-yellow-500 hover:text-yellow-600 transition-colors'>
+            <button type='button' onClick={() => appendCert({ title: '', issuer: '', url: '', dateIssued: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-warning hover:text-primary-hover transition-colors'>
               <Plus className='w-3 h-3' /> Add Certification
             </button>
           </div>
@@ -152,7 +152,7 @@ export default function TabDocs({
       <div>
         <div className='flex items-center justify-between mb-4'>
           <h3 className='text-xs font-semibold text-foreground flex items-center gap-2 uppercase tracking-widest'>
-            <Code2 className='w-4 h-4 text-cyan-500' /> Coding Profiles
+            <Code2 className='w-4 h-4 text-info' /> Coding Profiles
           </h3>
         </div>
 
@@ -188,7 +188,7 @@ export default function TabDocs({
                 </div>
               </div>
             ))}
-            <button type='button' onClick={() => appendCoding({ platform: '', username: '', url: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-cyan-500 hover:text-cyan-600 transition-colors'>
+            <button type='button' onClick={() => appendCoding({ platform: '', username: '', url: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-info hover:text-primary transition-colors'>
               <Plus className='w-3 h-3' /> Add Profile
             </button>
           </div>
@@ -199,7 +199,7 @@ export default function TabDocs({
       <div>
         <div className='flex items-center justify-between mb-4'>
           <h3 className='text-xs font-semibold text-foreground flex items-center gap-2 uppercase tracking-widest'>
-            <Trophy className='w-4 h-4 text-orange-500' /> Achievements
+            <Trophy className='w-4 h-4 text-warning' /> Achievements
           </h3>
         </div>
 
@@ -232,7 +232,7 @@ export default function TabDocs({
                 <FormField control={form.control} name={`achievements.${idx}.description`} render={({field: f}) => <FormItem><FormControl><textarea className={`${inputClass} min-h-[80px] py-3 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary bg-muted/40 border`} placeholder='Description' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
               </div>
             ))}
-            <button type='button' onClick={() => appendAchievement({ title: '', description: '', date: '', issuer: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-orange-500 hover:text-orange-600 transition-colors'>
+            <button type='button' onClick={() => appendAchievement({ title: '', description: '', date: '', issuer: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-warning hover:text-primary-hover transition-colors'>
               <Plus className='w-3 h-3' /> Add Achievement
             </button>
           </div>
@@ -243,7 +243,7 @@ export default function TabDocs({
       <div>
         <div className='flex items-center justify-between mb-4'>
           <h3 className='text-xs font-semibold text-foreground flex items-center gap-2 uppercase tracking-widest'>
-            <BookOpen className='w-4 h-4 text-sky-500' /> Research Papers
+            <BookOpen className='w-4 h-4 text-info' /> Research Papers
           </h3>
         </div>
 
@@ -283,7 +283,7 @@ export default function TabDocs({
                 <FormField control={form.control} name={`researchPapers.${idx}.abstract`} render={({field: f}) => <FormItem><FormControl><textarea className={`${inputClass} min-h-[80px] py-3 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary border bg-muted/40`} placeholder='Abstract' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
               </div>
             ))}
-            <button type='button' onClick={() => appendResearch({ title: '', abstract: '', url: '', datePublished: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-sky-500 hover:text-sky-600 transition-colors'>
+            <button type='button' onClick={() => appendResearch({ title: '', abstract: '', url: '', datePublished: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-info hover:text-primary transition-colors'>
               <Plus className='w-3 h-3' /> Add Research Paper
             </button>
           </div>

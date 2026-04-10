@@ -10,24 +10,24 @@ const features = [
     iconColor: 'text-primary',
     iconBg: 'bg-primary/10',
     title: 'AMCAT Score Integration',
-    description: 'Published AMCAT sessions are automatically ingested and normalized into student ranking scores. Zero manual entry.',
-    metric: { label: 'Avg. sync time', value: '< 2 min' },
+    description: 'AMCAT sessions flow straight into ranking scores.',
+    metric: { label: 'Sync', value: '< 2 min' },
   },
   {
     icon: Cpu,
-    iconColor: 'text-[#3E53A0]',
-    iconBg: 'bg-[#3E53A0]/10',
+    iconColor: 'text-primary',
+    iconBg: 'bg-primary/10',
     title: 'AI-Native Drive Matching',
-    description: 'The ATS engine parses JDs and student profiles using vector embeddings to surface best-fit candidates automatically.',
-    metric: { label: 'Match accuracy', value: '94%' },
+    description: 'JDs and profiles are matched with vector search.',
+    metric: { label: 'Accuracy', value: '94%' },
   },
   {
     icon: CalendarCheck,
-    iconColor: 'text-success',
-    iconBg: 'bg-success/10',
+    iconColor: 'text-primary',
+    iconBg: 'bg-primary/10',
     title: 'Conflict-Free Scheduling',
-    description: 'Drives, deadlines, and shortlists are cross-checked in real time so no student is double-booked across concurrent drives.',
-    metric: { label: 'Conflicts prevented', value: '100%' },
+    description: 'Drives, deadlines, and shortlists stay conflict-free.',
+    metric: { label: 'Conflicts', value: '0' },
   },
 ];
 
@@ -62,7 +62,7 @@ function FeatureCard({ feature, index }: { feature: typeof features[number]; ind
     </>
   );
 
-  const className = 'group rounded-xl border border-border bg-card p-5 flex flex-col gap-4 hover:border-primary/40 hover:shadow-sm transition-all duration-200';
+  const className = 'group flex h-full flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 dark:border-slate-800 dark:bg-slate-900';
 
   if (prefersReducedMotion) {
     return <div className={className}>{content}</div>;
@@ -83,14 +83,14 @@ function FeatureCard({ feature, index }: { feature: typeof features[number]; ind
 
 export default function LandingFeatureGrid() {
   return (
-    <section className='w-full py-12 px-4 sm:px-6 lg:px-8 bg-background border-b border-border'>
-      <div className='max-w-[1400px] mx-auto'>
-        <div className='mb-8'>
-          <span className='text-[11px] font-bold text-muted-foreground uppercase tracking-[0.15em]'>
-            Platform Capabilities
+    <section id='capabilities' className='w-full border-b border-zinc-200/80 bg-zinc-50 px-4 py-14 sm:px-6 lg:px-8 dark:border-slate-800 dark:bg-slate-950'>
+      <div className='mx-auto max-w-[1200px]'>
+        <div className='mb-9'>
+          <span className='text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-slate-400'>
+            Capabilities
           </span>
-          <h2 className='text-2xl sm:text-3xl font-black text-foreground mt-1.5 tracking-tight'>
-            Built for placement-scale operations
+          <h2 className='mt-1.5 max-w-[18ch] text-2xl font-black tracking-tight text-zinc-900 sm:text-3xl dark:text-slate-100'>
+            Core placement flows
           </h2>
         </div>
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>

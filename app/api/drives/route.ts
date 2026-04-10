@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { drives, jobs, students, rankings, seasons } from "@/lib/db/schema";
 import { hasComponent, requireRole, requireStudentProfile } from "@/lib/auth/helpers";
-import { and, eq } from "drizzle-orm";
+import { and, eq, ilike, or } from "drizzle-orm";
 import { z } from "zod";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { expandBranches } from "@/lib/constants/branches";
@@ -126,8 +126,15 @@ export async function POST(req: NextRequest) {
 
 // ── GET /api/drives — List drives based on role ─────────────────────────────
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
+    const url = new URL(req.url);
+    const search = (url.searchParams.get("search") ?? "").trim();
+    const requestedLimit = Number(url.searchParams.get("limit") ?? "50");
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.max(1, Math.min(Math.floor(requestedLimit), 50))
+      : 50;
+
     // Try faculty/admin first
     let user: Awaited<ReturnType<typeof requireRole>> | null = null;
     let isStudent = false;
@@ -152,8 +159,17 @@ export async function GET(_req: NextRequest) {
       }
 
       const result = await db.query.drives.findMany({
-        where: eq(drives.collegeId, user!.collegeId),
+        where: search
+          ? and(
+              eq(drives.collegeId, user!.collegeId),
+              or(
+                ilike(drives.company, `%${search}%`),
+                ilike(drives.roleTitle, `%${search}%`)
+              )
+            )
+          : eq(drives.collegeId, user!.collegeId),
         orderBy: (drives, { desc }) => [desc(drives.createdAt)],
+        limit,
       });
 
       return NextResponse.json({ drives: result });
@@ -226,7 +242,16 @@ export async function GET(_req: NextRequest) {
       ranking: rankingMap.get(drive.id) ?? null,
     }));
 
-    return NextResponse.json({ drives: drivesWithScore });
+    const filteredDrives = search
+      ? drivesWithScore.filter((drive) => {
+          const company = drive.company?.toLowerCase() ?? "";
+          const roleTitle = drive.roleTitle?.toLowerCase() ?? "";
+          const q = search.toLowerCase();
+          return company.includes(q) || roleTitle.includes(q);
+        })
+      : drivesWithScore;
+
+    return NextResponse.json({ drives: filteredDrives.slice(0, limit) });
   } catch (err: unknown) {
     if (isRedirectError(err)) throw err;
     console.error("[api/drives] GET error:", err);

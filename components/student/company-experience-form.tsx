@@ -121,7 +121,7 @@ export default function CompanyExperienceForm() {
             <div className="flex items-center gap-2">
               {[1, 2, 3, 4, 5].map((value) => (
                 <button key={value} type="button" onClick={() => setDifficulty(value)}>
-                  <Star className={cn("h-6 w-6", value <= difficulty ? "fill-amber-400 text-warning" : "text-muted-foreground")} />
+                  <Star className={cn("h-6 w-6", value <= difficulty ? "fill-warning text-warning" : "text-muted-foreground")} />
                 </button>
               ))}
             </div>

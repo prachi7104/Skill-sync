@@ -7,6 +7,7 @@ import {
   CommandGroup, CommandItem, CommandSeparator
 } from '@/components/ui/command';
 import { Briefcase, Building2, GraduationCap, Search, ArrowRight } from 'lucide-react';
+import { normalizeCompanyName } from '@/lib/content-utils';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -38,10 +39,10 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
         fetch(`/api/drives?search=${encodeURIComponent(q)}&limit=4`),
       ];
       if (role === 'admin' || role === 'faculty') {
-        endpoints.push(fetch(`/api/${role}/students?search=${encodeURIComponent(q)}&limit=4`));
+        endpoints.push(fetch(`/api/${role}/students/search?q=${encodeURIComponent(q)}&page=1&limit=4`));
       }
       if (role === 'student') {
-        endpoints.push(fetch(`/api/student/companies?search=${encodeURIComponent(q)}&limit=4`));
+        endpoints.push(fetch(`/api/student/experiences?mode=suggestions&q=${encodeURIComponent(q)}`));
       }
 
       const responses = await Promise.allSettled(endpoints);
@@ -50,11 +51,11 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
       // Process drives
       if (responses[0].status === 'fulfilled' && responses[0].value.ok) {
         const data = await responses[0].value.json();
-        (data.drives ?? []).forEach((d: { id: string; companyName: string; role: string }) => {
+        (data.drives ?? []).forEach((d: { id: string; company?: string; companyName?: string; roleTitle?: string; role?: string }) => {
           allResults.push({
             id: d.id,
-            label: d.companyName,
-            sublabel: d.role,
+            label: d.companyName ?? d.company ?? 'Drive',
+            sublabel: d.role ?? d.roleTitle,
             href: role === 'admin' ? `/admin/drives` : role === 'faculty' ? `/faculty/drives` : `/student/drives`,
             icon: Briefcase,
             category: 'drive',
@@ -66,12 +67,13 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
       if (responses[1]?.status === 'fulfilled' && responses[1].value.ok) {
         const data = await responses[1].value.json();
         if (role === 'student') {
-          (data.companies ?? []).forEach((c: { id: string; name: string; industry: string }) => {
+          (data.suggestions ?? []).forEach((name: string, index: number) => {
+            const companySlug = normalizeCompanyName(name);
             allResults.push({
-              id: c.id,
-              label: c.name,
-              sublabel: c.industry,
-              href: `/student/companies/${c.id}`,
+              id: `${companySlug}-${index}`,
+              label: name,
+              sublabel: 'Experience wall',
+              href: `/student/companies/${companySlug}`,
               icon: Building2,
               category: 'company',
             });

@@ -459,18 +459,20 @@ export default function AdminAmcatPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">AMCAT Upload System</h1>
-          <p className="text-sm text-muted-foreground mt-1">Upload, review, recalculate and publish session results</p>
+    <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-2">
+            <h1 className="text-3xl font-black tracking-tight text-foreground">AMCAT Upload System</h1>
+            <p className="text-sm leading-6 text-muted-foreground">Upload, review, recalculate and publish session results.</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={fetchSessions} className="gap-2 self-start">
+            <RefreshCw className="h-4 w-4" /> Refresh
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchSessions} className="gap-2">
-          <RefreshCw className="h-4 w-4" /> Refresh
-        </Button>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-1 border-t-4 border-t-primary">
           <CardHeader>
             <CardTitle>Upload Session File</CardTitle>
@@ -596,7 +598,7 @@ export default function AdminAmcatPage() {
                 <Button
                   disabled={!selectedSessionId || selectedSession?.status !== "review"}
                   onClick={() => setPublishOpen(true)}
-                  className="bg-success/10 hover:bg-emerald-700"
+                  className="bg-success/10 hover:bg-primary-hover"
                 >
                   Publish to Students
                 </Button>
@@ -615,7 +617,7 @@ export default function AdminAmcatPage() {
               ) : leaderboardLoading ? (
                 <p className="text-sm text-muted-foreground">Loading leaderboard preview...</p>
               ) : leaderboardError ? (
-                <p className="text-sm text-rose-600">{leaderboardError}</p>
+                <p className="text-sm text-destructive">{leaderboardError}</p>
               ) : leaderboardPreview.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No ranked students found for this session.</p>
               ) : (
@@ -714,17 +716,17 @@ export default function AdminAmcatPage() {
       </div>
 
       {feedbackError && (
-        <div className="mt-3 flex items-center gap-2 rounded-md bg-rose-50 border border-rose-200 px-3 py-2 text-sm text-rose-700">
+        <div className="mt-3 flex items-center gap-2 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" /> {feedbackError}
         </div>
       )}
       {feedbackSuccess && (
-        <div className="mt-3 flex items-center gap-2 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-700">
+        <div className="mt-3 flex items-center gap-2 rounded-md bg-success/10 border border-success/20 px-3 py-2 text-sm text-success">
           <Check className="h-4 w-4 shrink-0" /> {feedbackSuccess}
         </div>
       )}
       {sessionsError && (
-        <div className="mt-3 flex items-center gap-2 rounded-md bg-rose-50 border border-rose-200 px-3 py-2 text-sm text-rose-700">
+        <div className="mt-3 flex items-center gap-2 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" /> {sessionsError}
         </div>
       )}
@@ -904,7 +906,7 @@ export default function AdminAmcatPage() {
             <Button type="button" variant="outline" onClick={() => setPublishOpen(false)}>
               Cancel
             </Button>
-            <Button type="button" className="bg-success/10 hover:bg-emerald-700" onClick={handlePublish} disabled={publishing}>
+            <Button type="button" className="bg-success/10 hover:bg-primary-hover" onClick={handlePublish} disabled={publishing}>
               {publishing ? "Publishing..." : "Publish Results"}
             </Button>
           </DialogFooter>

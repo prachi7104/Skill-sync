@@ -59,8 +59,8 @@ export default function FacultySandboxPage() {
           <CardTitle>Result</CardTitle>
         </CardHeader>
         <CardContent>
-          {error ? <p className="text-sm text-rose-400 mb-3">{error}</p> : null}
-          <pre className="whitespace-pre-wrap text-sm text-slate-300">{result || "No result yet."}</pre>
+          {error ? <p className="text-sm text-destructive mb-3">{error}</p> : null}
+          <pre className="whitespace-pre-wrap text-sm text-foreground">{result || "No result yet."}</pre>
         </CardContent>
       </Card>
     </div>

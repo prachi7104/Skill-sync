@@ -73,7 +73,7 @@ export default function TabProjects({
         {/* Projects View */}
         <div>
           <div className='flex items-center gap-2 mb-4'>
-            <FolderOpen className='w-4 h-4 text-purple-500' />
+            <FolderOpen className='w-4 h-4 text-primary' />
             <h3 className='text-xs font-semibold text-foreground tracking-widest uppercase'>Projects</h3>
           </div>
           {(!profile.projects || profile.projects.length === 0) ? (

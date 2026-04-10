@@ -59,7 +59,7 @@ const ROLE_CONFIG = {
   admin: {
     label: "Admin",
     icon: ShieldCheck,
-    badge: "bg-rose-50 text-rose-700 border-rose-200",
+    badge: "bg-destructive/10 text-destructive border-destructive/20",
   },
   faculty: {
     label: "Faculty",
@@ -69,7 +69,7 @@ const ROLE_CONFIG = {
   student: {
     label: "Student",
     icon: GraduationCap,
-    badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    badge: "bg-success/10 text-success border-success/20",
   },
 };
 
@@ -375,17 +375,18 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
-          <p className="text-sm text-muted-foreground mt-1">{totalCount} total users</p>
+    <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-2">
+            <h1 className="text-3xl font-black tracking-tight text-foreground">User Management</h1>
+            <p className="text-sm leading-6 text-muted-foreground">{totalCount} total users across faculty, students, and admin accounts.</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={fetchUsers} className="gap-2 self-start">
+            <RefreshCw className="h-4 w-4" /> Refresh
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchUsers} className="gap-2">
-          <RefreshCw className="h-4 w-4" /> Refresh
-        </Button>
-      </div>
+      </header>
 
       {/* Create Staff Account Card */}
       <Card className="border-t-4 border-t-primary">
@@ -501,12 +502,12 @@ export default function AdminUsersPage() {
           </form>
 
           {createError && (
-            <div className="mt-3 flex items-center gap-2 rounded-md bg-rose-50 border border-rose-200 px-3 py-2 text-sm text-rose-700">
+            <div className="mt-3 flex items-center gap-2 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" /> {createError}
             </div>
           )}
           {createSuccess && (
-            <div className="mt-3 flex items-center gap-2 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-700">
+            <div className="mt-3 flex items-center gap-2 rounded-md bg-success/10 border border-success/20 px-3 py-2 text-sm text-success">
               <Check className="h-4 w-4 shrink-0" /> {createSuccess}
             </div>
           )}
@@ -624,12 +625,12 @@ export default function AdminUsersPage() {
             </div>
           )}
           {editError && (
-            <div className="flex items-center gap-2 rounded-md bg-rose-50 border border-rose-200 px-3 py-2 text-sm text-rose-700">
+            <div className="flex items-center gap-2 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" /> {editError}
             </div>
           )}
           {editSuccess && (
-            <div className="flex items-center gap-2 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-700">
+            <div className="flex items-center gap-2 rounded-md bg-success/10 border border-success/20 px-3 py-2 text-sm text-success">
               <Check className="h-4 w-4 shrink-0" /> Permissions saved!
             </div>
           )}
@@ -673,7 +674,7 @@ export default function AdminUsersPage() {
       </div>
 
       {fetchError ? (
-        <div className="rounded-md bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
           {fetchError}
         </div>
       ) : loading ? (
@@ -769,7 +770,7 @@ export default function AdminUsersPage() {
                                   </Button>
                                   {rs?.success && <Check className="w-4 h-4 text-success" />}
                                 </form>
-                                {rs?.error && <p className="text-[10px] text-rose-600">{rs.error}</p>}
+                                {rs?.error && <p className="text-[10px] text-destructive">{rs.error}</p>}
                               </div>
                             )}
 

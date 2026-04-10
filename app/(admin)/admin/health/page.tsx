@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type HealthData = {
   totalStudents: number;
@@ -90,11 +91,11 @@ function Metric({ label, value, status }: { label: string; value: string; status
   };
 
   return (
-    <div className="rounded-md border border-border bg-card p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm dark:bg-slate-950/60">
+      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
       <div className="mt-2 flex items-center gap-2">
         <p className="text-2xl font-black text-foreground">{value}</p>
-        {status && <span className={`rounded px-2 py-0.5 text-[10px] font-bold border ${statusClass[status]}`}>{status.toUpperCase()}</span>}
+        {status && <span className={cn("rounded px-2 py-0.5 text-[10px] font-bold border", statusClass[status])}>{status.toUpperCase()}</span>}
       </div>
     </div>
   );
@@ -207,10 +208,15 @@ export default function AdminHealthPage() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-6xl p-8">
-        <h1 className="text-3xl font-black text-foreground">System Health</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
-        <div className="mt-6 rounded-md border border-border bg-card p-12 text-center text-muted-foreground">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
+        <div className="space-y-1">
+          <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
+            Operations monitoring
+          </div>
+          <h1 className="text-3xl font-black text-foreground">System Health</h1>
+          <p className="text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground shadow-sm dark:bg-slate-950/60">
           Loading health data...
         </div>
       </div>
@@ -219,10 +225,15 @@ export default function AdminHealthPage() {
 
   if (!health) {
     return (
-      <div className="w-full max-w-6xl p-8">
-        <h1 className="text-3xl font-black text-foreground">System Health</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
-        <div className="mt-6 rounded-md border border-destructive/20 bg-destructive/10 p-6 text-destructive">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
+        <div className="space-y-1">
+          <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
+            Operations monitoring
+          </div>
+          <h1 className="text-3xl font-black text-foreground">System Health</h1>
+          <p className="text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
+        </div>
+        <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-6 text-destructive">
           Health data unavailable
         </div>
       </div>
@@ -230,16 +241,19 @@ export default function AdminHealthPage() {
   }
 
   return (
-    <div className="w-full max-w-6xl space-y-6 p-8 animate-in fade-in duration-300">
-      <div className="flex items-center justify-between gap-4">
-        <div>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 animate-in fade-in duration-300 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1">
+          <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
+            Operations monitoring
+          </div>
           <h1 className="text-3xl font-black text-foreground">System Health</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
+          <p className="text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="inline-flex items-center gap-2 rounded-lg bg-card px-3 py-2 text-xs font-bold text-foreground hover:bg-card disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-xs font-bold text-foreground shadow-sm transition-colors hover:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-950/60"
         >
           {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
           Refresh
@@ -247,20 +261,20 @@ export default function AdminHealthPage() {
       </div>
 
       {error && (
-        <div className="rounded-md border border-warning/20 bg-warning/10 p-4 text-sm text-amber-200">
+        <div className="rounded-2xl border border-warning/20 bg-warning/10 p-4 text-sm text-warning-foreground">
           {error}
         </div>
       )}
 
       {health.degraded ? (
-        <div className="rounded-md border border-warning/20 bg-warning/10 p-4 text-sm text-amber-100">
+        <div className="rounded-2xl border border-warning/20 bg-warning/10 p-4 text-sm text-warning-foreground">
           Partial health data: some checks failed within timeout
           {health.failedChecks && health.failedChecks.length > 0 ? ` (${health.failedChecks.join(", ")})` : ""}.
         </div>
       ) : null}
 
       <section>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted-foreground">Core Metrics</h2>
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-[0.24em] text-muted-foreground">Core metrics</h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4 xl:grid-cols-5">
           <Metric label="Total Students" value={displayCount(health.totalStudents)} />
           <Metric label="Students Onboarded" value={displayCount(health.studentsOnboarded)} />
@@ -275,8 +289,8 @@ export default function AdminHealthPage() {
         </div>
       </section>
 
-      <section className="rounded-md border border-border bg-card p-5">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Job Queue</h2>
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm dark:bg-slate-950/60">
+        <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-muted-foreground">Job queue</h2>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
           <Metric label="Pending Total" value={displayCount(pendingTotal)} status={pendingTotal > 0 ? "warning" : "ok"} />
           <Metric label="Failed (24h)" value={displayCount(failed24h)} status={failed24h > 0 ? "error" : "ok"} />
@@ -296,15 +310,15 @@ export default function AdminHealthPage() {
         )}
       </section>
 
-      <section className="rounded-md border border-border bg-card p-5">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Manual Triggers</h2>
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm dark:bg-slate-950/60">
+        <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-muted-foreground">Manual triggers</h2>
         <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
           {(["resumes", "embeddings", "jd-enhancement", "rankings", "cleanup"] as const).map((type) => (
             <button
               key={type}
               onClick={() => handleTrigger(type)}
               disabled={!!triggering[type]}
-              className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-foreground hover:bg-primary disabled:opacity-60"
+              className="rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {triggering[type] ? "Running..." : type}
             </button>

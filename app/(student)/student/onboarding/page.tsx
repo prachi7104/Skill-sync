@@ -764,9 +764,9 @@ export default function OnboardingPage() {
       {/* Autofill highlight animation */}
       <style>{`
         @keyframes autofill-glow {
-          0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-          50% { box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
-          100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+          0% { box-shadow: 0 0 0 0 rgba(90, 119, 223, 0.4); }
+          50% { box-shadow: 0 0 0 3px rgba(90, 119, 223, 0.2); }
+          100% { box-shadow: 0 0 0 0 rgba(90, 119, 223, 0); }
         }
         .autofill-flash { animation: autofill-glow 1.5s ease-out; }
       `}</style>
@@ -837,7 +837,7 @@ export default function OnboardingPage() {
                       done
                         ? "bg-success/10 text-foreground"
                         : active
-                          ? "bg-primary text-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-slate-950"
+                          ? "bg-primary text-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-background"
                           : unlocked
                             ? "bg-card text-muted-foreground"
                             : "bg-muted/50 text-muted-foreground",

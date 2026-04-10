@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type TouchEvent } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -74,16 +74,47 @@ export default function MobileNav({
     if (forceOpen === undefined) setInternalOpen(true);
   };
 
+  const [edgeStartX, setEdgeStartX] = useState<number | null>(null);
+
+  const handleEdgeSwipeStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (open || forceOpen !== undefined) return;
+    setEdgeStartX(event.touches[0]?.clientX ?? null);
+  };
+
+  const handleEdgeSwipeMove = (event: TouchEvent<HTMLDivElement>) => {
+    if (edgeStartX === null || open || forceOpen !== undefined) return;
+    const distance = (event.touches[0]?.clientX ?? edgeStartX) - edgeStartX;
+    if (distance > 60) {
+      setInternalOpen(true);
+      setEdgeStartX(null);
+    }
+  };
+
+  const handleEdgeSwipeEnd = () => {
+    setEdgeStartX(null);
+  };
+
   return (
     <>
+      {/* Left edge swipe target — touch only, opens drawer in uncontrolled mode */}
+      <div
+        className='md:hidden fixed left-0 top-0 bottom-0 w-4 z-30 touch-pan-y'
+        onTouchStart={handleEdgeSwipeStart}
+        onTouchMove={handleEdgeSwipeMove}
+        onTouchEnd={handleEdgeSwipeEnd}
+        aria-hidden='true'
+      />
+
       {/* Hamburger — mobile only */}
-      <button
-        onClick={handleOpen}
-        className='md:hidden flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150'
-        aria-label='Open navigation menu'
-      >
-        <Menu size={20} />
-      </button>
+      {forceOpen === undefined && (
+        <button
+          onClick={handleOpen}
+          className='md:hidden flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150'
+          aria-label='Open navigation menu'
+        >
+          <Menu size={20} />
+        </button>
+      )}
 
       <AnimatePresence>
         {open && (
@@ -107,7 +138,13 @@ export default function MobileNav({
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-              className='fixed inset-y-0 left-0 w-[280px] bg-card border-r border-border z-50 flex flex-col md:hidden'
+              drag='x'
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={{ left: 0.3, right: 0 }}
+              onDragEnd={(_, info) => {
+                if (info.offset.x < -80) handleClose();
+              }}
+              className='fixed inset-y-0 left-0 w-[280px] bg-card border-r border-border z-50 flex flex-col md:hidden touch-pan-y'
             >
               {/* Drawer header */}
               <div className='h-14 shrink-0 flex items-center justify-between px-5 border-b border-border'>

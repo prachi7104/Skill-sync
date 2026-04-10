@@ -111,9 +111,9 @@ export default function QuickSandbox() {
 
     const REC_STYLE: Record<string, string> = {
         "STRONG MATCH": "bg-success/10 text-success border-success/20",
-        "GOOD MATCH": "bg-blue-500/15 text-blue-400 border-blue-500/20",
+      "GOOD MATCH": "bg-primary/15 text-primary border-primary/20",
         "MODERATE MATCH": "bg-warning/10 text-warning border-warning/20",
-        "WEAK MATCH": "bg-orange-500/15 text-orange-400 border-orange-500/20",
+      "WEAK MATCH": "bg-warning/15 text-warning border-warning/20",
         "REJECT": "bg-destructive/10 text-destructive border-destructive/20",
         "Ineligible": "bg-destructive/10 text-destructive border-destructive/20",
     };
@@ -442,8 +442,8 @@ function FeedbackCard({ item }: { item: CardFeedback["feedback"][0] }) {
   const typeColors: Record<string, { badge: string; label: string }> = {
     add_to_resume: { badge: "bg-warning/10 border-warning/20 text-warning", label: "Critical gap" },
     learn_skill: { badge: "bg-destructive/10 border-destructive/20 text-destructive", label: "Learn skill" },
-    quantify: { badge: "bg-blue-500/10 border-blue-500/20 text-blue-300", label: "Strengthen evidence" },
-    highlight: { badge: "bg-purple-500/10 border-purple-500/20 text-purple-300", label: "Highlight deeper" },
+    quantify: { badge: "bg-info/10 border-info/20 text-info", label: "Strengthen evidence" },
+    highlight: { badge: "bg-primary/10 border-primary/20 text-primary", label: "Highlight deeper" },
     format: { badge: "bg-card border-border text-muted-foreground", label: "Format fix" },
   };
 

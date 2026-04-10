@@ -47,7 +47,7 @@ function RadarChart({ breakdown, label }: { breakdown: ScoreBreakdown; label: st
         return (
             <g key={d.key}>
                 <line x1={cx} y1={cy} x2={endX} y2={endY} stroke="currentColor" strokeWidth="0.5" className="text-muted-foreground" />
-                <text x={labelX} y={labelY} textAnchor="middle" dominantBaseline="middle" className="fill-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                <text x={labelX} y={labelY} textAnchor="middle" dominantBaseline="middle" className="fill-muted-foreground text-[10px] font-bold uppercase tracking-widest">
                     {d.label}
                 </text>
             </g>
@@ -60,8 +60,8 @@ function RadarChart({ breakdown, label }: { breakdown: ScoreBreakdown; label: st
             <svg viewBox="0 0 240 240" className="w-full max-w-[240px]">
                 {gridCircles}
                 {axes}
-                <polygon points={polygon} fill="rgba(99, 102, 241, 0.2)" stroke="#818cf8" strokeWidth="2" className="transition-all duration-1000" />
-                {points.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="4" fill="#818cf8" className="shadow-lg" />)}
+                <polygon points={polygon} fill="rgba(90, 119, 223, 0.2)" stroke="hsl(var(--primary))" strokeWidth="2" className="transition-all duration-1000" />
+                {points.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="4" fill="hsl(var(--primary))" className="shadow-lg" />)}
             </svg>
         </div>
     );
@@ -226,7 +226,7 @@ export default function DetailedSandboxClient() {
                 <div className="lg:col-span-7 flex flex-col h-full min-h-[500px]">
                     {!result ? (
                         <div className="flex-1 bg-card border-2 border-dashed border-border rounded-md flex flex-col items-center justify-center text-center p-10 relative overflow-hidden group">
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-purple-500/5 opacity-50" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-info/5 opacity-50" />
                             <div className="p-5 bg-card  rounded-full shadow-sm border border-border mb-6 z-10">
                                 <div className="p-4 bg-card rounded-full">
                                     <Target className="w-8 h-8 text-primary/50" />
@@ -285,7 +285,7 @@ export default function DetailedSandboxClient() {
                     {/* RADAR CHARTS */}
                     <div className="bg-card rounded-md border border-border p-8">
                         <div className="flex items-center gap-3 mb-8">
-                            <div className="p-2.5 bg-blue-500/10 rounded-md"><Shield className="w-5 h-5 text-blue-400" /></div>
+                            <div className="p-2.5 bg-info/10 rounded-md"><Shield className="w-5 h-5 text-info" /></div>
                             <h2 className="font-bold text-foreground text-xl">Dimensional Breakdown</h2>
                         </div>
                         
@@ -342,7 +342,7 @@ export default function DetailedSandboxClient() {
 
                     {/* MISSED OPPORTUNITIES */}
                     {result.missedOpportunities.length > 0 && (
-                        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-md border border-warning/20 p-8">
+                        <div className="bg-gradient-to-r from-warning/10 to-primary/10 rounded-md border border-warning/20 p-8">
                             <div className="flex items-center gap-3 mb-2">
                                 <AlertTriangle className="w-6 h-6 text-warning" />
                                 <h2 className="font-bold text-warning text-xl">Missed Opportunities</h2>
@@ -377,7 +377,7 @@ function FeedbackItem({ feedback }: { feedback: ActionableFeedback }) {
     const isMed = feedback.priority === "Medium";
     
     return (
-        <div className={`flex items-start gap-4 p-4 rounded-md border-l-4 ${isHigh ? 'border-l-rose-500 bg-destructive/10 border-y-white/5 border-r-white/5' : isMed ? 'border-l-amber-500 bg-warning/10 border-y-white/5 border-r-white/5' : 'border-l-slate-600 bg-muted/20 border-y-white/5 border-r-white/5'}`}>
+        <div className={`flex items-start gap-4 p-4 rounded-md border-l-4 ${isHigh ? 'border-l-destructive bg-destructive/10 border-y-border/40 border-r-border/40' : isMed ? 'border-l-warning bg-warning/10 border-y-border/40 border-r-border/40' : 'border-l-muted-foreground bg-muted/20 border-y-border/40 border-r-border/40'}`}>
             <div className="flex-1">
                 <p className="text-sm font-medium text-muted-foreground">{feedback.message}</p>
             </div>

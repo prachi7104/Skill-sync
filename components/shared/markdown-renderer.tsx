@@ -12,7 +12,7 @@ export default function MarkdownRenderer({
   className?: string;
 }) {
   return (
-    <div className={cn("prose prose-sm prose-invert max-w-none prose-p:leading-6 prose-headings:text-white prose-strong:text-slate-100 prose-li:text-slate-300", className)}>
+    <div className={cn("prose prose-sm prose-invert max-w-none prose-p:leading-6 prose-headings:text-foreground prose-strong:text-foreground prose-li:text-muted-foreground", className)}>
       <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>
     </div>
   );

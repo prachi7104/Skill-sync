@@ -5,13 +5,14 @@ import { students, drives, jobs, users } from "@/lib/db/schema";
 import { eq, and, gte, isNotNull, isNull, sql, desc } from "drizzle-orm";
 import { format, formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 export default async function AdminMasterDashboard() {
   const user = await requireRole(["admin"]);
   if (!user.collegeId) {
     return (
       <div className="max-w-4xl mx-auto p-8 md:p-10">
-        <div className="rounded-md border border-warning/20 bg-warning/10 p-6 text-amber-200">
+        <div className="rounded-md border border-warning/20 bg-warning/10 p-6 text-warning-foreground">
           Admin account is not linked to a college. Dashboard metrics are unavailable.
         </div>
       </div>
@@ -89,15 +90,33 @@ export default async function AdminMasterDashboard() {
     .where(and(eq(users.role, "faculty"), eq(users.collegeId, user.collegeId)));
 
   return (
-    <div className="max-w-7xl mx-auto p-8 md:p-10 pb-32 space-y-10">
+    <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 pb-32 sm:px-6 lg:px-8">
       
       {/* Header */}
-      <div>
-        <h1 className="text-4xl font-black text-foreground tracking-tight">Master Dashboard</h1>
-        <p className="text-muted-foreground mt-2">
-          Complete placement platform overview · Last updated {format(now, "MMM d, h:mm a")}
-        </p>
-      </div>
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
+              <Sparkles className="h-3.5 w-3.5" /> Admin control plane
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-4xl font-black tracking-tight text-foreground">Master Dashboard</h1>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Complete placement platform overview. Last updated {format(now, "MMM d, h:mm a")}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="rounded-2xl border border-border bg-background px-4 py-3 shadow-sm dark:bg-slate-950/70">
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">College scope</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{totalStudents[0]?.c ?? 0} students</p>
+            </div>
+            <Link href="/admin/drives" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+              View drives <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </header>
 
       {/* Top Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -116,11 +135,14 @@ export default async function AdminMasterDashboard() {
       </div>
 
       {/* Two-column: AI Pipeline + Student Readiness */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         
         {/* AI Pipeline Health */}
-        <div className="bg-card rounded-md border border-border p-6 space-y-4">
-          <h2 className="font-bold text-foreground">AI Pipeline Health</h2>
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">AI pipeline health</h2>
+            <Link href="/admin/health" className="text-xs font-bold text-primary hover:underline">Full system health</Link>
+          </div>
           {[
             { label: "Pending jobs", value: pendingJobs[0]?.c ?? 0, status: (pendingJobs[0]?.c ?? 0) > 10 ? "warn" : "ok" },
             { label: "Failed (24h)", value: failedJobs[0]?.c ?? 0, status: (failedJobs[0]?.c ?? 0) > 0 ? "error" : "ok" },
@@ -135,14 +157,14 @@ export default async function AdminMasterDashboard() {
               }`}>{row.value}</span>
             </div>
           ))}
-          <Link href="/admin/health" className="text-xs text-primary hover:text-primary font-bold">
-            Full system health →
-          </Link>
-        </div>
+        </section>
 
         {/* Student Readiness */}
-        <div className="bg-card rounded-md border border-border p-6 space-y-4">
-          <h2 className="font-bold text-foreground">Student Readiness</h2>
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">Student readiness</h2>
+            <Link href="/admin/users" className="text-xs font-bold text-primary hover:underline">View students</Link>
+          </div>
           {[
             {
               label: "Embedding coverage",
@@ -174,23 +196,18 @@ export default async function AdminMasterDashboard() {
               </div>
             </div>
           ))}
-          <Link href="/admin/users" className="text-xs text-primary hover:text-primary font-bold">
-            View all students →
-          </Link>
-        </div>
+        </section>
       </div>
 
       {/* Recent Drives */}
-      <div className="bg-card rounded-md border border-border p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="font-bold text-foreground">Recent Drives</h2>
-          <Link href="/admin/drives" className="text-xs text-primary hover:text-primary font-bold">
-            View all →
-          </Link>
+      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">Recent drives</h2>
+          <Link href="/admin/drives" className="text-xs font-bold text-primary hover:underline">View all</Link>
         </div>
         <div className="space-y-3">
           {recentDrives.map((drive) => (
-            <div key={drive.id} className="flex items-center justify-between p-4 rounded-md bg-muted/20 border border-border">
+            <div key={drive.id} className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background p-4 dark:bg-slate-950/60">
               <div>
                 <p className="font-bold text-foreground text-sm">{drive.company} — {drive.roleTitle}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -207,21 +224,20 @@ export default async function AdminMasterDashboard() {
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {[
           { href: "/admin/users", label: "Manage Faculty", desc: "Add or update staff accounts", emoji: "👥" },
           { href: "/admin/drives", label: "All Drives", desc: "Monitor every placement drive", emoji: "🎯" },
           { href: "/admin/health", label: "System Health", desc: "Job queue and AI pipeline status", emoji: "⚡" },
         ].map((action) => (
           <Link key={action.href} href={action.href}
-            className="bg-card hover:bg-card border border-border hover:border-primary/30 rounded-md p-6 transition-all group"
+            className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition-colors hover:border-primary/30 hover:bg-muted/30 dark:bg-slate-950/60"
           >
-            <div className="text-2xl mb-3">{action.emoji}</div>
-            <p className="font-bold text-foreground group-hover:text-primary transition-colors">{action.label}</p>
-            <p className="text-xs text-muted-foreground mt-1">{action.desc}</p>
+            <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{action.label}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{action.desc}</p>
           </Link>
         ))}
       </div>

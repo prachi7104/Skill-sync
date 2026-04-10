@@ -42,11 +42,13 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-8 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Admin Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your account and security settings.</p>
-      </div>
+    <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+        <div className="max-w-2xl space-y-2">
+          <h1 className="text-3xl font-black tracking-tight text-foreground">Admin Settings</h1>
+          <p className="text-sm leading-6 text-muted-foreground">Manage your account and security settings.</p>
+        </div>
+      </header>
 
       <section className="bg-card rounded-md border border-border p-6 space-y-3">
         <h2 className="font-bold text-foreground">Account Info</h2>
