@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, BookOpen, ChevronDown, ChevronUp, Filter, Search, Star, XCircle } from "lucide-react";
+import { toast } from "sonner";
+import { patchJSON } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 interface RankingData {
@@ -98,30 +100,26 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
     async function toggleShortlist(studentId: string, current: boolean | null) {
         const next = current === true ? null : true;
         setLocalShortlisted((previous) => ({ ...previous, [studentId]: next }));
-        try {
-            const res = await fetch(`/api/drives/${driveId}/rankings/${studentId}/shortlist`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ shortlisted: next }),
-            });
-            if (!res.ok) throw new Error();
-        } catch {
+        const { error } = await patchJSON(
+          `/api/drives/${driveId}/rankings/${studentId}/shortlist`,
+          { shortlisted: next }
+        );
+        if (error) {
             setLocalShortlisted((previous) => ({ ...previous, [studentId]: current }));
+            toast.error(error);
         }
     }
 
     async function passCandidate(studentId: string, current: boolean | null) {
         const next = current === false ? null : false;
         setLocalShortlisted((previous) => ({ ...previous, [studentId]: next }));
-        try {
-            const res = await fetch(`/api/drives/${driveId}/rankings/${studentId}/shortlist`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ shortlisted: next }),
-            });
-            if (!res.ok) throw new Error();
-        } catch {
+        const { error } = await patchJSON(
+          `/api/drives/${driveId}/rankings/${studentId}/shortlist`,
+          { shortlisted: next }
+        );
+        if (error) {
             setLocalShortlisted((previous) => ({ ...previous, [studentId]: current }));
+            toast.error(error);
         }
     }
 

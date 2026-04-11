@@ -23,13 +23,40 @@ export async function POST(req: NextRequest) {
   const file = formData.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
 
+  // File size limit: 5 MB
+  const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return NextResponse.json(
+      { error: "File too large. Maximum allowed size is 5 MB." },
+      { status: 413 }
+    );
+  }
+
   const text = await file.text();
   const lines = text.split(/\r?\n/).filter((line) => line.trim());
   if (lines.length < 2) return NextResponse.json({ error: "Empty CSV" }, { status: 400 });
 
+  // Row count limit: 5000 students per import
+  const MAX_ROWS = 5000;
+  if (lines.length - 1 > MAX_ROWS) {
+    return NextResponse.json(
+      { error: `Too many rows. Maximum ${MAX_ROWS} students per import. Split your file and import in batches.` },
+      { status: 400 }
+    );
+  }
+
   const headers = lines[0]
     .split(",")
     .map((header) => header.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_"));
+
+  // Column count limit: prevents malicious wide CSVs from exhausting memory
+  const MAX_COLUMNS = 30;
+  if (headers.length > MAX_COLUMNS) {
+    return NextResponse.json(
+      { error: `CSV has too many columns (${headers.length}). Maximum is ${MAX_COLUMNS}.` },
+      { status: 400 }
+    );
+  }
 
   const getCol = (row: string[], name: string) => {
     const idx = headers.indexOf(name);

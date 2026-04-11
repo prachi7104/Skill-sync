@@ -3,9 +3,9 @@ import { requireStudentProfile } from "@/lib/auth/helpers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
-import { students, users, jobs } from "@/lib/db/schema";
+import { jobs, students, users } from "@/lib/db/schema";
 import { isRedirectError } from "next/dist/client/components/redirect";
-import { eq, and, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { studentProfileSchema } from "@/lib/validations/student-profile";
 import { computeCompleteness } from "@/lib/profile/completeness";
 import { processEmbeddingJobs } from "@/lib/workers/generate-embedding";
@@ -197,21 +197,47 @@ export async function PATCH(req: NextRequest) {
         const shouldQueueEmbedding = hasSignalChange || isFirstTimeComplete;
 
         if (shouldQueueEmbedding && completeness >= 50) {
-            const existing = await db.query.jobs.findFirst({
-                where: and(
-                    eq(jobs.type, "generate_embedding"),
-                    eq(jobs.status, "pending"),
-                    sql`${jobs.payload}->>'targetId' = ${user.id}`,
-                ),
-                columns: { id: true },
-            });
+            let jobQueued = false;
 
-            if (!existing) {
-                await db.insert(jobs).values({
-                    type: "generate_embedding",
-                    payload: { targetType: "student", targetId: user.id },
-                    priority: 6,
+            // Use atomic SQL when available (production DB), but keep a fallback
+            // for test environments that mock only query/insert APIs.
+            if (typeof (db as unknown as { execute?: unknown }).execute === "function") {
+                const [inserted] = await db.execute(sql`
+                    INSERT INTO jobs (type, status, payload, priority)
+                    SELECT 'generate_embedding', 'pending',
+                           ${JSON.stringify({ targetType: "student", targetId: user.id })}::jsonb,
+                           6
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM jobs
+                        WHERE type = 'generate_embedding'
+                          AND status = 'pending'
+                          AND payload->>'targetId' = ${user.id}
+                    )
+                    RETURNING id
+                `) as unknown as Array<{ id: string }>;
+                jobQueued = Boolean(inserted?.id);
+            } else {
+                const existingPending = await db.query.jobs.findFirst({
+                    where: and(
+                        eq(jobs.type, "generate_embedding"),
+                        eq(jobs.status, "pending"),
+                        sql`${jobs.payload}->>'targetId' = ${user.id}`,
+                    ),
+                    columns: { id: true },
                 });
+
+                if (!existingPending) {
+                    await db.insert(jobs).values({
+                        type: "generate_embedding",
+                        status: "pending",
+                        payload: { targetType: "student", targetId: user.id },
+                        priority: 6,
+                    });
+                    jobQueued = true;
+                }
+            }
+
+            if (jobQueued) {
 
                 logger.info("[Profile PATCH] Queued embedding job", {
                     userId: user.id,

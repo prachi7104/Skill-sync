@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useEffect, useMemo, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";

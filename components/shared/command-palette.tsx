@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/command';
 import { Briefcase, Building2, GraduationCap, Search, ArrowRight } from 'lucide-react';
 import { normalizeCompanyName } from '@/lib/content-utils';
+import { safeFetch } from '@/lib/api';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -35,23 +36,22 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
     if (q.trim().length < 2) { setResults([]); return; }
     setLoading(true);
     try {
-      const endpoints: Promise<Response>[] = [
-        fetch(`/api/drives?search=${encodeURIComponent(q)}&limit=4`),
-      ];
-      if (role === 'admin' || role === 'faculty') {
-        endpoints.push(fetch(`/api/${role}/students/search?q=${encodeURIComponent(q)}&page=1&limit=4`));
-      }
-      if (role === 'student') {
-        endpoints.push(fetch(`/api/student/experiences?mode=suggestions&q=${encodeURIComponent(q)}`));
-      }
+      const endpoint1 = safeFetch<{ drives?: Array<{ id: string; company?: string; companyName?: string; roleTitle?: string; role?: string }> }>(
+        `/api/drives?search=${encodeURIComponent(q)}&limit=4`
+      );
+      const endpoint2 = (role === 'admin' || role === 'faculty') 
+        ? safeFetch<{ students?: Array<{ id: string; name: string; sapId: string }> }>(`/api/${role}/students/search?q=${encodeURIComponent(q)}&page=1&limit=4`)
+        : Promise.resolve({ data: null, error: null });
+      const endpoint3 = role === 'student'
+        ? safeFetch<{ suggestions?: string[] }>(`/api/student/experiences?mode=suggestions&q=${encodeURIComponent(q)}`)
+        : Promise.resolve({ data: null, error: null });
 
-      const responses = await Promise.allSettled(endpoints);
+      const [drivesRes, studentsRes, companiesRes] = await Promise.all([endpoint1, endpoint2, endpoint3]);
       const allResults: SearchResult[] = [];
 
       // Process drives
-      if (responses[0].status === 'fulfilled' && responses[0].value.ok) {
-        const data = await responses[0].value.json();
-        (data.drives ?? []).forEach((d: { id: string; company?: string; companyName?: string; roleTitle?: string; role?: string }) => {
+      if (drivesRes.data?.drives) {
+        drivesRes.data.drives.forEach((d) => {
           allResults.push({
             id: d.id,
             label: d.companyName ?? d.company ?? 'Drive',
@@ -64,10 +64,8 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
       }
 
       // Process students or companies
-      if (responses[1]?.status === 'fulfilled' && responses[1].value.ok) {
-        const data = await responses[1].value.json();
-        if (role === 'student') {
-          (data.suggestions ?? []).forEach((name: string, index: number) => {
+      if (role === 'student' && companiesRes.data?.suggestions) {
+        companiesRes.data.suggestions.forEach((name: string, index: number) => {
             const companySlug = normalizeCompanyName(name);
             allResults.push({
               id: `${companySlug}-${index}`,
@@ -78,8 +76,8 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
               category: 'company',
             });
           });
-        } else {
-          (data.students ?? []).forEach((s: { id: string; name: string; sapId: string }) => {
+      } else if ((role === 'admin' || role === 'faculty') && studentsRes.data?.students) {
+          studentsRes.data.students.forEach((s) => {
             allResults.push({
               id: s.id,
               label: s.name,
@@ -89,7 +87,6 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
               category: 'student',
             });
           });
-        }
       }
 
       setResults(allResults);

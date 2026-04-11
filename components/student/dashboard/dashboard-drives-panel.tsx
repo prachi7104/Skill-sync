@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Briefcase, ArrowUpRight, Clock } from 'lucide-react';
+import { safeFetch } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface Drive {
   id: string;
@@ -16,10 +18,19 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/student/drives?active=true&studentId=${studentId}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { setDrives(data?.drives ?? []); setLoading(false); })
-      .catch(() => { setDrives([]); setLoading(false); });
+    async function loadDrives() {
+      const { data, error } = await safeFetch<{ drives: Drive[] }>(
+        `/api/student/drives?active=true&studentId=${studentId}`
+      );
+      if (error) {
+        toast.error(error);
+        setDrives([]);
+      } else {
+        setDrives(data?.drives ?? []);
+      }
+      setLoading(false);
+    }
+    loadDrives();
   }, [studentId]);
 
   return (

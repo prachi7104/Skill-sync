@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { safeFetch, postJSON } from "@/lib/api";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,13 +71,14 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
 
   useEffect(() => {
     async function loadSeasons() {
-      try {
-        const res = await fetch("/api/seasons");
-        if (!res.ok) return;
-        const data = await res.json();
-        setSeasons(data.seasons ?? []);
-      } catch {
+      const { data, error } = await safeFetch<{ seasons: Array<{ id: string; name: string }> }>(
+        "/api/seasons"
+      );
+      if (error) {
+        toast.error(error);
         setSeasons([]);
+      } else {
+        setSeasons(data?.seasons ?? []);
       }
     }
 
@@ -93,6 +96,8 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
 
     const payload = {
       ...values,
+      // Faculty selects a date in IST (Indian Standard Time, +05:30).
+      // Force end-of-day IST, then convert to UTC for storage.
       deadline: values.deadline ? new Date(`${values.deadline}T23:59:59+05:30`).toISOString() : null,
       seasonId: values.seasonId || null,
       minCgpa: values.minCgpa === 0 || !values.minCgpa ? null : values.minCgpa,
@@ -101,25 +106,19 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
       eligibleCategories: values.eligibleCategories?.length ? values.eligibleCategories : null,
     };
 
-    try {
-      const res = await fetch("/api/drives", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+    const { data, error } = await postJSON<{ drive?: { id?: string } }>(
+      "/api/drives",
+      payload,
+      { onError: (msg) => toast.error(msg) }
+    );
 
-      if (res.ok) {
-        const data = (await res.json()) as { drive?: { id?: string } };
-        onSuccess?.(data.drive?.id ?? "");
-      } else {
-        const d = await res.json();
-        setError(d.message ?? "Failed to create drive");
-      }
-    } catch {
-      setError("An unexpected error occurred");
-    } finally {
-      setIsSubmitting(false);
+    if (error) {
+      setError(error);
+    } else {
+      onSuccess?.(data?.drive?.id ?? "");
+      toast.success("Drive created successfully");
     }
+    setIsSubmitting(false);
   }
 
   const toggleBranch = (val: string) => {

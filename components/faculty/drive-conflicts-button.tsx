@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { AlertTriangle } from "lucide-react";
+import { safeFetch } from "@/lib/api";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,9 +29,15 @@ export function DriveConflictsButton() {
   async function loadConflicts() {
     setLoading(true);
     setOpen(true);
-    const res = await fetch("/api/faculty/drives/conflicts");
-    const json = await res.json();
-    setConflicts(json.conflicts ?? []);
+    const { data, error } = await safeFetch<{ conflicts: Conflict[] }>(
+      "/api/faculty/drives/conflicts"
+    );
+    if (error) {
+      toast.error(error);
+      setConflicts([]);
+    } else {
+      setConflicts(data?.conflicts ?? []);
+    }
     setLoading(false);
   }
 

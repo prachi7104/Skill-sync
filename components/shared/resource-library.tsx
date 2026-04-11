@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCategoryLabel, SOFTSKILLS_RESOURCE_CATEGORIES, TECHNICAL_RESOURCE_CATEGORIES } from "@/lib/phase8-10";
 import { stripMarkdown } from "@/lib/content-utils";
+import { safeFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_MAP = {
@@ -124,26 +125,39 @@ export default function ResourceLibrary() {
       if (search) params.set("q", search);
       if (statusFilter !== "all") params.set("status", statusFilter);
 
-      const res = await fetch(`/api/resources?${params.toString()}`);
-      const json = await res.json();
+      const { data, error } = await safeFetch<{
+        resources: ResourceRow[];
+        canCreate: boolean;
+        viewerRole: "student" | "faculty" | "admin" | null;
+        viewerId: string | null;
+      }>(`/api/resources?${params.toString()}`);
 
-      setResources(json.resources ?? []);
-      setCanCreate(Boolean(json.canCreate));
-      setViewerRole((json.viewerRole ?? null) as "student" | "faculty" | "admin" | null);
-      setViewerId((json.viewerId as string | null) ?? null);
+      if (error) {
+        toast.error(error);
+        setResources([]);
+      } else {
+        setResources(data?.resources ?? []);
+        setCanCreate(Boolean(data?.canCreate));
+        setViewerRole(data?.viewerRole ?? null);
+        setViewerId(data?.viewerId ?? null);
+      }
     } finally {
       if (showLoading) setLoading(false);
     }
   }
 
   useEffect(() => {
-    refreshCurrentList(true).catch(() => setLoading(false));
+    refreshCurrentList(true);
   }, [category, search, section, statusFilter]);
 
   async function openResource(resource: ResourceRow) {
     setSelected(resource);
-    await fetch(`/api/resources/${resource.id}/view`, { method: "POST" }).catch(() => undefined);
-    setResources((current) => current.map((item) => item.id === resource.id ? { ...item, view_count: item.view_count + 1 } : item));
+    await safeFetch(`/api/resources/${resource.id}/view`, { method: "POST" });
+    setResources((current) =>
+      current.map((item) =>
+        item.id === resource.id ? { ...item, view_count: item.view_count + 1 } : item
+      )
+    );
   }
 
   async function createResource() {
@@ -156,10 +170,6 @@ export default function ResourceLibrary() {
       body.append("body", form.body);
       body.append("bodyFormat", "markdown");
       body.append("tags", form.tags);
-      body.append("companyName", form.companyName);
-      body.append("status", form.status);
-      if (form.file) body.append("file", form.file);
-
       const res = await fetch("/api/resources", { method: "POST", body });
       const json = await res.json();
 

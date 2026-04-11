@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { toast } from "sonner";
+import { safeFetch, postJSON } from "@/lib/api";
 
 import MarkdownRenderer from "@/components/shared/markdown-renderer";
 import { Button } from "@/components/ui/button";
@@ -31,13 +32,17 @@ export default function CompanyExperienceForm() {
         setSuggestions([]);
         return;
       }
-      const res = await fetch(`/api/student/experiences?mode=suggestions&q=${encodeURIComponent(companyName)}`);
-      if (!res.ok) return;
-      const json = await res.json();
-      setSuggestions(json.suggestions ?? []);
+      const { data, error } = await safeFetch<{ suggestions: string[] }>(
+        `/api/student/experiences?mode=suggestions&q=${encodeURIComponent(companyName)}`
+      );
+      if (error) {
+        setSuggestions([]);
+      } else {
+        setSuggestions(data?.suggestions ?? []);
+      }
     }
 
-    loadSuggestions().catch(() => undefined);
+    void loadSuggestions();
   }, [companyName]);
 
   async function onSubmit() {
@@ -47,20 +52,18 @@ export default function CompanyExperienceForm() {
     }
 
     setSubmitting(true);
-    const res = await fetch("/api/student/experiences", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ companyName, roleTitle, driveType, outcome, interviewProcess, tips, difficulty, wouldRecommend, showName }),
-    });
-    const json = await res.json();
+    const { error } = await postJSON(
+      "/api/student/experiences",
+      { companyName, roleTitle, driveType, outcome, interviewProcess, tips, difficulty, wouldRecommend, showName },
+      { onError: (msg) => toast.error(msg) }
+    );
     setSubmitting(false);
 
-    if (!res.ok) {
-      toast.error(json.error ?? "Submission failed");
+    if (error) {
       return;
     }
 
-    toast.success(json.message ?? "Experience submitted");
+    toast.success("Experience submitted successfully");
     setCompanyName("");
     setRoleTitle("");
     setInterviewProcess("");

@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 import { format } from "date-fns";
 import { Briefcase, TriangleAlert } from "lucide-react";
 import DrivesGrid, { type SerializedDrive, type SerializedRanking } from "@/components/student/drives/drives-grid";
-import { expandBranches } from "@/lib/constants/branches";
+import { filterEligibleDrives } from "@/lib/business/eligibility";
 
 export default async function StudentDrivesPage() {
   const { user, profile } = await requireStudentProfile();
@@ -18,28 +18,11 @@ export default async function StudentDrivesPage() {
     orderBy: (drives, { desc }) => [desc(drives.createdAt)],
   });
 
-  const eligible = activeDrives.filter((drive) => {
-    if (drive.minCgpa !== null && drive.minCgpa !== undefined) {
-      if (profile.cgpa === null || profile.cgpa === undefined) return false;
-      if (profile.cgpa < drive.minCgpa) return false;
-    }
-    const branches = drive.eligibleBranches as string[] | null;
-    if (branches && branches.length > 0) {
-      if (!profile.branch) return false;
-      const expanded = expandBranches(branches).map((b) => b.toLowerCase().trim());
-      if (!expanded.includes(profile.branch.toLowerCase().trim())) return false;
-    }
-    const batchYears = drive.eligibleBatchYears as number[] | null;
-    if (batchYears && batchYears.length > 0) {
-      if (profile.batchYear === null || profile.batchYear === undefined) return false;
-      if (!batchYears.includes(profile.batchYear)) return false;
-    }
-    const categories = drive.eligibleCategories as string[] | null;
-    if (categories && categories.length > 0) {
-      if (!profile.category) return false;
-      if (!categories.includes(profile.category)) return false;
-    }
-    return true;
+  const eligible = filterEligibleDrives(activeDrives, {
+    cgpa: profile.cgpa,
+    branch: profile.branch,
+    batchYear: profile.batchYear,
+    category: profile.category,
   });
 
   const hasIncompleteProfile = !profile.branch || !profile.cgpa || !profile.batchYear;

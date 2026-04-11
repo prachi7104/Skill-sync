@@ -6,6 +6,7 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { validatePasswordStrength } from "@/lib/auth/password";
+import { redisRateLimit } from "@/lib/redis";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -17,6 +18,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: "Students authenticate via Microsoft. No password to change." },
       { status: 400 },
+    );
+  }
+
+  // Rate limit: 5 attempts per 15 minutes per user
+  const { allowed } = await redisRateLimit(
+    `change-password:${session.user.id}`,
+    5,
+    900
+  );
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many password change attempts. Please wait 15 minutes before trying again." },
+      { status: 429 }
     );
   }
 

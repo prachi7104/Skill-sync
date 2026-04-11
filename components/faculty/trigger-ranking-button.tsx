@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { safeFetch } from "@/lib/api";
+import { toast } from "sonner";
 
 interface TriggerRankingButtonProps {
     driveId: string;
@@ -31,7 +33,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
     }, [initialStatus]);
 
     useEffect(() => {
-        checkEmbeddings().catch(() => undefined);
+        void checkEmbeddings();
     }, [driveId]);
 
     async function checkEmbeddings() {
@@ -40,33 +42,30 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
             withEmbedding: prev?.withEmbedding ?? 0,
             loading: true,
         }));
-        const res = await fetch(`/api/drives/${driveId}/embedding-check`);
-        if (res.ok) {
-            const data = await res.json();
-            setEmbeddingCheck({
-                total: data.total ?? 0,
-                withEmbedding: data.withEmbedding ?? 0,
-                loading: false,
-            });
-        } else {
+        const { data, error } = await safeFetch<{total: number; withEmbedding: number}>(
+          `/api/drives/${driveId}/embedding-check`
+        );
+        if (error) {
             setEmbeddingCheck((prev) =>
                 prev ? { ...prev, loading: false } : { total: 0, withEmbedding: 0, loading: false },
             );
+        } else {
+            setEmbeddingCheck({
+                total: data?.total ?? 0,
+                withEmbedding: data?.withEmbedding ?? 0,
+                loading: false,
+            });
         }
     }
 
     async function queueMissingEmbeddings() {
-        try {
-            const res = await fetch(`/api/drives/${driveId}/queue-embeddings`, {
-                method: "POST",
-            });
-            if (!res.ok) {
-                throw new Error("Failed to queue missing embeddings");
-            }
+        const { error } = await safeFetch(
+          `/api/drives/${driveId}/queue-embeddings`,
+          { method: "POST" }
+        );
+        if (!error) {
             await checkEmbeddings();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-            setErrorMessage(err.message || "Unable to queue embeddings");
+            toast.success("Embeddings queued");
         }
     }
 

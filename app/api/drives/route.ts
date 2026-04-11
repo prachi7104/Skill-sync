@@ -5,7 +5,7 @@ import { hasComponent, requireRole, requireStudentProfile } from "@/lib/auth/hel
 import { and, eq, ilike, or } from "drizzle-orm";
 import { z } from "zod";
 import { isRedirectError } from "next/dist/client/components/redirect";
-import { expandBranches } from "@/lib/constants/branches";
+import { filterEligibleDrives } from "@/lib/business/eligibility";
 
 // ── Zod Schema for drive creation ───────────────────────────────────────────
 
@@ -194,37 +194,12 @@ export async function GET(req: NextRequest) {
       orderBy: (drives, { desc }) => [desc(drives.createdAt)],
     });
 
-    // Filter by eligibility in application code (simpler than dynamic SQL for JSONB)
-    const eligible = activeDrives.filter((drive) => {
-      // CGPA check
-      if (drive.minCgpa !== null && drive.minCgpa !== undefined) {
-        if (profile.cgpa === null || profile.cgpa === undefined) return false;
-        if (profile.cgpa < drive.minCgpa) return false;
-      }
-
-      // Branch check
-      const branches = drive.eligibleBranches as string[] | null;
-      if (branches && branches.length > 0) {
-        if (!profile.branch) return false;
-        const normalizedBranches = expandBranches(branches).map((b) => b.toLowerCase().trim());
-        if (!normalizedBranches.includes(profile.branch.toLowerCase().trim())) return false;
-      }
-
-      // Batch year check
-      const batchYears = drive.eligibleBatchYears as number[] | null;
-      if (batchYears && batchYears.length > 0) {
-        if (profile.batchYear === null || profile.batchYear === undefined) return false;
-        if (!batchYears.includes(profile.batchYear)) return false;
-      }
-
-      // Category check
-      const categories = drive.eligibleCategories as string[] | null;
-      if (categories && categories.length > 0) {
-        if (!profile.category) return false;
-        if (!categories.includes(profile.category)) return false;
-      }
-
-      return true;
+    // Filter by eligibility using shared business logic (lib/business/eligibility.ts)
+    const eligible = filterEligibleDrives(activeDrives, {
+      cgpa: profile.cgpa,
+      branch: profile.branch,
+      batchYear: profile.batchYear,
+      category: profile.category,
     });
 
     // Fetch any existing rankings for this student

@@ -53,7 +53,7 @@ export const authOptions: NextAuthOptions = {
         const password = credentials.password;
 
         const user = await db.query.users.findFirst({
-          where: eq(users.email, email),
+          where: eq(users.email, email.toLowerCase()),
           columns: {
             id: true, email: true, name: true,
             role: true, passwordHash: true,
@@ -213,8 +213,9 @@ export const authOptions: NextAuthOptions = {
 
     async jwt({ token, user }) {
       if (user) {
+        const normalizedEmail = user.email!.toLowerCase().trim();
         const dbUser = await db.query.users.findFirst({
-          where: eq(users.email, user.email!),
+          where: eq(users.email, normalizedEmail),
           columns: { id: true, role: true, name: true, email: true, collegeId: true },
         });
         if (dbUser) {
