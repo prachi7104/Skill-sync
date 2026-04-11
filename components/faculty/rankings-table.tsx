@@ -126,7 +126,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
         <div className="space-y-6">
             {/* ── Histogram ────────────────────────────────────────────────────────── */}
             {maxCount > 0 && (
-                <Card className="border-dashed border-border bg-card shadow-sm dark:bg-slate-950/60">
+                <Card className="border-dashed border-border bg-card shadow-sm">
                     <CardContent className="pt-6">
                         <div className="flex items-end justify-around h-24 gap-2 px-4">
                             {distribution.map((d, i) => {
@@ -159,19 +159,19 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
             )}
 
             {/* ── Filter Row ───────────────────────────────────────────────────────── */}
-            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm dark:bg-slate-950/60">
+            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm">
                 <div className="relative flex-1 min-w-[200px]">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search by name..."
                         value={nameSearch}
                         onChange={(e) => setNameSearch(e.target.value)}
-                        className="h-9 border-border bg-background pl-9 text-sm dark:bg-slate-950/60"
+                        className="h-9 border-border bg-background pl-9 text-sm"
                     />
                 </div>
 
                 <Select value={branchFilter} onValueChange={setBranchFilter}>
-                    <SelectTrigger className="h-9 w-[180px] border-border bg-background text-sm dark:bg-slate-950/60">
+                    <SelectTrigger className="h-9 w-[180px] border-border bg-background text-sm">
                         <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                         <SelectValue placeholder="All Branches" />
                     </SelectTrigger>
@@ -199,7 +199,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                     onClick={() => setShortlistedOnly(!shortlistedOnly)}
                     className={cn(
                         "h-9 gap-2 font-semibold transition-all",
-                        shortlistedOnly ? "bg-primary hover:bg-primary" : "text-muted-foreground"
+                        shortlistedOnly ? "bg-primary hover:bg-primary/90" : "text-muted-foreground"
                     )}
                 >
                     <Star className={cn("h-4 w-4", shortlistedOnly && "fill-current")} />
@@ -221,7 +221,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
             </div>
 
             {/* ── Table ────────────────────────────────────────────────────────────── */}
-            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm dark:bg-slate-950/60">
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
                 <Table>
                     <TableHeader className="bg-muted/30">
                         <TableRow className="hover:bg-transparent border-b">
@@ -425,7 +425,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                                             "h-9 px-4 font-bold shadow-sm transition-all",
                                                                             isShortlisted
                                                                                 ? "bg-warning/10 text-warning border-warning/20 hover:bg-warning/10"
-                                                                                : "bg-primary hover:bg-primary"
+                                                                                : "bg-primary hover:bg-primary/90"
                                                                         )}
                                                                         variant={isShortlisted ? "outline" : "default"}
                                                                     >

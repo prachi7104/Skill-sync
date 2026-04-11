@@ -89,7 +89,7 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
   const tooltip = isCollapsed && showTooltip && (
     <div
       role='tooltip'
-      className='absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-md bg-sidebar-surface border border-sidebar-border text-sidebar-fg text-[12px] font-semibold whitespace-nowrap shadow-md pointer-events-none'
+      className='absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 z-[201] px-2.5 py-1 rounded-md bg-sidebar-surface border border-sidebar-border text-sidebar-fg text-[12px] font-semibold whitespace-nowrap shadow-md pointer-events-none'
     >
       {label}
       {isBlocked && <span className='ml-1.5 text-sidebar-fg-muted font-normal'>(locked)</span>}

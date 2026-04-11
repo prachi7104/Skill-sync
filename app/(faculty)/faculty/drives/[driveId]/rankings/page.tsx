@@ -76,7 +76,7 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
           <h1 className="text-3xl font-black tracking-tight text-foreground">Rankings</h1>
           <p className="text-sm text-muted-foreground">{drive.company} • {drive.roleTitle}</p>
         </div>
-        <Card className="border-warning/20 bg-card shadow-sm dark:bg-slate-950/60">
+        <Card className="border-warning/20 bg-card shadow-sm">
           <CardContent className="space-y-4 py-12 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-warning/10">
               <TrendingUp className="h-6 w-6 text-warning" />
@@ -152,7 +152,7 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 animate-in fade-in duration-500 sm:px-6 lg:px-8">
       {/* ── Drive Header Card ──────────────────────────────────────────────── */}
-      <Card className="overflow-hidden border-border bg-card shadow-sm dark:bg-slate-950/60">
+      <Card className="overflow-hidden border-border bg-card shadow-sm">
         <div className="border-b border-border bg-card p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
             <div className={cn(
@@ -189,7 +189,7 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button asChild variant="outline" size="sm" className="h-10 text-xs font-bold gap-2 border-border hover:bg-card hover:text-primary transition-all shadow-sm">
+            <Button asChild variant="outline" size="sm" className="h-10 text-xs font-bold gap-2 border-border hover:bg-muted hover:text-primary transition-all shadow-sm">
               <Link href={`/api/drives/${driveId}/export`} download>
                 <Download className="h-3.5 w-3.5" /> Export All CSV
               </Link>
@@ -253,7 +253,7 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
         </Card>
       )}
 
-      <Card className="border-border bg-card shadow-sm dark:bg-slate-950/60">
+      <Card className="border-border bg-card shadow-sm">
         <CardContent className="pt-6 space-y-6">
           <section className="space-y-3">
             <div className="flex items-center justify-between">
@@ -284,10 +284,10 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black uppercase tracking-wider text-muted-foreground">Ineligible</h3>
-              <Badge className="border border-border bg-background text-foreground dark:bg-slate-950/60">{ineligibleRankings.length}</Badge>
+              <Badge className="border border-border bg-background text-foreground">{ineligibleRankings.length}</Badge>
             </div>
             {ineligibleRankings.slice(0, 10).map((r) => (
-              <div key={r.studentId} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm dark:bg-slate-950/60">
+              <div key={r.studentId} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm">
                 <span className="text-muted-foreground">Ineligible • {r.studentName}</span>
                 <Badge variant="outline" className="border-border text-muted-foreground max-w-[60%] truncate">
                   {r.ineligibilityReason ?? "Does not meet criteria"}

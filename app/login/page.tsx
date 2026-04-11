@@ -100,6 +100,7 @@ function LoginForm() {
           onStaffPasswordChange={(v) => setStaffPassword(v)}
           onTogglePassword={() => setShowPassword(v => !v)}
           onStaffSubmit={handleStaffLogin}
+          onDismissError={() => setErrorMessage(null)}
         />
         <LoginBrandPanel />
       </div>

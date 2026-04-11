@@ -93,7 +93,7 @@ export default async function AdminMasterDashboard() {
     <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 pb-32 sm:px-6 lg:px-8">
       
       {/* Header */}
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl space-y-3">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
@@ -109,7 +109,7 @@ export default async function AdminMasterDashboard() {
           <div className="flex items-center gap-3">
             <div className="rounded-2xl border border-border bg-background px-4 py-3 shadow-sm dark:bg-slate-950/70">
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">College scope</p>
-              <p className="mt-1 text-sm font-semibold text-foreground">{totalStudents[0]?.c ?? 0} students</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{totalStudents[0]?.c ?? 0} {Number(totalStudents[0]?.c ?? 0) === 1 ? "student" : "students"}</p>
             </div>
             <Link href="/admin/drives" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
               View drives <ArrowRight className="h-4 w-4" />
@@ -138,7 +138,7 @@ export default async function AdminMasterDashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         
         {/* AI Pipeline Health */}
-        <section className="rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">AI pipeline health</h2>
             <Link href="/admin/health" className="text-xs font-bold text-primary hover:underline">Full system health</Link>
@@ -160,7 +160,7 @@ export default async function AdminMasterDashboard() {
         </section>
 
         {/* Student Readiness */}
-        <section className="rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">Student readiness</h2>
             <Link href="/admin/users" className="text-xs font-bold text-primary hover:underline">View students</Link>
@@ -200,14 +200,14 @@ export default async function AdminMasterDashboard() {
       </div>
 
       {/* Recent Drives */}
-      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
+      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">Recent drives</h2>
           <Link href="/admin/drives" className="text-xs font-bold text-primary hover:underline">View all</Link>
         </div>
         <div className="space-y-3">
           {recentDrives.map((drive) => (
-            <div key={drive.id} className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background p-4 dark:bg-slate-950/60">
+            <div key={drive.id} className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background p-4">
               <div>
                 <p className="font-bold text-foreground text-sm">{drive.company} — {drive.roleTitle}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -234,7 +234,7 @@ export default async function AdminMasterDashboard() {
           { href: "/admin/health", label: "System Health", desc: "Job queue and AI pipeline status", emoji: "⚡" },
         ].map((action) => (
           <Link key={action.href} href={action.href}
-            className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition-colors hover:border-primary/30 hover:bg-muted/30 dark:bg-slate-950/60"
+            className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition-colors hover:border-primary/30 hover:bg-muted/30"
           >
             <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{action.label}</p>
             <p className="mt-1 text-xs text-muted-foreground">{action.desc}</p>

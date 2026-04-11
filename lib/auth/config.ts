@@ -242,8 +242,8 @@ export const authOptions: NextAuthOptions = {
         } catch {}
       }
 
-      // Re-fetch role + collegeId once per hour
-      const ROLE_REFRESH_MS = 60 * 60 * 1000;
+      // Re-fetch role + collegeId every 5 minutes to reduce stale-token window
+      const ROLE_REFRESH_MS = 5 * 60 * 1000;
       const lastChecked = (token.roleCheckedAt as number | undefined) ?? 0;
       if (token.id && Date.now() - lastChecked > ROLE_REFRESH_MS) {
         try {

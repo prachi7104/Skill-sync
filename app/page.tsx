@@ -2,6 +2,10 @@ import { getCachedSession } from "@/lib/auth/session-cache";
 import { redirect } from "next/navigation";
 import LandingHeader from "@/components/landing/landing-header";
 import LandingHero from "@/components/landing/landing-hero";
+import LandingProofStrip from "@/components/landing/landing-proof-strip";
+import LandingFeatureGrid from "@/components/landing/landing-feature-grid";
+import LandingHowItWorks from "@/components/landing/landing-how-it-works";
+import LandingFaq from "@/components/landing/landing-faq";
 import LandingFinalCta from "@/components/landing/landing-final-cta";
 import LandingFooterStrip from "@/components/landing/landing-footer-strip";
 
@@ -31,6 +35,10 @@ export default async function Home() {
       <LandingHeader />  {/* sticky header — client component */}
       <main className='flex flex-1 flex-col'>
         <LandingHero />         {/* hero — client component for motion */}
+        <LandingProofStrip />   {/* stats + company logos */}
+        <LandingFeatureGrid />  {/* core capabilities */}
+        <LandingHowItWorks />   {/* 3-step workflow */}
+        <LandingFaq />          {/* FAQ accordion */}
         <LandingFinalCta />
         <LandingFooterStrip />  {/* footer row — server component */}
       </main>

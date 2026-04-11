@@ -132,7 +132,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (state === "ranked") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 border-border bg-background text-muted-foreground dark:bg-slate-950/60">
+            <Button variant="outline" size="sm" disabled className="gap-2 border-border bg-background text-muted-foreground">
                 Ranked <CheckCircle2 className="h-4 w-4" />
             </Button>
         );
@@ -167,7 +167,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
                 onClick={handleTrigger}
                 className={cn(
                     "gap-2 min-w-[140px]",
-                    state === "idle" && "bg-primary hover:bg-primary"
+                    state === "idle" && "bg-primary hover:bg-primary/90"
                 )}
             >
                 {state === "loading" ? (

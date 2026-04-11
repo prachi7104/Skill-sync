@@ -83,60 +83,95 @@ export default function AIModelsPage() {
 
   async function createModel(e: FormEvent) {
     e.preventDefault();
-    await fetch("/api/admin/ai-models", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...newModel,
-        task_types: newModel.task_types
-          .split(",")
-          .map((task) => task.trim())
-          .filter(Boolean),
-        rpm_limit: Number(newModel.rpm_limit),
-        rpd_limit: newModel.rpd_limit ? Number(newModel.rpd_limit) : null,
-        tpm_limit: newModel.tpm_limit ? Number(newModel.tpm_limit) : null,
-        priority: Number(newModel.priority),
-      }),
-    });
-
-    setShowAddForm(false);
-    setNewModel({
-      model_key: "",
-      display_name: "",
-      provider: "google",
-      task_types: "enhance_jd,parse_resume_full",
-      rpm_limit: "15",
-      rpd_limit: "1500",
-      tpm_limit: "",
-      priority: "99",
-      notes: "",
-    });
-    fetchModels();
+    try {
+      const res = await fetch("/api/admin/ai-models", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...newModel,
+          task_types: newModel.task_types
+            .split(",")
+            .map((task) => task.trim())
+            .filter(Boolean),
+          rpm_limit: Number(newModel.rpm_limit),
+          rpd_limit: newModel.rpd_limit ? Number(newModel.rpd_limit) : null,
+          tpm_limit: newModel.tpm_limit ? Number(newModel.tpm_limit) : null,
+          priority: Number(newModel.priority),
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error ?? `Failed to create model (${res.status})`);
+        return;
+      }
+      setShowAddForm(false);
+      setNewModel({
+        model_key: "",
+        display_name: "",
+        provider: "google",
+        task_types: "enhance_jd,parse_resume_full",
+        rpm_limit: "15",
+        rpd_limit: "1500",
+        tpm_limit: "",
+        priority: "99",
+        notes: "",
+      });
+      fetchModels();
+    } catch {
+      alert("Network error — could not create model");
+    }
   }
 
   async function updateModel(model: AIModel, patch: Record<string, unknown>) {
     setSavingModelId(model.id);
-    await fetch(`/api/admin/ai-models/${model.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
-    setSavingModelId(null);
-    fetchModels();
+    try {
+      const res = await fetch(`/api/admin/ai-models/${model.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error ?? `Failed to update model (${res.status})`);
+      }
+    } catch {
+      alert("Network error — could not update model");
+    } finally {
+      setSavingModelId(null);
+      fetchModels();
+    }
   }
 
   async function pingModel(model: AIModel) {
     setPinging(model.id);
-    await fetch(`/api/admin/ai-models/${model.id}/ping`, { method: "POST" });
-    setPinging(null);
-    fetchModels();
+    try {
+      const res = await fetch(`/api/admin/ai-models/${model.id}/ping`, { method: "POST" });
+      if (!res.ok) {
+        alert(`Ping failed (${res.status})`);
+      }
+    } catch {
+      alert("Network error — could not ping model");
+    } finally {
+      setPinging(null);
+      fetchModels();
+    }
   }
 
   async function deleteModel(model: AIModel) {
+    if (!confirm(`Delete model "${model.display_name}"? This cannot be undone.`)) return;
     setDeletingModelId(model.id);
-    await fetch(`/api/admin/ai-models/${model.id}`, { method: "DELETE" });
-    setDeletingModelId(null);
-    fetchModels();
+    try {
+      const res = await fetch(`/api/admin/ai-models/${model.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error ?? `Failed to delete model (${res.status})`);
+      }
+    } catch {
+      alert("Network error — could not delete model");
+    } finally {
+      setDeletingModelId(null);
+      fetchModels();
+    }
   }
 
   const activeCount = models.filter((m) => m.is_active && !m.is_deprecated).length;
@@ -145,7 +180,7 @@ export default function AIModelsPage() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl space-y-2">
             <h1 className="text-3xl font-black tracking-tight text-foreground">AI Model Registry</h1>
@@ -231,10 +266,10 @@ export default function AIModelsPage() {
             className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
           />
           <div className="md:col-span-2 lg:col-span-3 flex justify-end gap-2 pt-1">
-            <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 rounded-md text-sm font-bold text-muted-foreground bg-card hover:bg-card">
+            <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 rounded-md text-sm font-bold text-muted-foreground bg-card hover:bg-muted">
               Cancel
             </button>
-            <button type="submit" className="px-4 py-2 rounded-md text-sm font-bold text-foreground bg-primary hover:bg-primary">
+            <button type="submit" className="px-4 py-2 rounded-md text-sm font-bold text-foreground bg-primary hover:bg-primary/90">
               Save Model
             </button>
           </div>
@@ -277,7 +312,7 @@ export default function AIModelsPage() {
               return (
                 <tr
                   key={model.id}
-                  className={`hover:bg-card transition-colors ${model.is_deprecated ? "opacity-50" : ""}`}
+                  className={`hover:bg-muted transition-colors ${model.is_deprecated ? "opacity-50" : ""}`}
                 >
                   <td className="px-4 py-3">
                     <div
@@ -357,7 +392,7 @@ export default function AIModelsPage() {
                       <button
                         onClick={() => pingModel(model)}
                         disabled={pinging === model.id}
-                        className="text-[10px] font-bold px-2 py-1 bg-card hover:bg-card rounded text-muted-foreground transition-all disabled:opacity-50"
+                        className="text-[10px] font-bold px-2 py-1 bg-card hover:bg-muted rounded text-muted-foreground transition-all disabled:opacity-50"
                       >
                         {pinging === model.id ? <Activity className="w-3 h-3 animate-pulse" /> : "Ping"}
                       </button>
@@ -366,8 +401,8 @@ export default function AIModelsPage() {
                         disabled={savingModelId === model.id}
                         className={`text-[10px] font-bold px-2 py-1 rounded transition-all ${
                           model.is_active
-                            ? "bg-success/10 text-success hover:bg-success/10"
-                            : "bg-card text-muted-foreground hover:bg-card"
+                            ? "bg-success/10 text-success hover:bg-success/20"
+                            : "bg-card text-muted-foreground hover:bg-muted"
                         }`}
                       >
                         {model.is_active ? "Active" : "Inactive"}
@@ -377,8 +412,8 @@ export default function AIModelsPage() {
                         disabled={savingModelId === model.id}
                         className={`text-[10px] font-bold px-2 py-1 rounded transition-all ${
                           model.is_deprecated
-                            ? "bg-destructive/10 text-destructive hover:bg-destructive/10"
-                            : "bg-card text-muted-foreground hover:bg-card"
+                            ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                            : "bg-card text-muted-foreground hover:bg-muted"
                         }`}
                       >
                         {model.is_deprecated ? "Deprecated" : "Deprecate"}
@@ -386,7 +421,7 @@ export default function AIModelsPage() {
                       <button
                         onClick={() => deleteModel(model)}
                         disabled={deletingModelId === model.id}
-                        className="text-[10px] font-bold px-2 py-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/10 transition-all disabled:opacity-50"
+                        className="text-[10px] font-bold px-2 py-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all disabled:opacity-50"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>

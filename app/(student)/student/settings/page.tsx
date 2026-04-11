@@ -22,20 +22,20 @@ export default function StudentSettingsPage() {
         <p className="text-sm text-muted-foreground">Manage your account information.</p>
       </div>
 
-      <section className="space-y-2 rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
+      <section className="space-y-2 rounded-2xl border border-border bg-card p-6 shadow-sm">
         <h2 className="font-bold text-foreground">Account Info</h2>
         <p className="text-sm text-muted-foreground">Email: {session?.user?.email || "-"}</p>
         <p className="text-sm text-primary capitalize">Role: {session?.user?.role || "-"}</p>
       </section>
 
-      <form onSubmit={handleSave} className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
+      <form onSubmit={handleSave} className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
         <h2 className="font-bold text-foreground">Display Name</h2>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter your display name"
-          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/30 dark:bg-slate-950/60"
+          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/30"
           required
         />
 

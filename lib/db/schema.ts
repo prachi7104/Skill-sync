@@ -124,7 +124,7 @@ export const colleges = pgTable("colleges", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
   shortCode: varchar("short_code", { length: 20 }).notNull().unique(),
-  studentDomain: varchar("student_domain", { length: 100 }).notNull(),
+  studentDomain: varchar("student_domain", { length: 100 }).notNull().unique(),
   staffDomain: varchar("staff_domain", { length: 100 }),
   city: varchar("city", { length: 100 }),
   country: varchar("country", { length: 50 }).notNull().default("India"),

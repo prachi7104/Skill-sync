@@ -28,7 +28,7 @@ const config = {
       },
       fontFamily: {
         sans: ["var(--font-inter)", "sans-serif"],
-        heading: ["var(--font-inter)", "sans-serif"], // alias to Inter; Jakarta remains loaded but unused
+        heading: ["var(--font-inter)", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

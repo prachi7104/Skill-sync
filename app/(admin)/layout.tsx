@@ -54,7 +54,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </header>
 
       {/* ── Body ── */}
-      <div className='flex flex-1 overflow-hidden' style={{ height: 'calc(100vh - 56px)' }}>
+      <div className='flex h-[calc(100dvh-56px)] flex-1 overflow-hidden'>
 
         <SidebarShell label='Admin'>
           <AdminNav />

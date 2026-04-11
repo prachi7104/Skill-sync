@@ -291,7 +291,7 @@ export default function ResourceLibrary() {
           <h1 className="text-3xl font-black tracking-tight text-foreground">Resource Library</h1>
           <p className="mt-1 text-sm text-muted-foreground">Browse technical and soft-skills content curated for your college.</p>
         </div>
-        {canCreate ? <Button onClick={() => setCreateOpen(true)} className="gap-2 bg-primary hover:bg-primary"><Plus className="h-4 w-4" /> New Resource</Button> : null}
+        {canCreate ? <Button onClick={() => setCreateOpen(true)} className="gap-2 bg-primary hover:bg-primary/90"><Plus className="h-4 w-4" /> New Resource</Button> : null}
       </div>
 
       <Tabs value={section} onValueChange={(value) => setSection(value as "technical" | "softskills")}>
@@ -314,7 +314,7 @@ export default function ResourceLibrary() {
                         "rounded-md px-3 py-2 text-xs font-semibold",
                         statusFilter === statusKey
                           ? "bg-primary text-foreground"
-                          : "bg-muted/20 text-muted-foreground hover:bg-card"
+                          : "bg-muted/20 text-muted-foreground hover:bg-muted"
                       )}
                     >
                       {statusKey === "all" ? "All" : statusKey.charAt(0).toUpperCase() + statusKey.slice(1)}
@@ -328,13 +328,13 @@ export default function ResourceLibrary() {
                   onClick={() => setCategory("all")}
                   className={cn(
                     "w-full rounded-md px-4 py-3 text-left text-sm font-semibold",
-                    category === "all" ? "bg-primary text-foreground" : "bg-muted/20 text-muted-foreground hover:bg-card"
+                    category === "all" ? "bg-primary text-foreground" : "bg-muted/20 text-muted-foreground hover:bg-muted"
                   )}
                 >
                   All Categories
                 </button>
                 {sideCategories.map((item) => (
-                  <button key={item} type="button" onClick={() => setCategory(item)} className={cn("w-full rounded-md px-4 py-3 text-left text-sm font-semibold", category === item ? "bg-primary text-foreground" : "bg-muted/20 text-muted-foreground hover:bg-card")}>{formatCategoryLabel(item)}</button>
+                  <button key={item} type="button" onClick={() => setCategory(item)} className={cn("w-full rounded-md px-4 py-3 text-left text-sm font-semibold", category === item ? "bg-primary text-foreground" : "bg-muted/20 text-muted-foreground hover:bg-muted")}>{formatCategoryLabel(item)}</button>
                 ))}
               </div>
             </aside>
@@ -364,16 +364,16 @@ export default function ResourceLibrary() {
                           <Download className="h-3 w-3" /> PDF
                         </a>
                       ) : null}
-                      <Button variant="outline" className="border-border bg-muted/20 text-foreground hover:bg-card" onClick={() => openResource(resource)}>
+                      <Button variant="outline" className="border-border bg-muted/20 text-foreground hover:bg-muted" onClick={() => openResource(resource)}>
                         Open
                       </Button>
                       {canManageResource(resource) ? (
-                        <Button variant="outline" className="gap-1 border-border bg-muted/20 text-foreground hover:bg-card" onClick={() => startEdit(resource)}>
+                        <Button variant="outline" className="gap-1 border-border bg-muted/20 text-foreground hover:bg-muted" onClick={() => startEdit(resource)}>
                           <Pencil className="h-3 w-3" /> Edit
                         </Button>
                       ) : null}
                       {canManageResource(resource) ? (
-                        <Button variant="outline" className="gap-1 border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/10" onClick={() => deleteResource(resource)}>
+                        <Button variant="outline" className="gap-1 border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20" onClick={() => deleteResource(resource)}>
                           <Trash2 className="h-3 w-3" /> Delete
                         </Button>
                       ) : null}
@@ -471,7 +471,7 @@ export default function ResourceLibrary() {
           </div>
           <DialogFooter>
             <Button variant="outline" className="border-border bg-card text-foreground" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={createResource} disabled={submitting} className="bg-primary hover:bg-primary">{submitting ? "Creating..." : "Create Resource"}</Button>
+            <Button onClick={createResource} disabled={submitting} className="bg-primary hover:bg-primary/90">{submitting ? "Creating..." : "Create Resource"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -580,7 +580,7 @@ export default function ResourceLibrary() {
           </div>
           <DialogFooter>
             <Button variant="outline" className="border-border bg-card text-foreground" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={saveEdit} disabled={savingEdit} className="bg-primary hover:bg-primary">{savingEdit ? "Saving..." : "Save Changes"}</Button>
+            <Button onClick={saveEdit} disabled={savingEdit} className="bg-primary hover:bg-primary/90">{savingEdit ? "Saving..." : "Save Changes"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

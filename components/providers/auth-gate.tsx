@@ -44,7 +44,15 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         }
     }, [mounted, status, pathname, router]);
 
-    // Always render children — the server and first client render are identical.
-    // Auth redirects happen imperatively via useEffect AFTER hydration.
+    // Show skeleton while session is loading on protected routes to avoid
+    // flashing protected content before redirect.
+    if (!mounted || (status === "loading" && !isPublicPath(pathname))) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-background">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+        );
+    }
+
     return <>{children}</>;
 }

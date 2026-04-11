@@ -303,7 +303,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                                 void uploadResumeFile(pendingResumeFile, false);
                             }}
                             disabled={!pendingResumeFile || isUploading || isPollingParse || isApplyingMerge}
-                            className="rounded-md border border-border bg-muted/50 px-4 py-2 text-sm font-semibold text-foreground hover:bg-card disabled:opacity-60"
+                            className="rounded-md border border-border bg-muted/50 px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-60"
                         >
                             No, Save Resume Only
                         </button>

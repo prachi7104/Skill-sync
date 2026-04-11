@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jobs, students } from "@/lib/db/schema";
 import { and, eq, lt, sql } from "drizzle-orm";
-import { CRON_SECRET } from "@/lib/env";
+import { validateCronAuth } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    if (req.headers.get("authorization") !== `Bearer ${CRON_SECRET}`) {
+    if (!validateCronAuth(req.headers.get("authorization"))) {
       return new Response("Unauthorized", { status: 401 });
     }
 

@@ -128,7 +128,7 @@ export default function AdminSeasonsPage() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="max-w-2xl space-y-2">
           <h1 className="text-3xl font-black tracking-tight text-foreground">Season Management</h1>
           <p className="text-sm leading-6 text-muted-foreground">Create recruiting seasons and control which one is active for your college.</p>
@@ -166,7 +166,7 @@ export default function AdminSeasonsPage() {
           />
           Set as active season
         </label>
-        <Button onClick={createSeason} disabled={saving} className="bg-primary hover:bg-primary">
+        <Button onClick={createSeason} disabled={saving} className="bg-primary hover:bg-primary/90">
           {saving ? "Creating..." : "Create Season"}
         </Button>
       </section>
@@ -195,11 +195,11 @@ export default function AdminSeasonsPage() {
               </div>
               <div className="flex items-center gap-2">
                 {row.isActive ? (
-                  <Button variant="outline" className="border-border bg-muted/20 text-foreground hover:bg-card" onClick={() => toggleSeason(row, false)}>
+                  <Button variant="outline" className="border-border bg-muted/20 text-foreground hover:bg-muted" onClick={() => toggleSeason(row, false)}>
                     Deactivate
                   </Button>
                 ) : (
-                  <Button className="bg-primary hover:bg-primary" onClick={() => toggleSeason(row, true)}>
+                  <Button className="bg-primary hover:bg-primary/90" onClick={() => toggleSeason(row, true)}>
                     Activate
                   </Button>
                 )}

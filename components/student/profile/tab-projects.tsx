@@ -139,7 +139,7 @@ export default function TabProjects({
           ))}
         </div>
 
-        <button type='button' onClick={() => appendWork({ company: '', role: '', description: '', startDate: '', endDate: '', location: '' } as any)} className='inline-flex items-center gap-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors'>
+        <button type='button' onClick={() => appendWork({ company: '', role: '', description: '', startDate: '', endDate: '', location: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors'>
           <Plus className='w-3 h-3' /> Add Work Experience
         </button>
       </div>

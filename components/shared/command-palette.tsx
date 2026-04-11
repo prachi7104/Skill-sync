@@ -138,7 +138,8 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
         {!loading && query.length < 2 && (
           <div className='px-4 py-8 text-center'>
             <Search size={24} className='text-muted-foreground mx-auto mb-2 opacity-40' />
-            <p className='text-[12px] text-muted-foreground'>Type at least 2 characters to search</p>
+            <p className='text-[12px] text-muted-foreground'>Start typing to search drives, students, or companies.</p>
+            <p className='mt-1 text-[11px] text-muted-foreground'>Minimum 2 characters required.</p>
           </div>
         )}
         {driveResults.length > 0 && (

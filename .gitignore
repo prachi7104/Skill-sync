@@ -65,4 +65,8 @@ debug_amcat.ts
 /lib/amcat/Final_Report_AMCAT_1_2027.xlsx
 
 # database
-/drizzle/
+/drizzle/*
+!/drizzle/0010_colleges_student_domain_unique.sql
+!/drizzle/meta/
+/drizzle/meta/*
+!/drizzle/meta/_journal.json

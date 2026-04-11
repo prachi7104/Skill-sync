@@ -106,7 +106,7 @@ export default function TabSkills({
                 <FormItem className='flex-1 lg:w-auto'><FormControl><Input className={inputClass} placeholder='React, Python, etc.' {...f} value={f.value ?? ''}/></FormControl></FormItem>
               )} />
               
-              <FormField control={form.control} name={`skills.${idx as any}.proficiency`} render={({field: f}) => (
+              <FormField control={form.control} name={`skills.${idx}.proficiency` as const} render={({field: f}) => (
                 <FormItem className='w-24 sm:w-32'>
                   <Select onValueChange={(v) => f.onChange(parseInt(v))} value={f.value?.toString() ?? ''}>
                     <FormControl>
@@ -123,7 +123,7 @@ export default function TabSkills({
                 </FormItem>
               )} />
 
-              <FormField control={form.control} name={`skills.${idx as any}.category`} render={({field: f}) => (
+              <FormField control={form.control} name={`skills.${idx}.category` as const} render={({field: f}) => (
                 <FormItem className='w-24 sm:w-48'><FormControl><Input className={inputClass} placeholder='e.g. Frontend' {...f} value={f.value ?? ''}/></FormControl></FormItem>
               )} />
 
@@ -134,7 +134,7 @@ export default function TabSkills({
           ))}
         </div>
         
-        <button type='button' onClick={() => appendSkill({ name: '', proficiency: 3, category: '' } as any)} className='inline-flex items-center gap-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors'>
+        <button type='button' onClick={() => appendSkill({ name: '', proficiency: 3, category: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors'>
           <Plus className='w-3 h-3' /> Add Skill
         </button>
       </div>

@@ -19,14 +19,14 @@ export default function Pagination({ page, total, pageSize = 20 }: {
   return (
     <div className="flex items-center gap-2 mt-8">
       <button onClick={() => go(page - 1)} disabled={page <= 1}
-        className="px-4 py-2 bg-card hover:bg-card text-foreground rounded-md disabled:opacity-40 text-sm font-bold transition-colors border border-border">
+        className="px-4 py-2 bg-card hover:bg-muted text-foreground rounded-md disabled:opacity-40 text-sm font-bold transition-colors border border-border">
         &larr; Prev
       </button>
       <span className="text-sm font-medium text-muted-foreground px-2 lg:px-4">
         Page <span className="text-foreground">{page}</span> of <span className="text-foreground">{totalPages}</span>
       </span>
       <button onClick={() => go(page + 1)} disabled={page >= totalPages}
-        className="px-4 py-2 bg-card hover:bg-card text-foreground rounded-md disabled:opacity-40 text-sm font-bold transition-colors border border-border">
+        className="px-4 py-2 bg-card hover:bg-muted text-foreground rounded-md disabled:opacity-40 text-sm font-bold transition-colors border border-border">
         Next &rarr;
       </button>
     </div>

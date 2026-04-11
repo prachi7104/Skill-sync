@@ -24,7 +24,7 @@ export default function DashboardGreetingCard({ studentName, profileCompletion, 
 
       {/* Profile completion ring */}
       <div className='flex items-center gap-4'>
-        <div className='relative w-20 h-20 shrink-0'>
+        <div className='relative w-20 h-20 shrink-0' role='img' aria-label={`Profile completion: ${profileCompletion}%`}>
           <ResponsiveContainer width='100%' height='100%'>
             <RadialBarChart
               cx='50%' cy='50%'

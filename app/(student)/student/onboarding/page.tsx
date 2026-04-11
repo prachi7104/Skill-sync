@@ -955,7 +955,7 @@ export default function OnboardingPage() {
                   <Button
                     onClick={handleNext}
                     disabled={activeStep === "identity" ? !form.rollNo.trim() : (STEPS[currentStepIndex].required.length > 0 && !stepStates[currentStepIndex].done)}
-                    className="bg-primary px-6 font-bold text-foreground hover:bg-primary"
+                    className="bg-primary px-6 font-bold text-foreground hover:bg-primary/90"
                   >
                     {activeStep === "identity" && !form.rollNo.trim()
                       ? "Enter your Roll Number to continue"

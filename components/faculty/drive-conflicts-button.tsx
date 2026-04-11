@@ -35,7 +35,7 @@ export function DriveConflictsButton() {
 
   return (
     <>
-      <Button variant="outline" className="border-border bg-background text-foreground hover:bg-muted/40 dark:bg-slate-950/60" onClick={loadConflicts}>
+      <Button variant="outline" className="border-border bg-background text-foreground hover:bg-muted/40" onClick={loadConflicts}>
         Check Conflicts
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>

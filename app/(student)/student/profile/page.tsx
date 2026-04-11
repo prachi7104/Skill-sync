@@ -15,12 +15,6 @@ export default function StudentProfilePage() {
         );
     }
 
-    const serializedUser = {
-        ...user,
-        createdAt: user.createdAt ? format(new Date(user.createdAt), "MMMM yyyy") : "",
-        updatedAt: new Date().toISOString(),
-    };
-
     // Ensure all array fields default to empty arrays so map() doesn't crash
     const serializedProfile = {
         ...student,
@@ -37,14 +31,12 @@ export default function StudentProfilePage() {
         softSkills: student.softSkills || [],
     };
 
-    // We accept that some fields in serializedUser might be missing if the type definition 
-    // of UserInfo in provider is strict. We might need to cast or update provider type.
-    // For now, we cast to any to pass to View if types mismatch, but ideally we match types.
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <ProfileView user={serializedUser as any} profile={serializedProfile} />
+            <ProfileView
+                user={{ name: user.name ?? "", email: user.email ?? "" }}
+                profile={serializedProfile}
+            />
         </div>
     );
 }

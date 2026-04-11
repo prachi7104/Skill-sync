@@ -100,7 +100,7 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl space-y-3">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
@@ -132,7 +132,7 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
 
       {/* Grid */}
       {facultyDrives.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center shadow-sm dark:bg-slate-950/60">
+        <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
             <FolderOpen className="h-5 w-5" />
           </div>
@@ -168,7 +168,7 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
             const config = statusConfig[status];
 
             return (
-              <Card key={drive.id} className="group flex flex-col overflow-hidden border-border bg-card shadow-sm transition-all hover:border-primary/30 hover:shadow-md dark:bg-slate-950/60">
+              <Card key={drive.id} className="group flex flex-col overflow-hidden border-border bg-card shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -199,17 +199,17 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
                   {/* Info Pills */}
                   <div className="flex flex-wrap gap-1.5">
                     {drive.location && (
-                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-slate-950/60">
+                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground">
                         <MapPin className="h-3 w-3" /> {drive.location}
                       </div>
                     )}
                     {drive.packageOffered && (
-                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-slate-950/60">
+                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground">
                         <IndianRupee className="h-3 w-3" /> {drive.packageOffered}
                       </div>
                     )}
                     {drive.deadline && (
-                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-slate-950/60">
+                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground">
                         <Calendar className="h-3 w-3" /> {format(new Date(drive.deadline), "MMM d")}
                       </div>
                     )}
@@ -239,9 +239,6 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
                   >
                     View Rankings <ExternalLink className="h-3 w-3" />
                   </Link>
-                  <Badge variant="outline" className={cn("rounded px-1.5 py-0 text-[10px] font-bold tracking-wider", config.className)}>
-                    {config.label}
-                  </Badge>
                 </CardFooter>
               </Card>
             );

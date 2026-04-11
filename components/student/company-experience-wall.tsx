@@ -112,36 +112,36 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
           </p>
         </div>
         {canSubmit ? (
-          <Button asChild className="gap-2 bg-primary hover:bg-primary">
+          <Button asChild className="gap-2 bg-primary hover:bg-primary/90">
             <Link href="/student/companies/submit"><Plus className="h-4 w-4" /> Share Your Experience</Link>
           </Button>
         ) : null}
       </div>
 
-      <div className="grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm md:grid-cols-[1fr_auto_auto] dark:bg-slate-950/60">
+      <div className="grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm md:grid-cols-[1fr_auto_auto]">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by company name" className="border-border bg-background pl-10 text-foreground dark:bg-slate-950/60" />
+          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by company name" className="border-border bg-background pl-10 text-foreground" />
         </div>
         <div className="flex items-center gap-2 overflow-x-auto">
           {["all", "placement", "internship", "ppo"].map((type) => (
-            <button key={type} type="button" onClick={() => setDriveType(type)} className={cn("rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide", driveType === type ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground border border-border dark:bg-slate-950/60")}>{formatCategoryLabel(type)}</button>
+            <button key={type} type="button" onClick={() => setDriveType(type)} className={cn("rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide", driveType === type ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground border border-border")}>{formatCategoryLabel(type)}</button>
           ))}
         </div>
         <div className="flex items-center gap-2 overflow-x-auto">
           {["all", "1", "2", "3", "4", "5"].map((value) => (
-            <button key={value} type="button" onClick={() => setDifficulty(value)} className={cn("rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide", difficulty === value ? "bg-warning/10 text-foreground" : "bg-background text-muted-foreground border border-border dark:bg-slate-950/60")}>{value === "all" ? "All levels" : `${value}★+`}</button>
+            <button key={value} type="button" onClick={() => setDifficulty(value)} className={cn("rounded-full px-3 py-2 text-xs font-bold uppercase tracking-wide", difficulty === value ? "bg-warning/10 text-foreground" : "bg-background text-muted-foreground border border-border")}>{value === "all" ? "All levels" : `${value}★+`}</button>
           ))}
         </div>
       </div>
 
-      {loading ? <div className="rounded-2xl border border-border bg-card p-8 text-sm text-muted-foreground shadow-sm dark:bg-slate-950/60">Loading experiences...</div> : null}
+      {loading ? <div className="rounded-2xl border border-border bg-card p-8 text-sm text-muted-foreground shadow-sm">Loading experiences...</div> : null}
 
       {!loading && !isDetailView ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {companies.map((company) => (
             <Link key={company.company_normalized} href={`/student/companies/${company.company_normalized}`}>
-              <Card className="h-full border-border bg-card transition-all hover:border-border hover:bg-card dark:bg-slate-950/60">
+              <Card className="h-full border-border bg-card transition-all hover:border-border hover:bg-muted">
                 <CardHeader className="space-y-2">
                   <CardTitle className="text-lg text-foreground">{company.company_name}</CardTitle>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -156,14 +156,14 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
               </Card>
             </Link>
           ))}
-          {companies.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-sm text-muted-foreground shadow-sm dark:bg-slate-950/60">No published experiences found for that search yet.</div> : null}
+          {companies.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-sm text-muted-foreground shadow-sm">No published experiences found for that search yet.</div> : null}
         </div>
       ) : null}
 
       {!loading && isDetailView ? (
         <div className="space-y-4">
           {experiences.map((experience) => (
-            <article key={experience.id} className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
+            <article key={experience.id} className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-bold text-foreground">{experience.show_name ? experience.student_name : experience.is_admin_posted ? "Anonymous — Shared by Admin" : "Anonymous"}</p>
@@ -204,7 +204,7 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
               </div>
             </article>
           ))}
-          {experiences.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-sm text-muted-foreground shadow-sm dark:bg-slate-950/60">No published experiences for this company yet.</div> : null}
+          {experiences.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-sm text-muted-foreground shadow-sm">No published experiences for this company yet.</div> : null}
         </div>
       ) : null}
     </div>

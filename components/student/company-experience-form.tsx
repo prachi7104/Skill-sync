@@ -136,7 +136,7 @@ export default function CompanyExperienceForm() {
               Show my name publicly
             </label>
           </div>
-          <Button onClick={onSubmit} disabled={submitting} className="bg-primary hover:bg-primary">
+          <Button onClick={onSubmit} disabled={submitting} className="bg-primary hover:bg-primary/90">
             {submitting ? "Submitting..." : "Submit Experience"}
           </Button>
         </CardContent>

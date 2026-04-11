@@ -35,7 +35,13 @@ export async function DELETE(
     }
 
     // Delete in explicit order: jobs -> rankings -> drive.
-    await db.delete(jobs).where(sql`${jobs.payload}->>'driveId' = ${driveId}`);
+    // Use typed drizzle conditions to avoid fragile JSONB text extraction.
+    await db.delete(jobs).where(
+      and(
+        sql`${jobs.payload}->>'driveId' = ${driveId}`,
+        sql`${jobs.type} IN ('rank_students', 'enhance_jd')`,
+      )
+    );
     await db.delete(rankings).where(eq(rankings.driveId, driveId));
     await db.delete(drives).where(eq(drives.id, driveId));
 

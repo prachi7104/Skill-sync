@@ -52,8 +52,8 @@ interface StudentSearchViewProps {
 export function ProfileModal({ student, onClose }: { student: StudentProfile; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-card shadow-2xl dark:bg-slate-950/95">
-        <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-8 py-6 dark:bg-slate-950/95">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-card shadow-2xl">
+        <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-8 py-6">
           <div>
             <h2 className="text-2xl font-bold text-foreground">{student.name}</h2>
             <p className="text-sm text-warning mt-1">
@@ -369,7 +369,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
           <p className="text-sm text-muted-foreground">Filter by branch, batch, and search terms to review college profiles quickly.</p>
         </div>
 
-        <div className="mb-8 rounded-2xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60">
+        <div className="mb-8 rounded-2xl border border-border bg-card p-6 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
@@ -378,7 +378,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                 placeholder="Search by name, email, or SAP ID..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-950/60"
+                className="w-full rounded-xl border border-border bg-background py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
@@ -388,7 +388,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                 setSelectedBranch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-950/60"
+              className="rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="all">All Branches</option>
               {branches.map((branch) => (
@@ -404,7 +404,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                 setSelectedBatchYear(e.target.value);
                 setCurrentPage(1);
               }}
-              className="rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-950/60"
+              className="rounded-xl border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="all">All Batch Years</option>
               {batchYears.map((year) => (
@@ -451,7 +451,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
               {results.map((student) => (
                 <div
                   key={student.id}
-                  className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm transition hover:bg-muted/30 dark:bg-slate-950/60"
+                  className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm transition hover:bg-muted/30"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-4 flex-wrap">
@@ -460,7 +460,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                         <p className="text-sm text-muted-foreground">{student.email}</p>
                       </div>
                       <div className="text-sm">
-                        <span className="rounded-lg bg-background px-2.5 py-1 text-muted-foreground dark:bg-slate-950/60">
+                        <span className="rounded-lg bg-background px-2.5 py-1 text-muted-foreground">
                           {student.branch || "—"}
                         </span>
                       </div>
@@ -489,7 +489,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                 <button
                   onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="rounded-lg bg-background px-4 py-2 text-foreground transition hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-950/60"
+                  className="rounded-lg bg-background px-4 py-2 text-foreground transition hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Previous
                 </button>
@@ -499,7 +499,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage >= Math.ceil(total / 20)}
-                  className="rounded-lg bg-background px-4 py-2 text-foreground transition hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-950/60"
+                  className="rounded-lg bg-background px-4 py-2 text-foreground transition hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Next
                 </button>

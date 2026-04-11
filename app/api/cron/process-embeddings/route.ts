@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processEmbeddingJobs } from "@/lib/workers/generate-embedding";
-import { CRON_SECRET } from "@/lib/env";
+import { validateCronAuth } from "@/lib/env";
 import { db } from "@/lib/db";
 import { jobs } from "@/lib/db/schema";
 import { eq, and, lt } from "drizzle-orm";
@@ -18,9 +18,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: NextRequest) {
   try {
-    // Security: Verify cron secret
-    const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${CRON_SECRET}`) {
+    if (!validateCronAuth(req.headers.get("authorization"))) {
       return new Response('Unauthorized', { status: 401 });
     }
 

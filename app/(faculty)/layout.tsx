@@ -52,7 +52,7 @@ export default async function FacultyLayout({ children }: { children: React.Reac
       </header>
 
       {/* ── Body ── */}
-      <div className='flex flex-1 overflow-hidden' style={{ height: 'calc(100vh - 56px)' }}>
+      <div className='flex h-[calc(100dvh-56px)] flex-1 overflow-hidden'>
 
         {/* Sidebar slot */}
         <SidebarShell label='Faculty'>

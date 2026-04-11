@@ -259,7 +259,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                 </label>
 
                 <div className="flex justify-end pt-4">
-                  <Button type="button" onClick={nextStep} className="gap-2 bg-primary hover:bg-primary">
+                  <Button type="button" onClick={nextStep} className="gap-2 bg-primary hover:bg-primary/90">
                     Continue <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -392,7 +392,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                   <Button type="button" variant="ghost" onClick={() => setStep(1)} className="gap-2 text-muted-foreground hover:text-foreground">
                     <ChevronLeft className="h-4 w-4" /> Back to details
                   </Button>
-                  <Button type="submit" disabled={isSubmitting} className="min-w-[140px] bg-primary hover:bg-primary">
+                  <Button type="submit" disabled={isSubmitting} className="min-w-[140px] bg-primary hover:bg-primary/90">
                     {isSubmitting ? "Creating..." : "Create Drive →"}
                   </Button>
                 </div>

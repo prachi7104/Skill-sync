@@ -460,7 +460,7 @@ export default function AdminAmcatPage() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl space-y-2">
             <h1 className="text-3xl font-black tracking-tight text-foreground">AMCAT Upload System</h1>
@@ -529,7 +529,7 @@ export default function AdminAmcatPage() {
               <Input id="academic-year" value={academicYear} onChange={(e) => setAcademicYear(e.target.value)} placeholder="2025-26" />
             </div>
 
-            <Button onClick={handleUpload} disabled={uploading} className="w-full gap-2 bg-primary hover:bg-primary">
+            <Button onClick={handleUpload} disabled={uploading} className="w-full gap-2 bg-primary hover:bg-primary/90">
               {uploading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
               {uploading ? "Uploading..." : "Upload AMCAT File"}
             </Button>

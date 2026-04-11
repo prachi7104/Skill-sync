@@ -376,7 +376,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl space-y-2">
             <h1 className="text-3xl font-black tracking-tight text-foreground">User Management</h1>
@@ -494,7 +494,7 @@ export default function AdminUsersPage() {
             <Button
               type="submit"
               disabled={creating || !newName.trim() || !newEmail.trim() || (!autoGeneratePassword && newPassword.length < 8)}
-              className="gap-2 bg-primary hover:bg-primary"
+              className="gap-2 bg-primary hover:bg-primary/90"
             >
               {creating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
               {creating ? "Creating..." : `Create ${newRole === "admin" ? "Admin" : "Faculty"}`}
@@ -636,7 +636,7 @@ export default function AdminUsersPage() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditUser(null)} disabled={editLoading}>Cancel</Button>
-            <Button onClick={handleSavePermissions} disabled={editLoading} className="gap-2 bg-primary hover:bg-primary">
+            <Button onClick={handleSavePermissions} disabled={editLoading} className="gap-2 bg-primary hover:bg-primary/90">
               {editLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               {editLoading ? "Saving…" : "Save Permissions"}
             </Button>

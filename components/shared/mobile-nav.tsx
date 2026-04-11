@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type TouchEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type TouchEvent } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -62,17 +62,19 @@ export default function MobileNav({
   const links = ROLE_LINKS[role] || [];
   const [internalOpen, setInternalOpen] = useState(false);
   const pathname = usePathname();
+  const drawerRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const open = forceOpen !== undefined ? forceOpen : internalOpen;
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (onClose) onClose();
     if (forceOpen === undefined) setInternalOpen(false);
-  };
+  }, [forceOpen, onClose]);
 
-  const handleOpen = () => {
+  const handleOpen = useCallback(() => {
     if (forceOpen === undefined) setInternalOpen(true);
-  };
+  }, [forceOpen]);
 
   const [edgeStartX, setEdgeStartX] = useState<number | null>(null);
 
@@ -93,6 +95,54 @@ export default function MobileNav({
   const handleEdgeSwipeEnd = () => {
     setEdgeStartX(null);
   };
+
+  useEffect(() => {
+    if (!open) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    closeButtonRef.current?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        handleClose();
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+      const container = drawerRef.current;
+      if (!container) return;
+
+      const focusable = Array.from(
+        container.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => !el.hasAttribute('disabled') && el.tabIndex !== -1);
+
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open, handleClose]);
 
   return (
     <>
@@ -144,7 +194,11 @@ export default function MobileNav({
               onDragEnd={(_, info) => {
                 if (info.offset.x < -80) handleClose();
               }}
+              ref={drawerRef}
               className='fixed inset-y-0 left-0 w-[280px] bg-card border-r border-border z-50 flex flex-col md:hidden touch-pan-y'
+              role='dialog'
+              aria-modal='true'
+              aria-label='Mobile navigation menu'
             >
               {/* Drawer header */}
               <div className='h-14 shrink-0 flex items-center justify-between px-5 border-b border-border'>
@@ -153,6 +207,7 @@ export default function MobileNav({
                 </span>
                 <button
                   onClick={handleClose}
+                  ref={closeButtonRef}
                   className='flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150'
                   aria-label='Close navigation menu'
                 >

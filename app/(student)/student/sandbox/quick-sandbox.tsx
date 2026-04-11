@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { AlertTriangle, XCircle, Briefcase, FileText, CheckCircle2, Sparkles, Target, Activity } from "lucide-react";
 
 interface CardFeedback {
@@ -335,9 +336,22 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
                     
                     return (
                       <div key={priority}>
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
-                          {priority === "Critical" ? "🔴 HIGH PRIORITY" : priority === "Medium" ? "🟡 MEDIUM PRIORITY" : "⚪ LOW PRIORITY"}
-                        </p>
+                        <div className="mb-3">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-md border px-2.5 py-1 text-xs font-bold uppercase tracking-wider",
+                              priority === "Critical"
+                                ? "border-destructive/30 bg-destructive/10 text-destructive"
+                                : priority === "Medium"
+                                  ? "border-warning/30 bg-warning/10 text-warning"
+                                  : "border-border bg-muted text-muted-foreground"
+                            )}
+                            role="status"
+                            aria-label={`${priority} priority recommendations`}
+                          >
+                            {priority} priority
+                          </span>
+                        </div>
                         <div className="space-y-3">
                           {items.map((item, i) => (
                             <FeedbackCard key={i} item={item} />

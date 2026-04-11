@@ -91,7 +91,7 @@ function Metric({ label, value, status }: { label: string; value: string; status
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm dark:bg-slate-950/60">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
       <div className="mt-2 flex items-center gap-2">
         <p className="text-2xl font-black text-foreground">{value}</p>
@@ -216,7 +216,7 @@ export default function AdminHealthPage() {
           <h1 className="text-3xl font-black text-foreground">System Health</h1>
           <p className="text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground shadow-sm dark:bg-slate-950/60">
+        <div className="rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground shadow-sm">
           Loading health data...
         </div>
       </div>
@@ -253,7 +253,7 @@ export default function AdminHealthPage() {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-xs font-bold text-foreground shadow-sm transition-colors hover:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-950/60"
+          className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-xs font-bold text-foreground shadow-sm transition-colors hover:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
           Refresh
@@ -289,7 +289,7 @@ export default function AdminHealthPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm dark:bg-slate-950/60">
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-muted-foreground">Job queue</h2>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
           <Metric label="Pending Total" value={displayCount(pendingTotal)} status={pendingTotal > 0 ? "warning" : "ok"} />
@@ -310,7 +310,7 @@ export default function AdminHealthPage() {
         )}
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm dark:bg-slate-950/60">
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-muted-foreground">Manual triggers</h2>
         <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
           {(["resumes", "embeddings", "jd-enhancement", "rankings", "cleanup"] as const).map((type) => (

@@ -193,7 +193,7 @@ export default function DetailedSandboxClient() {
                             <h3 className="font-bold text-foreground">Target Resume</h3>
                         </div>
                         <label className="cursor-pointer block">
-                            <div className={`border-2 border-dashed rounded-md p-8 flex flex-col items-center justify-center transition-all ${resumeFile ? "border-success/20 bg-success/10" : "border-border hover:border-primary/30 hover:bg-card"}`}>
+                            <div className={`border-2 border-dashed rounded-md p-8 flex flex-col items-center justify-center transition-all ${resumeFile ? "border-success/20 bg-success/10" : "border-border hover:border-primary/30 hover:bg-muted"}`}>
                                 {resumeFile ? (
                                     <>
                                         <FileText className="h-8 w-8 text-success mb-3" />

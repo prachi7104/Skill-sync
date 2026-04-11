@@ -4,7 +4,7 @@ import { jobs } from "@/lib/db/schema";
 import { eq, and, lt, desc, asc } from "drizzle-orm";
 import { computeRanking } from "@/lib/matching";
 import { logger } from "@/lib/logger";
-import { CRON_SECRET } from "@/lib/env";
+import { validateCronAuth } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 // Process exactly ONE ranking job per cron tick.
@@ -21,9 +21,7 @@ const MAX_JOBS_PER_TICK = 1;
  */
 export async function GET(req: NextRequest) {
   try {
-    // Security: Verify cron secret
-    const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${CRON_SECRET}`) {
+    if (!validateCronAuth(req.headers.get("authorization"))) {
       return new Response('Unauthorized', { status: 401 });
     }
 

@@ -1,22 +1,18 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { processResumeParseJobs } from "@/lib/workers/parse-resume";
-import { CRON_SECRET } from "@/lib/env";
+import { validateCronAuth } from "@/lib/env";
 import { db } from "@/lib/db";
 import { jobs } from "@/lib/db/schema";
 import { eq, and, lt } from "drizzle-orm";
 import { logger } from "@/lib/logger";
 
-export const dynamic = 'force-dynamic'; // Ensure this route is never cached
-
-// Secret key for cron authentication (should be set in environment variables)
+export const dynamic = 'force-dynamic';
 
 
 export async function GET(req: NextRequest) {
     try {
-        // Security: Verify cron secret to prevent unauthorized access
-        const authHeader = req.headers.get("authorization");
-        if (authHeader !== `Bearer ${CRON_SECRET}`) {
+        if (!validateCronAuth(req.headers.get("authorization"))) {
             return new Response('Unauthorized', { status: 401 });
         }
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Loader2, AlertCircle, ChevronRight, Eye, EyeOff, Lock, LogIn } from 'lucide-react';
 
@@ -18,6 +19,7 @@ export interface LoginFormPanelProps {
   onStaffPasswordChange: (v: string) => void;
   onTogglePassword: () => void;
   onStaffSubmit: (e: React.FormEvent) => void;
+  onDismissError: () => void;
 }
 
 const container = {
@@ -51,8 +53,20 @@ export default function LoginFormPanel({
   onStaffPasswordChange,
   onTogglePassword,
   onStaffSubmit,
+  onDismissError,
 }: LoginFormPanelProps) {
   const shouldAnimate = !useReducedMotion();
+
+  useEffect(() => {
+    if (!errorMessage) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onDismissError();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [errorMessage, onDismissError]);
 
   return (
     <div className='flex min-h-[100dvh] flex-col justify-center bg-zinc-50 px-4 py-10 sm:px-8 sm:py-12 lg:h-full lg:min-h-0 lg:px-10 xl:px-12 dark:bg-slate-950'>
@@ -98,7 +112,12 @@ export default function LoginFormPanel({
               transition={{ duration: 0.22, ease: 'easeOut' }}
               className='mb-4 overflow-hidden'
             >
-              <div className='rounded-md border border-destructive/30 bg-destructive/8 px-4 py-3 flex items-start gap-3'>
+              <div
+                className='rounded-md border border-destructive/30 bg-destructive/8 px-4 py-3 flex items-start gap-3 cursor-pointer'
+                onClick={onDismissError}
+                role='alert'
+                aria-live='assertive'
+              >
                 <AlertCircle size={16} className='text-destructive shrink-0 mt-0.5' />
                 <div>
                   <p className='text-xs font-bold text-destructive uppercase tracking-wider mb-0.5'>Error</p>

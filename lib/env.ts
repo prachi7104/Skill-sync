@@ -65,6 +65,15 @@ export const SUPABASE_SERVICE_ROLE_KEY = optionalEnv("SUPABASE_SERVICE_ROLE_KEY"
 // ── Cron Jobs ────────────────────────────────────────────────────────────────
 export const CRON_SECRET = requireEnv("CRON_SECRET");
 
+/**
+ * Validate that the CRON_SECRET is a non-empty, sufficiently long token.
+ * Used by cron route handlers to prevent empty-string bypass attacks.
+ */
+export function validateCronAuth(authHeader: string | null): boolean {
+  if (!CRON_SECRET || CRON_SECRET.length < 16) return false;
+  return authHeader === `Bearer ${CRON_SECRET}`;
+}
+
 // ── AI Providers (Free Tier) ────────────────────────────────────────────────
 export const GROQ_API_KEY = optionalEnv("GROQ_API_KEY");
 export const MISTRAL_API_KEY = optionalEnv("MISTRAL_API_KEY");

@@ -76,6 +76,11 @@ export default function AdminExperiencesPage() {
   }, []);
 
   async function moderate(id: string, action: "approve" | "reject") {
+    if (action === "reject") {
+      const confirmed = window.confirm("Reject this experience submission?");
+      if (!confirmed) return;
+    }
+
     const res = await fetch(`/api/admin/experiences/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -144,7 +149,7 @@ export default function AdminExperiencesPage() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="max-w-2xl space-y-2">
           <h1 className="text-3xl font-black tracking-tight text-foreground">Company Experiences</h1>
           <p className="text-sm leading-6 text-muted-foreground">Moderate student submissions and post admin-curated experience reports.</p>
@@ -267,7 +272,7 @@ export default function AdminExperiencesPage() {
               </div>
               <div className="space-y-2"><Label>Interview Process</Label><Textarea rows={6} value={form.interviewProcess} onChange={(event) => setForm((current) => ({ ...current, interviewProcess: event.target.value }))} className="border-border bg-muted/20 text-foreground" /></div>
               <div className="space-y-2"><Label>Tips</Label><Textarea rows={5} value={form.tips} onChange={(event) => setForm((current) => ({ ...current, tips: event.target.value }))} className="border-border bg-muted/20 text-foreground" /></div>
-              <Button onClick={createAdminPost} className="bg-primary hover:bg-primary">Publish Admin Experience</Button>
+              <Button onClick={createAdminPost} className="bg-primary hover:bg-primary/90">Publish Admin Experience</Button>
             </CardContent>
           </Card>
         </TabsContent>

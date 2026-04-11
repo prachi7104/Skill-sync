@@ -4,7 +4,7 @@ import { jobs, drives } from "@/lib/db/schema";
 import { eq, and, lt, desc, asc, sql } from "drizzle-orm";
 import { parseJD } from "@/lib/jd/parser";
 import { generateEmbedding, isValidEmbedding } from "@/lib/embeddings/generate";
-import { CRON_SECRET } from "@/lib/env";
+import { validateCronAuth } from "@/lib/env";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -21,9 +21,7 @@ const MAX_JOBS_PER_TICK = 5;
  */
 export async function GET(req: NextRequest) {
   try {
-    // Security: Verify cron secret
-    const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${CRON_SECRET}`) {
+    if (!validateCronAuth(req.headers.get("authorization"))) {
       return new Response('Unauthorized', { status: 401 });
     }
 

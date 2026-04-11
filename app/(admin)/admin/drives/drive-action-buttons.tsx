@@ -46,11 +46,12 @@ export function DriveActionButtons({ driveId, isActive }: { driveId: string; isA
       <button
         onClick={handleToggleActive}
         disabled={toggling}
+        aria-label={isActive ? "Deactivate drive" : "Activate drive"}
         title={isActive ? "Deactivate drive" : "Activate drive"}
         className={`p-2 rounded-lg text-xs font-bold transition-all ${
           isActive
-            ? "bg-warning/10 text-warning hover:bg-warning/10"
-            : "bg-card text-muted-foreground hover:bg-card"
+            ? "bg-warning/10 text-warning hover:bg-warning/20"
+            : "bg-card text-muted-foreground hover:bg-muted"
         }`}
       >
         {toggling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Power className="h-3.5 w-3.5" />}
@@ -58,8 +59,9 @@ export function DriveActionButtons({ driveId, isActive }: { driveId: string; isA
       <button
         onClick={handleDelete}
         disabled={deleting}
+        aria-label="Permanently delete drive"
         title="Permanently delete drive"
-        className="p-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/10 transition-all"
+        className="p-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
       >
         {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
       </button>

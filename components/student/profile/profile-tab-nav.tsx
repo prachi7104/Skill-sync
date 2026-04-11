@@ -31,7 +31,7 @@ export default function ProfileTabNav({ active, onChange }: ProfileTabNavProps) 
           }`}
         >
           <Icon size={14} className='shrink-0' />
-          <span className='hidden sm:inline'>{label}</span>
+          <span className='inline text-[11px] sm:text-sm'>{label}</span>
           {active === id && (
             <motion.div
               layoutId='profile-tab-indicator'

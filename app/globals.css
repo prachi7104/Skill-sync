@@ -18,18 +18,18 @@
     --muted-foreground: 227 52% 44%;
     --accent: 227 68% 96%;
     --accent-foreground: 226 71% 11%;
-    --destructive: 226 40% 26%;
-    --destructive-foreground: 210 12% 93%;
     --border: 214 22% 84%;
     --input: 214 22% 84%;
     --ring: 227 68% 61%;
     --radius: 12px;
-    --success: 227 68% 61%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 227 52% 44%;
-    --warning-foreground: 0 0% 100%;
-    --info: 227 68% 61%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 9%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
     --primary-hover: 227 52% 44%;
     /* Sidebar tokens — invariant, always dark */
     --sidebar: 226 71% 11%;
@@ -57,17 +57,17 @@
     --muted-foreground: 227 52% 44%;
     --accent: 227 52% 44%;
     --accent-foreground: 210 12% 93%;
-    --destructive: 226 40% 26%;
-    --destructive-foreground: 210 12% 93%;
     --border: 227 52% 44%;
     --input: 227 52% 44%;
     --ring: 227 68% 61%;
     --radius: 12px;
-    --success: 227 68% 61%;
+    --destructive: 0 63% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 227 52% 44%;
-    --warning-foreground: 0 0% 100%;
-    --info: 227 68% 61%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 9%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
     --primary-hover: 227 52% 44%;
     /* Sidebar tokens — identical to light mode, sidebar never changes */

@@ -93,7 +93,7 @@ export default function FacultySettingsPage() {
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
           required
-          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus:outline-none focus:border-primary/30"
+          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         />
         <input
           type="password"
@@ -102,7 +102,7 @@ export default function FacultySettingsPage() {
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           required
-          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus:outline-none focus:border-primary/30"
+          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         />
         {passwordStrengthMessage ? (
           <p className="text-xs text-warning">{passwordStrengthMessage}</p>
@@ -116,7 +116,7 @@ export default function FacultySettingsPage() {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
-          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus:outline-none focus:border-primary/30"
+          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         />
         <button
           type="submit"

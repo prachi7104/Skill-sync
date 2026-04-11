@@ -125,7 +125,7 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm dark:bg-slate-950/60 sm:p-8">
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl space-y-3">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
@@ -147,13 +147,13 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
       </header>
 
       <div className="flex flex-wrap gap-3">
-        <Badge variant="outline" className="rounded-full border-border bg-background px-3 py-1 text-sm text-foreground dark:bg-slate-950/60">
+        <Badge variant="outline" className="rounded-full border-border bg-background px-3 py-1 text-sm text-foreground">
           Total Drives: {totalDrives}
         </Badge>
         <Badge variant="outline" className="rounded-full border-success/20 bg-success/10 px-3 py-1 text-sm text-success">
           Active: {activeDrives}
         </Badge>
-        <Badge variant="outline" className="rounded-full border-border bg-background px-3 py-1 text-sm text-muted-foreground dark:bg-slate-950/60">
+        <Badge variant="outline" className="rounded-full border-border bg-background px-3 py-1 text-sm text-muted-foreground">
           Closed: {totalDrives - activeDrives}
         </Badge>
         <Badge variant="outline" className="rounded-full border-primary/30 bg-primary/10 px-3 py-1 text-sm text-primary">
@@ -162,7 +162,7 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
       </div>
 
       {totalDrives === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-20 text-center shadow-sm dark:bg-slate-950/60">
+        <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-20 text-center shadow-sm">
           <p className="text-sm font-semibold text-foreground">No drives created yet.</p>
           <Button asChild variant="link" className="mt-2 text-primary">
             <Link href="/admin/drives/new">Create your first drive &rarr;</Link>
@@ -185,7 +185,7 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
               processing: { label: "PROCESSING", className: "text-primary bg-primary/10 border-primary/30" },
               jd_analyzing: { label: "JD ANALYZING", className: "text-warning bg-warning/10 border-warning/20" },
               pending: { label: "PENDING", className: "text-warning bg-warning/10 border-warning/20" },
-              closed: { label: "CLOSED", className: "text-muted-foreground bg-background border-border dark:bg-slate-950/60" },
+              closed: { label: "CLOSED", className: "text-muted-foreground bg-background border-border" },
             };
 
             const config = statusConfig[status];
@@ -193,7 +193,7 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
             return (
               <Card
                 key={drive.id}
-                className="group flex flex-col border-border bg-card shadow-sm transition-all hover:border-primary/30 hover:shadow-md dark:bg-slate-950/60"
+                className="group flex flex-col border-border bg-card shadow-sm transition-all hover:border-primary/30 hover:shadow-md"
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-4">
@@ -246,22 +246,22 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
                   {/* Info pills */}
                   <div className="flex flex-wrap gap-1.5">
                     {drive.location && (
-                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-slate-950/60">
+                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground">
                         <MapPin className="h-3 w-3" /> {drive.location}
                       </div>
                     )}
                     {drive.packageOffered && (
-                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-slate-950/60">
+                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground">
                         <IndianRupee className="h-3 w-3" /> {drive.packageOffered}
                       </div>
                     )}
                     {drive.deadline && (
-                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-slate-950/60">
+                      <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground">
                         <Calendar className="h-3 w-3" />{" "}
                         {format(new Date(drive.deadline), "MMM d")}
                       </div>
                     )}
-                    <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-slate-950/60">
+                    <div className="flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground">
                       <Calendar className="h-3 w-3" />{" "}
                       {format(new Date(drive.createdAt), "MMM d, yyyy")}
                     </div>
@@ -306,7 +306,7 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
                   </div>
                   <TriggerRankingButton
                     driveId={drive.id}
-                    initialStatus={status as any}
+                    initialStatus={status}
                     jdReady={!!drive.parsedJd}
                   />
                 </CardFooter>
