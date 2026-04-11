@@ -35,17 +35,19 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
 
   return (
     <div className='flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900'>
-      <div className='mb-4 flex items-center justify-between'>
-        <div className='flex items-center gap-2'>
-          <div className='flex h-8 w-8 items-center justify-center rounded-md bg-success/10'>
-            <Briefcase size={16} className='text-success' />
+        <div className='mb-4 flex items-center justify-between'>
+          <div className='flex items-center gap-2'>
+            <div className='flex h-8 w-8 items-center justify-center rounded-md bg-success/10'>
+              <Briefcase size={16} className='text-success' />
+            </div>
+            <p className='text-[13px] font-bold text-zinc-900 dark:text-slate-100'>Active Drives</p>
           </div>
-          <p className='text-[13px] font-bold text-zinc-900 dark:text-slate-100'>Active Drives</p>
+          {drives && drives.length > 0 ? (
+            <Link href='/student/drives' className='flex items-center gap-1 text-[12px] font-semibold text-primary transition-colors duration-150 hover:text-primary-hover'>
+              All <ArrowUpRight size={13} />
+            </Link>
+          ) : null}
         </div>
-        <Link href='/student/drives' className='flex items-center gap-1 text-[12px] font-semibold text-primary transition-colors duration-150 hover:text-primary-hover'>
-          All <ArrowUpRight size={13} />
-        </Link>
-      </div>
 
       <div className='flex-1 space-y-2 overflow-y-auto'>
         {loading ? (
