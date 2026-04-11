@@ -23,6 +23,7 @@ import { formatCategoryLabel, SOFTSKILLS_RESOURCE_CATEGORIES, TECHNICAL_RESOURCE
 import { stripMarkdown } from "@/lib/content-utils";
 import { safeFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { StatusCard } from "@/components/ui/status-card";
 
 const CATEGORY_MAP = {
   technical: TECHNICAL_RESOURCE_CATEGORIES,
@@ -88,6 +89,7 @@ export default function ResourceLibrary() {
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<ResourceRow | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [form, setForm] = useState<CreateResourceForm>({
     category: TECHNICAL_RESOURCE_CATEGORIES[0],
     title: "",
@@ -135,11 +137,13 @@ export default function ResourceLibrary() {
       if (error) {
         toast.error(error);
         setResources([]);
+        setFetchError(error);
       } else {
         setResources(data?.resources ?? []);
         setCanCreate(Boolean(data?.canCreate));
         setViewerRole(data?.viewerRole ?? null);
         setViewerId(data?.viewerId ?? null);
+        setFetchError(null);
       }
     } finally {
       if (showLoading) setLoading(false);
@@ -350,8 +354,29 @@ export default function ResourceLibrary() {
             </aside>
 
             <div className="space-y-4">
-              {loading ? <div className="rounded-md border border-border bg-card p-8 text-sm text-muted-foreground">Loading resources...</div> : null}
-              {!loading && resources.length === 0 ? <div className="rounded-md border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">No resources found for this filter yet.</div> : null}
+               {loading ? (
+                 <StatusCard
+                   variant="loading"
+                   title="Loading resources"
+                   description="Please wait while we fetch the latest entries."
+                 />
+               ) : null}
+               {!loading && fetchError ? (
+                 <StatusCard
+                   variant="error"
+                   title="Unable to load resources"
+                   description={fetchError}
+                   actionLabel="Try again"
+                   onAction={() => refreshCurrentList(true)}
+                 />
+               ) : null}
+               {!loading && !fetchError && resources.length === 0 ? (
+                 <StatusCard
+                   variant="empty"
+                   title="No resources found"
+                   description="Try broadening your filters or keywords."
+                 />
+               ) : null}
               {!loading ? resources.map((resource) => (
                 <article key={resource.id} className="rounded-md border border-border bg-card p-5 transition-all hover:border-border">
                   <div className="flex items-start justify-between gap-4">

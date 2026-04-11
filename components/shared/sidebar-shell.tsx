@@ -24,11 +24,20 @@ export default function SidebarShell({ children, label }: SidebarShellProps) {
 
   // On mount: if viewport is mobile, ensure sidebar is collapsed
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < BREAKPOINT_MD) {
-      collapse();
-    }
+    if (typeof window === 'undefined') return;
+    const handleResize = () => {
+      if (window.innerWidth < BREAKPOINT_MD) {
+        collapse();
+      } else {
+        // re-open once wide enough
+        if (storeIsCollapsed) toggle();
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [collapse, toggle, storeIsCollapsed]);
 
   return (
     <motion.div

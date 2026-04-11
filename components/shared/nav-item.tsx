@@ -29,6 +29,7 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
 
   const baseClasses = cn(
     'group relative flex items-center w-full h-10 rounded-md transition-colors duration-150 select-none',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-surface',
     isCollapsed ? 'justify-center px-0 mx-auto' : 'px-3 gap-3 mx-2',
     isCollapsed ? 'w-10' : 'w-[calc(100%-16px)]', // collapsed: square; expanded: inset 8px each side
     isActive && !isBlocked
@@ -89,6 +90,7 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
   const tooltip = isCollapsed && showTooltip && (
     <div
       role='tooltip'
+      id={`nav-tooltip-${label.replace(/\s+/g, "-").toLowerCase()}`}
       className='absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 z-[201] px-2.5 py-1 rounded-md bg-sidebar-surface border border-sidebar-border text-sidebar-fg text-[12px] font-semibold whitespace-nowrap shadow-md pointer-events-none'
     >
       {label}
@@ -103,10 +105,18 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
     onBlur: () => setShowTooltip(false),
   };
 
+  const tooltipId = `nav-tooltip-${label.replace(/\s+/g, "-").toLowerCase()}`;
+
   if (href && !isBlocked) {
     return (
       <div className='relative px-2 mb-0.5'>
-        <Link href={href} className={baseClasses} {...sharedHandlers}>
+        <Link
+          href={href}
+          className={baseClasses}
+          aria-label={label}
+          aria-describedby={isCollapsed ? tooltipId : undefined}
+          {...sharedHandlers}
+        >
           {content}
         </Link>
         {tooltip}
@@ -122,6 +132,7 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
         className={baseClasses}
         aria-disabled={isBlocked}
         aria-label={label}
+        aria-describedby={isCollapsed ? tooltipId : undefined}
         {...sharedHandlers}
       >
         {content}

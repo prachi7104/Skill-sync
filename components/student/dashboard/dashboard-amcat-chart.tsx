@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import Link from 'next/link';
 import { BarChart3, ArrowUpRight } from 'lucide-react';
 import { useRef } from 'react';
+import { StatusCard } from '@/components/ui/status-card';
 
 interface DashboardAMCATChartProps {
   data: { session: string; score: number }[] | null;
@@ -106,19 +107,13 @@ export default function DashboardAMCATChart({ data }: DashboardAMCATChartProps) 
             </ResponsiveContainer>
           </>
         ) : (
-          /* Skeleton bars when data is null */
-          <div className='flex flex-col gap-3 h-full justify-end'>
-            <div className='h-5 w-20 rounded-sm bg-muted animate-shimmer bg-gradient-to-r from-muted via-border to-muted bg-[length:200%_100%]' />
-            <div className='flex items-end gap-2 h-[140px]'>
-              {[60, 80, 70, 90, 65, 85].map((h, i) => (
-                <div
-                  key={i}
-                  className='flex-1 rounded-sm bg-muted animate-shimmer bg-gradient-to-r from-muted via-border to-muted bg-[length:200%_100%]'
-                  style={{ height: `${h}%`, animationDelay: `${i * 0.1}s` }}
-                />
-              ))}
-            </div>
-          </div>
+          <StatusCard
+            variant='empty'
+            title='AMCAT history unavailable'
+            description='We could not load your recent AMCAT sessions. Try refreshing when the network is stable.'
+            actionLabel='Reload'
+            onAction={() => window.location.reload()}
+          />
         )}
       </div>
     </motion.div>

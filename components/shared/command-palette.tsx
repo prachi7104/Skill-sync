@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   CommandDialog, CommandInput, CommandList, CommandEmpty,
@@ -30,20 +30,26 @@ export default function CommandPalette({ open, onOpenChange, userRole }: Command
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const controllerRef = useRef<AbortController | null>(null);
 
   // Debounced search — 300ms delay, cancelled on new input
   const search = useCallback(async (q: string) => {
     if (q.trim().length < 2) { setResults([]); return; }
     setLoading(true);
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    const signal = controller.signal;
     try {
       const endpoint1 = safeFetch<{ drives?: Array<{ id: string; company?: string; companyName?: string; roleTitle?: string; role?: string }> }>(
-        `/api/drives?search=${encodeURIComponent(q)}&limit=4`
+        `/api/drives?search=${encodeURIComponent(q)}&limit=4`,
+        { signal }
       );
       const endpoint2 = (userRole === 'admin' || userRole === 'faculty') 
-        ? safeFetch<{ students?: Array<{ id: string; name: string; sapId: string }> }>(`/api/${userRole}/students/search?q=${encodeURIComponent(q)}&page=1&limit=4`)
+        ? safeFetch<{ students?: Array<{ id: string; name: string; sapId: string }> }>(`/api/${userRole}/students/search?q=${encodeURIComponent(q)}&page=1&limit=4`, { signal })
         : Promise.resolve({ data: null, error: null });
       const endpoint3 = userRole === 'student'
-        ? safeFetch<{ suggestions?: string[] }>(`/api/student/experiences?mode=suggestions&q=${encodeURIComponent(q)}`)
+        ? safeFetch<{ suggestions?: string[] }>(`/api/student/experiences?mode=suggestions&q=${encodeURIComponent(q)}`, { signal })
         : Promise.resolve({ data: null, error: null });
 
       const [drivesRes, studentsRes, companiesRes] = await Promise.all([endpoint1, endpoint2, endpoint3]);
@@ -90,7 +96,10 @@ export default function CommandPalette({ open, onOpenChange, userRole }: Command
       }
 
       setResults(allResults);
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
       setResults([]);
     } finally {
       setLoading(false);
@@ -107,6 +116,10 @@ export default function CommandPalette({ open, onOpenChange, userRole }: Command
   useEffect(() => {
     if (!open) { setQuery(''); setResults([]); }
   }, [open]);
+
+  useEffect(() => () => {
+    controllerRef.current?.abort();
+  }, []);
 
   const driveResults = results.filter(r => r.category === 'drive');
   const otherResults = results.filter(r => r.category !== 'drive');
