@@ -50,16 +50,16 @@ const ROLE_LINKS: Record<string, NavLink[]> = {
 
 export default function MobileNav({
   userName,
-  role = 'student',
+  userRole = 'student',
   forceOpen,
   onClose,
 }: {
   userName: string;
-  role?: 'student' | 'faculty' | 'admin';
+  userRole?: 'student' | 'faculty' | 'admin';
   forceOpen?: boolean;
   onClose?: () => void;
 }) {
-  const links = ROLE_LINKS[role] || [];
+  const links = ROLE_LINKS[userRole] || [];
   const [internalOpen, setInternalOpen] = useState(false);
   const pathname = usePathname();
   const drawerRef = useRef<HTMLDivElement | null>(null);

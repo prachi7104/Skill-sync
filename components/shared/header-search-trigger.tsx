@@ -10,10 +10,10 @@ const CommandPalette = dynamic(
 );
 
 interface HeaderSearchTriggerProps {
-  role: 'student' | 'faculty' | 'admin';
+  userRole: 'student' | 'faculty' | 'admin';
 }
 
-export default function HeaderSearchTrigger({ role }: HeaderSearchTriggerProps) {
+export default function HeaderSearchTrigger({ userRole }: HeaderSearchTriggerProps) {
   const [open, setOpen] = useState(false);
   const [isMac, setIsMac] = useState(false);
 
@@ -50,7 +50,7 @@ export default function HeaderSearchTrigger({ role }: HeaderSearchTriggerProps) 
         <CommandPalette
           open={open}
           onOpenChange={setOpen}
-          role={role}
+          userRole={userRole}
         />
       )}
     </>

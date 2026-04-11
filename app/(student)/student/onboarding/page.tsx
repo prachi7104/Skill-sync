@@ -143,8 +143,9 @@ function uid(): string {
   return Math.random().toString(36).slice(2, 9);
 }
 
-function toFormFromStudent(student: Record<string, unknown> | null): ProfileForm {
-  if (!student) {
+function toFormFromStudent(student: unknown): ProfileForm {
+  const s = student as Record<string, unknown> | null;
+  if (!s) {
     return {
       sapId: "",
       rollNo: "",
@@ -168,9 +169,9 @@ function toFormFromStudent(student: Record<string, unknown> | null): ProfileForm
     };
   }
 
-  const skills = (student.skills as Array<{ name: string }> | null) ?? [];
+  const skills = (s.skills as Array<{ name: string }> | null) ?? [];
   const projects =
-    (student.projects as Array<{
+    (s.projects as Array<{
       title: string;
       description?: string;
       techStack?: string[];
@@ -179,7 +180,7 @@ function toFormFromStudent(student: Record<string, unknown> | null): ProfileForm
       endDate?: string;
     }> | null) ?? [];
   const work =
-    (student.workExperience as Array<{
+    (s.workExperience as Array<{
       company: string;
       role: string;
       description?: string;
@@ -187,12 +188,12 @@ function toFormFromStudent(student: Record<string, unknown> | null): ProfileForm
       endDate?: string;
     }> | null) ?? [];
   const certs =
-    (student.certifications as Array<{ title: string; issuer?: string; year?: string }> | null) ?? [];
+    (s.certifications as Array<{ title: string; issuer?: string; year?: string }> | null) ?? [];
   const coding =
-    (student.codingProfiles as Array<{ platform: string; username?: string; url?: string }> | null) ?? [];
+    (s.codingProfiles as Array<{ platform: string; username?: string; url?: string }> | null) ?? [];
   const research =
-    (student.researchPapers as Array<{ title: string; journal?: string; year?: string; url?: string }> | null) ?? [];
-  const branchRaw = (student.branch as string | null) ?? "";
+    (s.researchPapers as Array<{ title: string; journal?: string; year?: string; url?: string }> | null) ?? [];
+  const branchRaw = (s.branch as string | null) ?? "";
   const normalizedBranch = branchRaw ? normalizeBranch(branchRaw) : "";
   const branchForForm = normalizedBranch
     ? UPES_BRANCHES.some((option) => option.value === normalizedBranch)
@@ -201,17 +202,17 @@ function toFormFromStudent(student: Record<string, unknown> | null): ProfileForm
     : "";
 
   return {
-    sapId: (student.sapId as string) ?? "",
-    rollNo: (student.rollNo as string) ?? "",
-    phone: (student.phone as string) ?? "",
-    linkedin: (student.linkedin as string) ?? "",
+    sapId: (s.sapId as string) ?? "",
+    rollNo: (s.rollNo as string) ?? "",
+    phone: (s.phone as string) ?? "",
+    linkedin: (s.linkedin as string) ?? "",
     portfolio: "",
-    cgpa: student.cgpa != null ? String(student.cgpa) : "",
+    cgpa: s.cgpa != null ? String(s.cgpa) : "",
     branch: branchForForm,
-    batchYear: student.batchYear != null ? String(student.batchYear) : "",
-    semester: student.semester != null ? String(student.semester) : "",
-    tenthPercentage: student.tenthPercentage != null ? String(student.tenthPercentage) : "",
-    twelfthPercentage: student.twelfthPercentage != null ? String(student.twelfthPercentage) : "",
+    batchYear: s.batchYear != null ? String(s.batchYear) : "",
+    semester: s.semester != null ? String(s.semester) : "",
+    tenthPercentage: s.tenthPercentage != null ? String(s.tenthPercentage) : "",
+    twelfthPercentage: s.twelfthPercentage != null ? String(s.twelfthPercentage) : "",
     skills: skills.map((s) => s.name),
     projects: projects.map((p) => ({
       id: uid(),
@@ -250,8 +251,8 @@ function toFormFromStudent(student: Record<string, unknown> | null): ProfileForm
       year: r.year ?? "",
       url: r.url ?? "",
     })),
-    softSkills: (student.softSkills as string[] | null) ?? [],
-    achievements: ((student.achievements as Array<{ title: string }> | null) ?? [])
+    softSkills: (s.softSkills as string[] | null) ?? [],
+    achievements: ((s.achievements as Array<{ title: string }> | null) ?? [])
       .map((a) => a.title)
       .join("\n"),
   };
@@ -342,7 +343,7 @@ export default function OnboardingPage() {
 
   const [activeStep, setActiveStep] = useState<StepKey>("identity");
   const [form, setForm] = useState<ProfileForm>(() =>
-    toFormFromStudent((student as Record<string, unknown> | null) ?? null),
+    toFormFromStudent(student ?? null),
   );
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
@@ -361,7 +362,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (!student) return;
     isUserChangeRef.current = false;
-    const newForm = toFormFromStudent(student as unknown as Record<string, unknown>);
+    const newForm = toFormFromStudent(student);
     setForm(newForm);
 
     const newSkills = newForm.skills;

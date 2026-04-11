@@ -118,8 +118,9 @@ export async function POST(req: NextRequest) {
                 },
                 (error, result) => {
                     if (error) {
+                        // Log full error server-side; expose only a generic message to the client
                         console.error("[Cloudinary] Upload error:", error);
-                        reject(new Error(`Cloudinary upload failed: ${error.message}`));
+                        reject(new Error("Resume upload failed. Please try again."));
                     } else {
                         resolve({ secure_url: result?.secure_url });
                     }

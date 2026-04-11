@@ -33,7 +33,7 @@ export default async function FacultyLayout({ children }: { children: React.Reac
 
         {/* Center: Search trigger — grows to fill space on desktop */}
         <div className='hidden sm:flex flex-1 justify-center px-4 max-w-xs lg:max-w-sm mx-auto'>
-          <HeaderSearchTrigger role='faculty' />
+          <HeaderSearchTrigger userRole='faculty' />
         </div>
 
         {/* Right: User info + controls */}
@@ -43,9 +43,9 @@ export default async function FacultyLayout({ children }: { children: React.Reac
             <span className='text-primary/60 font-normal ml-1.5 capitalize'>({role})</span>
           </span>
           <div className='sm:hidden'>
-            <HeaderSearchTrigger role='faculty' />
+            <HeaderSearchTrigger userRole='faculty' />
           </div>
-          <MobileNav userName={name} role='faculty' />
+          <MobileNav userName={name} userRole='faculty' />
           <ThemeToggle />
           <SignOutButton />
         </div>
@@ -67,7 +67,7 @@ export default async function FacultyLayout({ children }: { children: React.Reac
         </main>
 
       </div>
-      <BottomTabBar role='faculty' userName={name} />
+      <BottomTabBar userRole='faculty' userName={name} />
     </div>
   );
 }

@@ -35,7 +35,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
         {/* Center: Search trigger — grows to fill space on desktop */}
         <div className='hidden sm:flex flex-1 justify-center px-4 max-w-xs lg:max-w-sm mx-auto'>
-          <HeaderSearchTrigger role='admin' />
+          <HeaderSearchTrigger userRole='admin' />
         </div>
 
         {/* Right: User info + controls */}
@@ -45,9 +45,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <span className='text-primary/60 font-normal ml-1'>(admin)</span>
           </span>
           <div className='sm:hidden'>
-            <HeaderSearchTrigger role='admin' />
+            <HeaderSearchTrigger userRole='admin' />
           </div>
-          <MobileNav userName={name} role='admin' />
+          <MobileNav userName={name} userRole='admin' />
           <ThemeToggle />
           <SignOutButton />
         </div>
@@ -68,7 +68,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </main>
 
       </div>
-      <BottomTabBar role='admin' userName={name} />
+      <BottomTabBar userRole='admin' userName={name} />
     </div>
   );
 }

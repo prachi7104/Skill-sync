@@ -49,14 +49,14 @@ const TABS_BY_ROLE: Record<string, Tab[]> = {
 };
 
 interface BottomTabBarProps {
-  role: 'student' | 'faculty' | 'admin';
+  userRole: 'student' | 'faculty' | 'admin';
   userName: string;
 }
 
-export default function BottomTabBar({ role, userName }: BottomTabBarProps) {
+export default function BottomTabBar({ userRole, userName }: BottomTabBarProps) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const tabs = TABS_BY_ROLE[role] ?? STUDENT_TABS;
+  const tabs = TABS_BY_ROLE[userRole] ?? STUDENT_TABS;
 
   const isTabActive = (tab: Tab) => {
     if (!tab.href) return false;
@@ -102,7 +102,7 @@ export default function BottomTabBar({ role, userName }: BottomTabBarProps) {
                 {/* Active background pill */}
                 {active && (
                   <motion.div
-                    layoutId={`tab-active-${role}`}
+                    layoutId={`tab-active-${userRole}`}
                     className='absolute inset-x-3 top-1.5 h-8 rounded-lg bg-primary/10'
                     transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
                   />
@@ -130,7 +130,7 @@ export default function BottomTabBar({ role, userName }: BottomTabBarProps) {
       {drawerOpen && (
         <MobileNav
           userName={userName}
-          role={role}
+          userRole={userRole}
           forceOpen={drawerOpen}
           onClose={() => setDrawerOpen(false)}
         />

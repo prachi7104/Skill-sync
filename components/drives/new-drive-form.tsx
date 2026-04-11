@@ -42,6 +42,8 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seasons, setSeasons] = useState<Array<{ id: string; name: string }>>([]);
+  const [loadingSeasons, setLoadingSeasons] = useState(true);
+  const todayISO = new Date().toISOString().split("T")[0];
 
   const {
     register,
@@ -71,6 +73,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
 
   useEffect(() => {
     async function loadSeasons() {
+      setLoadingSeasons(true);
       const { data, error } = await safeFetch<{ seasons: Array<{ id: string; name: string }> }>(
         "/api/seasons"
       );
@@ -80,6 +83,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
       } else {
         setSeasons(data?.seasons ?? []);
       }
+      setLoadingSeasons(false);
     }
 
     void loadSeasons();
@@ -218,17 +222,20 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       Application Deadline
                     </Label>
-                    <Input id="deadline" type="date" {...register("deadline")} />
+                    <Input id="deadline" type="date" min={todayISO} {...register("deadline")} />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="seasonId">Season</Label>
                     <select
                       id="seasonId"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      disabled={loadingSeasons}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
                       {...register("seasonId")}
                     >
-                      <option value="">No season</option>
+                      <option value="">
+                        {loadingSeasons ? "Loading seasons…" : "No season"}
+                      </option>
                       {seasons.map((season) => (
                         <option key={season.id} value={season.id}>
                           {season.name}

@@ -13,7 +13,7 @@ import { safeFetch } from '@/lib/api';
 interface CommandPaletteProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  role: 'student' | 'faculty' | 'admin';
+  userRole: 'student' | 'faculty' | 'admin';
 }
 
 interface SearchResult {
@@ -25,7 +25,7 @@ interface SearchResult {
   category: 'drive' | 'student' | 'company';
 }
 
-export default function CommandPalette({ open, onOpenChange, role }: CommandPaletteProps) {
+export default function CommandPalette({ open, onOpenChange, userRole }: CommandPaletteProps) {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -39,10 +39,10 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
       const endpoint1 = safeFetch<{ drives?: Array<{ id: string; company?: string; companyName?: string; roleTitle?: string; role?: string }> }>(
         `/api/drives?search=${encodeURIComponent(q)}&limit=4`
       );
-      const endpoint2 = (role === 'admin' || role === 'faculty') 
-        ? safeFetch<{ students?: Array<{ id: string; name: string; sapId: string }> }>(`/api/${role}/students/search?q=${encodeURIComponent(q)}&page=1&limit=4`)
+      const endpoint2 = (userRole === 'admin' || userRole === 'faculty') 
+        ? safeFetch<{ students?: Array<{ id: string; name: string; sapId: string }> }>(`/api/${userRole}/students/search?q=${encodeURIComponent(q)}&page=1&limit=4`)
         : Promise.resolve({ data: null, error: null });
-      const endpoint3 = role === 'student'
+      const endpoint3 = userRole === 'student'
         ? safeFetch<{ suggestions?: string[] }>(`/api/student/experiences?mode=suggestions&q=${encodeURIComponent(q)}`)
         : Promise.resolve({ data: null, error: null });
 
@@ -56,7 +56,7 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
             id: d.id,
             label: d.companyName ?? d.company ?? 'Drive',
             sublabel: d.role ?? d.roleTitle,
-            href: role === 'admin' ? `/admin/drives` : role === 'faculty' ? `/faculty/drives` : `/student/drives`,
+            href: userRole === 'admin' ? `/admin/drives` : userRole === 'faculty' ? `/faculty/drives` : `/student/drives`,
             icon: Briefcase,
             category: 'drive',
           });
@@ -64,7 +64,7 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
       }
 
       // Process students or companies
-      if (role === 'student' && companiesRes.data?.suggestions) {
+      if (userRole === 'student' && companiesRes.data?.suggestions) {
         companiesRes.data.suggestions.forEach((name: string, index: number) => {
             const companySlug = normalizeCompanyName(name);
             allResults.push({
@@ -76,13 +76,13 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
               category: 'company',
             });
           });
-      } else if ((role === 'admin' || role === 'faculty') && studentsRes.data?.students) {
+      } else if ((userRole === 'admin' || userRole === 'faculty') && studentsRes.data?.students) {
           studentsRes.data.students.forEach((s) => {
             allResults.push({
               id: s.id,
               label: s.name,
               sublabel: s.sapId,
-              href: role === 'admin' ? `/admin/students` : `/faculty/students`,
+              href: userRole === 'admin' ? `/admin/students` : `/faculty/students`,
               icon: GraduationCap,
               category: 'student',
             });
@@ -95,7 +95,7 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
     } finally {
       setLoading(false);
     }
-  }, [role]);
+  }, [userRole]);
 
   // Debounce
   useEffect(() => {
@@ -161,7 +161,7 @@ export default function CommandPalette({ open, onOpenChange, role }: CommandPale
         )}
         {driveResults.length > 0 && otherResults.length > 0 && <CommandSeparator />}
         {otherResults.length > 0 && (
-          <CommandGroup heading={role === 'student' ? 'Companies' : 'Students'}>
+          <CommandGroup heading={userRole === 'student' ? 'Companies' : 'Students'}>
             {otherResults.map(result => (
               <CommandItem
                 key={result.id}

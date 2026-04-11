@@ -117,7 +117,7 @@ export default async function StudentLayout({
                         </span>
                     </div>
                     <div className='hidden sm:flex flex-1 justify-center px-4 max-w-xs lg:max-w-sm mx-auto'>
-                        <HeaderSearchTrigger role='student' />
+                        <HeaderSearchTrigger userRole='student' />
                     </div>
                     <div className='flex items-center gap-2 sm:gap-3'>
                         <span className='hidden md:block text-[13px] font-medium text-muted-foreground'>
@@ -125,9 +125,9 @@ export default async function StudentLayout({
                             <span className='text-primary/60 font-normal ml-1'>(student)</span>
                         </span>
                         <div className='sm:hidden'>
-                            <HeaderSearchTrigger role='student' />
+                            <HeaderSearchTrigger userRole='student' />
                         </div>
-                        <MobileNav userName={user.name!} role='student' />
+                        <MobileNav userName={user.name!} userRole='student' />
                         <ThemeToggle />
                         <SignOutButton />
                     </div>
@@ -149,7 +149,7 @@ export default async function StudentLayout({
                     </main>
 
                 </div>
-                <BottomTabBar role='student' userName={user.name ?? ''} />
+                <BottomTabBar userRole='student' userName={user.name ?? ''} />
             </div>
         </StudentProvider>
     );

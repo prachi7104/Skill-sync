@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { students, users } from "@/lib/db/schema";
-import { eq, and, ilike, or, count, sql } from "drizzle-orm";
+import { eq, and, ilike, or, count, sql, SQL } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const pageValue = Number(url.searchParams.get("page") || "1");
     const page = Number.isFinite(pageValue) && pageValue > 0 ? Math.floor(pageValue) : 1;
 
-    const whereConditions: any[] = [eq(students.collegeId, user.collegeId)];
+    const whereConditions: SQL[] = [eq(students.collegeId, user.collegeId)];
 
     if (q.trim()) {
       whereConditions.push(
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
           ilike(users.name, `%${q}%`),
           ilike(users.email, `%${q}%`),
           ilike(students.sapId, `%${q}%`)
-        ) as any
+        )!
       );
     }
 

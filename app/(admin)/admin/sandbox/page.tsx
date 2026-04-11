@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ export default function AdminSandboxPage() {
   const [result, setResult] = useState("");
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
   const [studentDailyLimit, setStudentDailyLimit] = useState("3");
+  const [savingConfig, setSavingConfig] = useState(false);
 
   useEffect(() => {
     async function loadConfig() {
@@ -48,13 +50,26 @@ export default function AdminSandboxPage() {
   }
 
   async function saveConfig() {
-    const res = await fetch("/api/admin/sandbox-config", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ studentDailyLimit: Number(studentDailyLimit) }),
-    });
-    const json = await res.json();
-    setConfig(json.config ?? null);
+    setSavingConfig(true);
+    try {
+      const res = await fetch("/api/admin/sandbox-config", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentDailyLimit: Number(studentDailyLimit) }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        toast.error(d.error ?? "Failed to save config");
+        return;
+      }
+      const json = await res.json();
+      setConfig(json.config ?? null);
+      toast.success("Sandbox config saved");
+    } catch {
+      toast.error("Network error — could not save config");
+    } finally {
+      setSavingConfig(false);
+    }
   }
 
   return (
@@ -108,7 +123,9 @@ export default function AdminSandboxPage() {
               <Label>Student Daily Limit</Label>
               <Input value={studentDailyLimit} onChange={(e) => setStudentDailyLimit(e.target.value)} />
             </div>
-            <Button onClick={saveConfig}>Save Config</Button>
+            <Button onClick={saveConfig} disabled={savingConfig}>
+              {savingConfig ? "Saving…" : "Save Config"}
+            </Button>
             <pre className="whitespace-pre-wrap text-xs text-muted-foreground">{JSON.stringify(config, null, 2)}</pre>
           </CardContent>
         </Card>

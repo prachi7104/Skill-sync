@@ -1,7 +1,8 @@
 {
     "extends": [
         "next/core-web-vitals",
-        "next/typescript"
+        "next/typescript",
+        "plugin:jsx-a11y/recommended"
     ],
     "rules": {
         "@typescript-eslint/no-explicit-any": "off",
@@ -12,7 +13,12 @@
         "react-hooks/exhaustive-deps": "off",
         "react-hooks/rules-of-hooks": "off",
         "prefer-const": "warn",
-        "no-var": "error"
+        "no-var": "error",
+        "jsx-a11y/click-events-have-key-events": "warn",
+        "jsx-a11y/no-noninteractive-element-interactions": "warn",
+        "jsx-a11y/anchor-is-valid": "warn",
+        "jsx-a11y/aria-role": "warn",
+        "jsx-a11y/label-has-associated-control": "warn"
     },
     "ignorePatterns": [
         "node_modules/",

@@ -351,6 +351,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
     } else {
       setResults([]);
       setTotal(0);
+      setError(null);
     }
   }, [searchQuery, selectedBranch, selectedBatchYear, debouncedSearch]);
 

@@ -468,6 +468,7 @@ export default function AdminUsersPage() {
                   {COMPONENTS.map(({ key, label, desc, locked }) => (
                     <label
                       key={key}
+                      htmlFor={`new-component-${key}`}
                       className={cn(
                         "flex items-start gap-2.5 rounded-md border p-3 cursor-pointer transition-colors",
                         locked ? "opacity-60 cursor-not-allowed bg-muted" : "hover:bg-muted/50",
@@ -475,11 +476,13 @@ export default function AdminUsersPage() {
                       )}
                     >
                       <input
+                        id={`new-component-${key}`}
                         type="checkbox"
                         checked={locked || newGrantedComponents.includes(key)}
                         disabled={!!locked}
                         onChange={() => !locked && toggleNewComponent(key)}
                         className="h-4 w-4 mt-0.5 shrink-0"
+                        aria-label={label}
                       />
                       <div>
                         <p className="text-sm font-medium leading-none">{label}</p>
@@ -589,12 +592,14 @@ export default function AdminUsersPage() {
                   />
                 </div>
               </div>
-              <label className="flex items-center gap-2 text-sm">
+              <label htmlFor="edit-is-active" className="flex items-center gap-2 text-sm">
                 <input
+                  id="edit-is-active"
                   type="checkbox"
                   checked={editIsActive}
                   onChange={(e) => setEditIsActive(e.target.checked)}
                   className="h-4 w-4"
+                  aria-label="Is Active"
                 />
                 Is Active
               </label>
@@ -602,6 +607,7 @@ export default function AdminUsersPage() {
                 {COMPONENTS.map(({ key, label, desc, locked }) => (
                   <label
                     key={key}
+                    htmlFor={`edit-component-${key}`}
                     className={cn(
                       "flex items-start gap-2.5 rounded-md border p-3 cursor-pointer transition-colors",
                       locked ? "opacity-60 cursor-not-allowed bg-muted" : "hover:bg-muted/50",
@@ -609,11 +615,13 @@ export default function AdminUsersPage() {
                     )}
                   >
                     <input
+                      id={`edit-component-${key}`}
                       type="checkbox"
                       checked={locked || editComponents.includes(key)}
                       disabled={!!locked}
                       onChange={() => !locked && toggleEditComponent(key)}
                       className="h-4 w-4 mt-0.5 shrink-0"
+                      aria-label={label}
                     />
                     <div>
                       <p className="text-sm font-medium leading-none">{label}</p>
