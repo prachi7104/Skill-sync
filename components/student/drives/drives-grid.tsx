@@ -57,9 +57,9 @@ export default function DrivesGrid({ drives, rankingMap }: DrivesGridProps) {
       />
 
       {filtered.length === 0 ? (
-        <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-white py-20 dark:border-slate-800 dark:bg-slate-900'>
-          <Briefcase size={36} className='mb-3 text-zinc-400 opacity-40 dark:text-slate-500' />
-          <p className='text-sm font-medium text-zinc-500 dark:text-slate-400'>No drives match your filters</p>
+        <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/40 py-20'>
+          <Briefcase size={36} className='mb-3 text-muted-foreground opacity-40' />
+          <p className='text-sm font-medium text-muted-foreground'>No drives match your filters</p>
           <button
             onClick={() => { setQuery(''); setUrgentOnly(false); }}
             className='mt-3 text-xs text-primary hover:underline'
