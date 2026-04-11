@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Check,
   Lock,
@@ -340,6 +340,8 @@ const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
 export default function OnboardingPage() {
   const { student, isLoading, refresh } = useStudent();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
 
   const [activeStep, setActiveStep] = useState<StepKey>("identity");
   const [form, setForm] = useState<ProfileForm>(() =>
@@ -380,6 +382,12 @@ export default function OnboardingPage() {
   const allRequired = stepStates
     .filter((s) => s.required.length > 0)
     .every((s) => s.done);
+
+  useEffect(() => {
+    if (!allRequired) return;
+    const target = returnTo ?? "/student/dashboard";
+    router.replace(target);
+  }, [allRequired, returnTo, router]);
 
   const currentStepIndex = STEPS.findIndex((s) => s.key === activeStep);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { safeFetch, postJSON } from "@/lib/api";
@@ -41,6 +41,7 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const errorRef = useRef<HTMLDivElement | null>(null);
   const [seasons, setSeasons] = useState<Array<{ id: string; name: string }>>([]);
   const [loadingSeasons, setLoadingSeasons] = useState(true);
   const todayISO = new Date().toISOString().split("T")[0];
@@ -118,6 +119,9 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
 
     if (error) {
       setError(error);
+      setTimeout(() => {
+        errorRef.current?.focus();
+      }, 0);
     } else {
       onSuccess?.(data?.drive?.id ?? "");
       toast.success("Drive created successfully");
@@ -274,7 +278,17 @@ export function NewDriveForm({ onSuccess }: NewDriveFormProps) {
 
             {step === 2 && (
               <div className="space-y-8 animate-in fade-in duration-300">
-                {error && <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm font-medium text-destructive">{error}</div>}
+                {error && (
+                  <div
+                    ref={errorRef}
+                    role="alert"
+                    aria-live="assertive"
+                    tabIndex={-1}
+                    className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm font-medium text-destructive"
+                  >
+                    {error}
+                  </div>
+                )}
 
                 <div className="space-y-3">
                   <Label htmlFor="rawJd" className="text-base font-semibold">Job Description *</Label>

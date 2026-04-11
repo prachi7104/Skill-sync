@@ -56,7 +56,7 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
           drives.slice(0, 4).map(drive => (
             <Link
               key={drive.id}
-              href={`/student/drives`}
+              href={`/student/drives/${drive.id}`}
               className='group flex items-start justify-between rounded-lg border border-zinc-200 p-3 transition-all duration-150 hover:border-primary/30 hover:bg-primary/5 dark:border-slate-800 dark:hover:border-primary/30 dark:hover:bg-primary/10'
             >
               <div className='min-w-0 flex-1'>

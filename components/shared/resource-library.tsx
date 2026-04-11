@@ -319,21 +319,27 @@ export default function ResourceLibrary() {
               <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search resources" className="border-border bg-muted/20 text-foreground" />
               {(viewerRole === "faculty" || viewerRole === "admin") ? (
                 <div className="grid grid-cols-2 gap-2">
-                  {(["all", "published", "draft", "archived"] as const).map((statusKey) => (
-                    <button
+                {(["all", "published", "draft", "archived"] as const).map((statusKey) => {
+                  const isActive = statusFilter === statusKey;
+                  return (
+                    <Button
                       key={statusKey}
                       type="button"
+                      variant="ghost"
+                      size="sm"
+                      aria-pressed={isActive}
                       onClick={() => setStatusFilter(statusKey)}
                       className={cn(
-                        "rounded-md px-3 py-2 text-xs font-semibold",
-                        statusFilter === statusKey
-                          ? "bg-primary text-foreground"
-                          : "bg-muted/20 text-muted-foreground hover:bg-muted"
+                        "justify-start rounded-md px-3 py-2 text-xs font-semibold text-left",
+                        isActive
+                          ? "bg-primary text-primary-foreground hover:bg-primary/80"
+                          : "text-muted-foreground hover:bg-muted/80"
                       )}
                     >
                       {statusKey === "all" ? "All" : statusKey.charAt(0).toUpperCase() + statusKey.slice(1)}
-                    </button>
-                  ))}
+                    </Button>
+                  );
+                })}
                 </div>
               ) : null}
               <div className="space-y-2">
@@ -347,9 +353,27 @@ export default function ResourceLibrary() {
                 >
                   All Categories
                 </button>
-                {sideCategories.map((item) => (
-                  <button key={item} type="button" onClick={() => setCategory(item)} className={cn("w-full rounded-md px-4 py-3 text-left text-sm font-semibold", category === item ? "bg-primary text-foreground" : "bg-muted/20 text-muted-foreground hover:bg-muted")}>{formatCategoryLabel(item)}</button>
-                ))}
+                {sideCategories.map((item) => {
+                  const isActive = category === item;
+                  return (
+                    <Button
+                      key={item}
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      aria-pressed={isActive}
+                      onClick={() => setCategory(item)}
+                      className={cn(
+                        "w-full justify-start rounded-md px-4 py-3 text-left text-sm font-semibold",
+                        isActive
+                          ? "bg-primary text-primary-foreground hover:bg-primary/80"
+                          : "text-muted-foreground hover:bg-muted/80"
+                      )}
+                    >
+                      {formatCategoryLabel(item)}
+                    </Button>
+                  );
+                })}
               </div>
             </aside>
 

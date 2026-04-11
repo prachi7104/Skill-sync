@@ -106,6 +106,7 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
   };
 
   const tooltipId = `nav-tooltip-${label.replace(/\s+/g, "-").toLowerCase()}`;
+  const computedTabIndex = isBlocked ? -1 : undefined;
 
   if (href && !isBlocked) {
     return (
@@ -115,6 +116,7 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
           className={baseClasses}
           aria-label={label}
           aria-describedby={isCollapsed ? tooltipId : undefined}
+          tabIndex={computedTabIndex}
           {...sharedHandlers}
         >
           {content}
@@ -133,6 +135,7 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
         aria-disabled={isBlocked}
         aria-label={label}
         aria-describedby={isCollapsed ? tooltipId : undefined}
+        tabIndex={computedTabIndex}
         {...sharedHandlers}
       >
         {content}

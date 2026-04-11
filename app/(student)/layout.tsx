@@ -13,6 +13,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { TriangleAlert } from "lucide-react";
 import HeaderSearchTrigger from "@/components/shared/header-search-trigger";
 import BottomTabBar from "@/components/shared/bottom-tab-bar";
+import { computeOnboardingProgress } from "@/lib/utils/onboarding";
 
 function deriveSapFromEmail(email: string): string | null {
     if (!email.toLowerCase().includes("stu.upes.ac.in")) return null;
@@ -81,24 +82,7 @@ export default async function StudentLayout({
         );
     }
 
-    const onboardingRequired = !profile?.sapId ||
-        !profile?.rollNo ||
-        !profile?.cgpa ||
-        !profile?.branch ||
-        !profile?.batchYear ||
-        typeof profile?.tenthPercentage !== "number" ||
-        typeof profile?.twelfthPercentage !== "number";
-
-    const requiredCount = [
-        !!profile?.sapId,
-        !!profile?.rollNo,
-        !!profile?.cgpa,
-        !!profile?.branch,
-        !!profile?.batchYear,
-        typeof profile?.tenthPercentage === "number",
-        typeof profile?.twelfthPercentage === "number",
-    ].filter(Boolean).length;
-    const onboardingProgress = Math.round((requiredCount / 7) * 100);
+    const { progress: onboardingProgress, onboardingRequired } = computeOnboardingProgress(profile);
 
     return (
         <StudentProvider

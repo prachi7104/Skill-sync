@@ -6,22 +6,14 @@ import DashboardAMCATChart from '@/components/student/dashboard/dashboard-amcat-
 import DashboardDrivesPanel from '@/components/student/dashboard/dashboard-drives-panel';
 import DashboardOnboardingCard from '@/components/student/dashboard/dashboard-onboarding-card';
 import DashboardStatsRow from '@/components/student/dashboard/dashboard-stats-row';
+import { computeOnboardingProgress } from '@/lib/utils/onboarding';
 
 export default async function StudentDashboardPage() {
   const user = await requireRole(['student']);
   const profile = await getStudentProfile(user.id);
 
   // Compute onboarding progress (same logic as layout)
-  const onboardingFields = [
-    !!profile?.sapId, !!profile?.rollNo, !!profile?.cgpa,
-    !!profile?.branch, !!profile?.batchYear,
-    typeof profile?.tenthPercentage === 'number',
-    typeof profile?.twelfthPercentage === 'number',
-  ];
-  const onboardingProgress = Math.round(
-    (onboardingFields.filter(Boolean).length / onboardingFields.length) * 100
-  );
-  const onboardingRequired = onboardingProgress < 100;
+  const { progress: onboardingProgress, onboardingRequired } = computeOnboardingProgress(profile);
 
   // Fetch AMCAT data — graceful failure
   let amcatData: { session: string; score: number }[] | null = null;

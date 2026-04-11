@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { computeOnboardingProgress } from "@/lib/utils/onboarding";
 
 /**
  * Tests for the student profile auto-creation fix (college_id NOT NULL).
@@ -173,16 +174,9 @@ describe("layoutRendersWithoutProfile", () => {
       twelfthPercentage: null,
     };
 
-    const onboardingRequired =
-      !profile.sapId ||
-      !profile.rollNo ||
-      !profile.cgpa ||
-      !profile.branch ||
-      !profile.batchYear ||
-      typeof profile.tenthPercentage !== "number" ||
-      typeof profile.twelfthPercentage !== "number";
+  const { onboardingRequired } = computeOnboardingProgress(profile);
 
-    expect(onboardingRequired).toBe(true);
+  expect(onboardingRequired).toBe(true);
   });
 
   it("computes onboardingProgress = 0 when no fields are filled", () => {
@@ -196,20 +190,10 @@ describe("layoutRendersWithoutProfile", () => {
       twelfthPercentage: null,
     };
 
-    const requiredCount = [
-      !!profile.sapId,
-      !!profile.rollNo,
-      !!profile.cgpa,
-      !!profile.branch,
-      !!profile.batchYear,
-      typeof profile.tenthPercentage === "number",
-      typeof profile.twelfthPercentage === "number",
-    ].filter(Boolean).length;
+  const { progress: onboardingProgress, onboardingRequired } = computeOnboardingProgress(profile);
 
-    const onboardingProgress = Math.round((requiredCount / 7) * 100);
-
-    expect(requiredCount).toBe(0);
-    expect(onboardingProgress).toBe(0);
+  expect(onboardingRequired).toBe(true);
+  expect(onboardingProgress).toBe(0);
   });
 });
 

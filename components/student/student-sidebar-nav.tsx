@@ -33,11 +33,13 @@ export default function StudentSidebarNav() {
         const isActive = pathname.startsWith(link.href);
 
         const handleBlockedClick = () => {
+          const returnTo = link.href;
           toast.info('Complete your profile setup first', {
             description: 'Fill in your SAP ID, roll number, academic details to unlock all features.',
             action: {
               label: 'Go to Onboarding',
-              onClick: () => router.push('/student/onboarding'),
+              onClick: () =>
+                router.push(`/student/onboarding?returnTo=${encodeURIComponent(returnTo)}`),
             },
           });
         };
