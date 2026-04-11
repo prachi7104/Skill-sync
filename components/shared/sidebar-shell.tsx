@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useSidebarStore } from '@/lib/stores/sidebar-store';
 import { cn } from '@/lib/utils';
@@ -42,20 +42,14 @@ export default function SidebarShell({ children, label }: SidebarShellProps) {
         'h-14 shrink-0 flex items-center border-b border-sidebar-border',
         isCollapsed ? 'justify-center px-0' : 'px-4'
       )}>
-        <AnimatePresence mode='wait'>
-          {!isCollapsed && (
-            <motion.span
-              key='label'
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -6 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
-              className='text-[11px] font-black uppercase tracking-[0.18em] text-sidebar-fg-muted select-none whitespace-nowrap overflow-hidden'
-            >
-              {label ?? 'Menu'}
-            </motion.span>
-          )}
-        </AnimatePresence>
+        <motion.span
+          initial={false}
+          animate={{ opacity: isCollapsed ? 0 : 1, x: isCollapsed ? -6 : 0, maxWidth: isCollapsed ? 0 : 160 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className='overflow-hidden whitespace-nowrap text-[11px] font-black uppercase tracking-[0.18em] text-sidebar-fg-muted select-none'
+        >
+          {label ?? 'Menu'}
+        </motion.span>
       </div>
 
       {/* Navigation items area — scrollable */}

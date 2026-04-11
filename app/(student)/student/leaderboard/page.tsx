@@ -182,13 +182,13 @@ export default function StudentLeaderboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 pb-32 pt-6 text-zinc-900 animate-in fade-in duration-500 sm:px-6 md:p-10 dark:text-slate-100">
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="mx-auto max-w-6xl space-y-8 px-4 pb-32 pt-6 text-foreground animate-in fade-in duration-500 sm:px-6 md:p-10">
+      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-slate-400">AMCAT Leaderboard</p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-zinc-900 dark:text-slate-100 md:text-4xl">Published session rankings</h1>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-slate-300">Top performers from published AMCAT sessions, with branch filters and CSV export.</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">AMCAT Leaderboard</p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-foreground md:text-4xl">Published session rankings</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Top performers from published AMCAT sessions, with branch filters and CSV export.</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -201,7 +201,7 @@ export default function StudentLeaderboardPage() {
               }}
               disabled={!hasData || loading}
             >
-              <SelectTrigger className="w-[260px] border-zinc-200 bg-white text-zinc-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
+              <SelectTrigger className="w-[260px] border-border bg-background text-foreground">
                 <SelectValue placeholder="Select session" />
               </SelectTrigger>
               <SelectContent>
@@ -221,7 +221,7 @@ export default function StudentLeaderboardPage() {
               }}
               disabled={!hasData || loading || branches.length === 0}
             >
-              <SelectTrigger className="w-[180px] border-zinc-200 bg-white text-zinc-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
+              <SelectTrigger className="w-[180px] border-border bg-background text-foreground">
                 <SelectValue placeholder="All branches" />
               </SelectTrigger>
               <SelectContent>
@@ -236,7 +236,7 @@ export default function StudentLeaderboardPage() {
 
             <Button
               variant="outline"
-              className="gap-2 border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+              className="gap-2 border-border bg-background text-foreground hover:bg-muted"
               onClick={downloadCsv}
               disabled={!hasData || loading || top50.length === 0}
             >
@@ -251,9 +251,9 @@ export default function StudentLeaderboardPage() {
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : error ? (
-        <div className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive dark:bg-destructive/10">{error}</div>
+        <div className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
       ) : !hasData ? (
-        <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-6 text-sm text-zinc-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+        <div className="rounded-2xl border border-border bg-card px-4 py-6 text-sm text-muted-foreground">
           No published AMCAT data is available yet.
         </div>
       ) : (
@@ -265,7 +265,8 @@ export default function StudentLeaderboardPage() {
             <Stat title="Gamma" value={stats.gamma} />
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -311,6 +312,7 @@ export default function StudentLeaderboardPage() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </div>
         </>
       )}
@@ -320,9 +322,9 @@ export default function StudentLeaderboardPage() {
 
 function Stat({ title, value }: { title: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-slate-400">{title}</p>
-      <p className="mt-2 text-2xl font-black text-zinc-900 dark:text-slate-100">{value}</p>
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{title}</p>
+      <p className="mt-2 text-2xl font-black text-foreground">{value}</p>
     </div>
   );
 }

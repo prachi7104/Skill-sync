@@ -392,7 +392,7 @@ export default function ResourceLibrary() {
       </Tabs>
 
       <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="max-w-3xl border-border bg-muted/20 text-foreground">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-[48rem] border-border bg-muted/20 text-foreground sm:w-[calc(100vw-2rem)]">
           {selected ? (
             <>
               <DialogHeader>
@@ -409,7 +409,7 @@ export default function ResourceLibrary() {
       </Dialog>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-3xl border-border bg-muted/20 text-foreground">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-[48rem] border-border bg-muted/20 text-foreground sm:w-[calc(100vw-2rem)]">
           <DialogHeader>
             <DialogTitle>Create Resource</DialogTitle>
             <DialogDescription>Post a new {section === "technical" ? "technical" : "soft skills"} resource for your college.</DialogDescription>
@@ -480,7 +480,7 @@ export default function ResourceLibrary() {
         setEditOpen(open);
         if (!open) setEditing(null);
       }}>
-        <DialogContent className="max-w-3xl border-border bg-muted/20 text-foreground">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-[48rem] border-border bg-muted/20 text-foreground sm:w-[calc(100vw-2rem)]">
           <DialogHeader>
             <DialogTitle>Edit Resource</DialogTitle>
             <DialogDescription>Update content, category, and publish status.</DialogDescription>

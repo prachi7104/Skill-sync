@@ -110,7 +110,6 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
       rollNo: students.rollNo,
       branch: students.branch,
       cgpa: students.cgpa,
-      batchYear: students.batchYear,
     })
     .from(rankings)
     .innerJoin(students, eq(rankings.studentId, students.id))
