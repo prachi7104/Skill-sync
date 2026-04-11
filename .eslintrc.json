@@ -1,8 +1,10 @@
 {
+    // TOKEN COMPLIANCE: See docs/TOKEN_COMPLIANCE.md — never use bg-zinc, bg-slate, text-zinc, text-slate, border-zinc, border-slate in app/ or components/ outside of landing/
     "extends": [
         "next/core-web-vitals",
         "next/typescript",
-        "plugin:jsx-a11y/recommended"
+        "plugin:jsx-a11y/recommended",
+        "plugin:tailwindcss/recommended"
     ],
     "rules": {
         "@typescript-eslint/no-explicit-any": "off",
@@ -18,8 +20,39 @@
         "jsx-a11y/no-noninteractive-element-interactions": "warn",
         "jsx-a11y/anchor-is-valid": "warn",
         "jsx-a11y/aria-role": "warn",
-        "jsx-a11y/label-has-associated-control": "warn"
+        "jsx-a11y/label-has-associated-control": "warn",
+        "no-restricted-syntax": [
+            "warn",
+            {
+                "selector": "JSXAttribute[name.name='className'][value.type='Literal']",
+                "message": "Literal className strings cannot be statically analyzed for forbidden tokens. Use cn() utility."
+            }
+        ],
+        "tailwindcss/no-contradicting-classname": "error"
     },
+    "overrides": [
+        {
+            "files": ["app/**/*.tsx", "app/**/*.ts", "components/**/*.tsx", "components/**/*.ts"],
+            "excludedFiles": ["components/landing/**/*", "app/page.tsx"],
+            "rules": {
+                "no-restricted-syntax": [
+                    "warn",
+                    {
+                        "selector": "JSXAttribute[name.name='className'][value.type='Literal']",
+                        "message": "Literal className strings cannot be statically analyzed for forbidden tokens. Use cn() utility."
+                    },
+                    {
+                        "selector": "Literal[value=/(?:bg|text|border)-(?:zinc|slate)/]",
+                        "message": "Raw Tailwind colors are forbidden. Use semantic tokens. See docs/TOKEN_COMPLIANCE.md."
+                    },
+                    {
+                        "selector": "TemplateElement[value.raw=/(?:bg|text|border)-(?:zinc|slate)/]",
+                        "message": "Raw Tailwind colors are forbidden. Use semantic tokens. See docs/TOKEN_COMPLIANCE.md."
+                    }
+                ]
+            }
+        }
+    ],
     "ignorePatterns": [
         "node_modules/",
         ".next/",
