@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { Briefcase, Users, Clock, TrendingUp, Activity, PlusCircle, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { ElementType } from "react";
 
 // Helpers
 function getActivityLabel(type: string, status: string) {
@@ -28,8 +29,15 @@ const statTone = {
     amber: "text-warning bg-warning/10",
 } as const;
 
-const StatCard = ({ label, value, icon: Icon, color = "indigo" }: any) => (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+interface StatCardProps {
+    label: string;
+    value: string | number;
+    icon: ElementType;
+    color?: 'indigo' | 'emerald' | 'amber';
+}
+
+const StatCard = ({ label, value, icon: Icon, color = 'indigo' }: StatCardProps) => (
+    <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="mb-4 flex items-start justify-between gap-4">
             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
             {Icon && (
@@ -125,7 +133,7 @@ export default async function FacultyDashboardPage({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
-                        <div className="rounded-2xl border border-border bg-background px-4 py-3 text-sm shadow-sm dark:bg-slate-950/70">
+                        <div className="rounded-2xl border border-border bg-muted/30 px-4 py-3 text-sm shadow-sm">
                             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">Season scope</p>
                             <p className="mt-1 font-semibold text-foreground">{filteredDrives.length} drives visible</p>
                         </div>

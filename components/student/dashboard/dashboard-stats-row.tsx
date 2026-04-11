@@ -85,6 +85,7 @@ export default function DashboardStatsRow(props: DashboardStatsRowProps) {
                 <div className='h-full w-full animate-shimmer bg-gradient-to-r from-muted via-border to-muted bg-[length:200%_100%]' />
               </div>
             )}
+          </div>
         </motion.div>
       ))}
     </motion.div>

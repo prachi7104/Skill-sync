@@ -65,14 +65,14 @@ export default function FacultySettingsPage() {
         <p className="text-muted-foreground mt-1">Manage your account details and password.</p>
       </div>
 
-      <section className="bg-card rounded-md border border-border p-6 space-y-3">
+      <section className="bg-card rounded-xl border border-border p-6 space-y-3">
         <h2 className="font-bold text-foreground">Account Info</h2>
         <p className="text-sm text-muted-foreground">Name: {session?.user?.name || "-"}</p>
         <p className="text-sm text-muted-foreground">Email: {session?.user?.email || "-"}</p>
-        <p className="text-sm text-primary capitalize">Role: {session?.user?.role || "-"}</p>
+        <p className="text-sm text-muted-foreground capitalize">Role: <span className="font-semibold text-foreground">{session?.user?.role || "-"}</span></p>
       </section>
 
-      <form onSubmit={handleChangePassword} className="bg-card rounded-md border border-border p-6 space-y-4">
+      <form onSubmit={handleChangePassword} className="bg-card rounded-xl border border-border p-6 space-y-4">
         <h2 className="font-bold text-foreground">Change Password</h2>
 
         {status === "success" && (
@@ -93,7 +93,7 @@ export default function FacultySettingsPage() {
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
           required
-          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
         />
         <input
           type="password"
@@ -102,7 +102,7 @@ export default function FacultySettingsPage() {
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           required
-          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
         />
         {passwordStrengthMessage ? (
           <p className="text-xs text-warning">{passwordStrengthMessage}</p>
@@ -116,7 +116,7 @@ export default function FacultySettingsPage() {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
-          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
         />
         <button
           type="submit"

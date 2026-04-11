@@ -9,17 +9,7 @@ interface DashboardGreetingCardProps {
   profileCompletion: number;
   onboardingRequired: boolean;
 }
-"use client";
 
-import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
-import { ArrowRight } from 'lucide-react';
-import Link from 'next/link';
-
-interface DashboardGreetingCardProps {
-  studentName: string;
-  profileCompletion: number;
-  onboardingRequired: boolean;
-}
 
 export default function DashboardGreetingCard({ studentName, profileCompletion, onboardingRequired }: DashboardGreetingCardProps) {
   return (

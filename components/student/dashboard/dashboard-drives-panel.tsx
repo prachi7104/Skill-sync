@@ -28,36 +28,6 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
       } else {
         setDrives(data?.drives ?? []);
       }
-'use client';
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Briefcase, ArrowUpRight, Clock } from 'lucide-react';
-import { safeFetch } from '@/lib/api';
-import { toast } from 'sonner';
-
-interface Drive {
-  id: string;
-  companyName: string;
-  role: string;
-  deadline: string;
-  isEligible: boolean;
-}
-
-export default function DashboardDrivesPanel({ studentId }: { studentId: string }) {
-  const [drives, setDrives] = useState<Drive[] | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadDrives() {
-      const { data, error } = await safeFetch<{ drives: Drive[] }>(
-        `/api/student/drives?active=true&studentId=${studentId}`
-      );
-      if (error) {
-        toast.error(error);
-        setDrives([]);
-      } else {
-        setDrives(data?.drives ?? []);
-      }
       setLoading(false);
     }
     loadDrives();

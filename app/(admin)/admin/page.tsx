@@ -107,7 +107,7 @@ export default async function AdminMasterDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="rounded-2xl border border-border bg-background px-4 py-3 shadow-sm dark:bg-slate-950/70">
+            <div className="rounded-2xl border border-border bg-muted/30 px-4 py-3 shadow-sm">
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">College scope</p>
               <p className="mt-1 text-sm font-semibold text-foreground">{totalStudents[0]?.c ?? 0} {Number(totalStudents[0]?.c ?? 0) === 1 ? "student" : "students"}</p>
             </div>
@@ -126,7 +126,7 @@ export default async function AdminMasterDashboard() {
           { label: "Rankings Generated", value: totalRankings[0]?.c ?? 0, sub: `Avg score: ${avgMatchScore[0]?.avg ?? 0}%`, color: "blue" },
           { label: "Faculty Members", value: facultyCount?.c ?? 0, sub: "Active staff", color: "amber" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card rounded-md border border-border p-6">
+          <div key={stat.label} className="bg-card rounded-xl border border-border p-6">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">{stat.label}</p>
             <p className="text-4xl font-black text-foreground tracking-tighter">{stat.value}</p>
             <p className="text-xs text-muted-foreground mt-2">{stat.sub}</p>
