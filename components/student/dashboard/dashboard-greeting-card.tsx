@@ -9,14 +9,25 @@ interface DashboardGreetingCardProps {
   profileCompletion: number;
   onboardingRequired: boolean;
 }
+"use client";
+
+import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
+import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+
+interface DashboardGreetingCardProps {
+  studentName: string;
+  profileCompletion: number;
+  onboardingRequired: boolean;
+}
 
 export default function DashboardGreetingCard({ studentName, profileCompletion, onboardingRequired }: DashboardGreetingCardProps) {
   return (
-    <div className='flex h-full flex-col gap-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900'>
+    <div className='flex h-full flex-col gap-5 rounded-2xl border border-border bg-card p-5 shadow-sm'>
       {/* Greeting */}
       <div>
-        <p className='mb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-500 dark:text-slate-400'>Welcome back</p>
-        <h2 className='text-xl font-black leading-tight tracking-tight text-zinc-900 dark:text-slate-100'>
+        <p className='mb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground'>Welcome back</p>
+        <h2 className='text-xl font-black leading-tight tracking-tight text-foreground'>
           {/* Show first name only */}
           {studentName.split(' ')[0]}
         </h2>
@@ -37,18 +48,9 @@ export default function DashboardGreetingCard({ studentName, profileCompletion, 
           </ResponsiveContainer>
           {/* Center percentage label */}
           <div className='absolute inset-0 flex items-center justify-center'>
-            <span className='text-sm font-black text-zinc-900 dark:text-slate-100'>{profileCompletion}%</span>
+            <span className='text-sm font-black text-foreground'>{profileCompletion}%</span>
             <span className='sr-only'>Profile completion {profileCompletion}%</span>
           </div>
-        </div>
-        <div>
-          <p className='text-[13px] font-bold text-zinc-900 dark:text-slate-100'>Profile Complete</p>
-          <p className='mt-0.5 text-[11px] leading-relaxed text-zinc-500 dark:text-slate-400'>
-            {profileCompletion === 100
-              ? 'Your profile is fully set up.'
-              : `${100 - profileCompletion}% remaining to unlock all features.`
-            }
-          </p>
         </div>
       </div>
 
