@@ -314,7 +314,7 @@ export default function ResourceLibrary() {
           <TabsTrigger value="softskills">Soft Skills</TabsTrigger>
         </TabsList>
         <TabsContent value={section}>
-          <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-[260px_1fr]">
             <aside className="space-y-4 rounded-md border border-border bg-card p-4">
               <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search resources" className="border-border bg-muted/20 text-foreground" />
               {(viewerRole === "faculty" || viewerRole === "admin") ? (
@@ -451,7 +451,7 @@ export default function ResourceLibrary() {
       </Tabs>
 
       <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="w-[calc(100vw-1rem)] max-w-[48rem] border-border bg-muted/20 text-foreground sm:w-[calc(100vw-2rem)]">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-[48rem] max-h-[90vh] overflow-hidden border-border bg-muted/20 text-foreground sm:w-[calc(100vw-2rem)]">
           {selected ? (
             <>
               <DialogHeader>
@@ -468,12 +468,12 @@ export default function ResourceLibrary() {
       </Dialog>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="w-[calc(100vw-1rem)] max-w-[48rem] border-border bg-muted/20 text-foreground sm:w-[calc(100vw-2rem)]">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-[48rem] max-h-[90vh] overflow-hidden border-border bg-muted/20 text-foreground sm:w-[calc(100vw-2rem)]">
           <DialogHeader>
             <DialogTitle>Create Resource</DialogTitle>
             <DialogDescription>Post a new {section === "technical" ? "technical" : "soft skills"} resource for your college.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4">
+          <div className="grid gap-4 max-h-[72vh] overflow-y-auto pr-1">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Category</Label>
@@ -544,7 +544,7 @@ export default function ResourceLibrary() {
             <DialogTitle>Edit Resource</DialogTitle>
             <DialogDescription>Update content, category, and publish status.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4">
+          <div className="grid gap-4 max-h-[72vh] overflow-y-auto pr-1">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Section</Label>
