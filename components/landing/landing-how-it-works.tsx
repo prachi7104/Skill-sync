@@ -28,7 +28,7 @@ export default function LandingHowItWorks() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section id='how-it-works' className='w-full border-b border-zinc-200/80 bg-zinc-50 px-4 py-16 sm:px-6 lg:px-8 dark:border-slate-800 dark:bg-slate-950'>
+    <section id='how-it-works' className='w-full border-b border-zinc-200/80 bg-zinc-50 px-4 py-16 sm:px-6 lg:px-8 dark:border-slate-800 dark:bg-[hsl(226,71%,11%)]'>
       <div className='mx-auto max-w-[1200px]'>
         <div className='mb-10 max-w-2xl'>
           <p className='text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-slate-400'>

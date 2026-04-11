@@ -96,14 +96,14 @@ function HeroRight() {
     <div className='hidden lg:block'>
       <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900'>
         {/* Mini topbar */}
-        <div className='flex h-10 items-center gap-2 border-b border-zinc-200 bg-zinc-50 px-4 dark:border-slate-800 dark:bg-slate-950'>
+        <div className='flex h-10 items-center gap-2 border-b border-zinc-200 bg-zinc-50 px-4 dark:border-slate-800 dark:bg-[hsl(226,71%,11%)]'>
           <span className='h-2 w-2 rounded-full bg-primary' />
           <span className='text-[11px] font-bold text-zinc-700 dark:text-slate-300'>SkillSync</span>
         </div>
         {/* Body with mock sidebar + content */}
         <div className='flex min-h-[280px] h-auto'>
           {/* Mock sidebar icons */}
-          <div className='flex w-10 flex-col items-center gap-3 border-r border-zinc-200 bg-zinc-50 pt-4 dark:border-slate-800 dark:bg-slate-950'>
+          <div className='flex w-10 flex-col items-center gap-3 border-r border-zinc-200 bg-zinc-50 pt-4 dark:border-slate-800 dark:bg-[hsl(226,71%,11%)]'>
             {[0, 1, 2, 3, 4].map(i => (
               <div key={i} className={`h-5 w-5 rounded-sm ${i === 0 ? 'bg-primary/60' : 'bg-zinc-200 dark:bg-slate-700'}`} />
             ))}
@@ -111,7 +111,7 @@ function HeroRight() {
           {/* Mock content area */}
           <div className='grid flex-1 grid-cols-2 content-start gap-3 bg-white p-4 dark:bg-slate-900'>
             {/* Greeting card */}
-            <div className='col-span-2 flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-slate-800 dark:bg-slate-950'>
+            <div className='col-span-2 flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-slate-800 dark:bg-[hsl(226,71%,11%)]'>
               <div className='flex-1'>
                 <div className='mb-1.5 h-2.5 w-24 rounded-sm bg-zinc-300 dark:bg-slate-700' />
                 <div className='h-1.5 w-36 rounded-sm bg-zinc-200 dark:bg-slate-800' />

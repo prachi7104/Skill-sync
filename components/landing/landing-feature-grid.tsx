@@ -83,7 +83,7 @@ function FeatureCard({ feature, index }: { feature: typeof features[number]; ind
 
 export default function LandingFeatureGrid() {
   return (
-    <section id='capabilities' className='w-full border-b border-zinc-200/80 bg-zinc-50 px-4 py-14 sm:px-6 lg:px-8 dark:border-slate-800 dark:bg-slate-950'>
+    <section id='capabilities' className='w-full border-b border-zinc-200/80 bg-zinc-50 px-4 py-14 sm:px-6 lg:px-8 dark:border-slate-800 dark:bg-[hsl(226,71%,11%)]'>
       <div className='mx-auto max-w-[1200px]'>
         <div className='mb-9'>
           <span className='text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-slate-400'>

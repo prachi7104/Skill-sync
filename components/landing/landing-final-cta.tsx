@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 
 export default function LandingFinalCta() {
   return (
-    <section className='w-full bg-zinc-50 px-4 py-16 sm:px-6 lg:px-8 dark:bg-slate-950'>
+    <section className='w-full bg-zinc-50 px-4 py-16 sm:px-6 lg:px-8 dark:bg-[hsl(226,71%,11%)]'>
       <div className='w-full rounded-none border-y border-zinc-200 bg-white px-4 py-10 text-center shadow-sm sm:px-8 dark:border-slate-800 dark:bg-slate-900'>
         <p className='text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-slate-400'>
           Start With SkillSync
