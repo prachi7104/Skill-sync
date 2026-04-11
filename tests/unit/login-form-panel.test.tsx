@@ -35,7 +35,7 @@ describe("LoginFormPanel", () => {
   it("dismisses error when alert is clicked", () => {
     const { onDismissError } = renderPanel();
 
-    fireEvent.click(screen.getByText("Invalid credentials"));
+    fireEvent.click(screen.getByRole("button", { name: /dismiss login error/i }));
     expect(onDismissError).toHaveBeenCalledTimes(1);
   });
 

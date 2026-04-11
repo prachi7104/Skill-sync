@@ -119,18 +119,19 @@ export default function LoginFormPanel({
               transition={{ duration: 0.22, ease: 'easeOut' }}
               className='mb-4 overflow-hidden'
             >
-              <div
-                className='rounded-md border border-destructive/30 bg-destructive/8 px-4 py-3 flex items-start gap-3 cursor-pointer'
+              <button
+                type='button'
+                aria-label={`Dismiss login error: ${errorMessage}`}
                 onClick={onDismissError}
-                role='alert'
-                aria-live='assertive'
+                className='w-full text-left rounded-md border border-destructive/30 bg-destructive/8 px-4 py-3 flex items-start gap-3 cursor-pointer'
               >
                 <AlertCircle size={16} className='text-destructive shrink-0 mt-0.5' />
                 <div>
                   <p className='text-xs font-bold text-destructive uppercase tracking-wider mb-0.5'>Error</p>
                   <p className='text-sm text-destructive/90 font-medium'>{errorMessage}</p>
                 </div>
-              </div>
+                <span aria-live='assertive' className='sr-only'>{errorMessage}</span>
+              </button>
             </motion.div>
           )}
         </AnimatePresence>

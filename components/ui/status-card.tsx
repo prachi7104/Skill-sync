@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Loader2, AlertCircle, Circle, Info, CheckCircle2 } from "lucide-react"
+import { Loader2, AlertCircle, Circle, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type StatusVariant = "error" | "empty" | "loading" | "info"
