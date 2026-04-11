@@ -38,6 +38,7 @@ export default function DashboardGreetingCard({ studentName, profileCompletion, 
           {/* Center percentage label */}
           <div className='absolute inset-0 flex items-center justify-center'>
             <span className='text-sm font-black text-zinc-900 dark:text-slate-100'>{profileCompletion}%</span>
+            <span className='sr-only'>Profile completion {profileCompletion}%</span>
           </div>
         </div>
         <div>

@@ -135,6 +135,7 @@ export default function CommandPalette({ open, onOpenChange, userRole }: Command
         placeholder='Search drives, students, companies...'
         value={query}
         onValueChange={setQuery}
+        aria-label='Search drives, students, companies'
       />
       <CommandList>
         {loading && (

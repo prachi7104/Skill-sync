@@ -65,11 +65,12 @@ export default function DashboardStatsRow(props: DashboardStatsRowProps) {
       className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4'
     >
       {stats.map(stat => (
-        <motion.div
-          key={stat.label}
-          variants={item}
-          className='flex items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900'
-        >
+      <motion.div
+        key={stat.label}
+        variants={item}
+        className='flex items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900'
+        aria-label={`${stat.label}: ${stat.value ?? 'not available'}${stat.suffix}`}
+      >
           <div className={`w-9 h-9 rounded-md ${stat.iconBg} flex items-center justify-center shrink-0`}>
             <stat.icon size={18} className={stat.iconColor} />
           </div>

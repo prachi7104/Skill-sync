@@ -79,14 +79,16 @@ export default function BottomTabBar({ userRole, userName }: BottomTabBarProps) 
             const active = isTabActive(tab);
 
             if (tab.isMore) {
-              return (
-                <button
-                  key='more'
-                  onClick={() => setDrawerOpen(true)}
-                  className='flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors duration-150'
-                  aria-label='More navigation options'
-                >
-                  <tab.icon size={22} />
+            return (
+              <button
+                key='more'
+                onClick={() => setDrawerOpen(true)}
+                className='flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors duration-150'
+                aria-label='More navigation options'
+                aria-haspopup='dialog'
+                aria-expanded={drawerOpen}
+              >
+                <tab.icon size={22} />
                   <span className='text-[10px] font-semibold'>{tab.label}</span>
                 </button>
               );

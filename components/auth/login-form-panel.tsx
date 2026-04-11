@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Loader2, AlertCircle, ChevronRight, Eye, EyeOff, Lock, LogIn } from 'lucide-react';
 
@@ -56,6 +56,7 @@ export default function LoginFormPanel({
   onDismissError,
 }: LoginFormPanelProps) {
   const shouldAnimate = !useReducedMotion();
+  const staffEmailRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!errorMessage) return;
@@ -67,6 +68,12 @@ export default function LoginFormPanel({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [errorMessage, onDismissError]);
+
+  useEffect(() => {
+    if (showStaffForm) {
+      staffEmailRef.current?.focus();
+    }
+  }, [showStaffForm]);
 
   return (
     <div className='flex min-h-[100dvh] flex-col justify-center bg-zinc-50 px-4 py-10 sm:px-8 sm:py-12 lg:h-full lg:min-h-0 lg:px-10 xl:px-12 dark:bg-slate-950'>
@@ -218,6 +225,7 @@ export default function LoginFormPanel({
                       onChange={e => onStaffEmailChange(e.target.value)}
                       required
                       autoComplete='email'
+                      ref={staffEmailRef}
                       className='w-full h-10 px-3 rounded-md border border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-shadow'
                     />
 
