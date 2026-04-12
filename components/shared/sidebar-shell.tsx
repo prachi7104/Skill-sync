@@ -26,18 +26,17 @@ export default function SidebarShell({ children, label }: SidebarShellProps) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handleResize = () => {
+      // Only enforce mobile collapse rule.
+      // Never reopen a sidebar the user has intentionally collapsed.
       if (window.innerWidth < BREAKPOINT_MD) {
         collapse();
-      } else {
-        // re-open once wide enough
-        if (storeIsCollapsed) toggle();
       }
+      // No else — desktop state is user-controlled only.
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [collapse, toggle, storeIsCollapsed]);
+  }, [collapse]);
 
   return (
     <motion.div

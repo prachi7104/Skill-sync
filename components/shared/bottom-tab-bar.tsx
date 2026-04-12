@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -18,14 +19,15 @@ type Tab = {
   icon: LucideIcon;
   exact?: boolean;
   isMore?: boolean;
+  alwaysUnlocked?: boolean;
 };
 
 const STUDENT_TABS: Tab[] = [
-  { href: '/student/dashboard', label: 'Home',       icon: LayoutDashboard, exact: true },
-  { href: '/student/drives',    label: 'Drives',     icon: Briefcase },
-  { href: '/student/profile',   label: 'Profile',    icon: UserCircle },
-  { href: '/student/leaderboard', label: 'Rankings', icon: Trophy },
-  { label: 'More', icon: MoreHorizontal, isMore: true },
+  { href: '/student/dashboard',   label: 'Dashboard',    icon: LayoutDashboard, exact: true, alwaysUnlocked: true },
+  { href: '/student/drives',      label: 'Drives',       icon: Briefcase,                    alwaysUnlocked: false },
+  { href: '/student/profile',     label: 'Profile',      icon: UserCircle,                   alwaysUnlocked: false },
+  { href: '/student/leaderboard', label: 'Leaderboard',  icon: Trophy,                       alwaysUnlocked: false },
+  { label: 'More', icon: MoreHorizontal, isMore: true, alwaysUnlocked: true },
 ];
 
 const FACULTY_TABS: Tab[] = [
@@ -51,23 +53,37 @@ const TABS_BY_ROLE: Record<string, Tab[]> = {
 interface BottomTabBarProps {
   userRole: 'student' | 'faculty' | 'admin';
   userName: string;
+  onboardingRequired?: boolean;
 }
 
-export default function BottomTabBar({ userRole, userName }: BottomTabBarProps) {
+export default function BottomTabBar({ userRole, userName, onboardingRequired }: BottomTabBarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const tabs = TABS_BY_ROLE[userRole] ?? STUDENT_TABS;
+
+  const shouldGate = userRole === 'student' && onboardingRequired === true;
 
   const isTabActive = (tab: Tab) => {
     if (!tab.href) return false;
     return tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
   };
 
+  const handleBlockedTabPress = () => {
+    toast.info('Complete your profile setup first', {
+      description: 'Fill in your SAP ID, roll number, and academic details to unlock all features.',
+      action: {
+        label: 'Go to Setup',
+        onClick: () => router.push('/student/onboarding'),
+      },
+    });
+  };
+
   return (
     <>
       {/* Tab Bar — mobile only */}
       <nav
-        className='md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border'
+        className='fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card md:hidden'
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}
         aria-label='Mobile navigation'
       >
@@ -83,13 +99,30 @@ export default function BottomTabBar({ userRole, userName }: BottomTabBarProps) 
               <button
                 key='more'
                 onClick={() => setDrawerOpen(true)}
-                className='flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors duration-150'
+                className='flex flex-col items-center justify-center gap-0.5 text-muted-foreground transition-colors duration-150 hover:text-foreground'
                 aria-label='More navigation options'
                 aria-haspopup='dialog'
                 aria-expanded={drawerOpen}
               >
                 <tab.icon size={22} />
                   <span className='text-[10px] font-semibold'>{tab.label}</span>
+                </button>
+              );
+            }
+
+            const isBlocked = shouldGate && !tab.alwaysUnlocked;
+
+            if (isBlocked) {
+              return (
+                <button
+                  key={tab.href}
+                  type='button'
+                  onClick={handleBlockedTabPress}
+                  className='relative flex flex-col items-center justify-center gap-0.5 opacity-50 transition-colors duration-150'
+                  aria-label={`${tab.label} (complete setup to unlock)`}
+                >
+                  <tab.icon size={22} className='relative z-10 text-muted-foreground' />
+                  <span className='relative z-10 text-[10px] font-semibold text-muted-foreground'>{tab.label}</span>
                 </button>
               );
             }

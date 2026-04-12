@@ -11,7 +11,7 @@ import NavItem from '@/components/shared/nav-item';
 
 const studentLinks = [
   { href: '/student/dashboard', label: 'Dashboard',    icon: LayoutDashboard, alwaysUnlocked: true },
-  { href: '/student/profile',   label: 'My Profile',   icon: UserCircle,      alwaysUnlocked: false },
+  { href: '/student/profile',   label: 'Profile',      icon: UserCircle,      alwaysUnlocked: false },
   { href: '/student/drives',    label: 'Drives',       icon: Briefcase,       alwaysUnlocked: false },
   { href: '/student/companies', label: 'Companies',    icon: Building2,       alwaysUnlocked: false },
   { href: '/student/resources', label: 'Resources',    icon: LibraryBig,      alwaysUnlocked: false },

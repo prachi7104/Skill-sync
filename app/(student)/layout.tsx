@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 
 import { requireRole, getStudentProfile } from "@/lib/auth/helpers";
 import SignOutButton from "@/components/shared/sign-out-button";
-import MobileNav from "@/components/shared/mobile-nav";
 import { StudentProvider } from "@/app/(student)/providers/student-provider";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
@@ -111,7 +110,6 @@ export default async function StudentLayout({
                         <div className='sm:hidden'>
                             <HeaderSearchTrigger userRole='student' />
                         </div>
-                        <MobileNav userName={user.name!} userRole='student' />
                         <ThemeToggle />
                         <SignOutButton />
                     </div>
@@ -133,7 +131,11 @@ export default async function StudentLayout({
                     </main>
 
                 </div>
-                <BottomTabBar userRole='student' userName={user.name ?? ''} />
+                <BottomTabBar
+                    userRole='student'
+                    userName={user.name ?? ''}
+                    onboardingRequired={onboardingRequired}
+                />
             </div>
         </StudentProvider>
     );
