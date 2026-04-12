@@ -10,8 +10,10 @@ import {
 import {
   AlertTriangle,
   BookOpen,
+  Loader2,
   MessageSquare,
   RefreshCw,
+  Send,
   Sparkles,
   Target,
 } from "lucide-react";
@@ -266,6 +268,7 @@ export default function CareerCoachPage() {
           >
             <RefreshCw
               className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+              aria-hidden="true"
             />
             Refresh
           </Button>
@@ -280,13 +283,20 @@ export default function CareerCoachPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="space-y-3" data-testid="summary-skeleton">
+              <div
+                className="space-y-3"
+                data-testid="summary-skeleton"
+                role="status"
+                aria-label="Loading summary"
+                aria-busy="true"
+              >
                 <div className="h-4 w-11/12 animate-pulse rounded bg-muted/50" />
                 <div className="h-4 w-9/12 animate-pulse rounded bg-muted/50" />
                 <div className="h-4 w-8/12 animate-pulse rounded bg-muted/50" />
                 <p className="pt-2 text-xs text-muted-foreground">
                   Analyzing your profile...
                 </p>
+                <span className="sr-only">Loading...</span>
               </div>
             ) : (
               <p className="text-sm leading-relaxed text-muted-foreground">
@@ -327,7 +337,11 @@ export default function CareerCoachPage() {
               </div>
             ) : null}
 
-            <div className="max-h-[420px] space-y-3 overflow-y-auto rounded-2xl border border-border bg-muted p-3">
+            <div
+              className="max-h-[420px] space-y-3 overflow-y-auto rounded-2xl border border-border bg-muted p-3"
+              aria-live="polite"
+              aria-label="Coach conversation"
+            >
               {messages.map((message, index) => (
                 <div
                   key={`${message.role}-${index}`}
@@ -359,10 +373,14 @@ export default function CareerCoachPage() {
                   <div
                     data-testid="typing-indicator"
                     className="flex items-center gap-1 rounded-md border border-border bg-card px-3 py-2"
+                    role="status"
+                    aria-live="polite"
+                    aria-label="Waiting for coach response"
                   >
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:0ms]" />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:120ms]" />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:240ms]" />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:0ms]" aria-hidden="true" />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:120ms]" aria-hidden="true" />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:240ms]" aria-hidden="true" />
+                    <span className="sr-only">Coach is thinking...</span>
                   </div>
                 </div>
               ) : null}
@@ -417,7 +435,12 @@ export default function CareerCoachPage() {
                   className="bg-primary text-primary-foreground hover:bg-primary-hover"
                   disabled={!canSend || !chatInput.trim() || messages.length >= MAX_MESSAGES}
                 >
-                  Send
+                  {chatLoading ? (
+                    <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Send size={16} aria-hidden="true" />
+                  )}
+                  <span className="sr-only">{chatLoading ? "Sending..." : "Send message"}</span>
                 </Button>
               </div>
             </div>
@@ -425,7 +448,12 @@ export default function CareerCoachPage() {
         </Card>
 
         {loading ? (
-          <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <section
+            className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"
+            role="status"
+            aria-label="Loading recommendations"
+            aria-busy="true"
+          >
             {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
@@ -438,6 +466,7 @@ export default function CareerCoachPage() {
                 <div className="h-16 w-full animate-pulse rounded bg-muted" />
               </div>
             ))}
+            <span className="sr-only">Loading...</span>
           </section>
         ) : errorText ? (
           <Card className="border border-warning/20 bg-warning/10 dark:bg-warning/10">

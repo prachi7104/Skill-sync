@@ -273,7 +273,7 @@ export default function DetailedSandboxClient() {
                         onClick={handleAnalyze} disabled={isLoading || !resumeFile || jdText.length < 50}
                         className="mt-6 w-full py-4 bg-primary hover:bg-primary disabled:bg-card text-foreground rounded-md font-bold transition-all shadow-sm disabled:shadow-none flex items-center justify-center gap-2"
                     >
-                        {isLoading ? <><Loader2 className="w-5 h-5 animate-spin" /> Processing Vectors...</> : <><Zap className="w-5 h-5" /> Run Detailed Analysis</>}
+                        {isLoading ? <><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Processing Vectors...</> : <><Zap className="w-5 h-5" aria-hidden="true" /> Run Detailed Analysis</>}
                     </button>
                 </div>
             </div>

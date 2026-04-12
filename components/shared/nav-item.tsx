@@ -28,8 +28,9 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
   }, []);
 
   const baseClasses = cn(
-    'group relative flex items-center w-full h-10 rounded-md transition-colors duration-150 select-none',
+    'group relative flex items-center w-full h-10 rounded-md transition-all duration-150 select-none',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-surface',
+    'active:scale-[0.98]',
     isCollapsed ? 'justify-center px-0 mx-auto' : 'px-3 gap-3 mx-2',
     isCollapsed ? 'w-10' : 'w-[calc(100%-16px)]', // collapsed: square; expanded: inset 8px each side
     isActive && !isBlocked
@@ -94,11 +95,7 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
       className='absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 z-[201] px-2.5 py-1 rounded-md bg-sidebar-surface border border-sidebar-border text-sidebar-fg text-[12px] font-semibold whitespace-nowrap shadow-md pointer-events-none'
     >
       {label}
-      {isBlocked && (
-        <span className='ml-1.5 text-[10px] font-normal text-sidebar-fg-muted'>
-          — locked
-        </span>
-      )}
+      {isBlocked && <span className='ml-1.5 text-sidebar-fg-muted font-normal'>(locked)</span>}
     </div>
   );
 
@@ -110,7 +107,7 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
   };
 
   const tooltipId = `nav-tooltip-${label.replace(/\s+/g, "-").toLowerCase()}`;
-  const computedTabIndex = undefined; // all items remain in tab order
+  const computedTabIndex = isBlocked ? -1 : undefined;
 
   if (href && !isBlocked) {
     return (
@@ -135,15 +132,9 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
       <button
         type='button'
         onClick={isBlocked ? undefined : onClick}
-        onKeyDown={isBlocked ? (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onClick?.();
-          }
-        } : undefined}
         className={baseClasses}
         aria-disabled={isBlocked}
-        aria-label={isBlocked ? `${label} — complete profile setup to unlock` : label}
+        aria-label={label}
         aria-describedby={isCollapsed ? tooltipId : undefined}
         tabIndex={computedTabIndex}
         {...sharedHandlers}

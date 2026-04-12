@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, XCircle, Briefcase, FileText, CheckCircle2, Sparkles, Target, Activity } from "lucide-react";
+import { AlertTriangle, XCircle, Briefcase, FileText, CheckCircle2, Sparkles, Target, Activity, Loader2 } from "lucide-react";
 
 interface CardFeedback {
   cards: {
@@ -194,7 +194,7 @@ export default function QuickSandbox() {
                         disabled={isLoading || jdText.trim().length < 20}
                         className="bg-primary hover:bg-primary disabled:bg-card text-foreground px-8 py-3.5 rounded-md font-bold text-sm transition-all shadow-sm disabled:shadow-none flex items-center justify-center gap-2"
                     >
-                        {isLoading ? <><Activity className="h-4 w-4 animate-spin" /> Analyzing...</> : "Run Quick Analysis"}
+                      {isLoading ? <><Loader2 size={16} className="animate-spin" aria-hidden="true" /> Analyzing...</> : "Run Quick Analysis"}
                     </button>
                 </div>
             </div>

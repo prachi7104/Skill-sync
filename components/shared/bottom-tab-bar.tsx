@@ -83,7 +83,7 @@ export default function BottomTabBar({ userRole, userName }: BottomTabBarProps) 
               <button
                 key='more'
                 onClick={() => setDrawerOpen(true)}
-                className='flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-foreground transition-colors duration-150'
+                className='flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-foreground transition-all duration-150 active:scale-[0.92]'
                 aria-label='More navigation options'
                 aria-haspopup='dialog'
                 aria-expanded={drawerOpen}
@@ -98,7 +98,7 @@ export default function BottomTabBar({ userRole, userName }: BottomTabBarProps) 
               <Link
                 key={tab.href}
                 href={tab.href!}
-                className='relative flex flex-col items-center justify-center gap-0.5 transition-colors duration-150'
+                className='relative flex flex-col items-center justify-center gap-0.5 transition-all duration-150 active:scale-[0.92]'
                 aria-current={active ? 'page' : undefined}
               >
                 {/* Active background pill */}
