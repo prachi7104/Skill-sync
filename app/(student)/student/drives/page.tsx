@@ -60,23 +60,23 @@ export default async function StudentDrivesPage() {
   });
 
   return (
-    <div className='mx-auto max-w-6xl space-y-5 px-4 py-6 pb-24 text-zinc-900 sm:px-6 md:pb-8 dark:text-slate-100'>
-      <section className='rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6'>
+    <div className='mx-auto max-w-6xl space-y-5 px-4 py-6 pb-24 text-foreground sm:px-6 md:pb-8'>
+      <section className='rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6'>
         <div className='flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
           <div className='max-w-2xl'>
-            <p className='text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-slate-400'>
+            <p className='text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground'>
               Student Drives
             </p>
-            <h1 className='mt-2 text-3xl font-black tracking-tight text-zinc-900 dark:text-slate-100 sm:text-4xl'>
+            <h1 className='mt-2 text-3xl font-black tracking-tight text-foreground sm:text-4xl'>
               Drives matching your profile
             </h1>
-            <p className='mt-2 text-sm leading-relaxed text-zinc-600 dark:text-slate-300'>
+            <p className='mt-2 text-sm leading-relaxed text-muted-foreground'>
               Explore active drives, compare match quality, and open ranking details with clear eligibility signals.
             </p>
           </div>
           <div className='flex flex-wrap gap-2'>
             {['Eligibility checks', 'Deadline alerts', 'Ranking insights'].map((chip) => (
-              <span key={chip} className='inline-flex h-7 items-center rounded-md border border-zinc-200 bg-zinc-50 px-2.5 text-[11px] font-semibold text-zinc-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300'>
+              <span key={chip} className='inline-flex h-7 items-center rounded-md border border-border bg-muted/50 px-2.5 text-[11px] font-semibold text-muted-foreground'>
                 {chip}
               </span>
             ))}
@@ -90,7 +90,7 @@ export default async function StudentDrivesPage() {
           <TriangleAlert size={15} className='text-warning mt-0.5 shrink-0' />
           <div>
             <p className='text-sm font-medium text-warning'>Profile incomplete</p>
-            <p className='mt-0.5 text-xs text-zinc-600 dark:text-slate-300'>
+            <p className='mt-0.5 text-xs text-muted-foreground'>
               Add your branch, CGPA, and batch year to see all eligible drives.{' '}
               <Link href='/student/profile' className='text-primary hover:underline font-medium'>
                 Update profile
@@ -102,10 +102,10 @@ export default async function StudentDrivesPage() {
 
       {/* No drives at all (eligible = 0 and profile is complete) */}
       {eligible.length === 0 && !hasIncompleteProfile && (
-        <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-white py-24 dark:border-slate-800 dark:bg-slate-900'>
-          <Briefcase size={36} className='mb-3 text-zinc-400 opacity-40 dark:text-slate-500' />
-          <h3 className='mb-1 text-sm font-semibold text-zinc-900 dark:text-slate-100'>No eligible drives yet</h3>
-          <p className='max-w-xs text-center text-xs leading-relaxed text-zinc-500 dark:text-slate-400'>
+        <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-24'>
+          <Briefcase size={36} className='mb-3 text-muted-foreground opacity-40' />
+          <h3 className='mb-1 text-sm font-semibold text-foreground'>No eligible drives yet</h3>
+          <p className='max-w-xs text-center text-xs leading-relaxed text-muted-foreground'>
             No active drives match your branch, batch year, and CGPA. Check back soon.
           </p>
         </div>

@@ -107,7 +107,7 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
         description={`Manage ${totalDrives} placement drives from one responsive list with clear status, ranking, and deadline context.`}
         actions={
           <div className="flex flex-wrap items-center gap-3">
-            <div className="rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm dark:bg-slate-950/70">
+            <div className="rounded-xl border border-border bg-card/70 px-4 py-3 text-sm shadow-sm">
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">Total drives</p>
               <p className="mt-1 font-semibold text-foreground">{totalDrives}</p>
             </div>
