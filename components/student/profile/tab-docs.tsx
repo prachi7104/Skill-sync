@@ -1,10 +1,22 @@
 'use client';
 
-import { UseFormReturn } from 'react-hook-form';
+import { UseFormReturn, UseFieldArrayReturn } from 'react-hook-form';
 import { FormField, FormControl, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, FileText, Upload, Download, Loader2, Award, Code2, BookOpen, Trophy, ExternalLink } from 'lucide-react';
-import type { StudentProfileInput } from '@/lib/validations/student-profile';
+import type {
+  StudentProfileInput,
+  certificationSchema,
+  codingProfileSchema,
+  achievementSchema,
+  researchPaperSchema
+} from '@/lib/validations/student-profile';
+import { z } from 'zod';
+
+type Certification = z.infer<typeof certificationSchema>;
+type CodingProfile = z.infer<typeof codingProfileSchema>;
+type Achievement = z.infer<typeof achievementSchema>;
+type ResearchPaper = z.infer<typeof researchPaperSchema>;
 
 interface TabDocsProps {
   form: UseFormReturn<StudentProfileInput>;
@@ -17,23 +29,23 @@ interface TabDocsProps {
   isUploading: boolean;
   isPollingParse: boolean;
   onResumeFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  certFields: any[];
-  appendCert: (v: any) => void;
-  removeCert: (i: number) => void;
-  codingFields: any[];
-  appendCoding: (v: any) => void;
-  removeCoding: (i: number) => void;
-  achievementFields: any[];
-  appendAchievement: (v: any) => void;
-  removeAchievement: (i: number) => void;
-  researchFields: any[];
-  appendResearch: (v: any) => void;
-  removeResearch: (i: number) => void;
+  certFields: UseFieldArrayReturn<StudentProfileInput, 'certifications'>['fields'];
+  appendCert: UseFieldArrayReturn<StudentProfileInput, 'certifications'>['append'];
+  removeCert: UseFieldArrayReturn<StudentProfileInput, 'certifications'>['remove'];
+  codingFields: UseFieldArrayReturn<StudentProfileInput, 'codingProfiles'>['fields'];
+  appendCoding: UseFieldArrayReturn<StudentProfileInput, 'codingProfiles'>['append'];
+  removeCoding: UseFieldArrayReturn<StudentProfileInput, 'codingProfiles'>['remove'];
+  achievementFields: UseFieldArrayReturn<StudentProfileInput, 'achievements'>['fields'];
+  appendAchievement: UseFieldArrayReturn<StudentProfileInput, 'achievements'>['append'];
+  removeAchievement: UseFieldArrayReturn<StudentProfileInput, 'achievements'>['remove'];
+  researchFields: UseFieldArrayReturn<StudentProfileInput, 'researchPapers'>['fields'];
+  appendResearch: UseFieldArrayReturn<StudentProfileInput, 'researchPapers'>['append'];
+  removeResearch: UseFieldArrayReturn<StudentProfileInput, 'researchPapers'>['remove'];
   profile: {
-    certifications?: any[];
-    codingProfiles?: any[];
-    achievements?: any[];
-    researchPapers?: any[];
+    certifications?: Certification[];
+    codingProfiles?: CodingProfile[];
+    achievements?: Achievement[];
+    researchPapers?: ResearchPaper[];
   };
 }
 
@@ -113,7 +125,7 @@ export default function TabDocs({
             {(!profile.certifications || profile.certifications.length === 0) ? (
               <p className='text-xs text-muted-foreground italic'>No certifications added.</p>
             ) : (
-              profile.certifications.map((cert: any, i: number) => (
+              profile.certifications.map((cert: Certification, i: number) => (
                 <div key={i} className='bg-muted/40 border border-border rounded-lg p-4 flex justify-between items-center'>
                   <div>
                     <h4 className='text-sm font-semibold text-foreground'>{cert.title}</h4>
@@ -161,7 +173,7 @@ export default function TabDocs({
             {(!profile.codingProfiles || profile.codingProfiles.length === 0) ? (
               <p className='text-xs text-muted-foreground italic'>No profiles linked.</p>
             ) : (
-              profile.codingProfiles.map((cp: any, i: number) => (
+              profile.codingProfiles.map((cp: CodingProfile, i: number) => (
                 <div key={i} className='bg-muted/40 border border-border rounded-lg p-4'>
                   <a href={cp.url || '#'} target='_blank' rel='noreferrer' className='flex items-center justify-between group'>
                     <div>
@@ -208,7 +220,7 @@ export default function TabDocs({
             {(!profile.achievements || profile.achievements.length === 0) ? (
               <p className='text-xs text-muted-foreground italic'>No achievements added.</p>
             ) : (
-              profile.achievements.map((ach: any, i: number) => (
+              profile.achievements.map((ach: Achievement, i: number) => (
                 <div key={i} className='bg-muted/40 border border-border rounded-lg p-4'>
                   <h4 className='text-sm font-semibold text-foreground'>{ach.title}</h4>
                   <p className='text-[11px] text-muted-foreground mt-1 mb-2 uppercase tracking-wide'>{ach.issuer} • {ach.date}</p>
@@ -252,7 +264,7 @@ export default function TabDocs({
             {(!profile.researchPapers || profile.researchPapers.length === 0) ? (
               <p className='text-xs text-muted-foreground italic'>No research papers added.</p>
             ) : (
-              profile.researchPapers.map((paper: any, i: number) => (
+              profile.researchPapers.map((paper: ResearchPaper, i: number) => (
                 <div key={i} className='bg-muted/40 border border-border rounded-lg p-4'>
                   <div className='flex justify-between items-start mb-2'>
                     <h4 className='text-sm font-semibold text-foreground'>{paper.title}</h4>

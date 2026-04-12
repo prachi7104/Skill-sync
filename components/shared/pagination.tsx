@@ -1,9 +1,13 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function Pagination({ page, total, pageSize = 20 }: {
-  page: number; total: number; pageSize?: number;
-}) {
+interface PaginationProps {
+  page: number;
+  total: number;
+  pageSize?: number;
+}
+
+export default function Pagination({ page, total, pageSize = 20 }: PaginationProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const totalPages = Math.ceil(total / pageSize);

@@ -223,11 +223,11 @@ export default function AdminHealthPage() {
           <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
             Operations monitoring
           </div>
-          <h1 className="text-3xl font-black text-foreground">System Health</h1>
+          <h2 className="text-3xl font-black text-foreground">System Health</h2>
           <p className="text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
         </div>
         <div
-          className="rounded-xl border border-border bg-card p-12 text-center text-muted-foreground shadow-sm"
+          className="rounded-xl border border-border bg-card p-6 text-center text-muted-foreground shadow-sm"
           role="status"
           aria-label="Loading health data"
           aria-live="polite"
@@ -246,7 +246,7 @@ export default function AdminHealthPage() {
           <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
             Operations monitoring
           </div>
-          <h1 className="text-3xl font-black text-foreground">System Health</h1>
+          <h2 className="text-3xl font-black text-foreground">System Health</h2>
           <p className="text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
         </div>
         <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-6 text-destructive">

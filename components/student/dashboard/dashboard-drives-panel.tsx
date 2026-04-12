@@ -50,13 +50,13 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
   }, [studentId]);
 
   return (
-    <div className='flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900'>
+    <div className='flex h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-sm'>
         <div className='mb-4 flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <div className='flex h-8 w-8 items-center justify-center rounded-md bg-success/10'>
               <Briefcase size={16} className='text-success' />
             </div>
-            <p className='text-[13px] font-bold text-zinc-900 dark:text-slate-100'>Active Drives</p>
+            <p className='text-[13px] font-bold text-foreground'>Active Drives</p>
           </div>
           {drives && drives.length > 0 ? (
             <Link href='/student/drives' className='flex items-center gap-1 text-[12px] font-semibold text-primary transition-colors duration-150 hover:text-primary-hover'>
@@ -78,17 +78,17 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
             <Link
               key={drive.id}
               href={`/student/drives/${drive.id}/ranking`}
-              className='group flex items-start justify-between rounded-lg border border-zinc-200 p-3 transition-all duration-150 hover:border-primary/30 hover:bg-primary/5 dark:border-slate-800 dark:hover:border-primary/30 dark:hover:bg-primary/10'
+              className='group flex items-start justify-between rounded-lg border border-border p-3 transition-all duration-150 hover:border-primary/30 hover:bg-primary/5'
             >
               <div className='min-w-0 flex-1'>
-                <p className='truncate text-[13px] font-bold text-zinc-900 dark:text-slate-100'>{drive.companyName}</p>
-                <p className='mt-0.5 truncate text-[11px] text-zinc-500 dark:text-slate-400'>{drive.role}</p>
+                <p className='truncate text-[13px] font-bold text-foreground'>{drive.companyName}</p>
+                <p className='mt-0.5 truncate text-[11px] text-muted-foreground'>{drive.role}</p>
               </div>
               <div className='ml-3 shrink-0 flex flex-col items-end gap-1'>
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${drive.isEligible ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
                   {drive.isEligible ? 'Eligible' : 'Ineligible'}
                 </span>
-                <span className='flex items-center gap-1 text-[10px] text-zinc-500 dark:text-slate-400'>
+                <span className='flex items-center gap-1 text-[10px] text-muted-foreground'>
                   <Clock size={9} /> {drive.deadline ? new Date(drive.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'No deadline'}
                 </span>
               </div>
@@ -96,14 +96,14 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
           ))
         ) : loadError ? (
           <div className='flex flex-col items-center justify-center h-full py-8 text-center'>
-            <Briefcase size={28} className='mb-2 text-zinc-400 opacity-40 dark:text-slate-500' />
-            <p className='text-[12px] text-zinc-500 dark:text-slate-400'>Could not load drives right now.</p>
-            <p className='mt-1 text-[11px] text-zinc-400 dark:text-slate-500'>Please refresh or try again in a moment.</p>
+            <Briefcase size={28} className='mb-2 text-muted-foreground/40' />
+            <p className='text-[12px] text-muted-foreground'>Could not load drives right now.</p>
+            <p className='mt-1 text-[11px] text-muted-foreground'>Please refresh or try again in a moment.</p>
           </div>
         ) : (
           <div className='flex flex-col items-center justify-center h-full py-8 text-center'>
-            <Briefcase size={28} className='mb-2 text-zinc-400 opacity-40 dark:text-slate-500' />
-            <p className='text-[12px] text-zinc-500 dark:text-slate-400'>No active drives at the moment.</p>
+            <Briefcase size={28} className='mb-2 text-muted-foreground/40' />
+            <p className='text-[12px] text-muted-foreground'>No active drives at the moment.</p>
           </div>
         )}
       </div>

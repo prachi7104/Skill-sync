@@ -12,14 +12,16 @@ interface DashboardGreetingCardProps {
 
 
 export default function DashboardGreetingCard({ studentName, progressPercent, onboardingRequired }: DashboardGreetingCardProps) {
+  const firstName = studentName.trim().split(/\s+/)[0] || 'Student';
+
   return (
     <div className='flex h-full flex-col gap-5 rounded-2xl border border-border bg-card p-5 shadow-sm'>
       {/* Greeting */}
       <div>
         <p className='mb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground'>Welcome back</p>
-        <h2 className='text-xl font-black leading-tight tracking-tight text-foreground'>
+        <h2 className='max-w-[180px] truncate text-xl font-black leading-tight tracking-tight text-foreground' title={firstName}>
           {/* Show first name only */}
-          {studentName.split(' ')[0]}
+          {firstName}
         </h2>
       </div>
 

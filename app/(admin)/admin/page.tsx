@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { students, drives, jobs, users } from "@/lib/db/schema";
-import { eq, and, gte, isNotNull, isNull, sql, desc } from "drizzle-orm";
+import { eq, and, gte, isNotNull, sql, desc } from "drizzle-orm";
 import { format, formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { ArrowRight, Sparkles, Users, Briefcase, TrendingUp } from "lucide-react";
@@ -13,7 +13,7 @@ export default async function AdminMasterDashboard() {
   const user = await requireRole(["admin"]);
   if (!user.collegeId) {
     return (
-      <div className="max-w-4xl mx-auto p-8 md:p-10">
+      <div className="max-w-4xl mx-auto p-6">
         <div className="rounded-lg border border-warning/20 bg-warning/10 p-6 text-warning-foreground">
           Admin account is not linked to a college. Dashboard metrics are unavailable.
         </div>
@@ -28,38 +28,29 @@ export default async function AdminMasterDashboard() {
   const [
     totalStudents,
     embeddedStudents,
-    _noResumeStudents,
     avgCompleteness,
     lowCompletenessStudents,
   ] = await Promise.all([
     db.select({ c: sql<number>`count(*)::int` }).from(students).where(eq(students.collegeId, user.collegeId)),
     db.select({ c: sql<number>`count(*)::int` }).from(students).where(and(eq(students.collegeId, user.collegeId), isNotNull(students.embedding))),
-    db.select({ c: sql<number>`count(*)::int` }).from(students).where(and(eq(students.collegeId, user.collegeId), isNull(students.resumeUrl))),
     db.select({ avg: sql<number>`round(avg(profile_completeness))::int` }).from(students).where(eq(students.collegeId, user.collegeId)),
     db.select({ c: sql<number>`count(*)::int` }).from(students).where(and(eq(students.collegeId, user.collegeId), sql`profile_completeness < 40`)),
   ]);
 
   // ── Drive Stats ────────────────────────────────────────────────────────
-  const [_totalDrives, activeDrives, rankedDrives] = await Promise.all([
-    db.select({ c: sql<number>`count(*)::int` }).from(drives).where(eq(drives.collegeId, user.collegeId)),
+  const [activeDrives, rankedDrives] = await Promise.all([
     db.select({ c: sql<number>`count(*)::int` }).from(drives).where(and(eq(drives.collegeId, user.collegeId), eq(drives.isActive, true))),
     db.select({ c: sql<number>`count(*)::int` }).from(drives).where(and(eq(drives.collegeId, user.collegeId), sql`ranking_status = 'completed'`)),
   ]);
 
   // ── Ranking Stats ─────────────────────────────────────────────────────
-  const [totalRankings, _avgMatchScore] = await Promise.all([
+  const [totalRankings] = await Promise.all([
     db.execute(sql`
       SELECT COUNT(*)::int AS c
       FROM rankings r
       JOIN drives d ON d.id = r.drive_id
       WHERE d.college_id = ${user.collegeId}
     `) as unknown as Promise<Array<{ c: number }>>,
-    db.execute(sql`
-      SELECT ROUND(AVG(r.match_score))::int AS avg
-      FROM rankings r
-      JOIN drives d ON d.id = r.drive_id
-      WHERE d.college_id = ${user.collegeId}
-    `) as unknown as Promise<Array<{ avg: number | null }>>,
   ]);
 
   // ── Job Queue Health ──────────────────────────────────────────────────
@@ -92,7 +83,7 @@ export default async function AdminMasterDashboard() {
     .where(and(eq(users.role, "faculty"), eq(users.collegeId, user.collegeId)));
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 pb-32 sm:px-6 lg:px-8">
+    <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
       
       {/* Header */}
             <PageHeader

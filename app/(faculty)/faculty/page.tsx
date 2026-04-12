@@ -79,7 +79,7 @@ export default async function FacultyDashboardPage({
     }
 
     return (
-        <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 px-4 py-8 animate-in fade-in duration-500 sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-8 animate-in fade-in duration-500 sm:px-6 lg:px-8">
                         <PageHeader
                 eyebrow="Faculty dashboard"
                 title={`Good morning, ${firstName}`}
@@ -111,7 +111,7 @@ export default async function FacultyDashboardPage({
                 }
             />
 
-            <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground shadow-sm">
+            <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground shadow-sm">
                 <p className="mb-1 font-semibold text-foreground">Bulk eligibility snapshot</p>
                 <p>
                     Select a drive in the rankings table and query <span className="font-mono">/api/faculty/bulk-eligibility?driveId=...</span> for batch eligibility counts.
@@ -130,7 +130,7 @@ export default async function FacultyDashboardPage({
                 <StatCard label="Avg Match Score" value={avgScore ? `${avgScore}%` : "—"} icon={TrendingUp} tone="primary" />
             </div>
 
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 {/* Activity Feed */}
                 <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
                     <h4 className="mb-6 flex items-center justify-between text-sm font-bold text-foreground">

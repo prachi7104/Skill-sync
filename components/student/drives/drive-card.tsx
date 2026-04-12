@@ -8,8 +8,8 @@ import { cn } from '@/lib/utils';
 interface DriveCardProps {
   drive: {
     id: string;
-    company: string;
-    roleTitle: string;
+    company?: string | null;
+    roleTitle?: string | null;
     location?: string | null;
     packageOffered?: string | null;
     minCgpa?: number | null;
@@ -26,13 +26,18 @@ interface DriveCardProps {
   } | null;
 }
 
-function companyInitials(name: string): string {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+function companyInitials(name?: string | null): string {
+  if (!name || !name.trim()) return '?';
+  return name.split(' ').map(w => w[0]).filter(Boolean).join('').toUpperCase().slice(0, 2);
 }
 
 export default function DriveCard({ drive, ranking }: DriveCardProps) {
   const shouldReduceMotion = useReducedMotion();
   const hasRankPosition = Boolean(ranking && ranking.rankPosition > 0);
+  const companyName = drive.company?.trim() || 'Company';
+  const roleTitle = drive.roleTitle?.trim() || 'Role not specified';
+  const location = drive.location?.trim();
+  const packageOffered = drive.packageOffered?.trim();
 
   return (
     <motion.div
@@ -62,27 +67,27 @@ export default function DriveCard({ drive, ranking }: DriveCardProps) {
         {/* Company initials + name + role */}
         <div className='flex items-start gap-3 pr-16 sm:pr-20'>
           <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10'>
-            <span className='text-xs font-bold text-primary'>{companyInitials(drive.company)}</span>
+            <span className='text-xs font-bold text-primary'>{companyInitials(companyName)}</span>
           </div>
           <div className='min-w-0'>
-            <h3 className='truncate text-sm font-semibold leading-snug text-foreground' title={drive.company}>{drive.company}</h3>
-            <p className='mt-0.5 max-w-[180px] truncate text-xs text-muted-foreground sm:max-w-none' title={drive.roleTitle}>{drive.roleTitle}</p>
+            <h3 className='truncate text-sm font-semibold leading-snug text-foreground' title={companyName}>{companyName}</h3>
+            <p className='mt-0.5 max-w-[180px] truncate text-xs text-muted-foreground sm:max-w-none' title={roleTitle}>{roleTitle}</p>
           </div>
         </div>
 
         {/* Info pills */}
         <div className='flex flex-wrap gap-1.5'>
-          {drive.location && (
+          {location && (
             <span className='inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground'>
-              <MapPin size={9} /> {drive.location}
+              <MapPin size={9} /> {location}
             </span>
           )}
-          {drive.packageOffered && (
+          {packageOffered && (
             <span className='inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground'>
-              <IndianRupee size={9} /> {drive.packageOffered}
+              <IndianRupee size={9} /> {packageOffered}
             </span>
           )}
-          {drive.minCgpa && (
+          {drive.minCgpa != null && (
             <span className='inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground'>
               <GraduationCap size={9} /> Min {drive.minCgpa} CGPA
             </span>

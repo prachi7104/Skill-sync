@@ -4,7 +4,11 @@ import { UseFormReturn, UseFieldArrayReturn } from 'react-hook-form';
 import { FormField, FormControl, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, ExternalLink, Briefcase, FolderOpen } from 'lucide-react';
-import type { StudentProfileInput } from '@/lib/validations/student-profile';
+import type { StudentProfileInput, projectSchema, workExperienceSchema } from '@/lib/validations/student-profile';
+import { z } from 'zod';
+
+type Project = z.infer<typeof projectSchema>;
+type WorkExperience = z.infer<typeof workExperienceSchema>;
 
 interface TabProjectsProps {
   form: UseFormReturn<StudentProfileInput>;
@@ -15,7 +19,7 @@ interface TabProjectsProps {
   workFields: UseFieldArrayReturn<StudentProfileInput, 'workExperience'>['fields'];
   appendWork: UseFieldArrayReturn<StudentProfileInput, 'workExperience'>['append'];
   removeWork: UseFieldArrayReturn<StudentProfileInput, 'workExperience'>['remove'];
-  profile: { projects?: any[]; workExperience?: any[] };
+  profile: { projects?: Project[]; workExperience?: WorkExperience[] };
 }
 
 export default function TabProjects({
@@ -44,7 +48,7 @@ export default function TabProjects({
             <p className='text-sm text-muted-foreground italic'>No work experience added.</p>
           ) : (
             <div className='space-y-3'>
-              {profile.workExperience.map((exp: any, i: number) => (
+              {profile.workExperience.map((exp: WorkExperience, i: number) => (
                 <div key={i} className='bg-muted/40 border border-border rounded-lg p-4'>
                   <div className='flex justify-between items-start'>
                     <div>
@@ -80,7 +84,7 @@ export default function TabProjects({
             <p className='text-sm text-muted-foreground italic'>No projects added.</p>
           ) : (
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              {profile.projects.map((p: any, i: number) => (
+              {profile.projects.map((p: Project, i: number) => (
                 <div key={i} className='bg-muted/40 border border-border rounded-lg p-4 flex flex-col'>
                   <div className='flex justify-between items-start mb-2'>
                     <h4 className='text-sm font-semibold text-foreground leading-tight'>{p.title}</h4>

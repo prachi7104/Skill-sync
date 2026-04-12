@@ -3,9 +3,9 @@
 import { useState, useCallback, useEffect } from "react";
 import { Search, Filter, Loader, AlertCircle, ExternalLink, X } from "lucide-react";
 
-const debounce = (func: (...args: any[]) => void, delay: number) => {
+const debounce = <T extends any[]>(func: (...args: T) => void, delay: number) => {
   let timeout: NodeJS.Timeout;
-  return (...args: any[]) => {
+  return (...args: T) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), delay);
   };

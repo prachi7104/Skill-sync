@@ -42,7 +42,7 @@ const VALID_TRANSITIONS: Record<number, number> = {
     9: 10, // Review → Complete
 };
 
-export async function updateOnboardingStep(step: number) {
+export async function updateOnboardingStep(step: number): Promise<{ success: boolean }> {
     // 1. Auth & Role Check — use requireRole instead of requireStudentProfile
     // to avoid redirecting during onboarding when profile may not exist yet
     const user = await requireRole(["student"]);
@@ -110,7 +110,7 @@ export async function updateAcademics(data: {
     semester: number | null;
     branch: string | null;
     batchYear: number | null;
-}) {
+}): Promise<{ success: boolean }> {
     const { user } = await requireStudentProfile();
 
     // Validate with Zod schema
@@ -135,7 +135,7 @@ export async function updateAcademics(data: {
 /**
  * Update coding profiles during onboarding.
  */
-export async function updateCodingProfiles(profiles: CodingProfile[]) {
+export async function updateCodingProfiles(profiles: CodingProfile[]): Promise<{ success: boolean }> {
     const { user } = await requireStudentProfile();
 
     await db
@@ -153,7 +153,7 @@ export async function updateCodingProfiles(profiles: CodingProfile[]) {
 export async function updateSoftSkillsAndAchievements(data: {
     softSkills: string[];
     achievements: Achievement[];
-}) {
+}): Promise<{ success: boolean }> {
     const { user } = await requireStudentProfile();
 
     await db
@@ -172,7 +172,7 @@ export async function updateSoftSkillsAndAchievements(data: {
  * Complete onboarding: transitions step 9 → 10, computes profile completeness,
  * and queues a generate_embedding job when the profile is sufficiently complete.
  */
-export async function completeOnboarding() {
+export async function completeOnboarding(): Promise<{ success: boolean; completeness: number }> {
     const { user, profile } = await requireStudentProfile();
 
     // Validate we're on the review step (9) ready to complete (10)

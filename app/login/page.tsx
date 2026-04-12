@@ -81,7 +81,7 @@ function LoginForm() {
     <div className='relative min-h-screen overflow-x-clip bg-background font-sans text-foreground'>
       <div className='pointer-events-none absolute inset-0 -z-10'>
         <div className='absolute -top-24 left-[15%] h-64 w-64 rounded-full bg-primary/10 blur-3xl' />
-        <div className='absolute bottom-0 right-[10%] h-72 w-72 rounded-full bg-zinc-200/60 blur-3xl dark:bg-slate-900/50' />
+        <div className='absolute bottom-0 right-[10%] h-72 w-72 rounded-full bg-muted/60 blur-3xl' />
       </div>
 
       <div className='grid min-h-screen grid-cols-1 md:grid-cols-[1fr_320px] lg:grid-cols-[1.05fr_0.95fr]'>

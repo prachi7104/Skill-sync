@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { Suspense } from 'react';
 
 import { requireRole, getStudentProfile } from '@/lib/auth/helpers';
+import PageHeader from '@/components/shared/page-header';
 import DashboardGreetingCard from '@/components/student/dashboard/dashboard-greeting-card';
 import DashboardAMCATChart from '@/components/student/dashboard/dashboard-amcat-chart';
 import DashboardDrivesPanel from '@/components/student/dashboard/dashboard-drives-panel';
@@ -50,29 +51,21 @@ async function StudentDashboardContent() {
   }
 
   return (
-    <div className='space-y-5 text-foreground'>
-      <section className='rounded-2xl border border-border bg-card px-5 py-5 shadow-sm sm:px-6'>
-        <div className='flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
-          <div className='max-w-2xl'>
-            <p className='text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground'>
-              Student Workspace
-            </p>
-            <h1 className='mt-2 text-3xl font-black tracking-tight text-foreground sm:text-4xl'>
-              Your placement activity at a glance
-            </h1>
-            <p className='mt-2 text-sm leading-relaxed text-muted-foreground'>
-              Track AMCAT scoring, active drives, your profile status, and quick links to Sandbox and Career Coach.
-            </p>
-          </div>
-          <div className='flex flex-wrap gap-2'>
+    <div className='space-y-6 text-foreground'>
+      <PageHeader
+        eyebrow='Student Dashboard'
+        title='Your placement activity at a glance'
+        description='Track AMCAT scoring, active drives, your profile status, and quick links to Sandbox and Career Coach.'
+        actions={
+          <div className='flex flex-wrap gap-3'>
             {['AMCAT scoring', 'AI Sandbox', 'Career Coach'].map((chip) => (
               <span key={chip} className='inline-flex h-7 items-center rounded-md border border-border bg-muted px-2.5 text-[11px] font-semibold text-muted-foreground'>
                 {chip}
               </span>
             ))}
           </div>
-        </div>
-      </section>
+        }
+      />
 
       {/* Onboarding card — only when incomplete */}
       {onboardingRequired && (

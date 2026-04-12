@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, MapPin, IndianRupee, Calendar, ExternalLink, Users } from "lucide-react";
 import { getCompanyColor } from "@/lib/utils/company-color";
-import { TriggerRankingButton } from "@/components/faculty/trigger-ranking-button";
+import { TriggerRankingButton } from "@/components/drives/trigger-ranking-button";
 import { cn } from "@/lib/utils";
 import { DriveActionButtons } from "./drive-action-buttons";
 

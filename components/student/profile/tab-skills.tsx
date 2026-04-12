@@ -5,7 +5,10 @@ import { FormField, FormControl, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, X } from 'lucide-react';
-import type { StudentProfileInput } from '@/lib/validations/student-profile';
+import type { StudentProfileInput, skillSchema } from '@/lib/validations/student-profile';
+import { z } from 'zod';
+
+type Skill = z.infer<typeof skillSchema>;
 
 interface TabSkillsProps {
   form: UseFormReturn<StudentProfileInput>;
@@ -15,7 +18,7 @@ interface TabSkillsProps {
   removeSkill: UseFieldArrayReturn<StudentProfileInput, 'skills'>['remove'];
   softSkillInput: string;
   setSoftSkillInput: (v: string) => void;
-  profile: { skills?: any[]; softSkills?: string[] };
+  profile: { skills?: Skill[]; softSkills?: string[] };
 }
 
 function ProficiencyDots({ value }: { value: number }) {
@@ -52,7 +55,7 @@ export default function TabSkills({
             <p className='text-sm text-muted-foreground italic'>No skills added yet.</p>
           ) : (
             <div className='flex flex-wrap gap-2'>
-              {profile.skills.map((skill: any, i: number) => (
+              {profile.skills.map((skill: Skill, i: number) => (
                 <div
                   key={i}
                   className='inline-flex items-center gap-2 bg-muted/50 border border-border rounded px-3 py-1.5'

@@ -7,7 +7,7 @@ import { Sparkles, Zap, LayoutTemplate } from "lucide-react";
 
 export default function SandboxPage() {
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 text-foreground animate-in fade-in duration-700 relative z-10 sm:px-6 md:px-10">
+    <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 text-foreground animate-in fade-in duration-700 relative z-10 sm:px-6 md:px-10 [&_pre]:overflow-x-auto [&_pre]:break-words [&_pre]:whitespace-pre-wrap [&_p]:break-words">
       <header className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="flex flex-col gap-2">
           <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">

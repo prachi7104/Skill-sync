@@ -303,7 +303,7 @@ export default function StudentLeaderboardPage() {
                 {!isInTop50 && myRank && (
                   <>
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-zinc-500 dark:text-slate-400">...</TableCell>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">...</TableCell>
                     </TableRow>
                     <TableRow className="bg-primary/10">
                       <TableCell className="font-semibold">#{myRank.rank}</TableCell>

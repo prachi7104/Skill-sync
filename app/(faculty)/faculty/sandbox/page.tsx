@@ -157,7 +157,7 @@ export default function FacultySandboxPage() {
               }
             </Button>
           </div>
-          <div className="prose prose-sm max-w-none text-foreground">
+          <div className="prose prose-sm max-w-none text-foreground break-words overflow-x-auto">
             <MarkdownRenderer content={result} />
           </div>
         </div>

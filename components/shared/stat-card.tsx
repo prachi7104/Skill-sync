@@ -25,6 +25,9 @@ export default function StatCard({
   tone = "primary",
   className,
 }: StatCardProps) {
+  const displayValue = String(value);
+  const compactValue = displayValue.length > 5;
+
   return (
     <div className={cn("rounded-lg border border-border bg-card p-5 shadow-sm", className)}>
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -37,8 +40,11 @@ export default function StatCard({
           </div>
         )}
       </div>
-      <p className="text-3xl font-black tracking-tight text-foreground">
-        {value}
+      <p className={cn(
+        "font-black tracking-tight text-foreground",
+        compactValue ? "text-2xl" : "text-3xl",
+      )}>
+        {displayValue}
       </p>
     </div>
   );
