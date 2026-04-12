@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useSession } from "next-auth/react";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/shared/page-header";
@@ -90,44 +91,78 @@ export default function FacultySettingsPage() {
           </div>
         )}
 
-        <input
-          type="password"
-          autoComplete="current-password"
-          placeholder="Current password"
-          value={currentPassword}
-          onChange={(e) => setCurrentPassword(e.target.value)}
-          required
-          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
-        />
-        <input
-          type="password"
-          autoComplete="new-password"
-          placeholder="New password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          required
-          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
-        />
+        <div className="space-y-1.5">
+          <label
+            htmlFor="current-password"
+            className="text-sm font-semibold text-foreground"
+          >
+            Current Password
+          </label>
+          <input
+            id="current-password"
+            type="password"
+            autoComplete="current-password"
+            placeholder="Enter current password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            required
+            className="w-full bg-muted border border-border text-foreground rounded-md px-4 py-3 text-sm placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label
+            htmlFor="new-password"
+            className="text-sm font-semibold text-foreground"
+          >
+            New Password
+          </label>
+          <input
+            id="new-password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Enter new password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+            className="w-full bg-muted border border-border text-foreground rounded-md px-4 py-3 text-sm placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+          />
+        </div>
         {passwordStrengthMessage ? (
           <p className="text-xs text-warning">{passwordStrengthMessage}</p>
         ) : newPassword ? (
           <p className="text-xs text-success">Strong password format looks good.</p>
         ) : null}
-        <input
-          type="password"
-          autoComplete="new-password"
-          placeholder="Confirm new password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
-        />
+        <div className="space-y-1.5">
+          <label
+            htmlFor="confirm-password"
+            className="text-sm font-semibold text-foreground"
+          >
+            Confirm New Password
+          </label>
+          <input
+            id="confirm-password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Re-enter new password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            className="w-full bg-muted border border-border text-foreground rounded-md px-4 py-3 text-sm placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+          />
+        </div>
         <Button
           type="submit"
           disabled={status === "loading"}
-          className="w-full bg-primary hover:bg-primary/90 disabled:bg-card text-foreground font-bold py-6 rounded-lg text-sm transition-all"
+          className="w-full"
         >
-          {status === "loading" ? "Changing..." : "Change Password"}
+          {status === "loading" ? (
+            <>
+              <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+              Changing…
+            </>
+          ) : (
+            "Change Password"
+          )}
         </Button>
       </form>
     </div>

@@ -8,7 +8,7 @@ import {
 import NavItem from '@/components/shared/nav-item';
 
 const facultyLinks = [
-  { href: '/faculty',                   label: 'Overview',   icon: LayoutDashboard },
+  { href: '/faculty',                   label: 'Dashboard', icon: LayoutDashboard },
   { href: '/faculty/drives',            label: 'Drives',     icon: FolderOpen },
   { href: '/faculty/drives/new',        label: 'New Drive',  icon: FolderPlus }, // shown only when creating
   { href: '/faculty/students',          label: 'Students',   icon: Users },
