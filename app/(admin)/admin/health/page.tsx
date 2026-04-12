@@ -65,8 +65,9 @@ function fallbackHealthData(): HealthData {
 }
 
 function displayCount(n: number | undefined | null): string {
-  if (n === undefined || n === null || n === -1) return "—";
-  return String(n);
+  if (n === undefined || n === null) return "…";    // still loading
+  if (n === -1) return "N/A";                       // fetch failed
+  return String(n);                                  // real value including 0
 }
 
 function asNumber(v: unknown, fallback = 0): number {
@@ -92,11 +93,18 @@ function Metric({ label, value, status }: { label: string; value: string; status
     neutral: "bg-muted text-muted-foreground border-border",
   };
 
+  const isUnavailable = value === "N/A";
+
   return (
     <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
       <div className="mt-2 flex items-center gap-2">
-        <p className="text-2xl font-black text-foreground">{value}</p>
+        <p className={cn(
+          "text-3xl font-black tracking-tight",
+          isUnavailable ? "text-xl text-muted-foreground" : "text-foreground"
+        )}>
+          {value}
+        </p>
         {status && <span className={cn("rounded px-2 py-0.5 text-[10px] font-bold border", statusClass[status])}>{status.toUpperCase()}</span>}
       </div>
     </div>

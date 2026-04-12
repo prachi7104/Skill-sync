@@ -20,6 +20,7 @@ import remarkGfm from "remark-gfm";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 type PrioritySkill = {
   skill: string;
@@ -368,9 +369,21 @@ export default function CareerCoachPage() {
             </div>
 
             {sessionComplete ? (
-              <p className="text-sm text-warning">
-                Session complete. Refresh to start a new one.
-              </p>
+              <div className='rounded-lg border border-border bg-muted/50 p-4 text-center space-y-2'>
+                <p className='text-sm font-semibold text-foreground'>
+                  Conversation limit reached
+                </p>
+                <p className='text-xs text-muted-foreground'>
+                  Start a new conversation to continue getting coaching advice.
+                </p>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setMessages([])}
+                >
+                  Start New Conversation
+                </Button>
+              </div>
             ) : null}
 
             <div className="space-y-2">
@@ -385,12 +398,24 @@ export default function CareerCoachPage() {
                 rows={3}
                 className="w-full resize-none rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/30"
               />
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between mt-2">
+                <div>
+                  {messages.length > 0 && (
+                    <p className={cn(
+                      'text-[11px] font-medium',
+                      messages.length >= MAX_MESSAGES - 2
+                        ? 'text-warning'
+                        : 'text-muted-foreground'
+                    )}>
+                      {MAX_MESSAGES - messages.length} message{MAX_MESSAGES - messages.length !== 1 ? 's' : ''} remaining
+                    </p>
+                  )}
+                </div>
                 <Button
                   type="button"
                   onClick={() => void sendMessage()}
                   className="bg-primary text-primary-foreground hover:bg-primary-hover"
-                  disabled={!canSend || !chatInput.trim()}
+                  disabled={!canSend || !chatInput.trim() || messages.length >= MAX_MESSAGES}
                 >
                   Send
                 </Button>

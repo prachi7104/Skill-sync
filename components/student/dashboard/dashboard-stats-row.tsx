@@ -1,7 +1,8 @@
 "use client";
 
-import { BarChart3, Trophy, Briefcase } from 'lucide-react';
+import { BarChart3, Trophy, Briefcase, LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface DashboardStatsRowProps {
   amcatScore: number | null;
@@ -9,10 +10,23 @@ interface DashboardStatsRowProps {
   activeDrives: number | null;
 }
 
-const getStats = (props: DashboardStatsRowProps) => [
+interface StatDef {
+  label: string;
+  value: string | null;
+  nullLabel: string;
+  nullHint: string | null;
+  icon: LucideIcon;
+  iconColor: string;
+  iconBg: string;
+  suffix: string;
+}
+
+const getStats = (props: DashboardStatsRowProps): StatDef[] => [
   {
     label: 'AMCAT Score',
     value: props.amcatScore !== null ? String(props.amcatScore) : null,
+    nullLabel: 'No data',
+    nullHint: 'AMCAT results will appear after your next session.',
     icon: BarChart3,
     iconColor: 'text-primary',
     iconBg: 'bg-primary/10',
@@ -21,6 +35,8 @@ const getStats = (props: DashboardStatsRowProps) => [
   {
     label: 'Leaderboard Rank',
     value: props.leaderboardRank !== null ? `#${props.leaderboardRank}` : null,
+    nullLabel: 'Unranked',
+    nullHint: 'Complete an AMCAT session to get your rank.',
     icon: Trophy,
     iconColor: 'text-warning',
     iconBg: 'bg-warning/10',
@@ -29,6 +45,8 @@ const getStats = (props: DashboardStatsRowProps) => [
   {
     label: 'Active Drives',
     value: props.activeDrives !== null ? String(props.activeDrives) : null,
+    nullLabel: '0',
+    nullHint: null,
     icon: Briefcase,
     iconColor: 'text-success',
     iconBg: 'bg-success/10',
@@ -59,24 +77,34 @@ export default function DashboardStatsRow(props: DashboardStatsRowProps) {
       <motion.div
         key={stat.label}
         variants={item}
-        className='flex items-start gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm'
+        className='rounded-xl border border-border bg-card p-4 shadow-sm'
         aria-label={`${stat.label}: ${stat.value ?? 'not available'}${stat.suffix}`}
       >
-          <div className={`w-9 h-9 rounded-md ${stat.iconBg} flex items-center justify-center shrink-0`}>
-            <stat.icon size={18} className={stat.iconColor} />
+          <div className='mb-3 flex items-start justify-between gap-2'>
+            <p className='text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground'>
+              {stat.label}
+            </p>
+            <div className={cn('rounded-full p-1.5 shrink-0', stat.iconBg)}>
+              <stat.icon size={13} className={stat.iconColor} aria-hidden='true' />
+            </div>
           </div>
-          <div className='min-w-0'>
-            <p className='truncate text-[11px] font-medium text-muted-foreground'>{stat.label}</p>
-            {stat.value !== null ? (
-              <p className='mt-0.5 text-xl font-black leading-tight text-foreground'>
-                {stat.value}<span className='text-sm font-semibold text-muted-foreground'>{stat.suffix}</span>
+
+          {stat.value !== null ? (
+            <p className='text-3xl font-black tracking-tight text-foreground'>
+              {stat.value}{stat.suffix}
+            </p>
+          ) : (
+            <div>
+              <p className='text-xl font-bold tracking-tight text-muted-foreground'>
+                {stat.nullLabel}
               </p>
-            ) : (
-              <div className='h-7 w-16 mt-1 rounded-sm bg-muted overflow-hidden'>
-                <div className='h-full w-full animate-shimmer bg-gradient-to-r from-muted via-border to-muted bg-[length:200%_100%]' />
-              </div>
-            )}
-          </div>
+              {stat.nullHint && (
+                <p className='mt-0.5 text-[11px] leading-relaxed text-muted-foreground/70'>
+                  {stat.nullHint}
+                </p>
+              )}
+            </div>
+          )}
         </motion.div>
       ))}
     </motion.div>
