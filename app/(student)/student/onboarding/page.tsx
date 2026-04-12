@@ -1217,7 +1217,7 @@ function AcademicsStep({
           <select
             value={form.branch}
             onChange={(e) => setField("branch", e.target.value)}
-            className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground focus:border-primary/30 focus:outline-none"
+            className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
           >
             <option value="">Select branch</option>
             {UPES_BRANCHES.map((branchOption) => (
@@ -1239,7 +1239,7 @@ function AcademicsStep({
             <select
               value={form.batchYear}
               onChange={(e) => setField("batchYear", e.target.value)}
-              className="w-full bg-muted/50 border border-border text-foreground rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-primary/30"
+              className="w-full bg-muted/50 border border-border text-foreground rounded-md px-3 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
             >
               <option value="">Select year</option>
               {BATCH_YEARS.map((y) => (
@@ -1255,7 +1255,7 @@ function AcademicsStep({
           <select
             value={form.semester}
             onChange={(e) => setField("semester", e.target.value)}
-            className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground focus:border-primary/30 focus:outline-none"
+            className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
           >
             <option value="">Select</option>
             {SEMESTERS.map((s) => (

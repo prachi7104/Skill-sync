@@ -9,8 +9,9 @@ export default function StudentProfilePage() {
 
     if (isLoading || !student || !user) {
         return (
-            <div className="flex min-h-[60vh] items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary/30"></div>
+            <div className="flex min-h-[60vh] items-center justify-center" role="status" aria-label="Loading">
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary/30" aria-hidden="true"></div>
+                <span className="sr-only">Loading…</span>
             </div>
         );
     }

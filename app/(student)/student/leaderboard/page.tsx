@@ -274,8 +274,9 @@ export default function StudentLeaderboardPage() {
       </section>
 
       {loading ? (
-        <div className="flex min-h-[240px] items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <div className="flex min-h-[240px] items-center justify-center" role="status" aria-label="Loading">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden="true" />
+          <span className="sr-only">Loading…</span>
         </div>
       ) : error ? (
         <div className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">

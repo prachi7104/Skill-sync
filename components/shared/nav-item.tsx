@@ -94,7 +94,11 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
       className='absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 z-[201] px-2.5 py-1 rounded-md bg-sidebar-surface border border-sidebar-border text-sidebar-fg text-[12px] font-semibold whitespace-nowrap shadow-md pointer-events-none'
     >
       {label}
-      {isBlocked && <span className='ml-1.5 text-sidebar-fg-muted font-normal'>(locked)</span>}
+      {isBlocked && (
+        <span className='ml-1.5 text-[10px] font-normal text-sidebar-fg-muted'>
+          — locked
+        </span>
+      )}
     </div>
   );
 
@@ -106,7 +110,7 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
   };
 
   const tooltipId = `nav-tooltip-${label.replace(/\s+/g, "-").toLowerCase()}`;
-  const computedTabIndex = isBlocked ? -1 : undefined;
+  const computedTabIndex = undefined; // all items remain in tab order
 
   if (href && !isBlocked) {
     return (
@@ -131,9 +135,15 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
       <button
         type='button'
         onClick={isBlocked ? undefined : onClick}
+        onKeyDown={isBlocked ? (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick?.();
+          }
+        } : undefined}
         className={baseClasses}
         aria-disabled={isBlocked}
-        aria-label={label}
+        aria-label={isBlocked ? `${label} — complete profile setup to unlock` : label}
         aria-describedby={isCollapsed ? tooltipId : undefined}
         tabIndex={computedTabIndex}
         {...sharedHandlers}
