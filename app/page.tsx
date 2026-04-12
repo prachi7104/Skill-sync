@@ -20,7 +20,7 @@ export default async function Home() {
       case "faculty":
         redirect("/faculty");
       case "admin":
-        redirect("/admin/health");
+        redirect("/admin");
     }
   }
 
