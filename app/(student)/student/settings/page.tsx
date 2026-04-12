@@ -1,61 +1,61 @@
 "use client";
 
-import { FormEvent, useState } from "react";
 import { useSession } from "next-auth/react";
+import { Badge } from "@/components/ui/badge";
+import { Mail, Shield } from "lucide-react";
 
 export default function StudentSettingsPage() {
   const { data: session } = useSession();
-  const [name, setName] = useState(session?.user?.name || "");
-  const [status, setStatus] = useState<"idle" | "saved">("idle");
-
-  function handleSave(e: FormEvent) {
-    e.preventDefault();
-    // Name editing UI only in this phase. Persistence is intentionally deferred.
-    setStatus("saved");
-    setTimeout(() => setStatus("idle"), 3000);
-  }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-8 sm:px-6">
+
+      {/* Page header */}
       <div className="space-y-1">
-        <h1 className="text-3xl font-black tracking-tight text-foreground">Settings</h1>
-        <p className="text-sm text-muted-foreground">Manage your account information.</p>
+        <h1 className="text-2xl font-black tracking-tight text-foreground">Settings</h1>
+        <p className="text-sm text-muted-foreground">Your account information.</p>
       </div>
 
-      <section className="space-y-2 rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <h2 className="font-bold text-foreground">Account Info</h2>
-        <p className="text-sm text-muted-foreground">Email: {session?.user?.email || "-"}</p>
-        <p className="text-sm text-primary capitalize">Role: {session?.user?.role || "-"}</p>
+      {/* Account info card */}
+      <section className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">Account</h2>
+
+        <div className="flex items-center gap-3">
+          <Mail size={16} className="shrink-0 text-muted-foreground" aria-hidden="true" />
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Email</p>
+            <p className="text-sm font-medium text-foreground">
+              {session?.user?.email || "—"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Shield size={16} className="shrink-0 text-muted-foreground" aria-hidden="true" />
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Role</p>
+            <Badge variant="neutral" className="mt-0.5 capitalize">
+              {session?.user?.role || "student"}
+            </Badge>
+          </div>
+        </div>
       </section>
 
-      <form onSubmit={handleSave} className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <h2 className="font-bold text-foreground">Display Name</h2>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Enter your display name"
-          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/30"
-          required
-        />
-
-        <p className="text-xs text-muted-foreground">
-          Name edit persistence will be enabled in a later phase.
+      {/* Name / profile edits — redirect to onboarding/profile */}
+      <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">Profile Details</h2>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Your name, SAP ID, branch, and academic details are managed through your{" "}
+          <a
+            href="/student/profile"
+            className="font-semibold text-primary hover:text-primary-hover transition-colors duration-150"
+          >
+            Profile page
+          </a>
+          .
         </p>
+      </section>
 
-        <button
-          type="submit"
-          className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90"
-        >
-          Save Name
-        </button>
-
-        {status === "saved" && (
-          <div className="rounded-md border border-success/20 bg-success/10 p-3 text-sm text-success">
-            Name updated in UI.
-          </div>
-        )}
-      </form>
     </div>
   );
 }
