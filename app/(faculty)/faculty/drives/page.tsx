@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { hasComponent, requireRole } from "@/lib/auth/helpers";
 import PageHeader from "@/components/shared/page-header";
+import EmptyState from "@/components/shared/empty-state";
 import { db } from "@/lib/db";
 import { drives, rankings, jobs } from "@/lib/db/schema";
 import { eq, count, avg, sql, and, inArray, desc } from "drizzle-orm";
@@ -10,12 +11,11 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, MapPin, IndianRupee, Calendar, ExternalLink } from "lucide-react";
+import { Plus, MapPin, IndianRupee, Calendar, ExternalLink, FolderOpen } from "lucide-react";
 import { getCompanyColor } from "@/lib/utils/company-color";
 import { DriveConflictsButton } from "@/components/faculty/drive-conflicts-button";
 import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
-import { FolderOpen } from "lucide-react";
 
 export default async function FacultyDrivesPage({ searchParams }: { searchParams: { page?: string } }) {
   const user = await requireRole(["faculty", "admin"]);
@@ -125,18 +125,15 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
 
       {/* Grid */}
       {facultyDrives.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center shadow-sm">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <FolderOpen className="h-5 w-5" />
-          </div>
-          <p className="text-sm font-semibold text-foreground">No drives created yet.</p>
-          <p className="mt-1 text-sm text-muted-foreground">Create the first drive to start ranking students and tracking eligibility.</p>
-          {canCreateDrive && (
-            <Button asChild variant="link" className="mt-2 text-primary">
-              <Link href="/faculty/drives/new">Create your first drive &rarr;</Link>
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={FolderOpen}
+          title="No drives created yet"
+          description="Create your first placement drive to start matching students with companies."
+          action={canCreateDrive ? {
+            label: "Create Drive",
+            href: "/faculty/drives/new"
+          } : undefined}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {facultyDrives.map((drive) => {

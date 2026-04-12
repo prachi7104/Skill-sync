@@ -11,6 +11,7 @@ import {
   Briefcase,
   Calendar,
   IndianRupee,
+  ChevronLeft,
 } from "lucide-react";
 import { format } from "date-fns";
 import RankingsTable from "@/components/faculty/rankings-table";
@@ -53,6 +54,7 @@ export interface DriveRankingsViewProps {
   driveId: string;
   rankings: RankingRow[];
   drive: DriveDetails;
+  backHref: string;
   isTruncated: boolean;
   maxRankingsRows: number;
   distribution: Array<{ label: string; count: number }>;
@@ -65,6 +67,7 @@ export default function DriveRankingsView({
   driveId,
   rankings,
   drive,
+  backHref,
   isTruncated,
   maxRankingsRows,
   distribution,
@@ -88,6 +91,14 @@ export default function DriveRankingsView({
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 animate-in fade-in duration-500 sm:px-6 lg:px-8">
+      <Link
+        href={backHref}
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors duration-150"
+      >
+        <ChevronLeft size={15} aria-hidden="true" />
+        Back to Drives
+      </Link>
+
       {/* ── Drive Header Card ──────────────────────────────────────────────── */}
       <Card className="overflow-hidden border-border bg-card shadow-sm">
         <div className="border-b border-border bg-card p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">

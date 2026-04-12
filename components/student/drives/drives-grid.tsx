@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { Briefcase } from 'lucide-react';
 import DriveFilterBar from './drive-filter-bar';
 import DriveCard from './drive-card';
+import EmptyState from '@/components/shared/empty-state';
 
 export interface SerializedDrive {
   id: string;
@@ -57,16 +58,15 @@ export default function DrivesGrid({ drives, rankingMap }: DrivesGridProps) {
       />
 
       {filtered.length === 0 ? (
-        <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/40 py-20'>
-          <Briefcase size={36} className='mb-3 text-muted-foreground opacity-40' />
-          <p className='text-sm font-medium text-muted-foreground'>No drives match your filters</p>
-          <button
-            onClick={() => { setQuery(''); setUrgentOnly(false); }}
-            className='mt-3 text-xs text-primary hover:underline'
-          >
-            Clear filters
-          </button>
-        </div>
+        <EmptyState
+          icon={Briefcase}
+          title="No drives match your filters"
+          description="Adjust your filters or clear them to see all available opportunities."
+          action={{
+            label: "Clear Filters",
+            onClick: () => { setQuery(''); setUrgentOnly(false); }
+          }}
+        />
       ) : (
         <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
           {filtered.map(drive => (

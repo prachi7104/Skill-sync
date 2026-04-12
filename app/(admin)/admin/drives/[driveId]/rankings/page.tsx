@@ -141,6 +141,7 @@ export default async function AdminDriveRankingsPage({ params }: PageProps) {
       driveId={driveId}
       rankings={rows}
       drive={drive}
+      backHref="/admin/drives"
       isTruncated={isTruncated}
       maxRankingsRows={MAX_RANKINGS_ROWS}
       distribution={distribution}

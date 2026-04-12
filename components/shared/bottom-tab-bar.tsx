@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   LayoutDashboard, Briefcase, UserCircle, Trophy,
   MoreHorizontal, Activity, Users, GraduationCap,
@@ -56,6 +56,7 @@ interface BottomTabBarProps {
 export default function BottomTabBar({ userRole, userName }: BottomTabBarProps) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
   const tabs = TABS_BY_ROLE[userRole] ?? STUDENT_TABS;
 
   const isTabActive = (tab: Tab) => {
@@ -103,11 +104,15 @@ export default function BottomTabBar({ userRole, userName }: BottomTabBarProps) 
               >
                 {/* Active background pill */}
                 {active && (
-                  <motion.div
-                    layoutId={`tab-active-${userRole}`}
-                    className='absolute inset-x-3 top-1.5 h-8 rounded-lg bg-primary/10'
-                    transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                  />
+                  prefersReducedMotion ? (
+                    <div className='absolute inset-x-3 top-1.5 h-8 rounded-lg bg-primary/10' />
+                  ) : (
+                    <motion.div
+                      layoutId={`tab-active-${userRole}`}
+                      className='absolute inset-x-3 top-1.5 h-8 rounded-lg bg-primary/10'
+                      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                    />
+                  )
                 )}
                 <tab.icon
                   size={22}

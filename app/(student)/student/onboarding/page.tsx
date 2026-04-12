@@ -348,6 +348,7 @@ export default function OnboardingPage() {
     toFormFromStudent(student ?? null),
   );
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [navActionState, setNavActionState] = useState<"idle" | "next" | "finish">("idle");
 
   const [resumeState, setResumeState] = useState<"idle" | "extracting" | "analyzing" | "uploading" | "parsing" | "done" | "skipped" | "error">("idle");
   const [resumeStatusText, setResumeStatusText] = useState("");
@@ -390,6 +391,10 @@ export default function OnboardingPage() {
   }, [allRequired, returnTo, router]);
 
   const currentStepIndex = STEPS.findIndex((s) => s.key === activeStep);
+  const isCurrentStepInvalid = activeStep === "identity"
+    ? !form.rollNo.trim()
+    : STEPS[currentStepIndex].required.length > 0 && !stepStates[currentStepIndex].done;
+  const isSubmittingStep = navActionState !== "idle";
 
   function isStepUnlocked(stepIndex: number): boolean {
     for (let i = 0; i < stepIndex; i++) {
@@ -727,37 +732,49 @@ export default function OnboardingPage() {
   );
 
   async function handleNext() {
-    const patch = buildPatch(activeStep, form);
-    await fetch("/api/student/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    }).catch(() => {});
+    if (isSubmittingStep) return;
+    setNavActionState("next");
+    try {
+      const patch = buildPatch(activeStep, form);
+      await fetch("/api/student/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      }).catch(() => {});
 
-    const nextIndex = currentStepIndex + 1;
-    if (nextIndex < STEPS.length) {
-      setActiveStep(STEPS[nextIndex].key);
+      const nextIndex = currentStepIndex + 1;
+      if (nextIndex < STEPS.length) {
+        setActiveStep(STEPS[nextIndex].key);
+      }
+    } finally {
+      setNavActionState("idle");
     }
   }
 
   async function handleFinish() {
-    // 1. Save the final step
-    const patch = buildPatch(activeStep, form);
-    await fetch("/api/student/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    }).catch(() => {});
+    if (isSubmittingStep) return;
+    setNavActionState("finish");
+    try {
+      // 1. Save the final step
+      const patch = buildPatch(activeStep, form);
+      await fetch("/api/student/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      }).catch(() => {});
 
-    // 2. Force Next.js to re-run the server layout and re-fetch initialStudent
-    //    Without this, StudentProvider uses stale data → dashboard redirects back
-    router.refresh();
+      // 2. Force Next.js to re-run the server layout and re-fetch initialStudent
+      //    Without this, StudentProvider uses stale data → dashboard redirects back
+      router.refresh();
 
-    // 3. Wait for the refresh to propagate before navigating
-    await new Promise((resolve) => setTimeout(resolve, 400));
+      // 3. Wait for the refresh to propagate before navigating
+      await new Promise((resolve) => setTimeout(resolve, 400));
 
-    // 4. Navigate — now StudentProvider will get fresh data from the server
-    router.push("/student/dashboard");
+      // 4. Navigate — now StudentProvider will get fresh data from the server
+      router.push("/student/dashboard");
+    } finally {
+      setNavActionState("idle");
+    }
   }
 
   if (isLoading) {
@@ -893,12 +910,34 @@ export default function OnboardingPage() {
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1">
+        <main className="min-w-0 flex-1 pb-[calc(theme(spacing.8)+max(env(safe-area-inset-bottom),0px))]">
           <div className="mb-6">
-            <h1 className="text-2xl font-black text-foreground">
-              {STEPS.find((s) => s.key === activeStep)?.label}
-            </h1>
-            <p className="mt-1 text-muted-foreground">{STEPS.find((s) => s.key === activeStep)?.description}</p>
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                Step {currentStepIndex + 1} of {STEPS.length}
+              </p>
+              <p className="text-[11px] font-semibold text-primary">
+                {STEPS[currentStepIndex]?.label}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {STEPS.map((step, i) => (
+                <div
+                  key={step.key}
+                  className={cn(
+                    "h-1.5 flex-1 rounded-full transition-all duration-300",
+                    i <= currentStepIndex ? "bg-primary" : "bg-muted",
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h2 className="text-lg font-black tracking-tight text-foreground">
+              {STEPS[currentStepIndex]?.label}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">{STEPS[currentStepIndex]?.description}</p>
           </div>
 
           {autofillBanner && activeStep === "identity" && (
@@ -941,40 +980,31 @@ export default function OnboardingPage() {
                 const prev = currentStepIndex - 1;
                 if (prev >= 0) setActiveStep(STEPS[prev].key);
               }}
-              disabled={currentStepIndex === 0}
+              disabled={currentStepIndex === 0 || isSubmittingStep}
               className="text-sm text-muted-foreground transition-all hover:text-foreground disabled:opacity-0"
             >
               Back
             </Button>
 
             <div className="flex items-center gap-3">
-              <div className="flex gap-1.5 md:hidden">
-                {STEPS.map((s, i) => (
-                  <div
-                    key={s.key}
-                    className={cn(
-                      "h-1.5 w-1.5 rounded-full transition-all",
-                      i === currentStepIndex
-                        ? "w-4 bg-primary/10"
-                        : stepStates[i].done
-                          ? "bg-success/10"
-                          : "bg-card",
-                    )}
-                  />
-                ))}
-              </div>
-
               {currentStepIndex < STEPS.length - 1 ? (
                 <div className="flex flex-col items-end gap-1">
                   <Button
                     onClick={handleNext}
-                    disabled={activeStep === "identity" ? !form.rollNo.trim() : (STEPS[currentStepIndex].required.length > 0 && !stepStates[currentStepIndex].done)}
+                    disabled={isSubmittingStep || isCurrentStepInvalid}
                     className="bg-primary px-6 font-bold text-foreground hover:bg-primary/90"
                   >
-                    {activeStep === "identity" && !form.rollNo.trim()
-                      ? "Enter your Roll Number to continue"
-                      : `Continue to ${STEPS[currentStepIndex + 1]?.label}`}
-                    <ChevronRight className="ml-1 h-4 w-4" />
+                    {navActionState === "next" ? (
+                      <>
+                        <Loader2 className="mr-1 h-4 w-4 animate-spin" aria-hidden="true" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        Save & Continue
+                        <ChevronRight className="ml-1 h-4 w-4" />
+                      </>
+                    )}
                   </Button>
                   {activeStep === "identity" && !form.rollNo.trim() && (
                     <p className="text-[11px] text-warning">Roll Number is required to proceed</p>
@@ -983,10 +1013,17 @@ export default function OnboardingPage() {
               ) : (
                 <Button
                   onClick={handleFinish}
-                  disabled={!allRequired}
+                  disabled={isSubmittingStep || !allRequired}
                   className="bg-success/10 px-6 font-bold text-foreground hover:bg-success/10"
                 >
-                  {allRequired ? "Go to Dashboard" : "Complete required fields first"}
+                  {navActionState === "finish" ? (
+                    <>
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" aria-hidden="true" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Complete Setup"
+                  )}
                 </Button>
               )}
             </div>
@@ -1157,6 +1194,11 @@ function IdentityStep({
           <Input
             value={form.rollNo}
             onChange={(e) => setField("rollNo", e.target.value)}
+            onFocus={(e) => {
+              setTimeout(() => {
+                e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }, 300);
+            }}
             placeholder="R2142212345"
             className={cn("border-border bg-muted/50 text-foreground", autofillClass)}
           />
@@ -1213,6 +1255,11 @@ function AcademicsStep({
             step="0.01"
             value={form.cgpa}
             onChange={(e) => setField("cgpa", e.target.value)}
+            onFocus={(e) => {
+              setTimeout(() => {
+                e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }, 300);
+            }}
             placeholder="8.5"
             className="border-border bg-muted/50 text-foreground"
           />

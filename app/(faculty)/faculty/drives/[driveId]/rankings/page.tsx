@@ -140,6 +140,7 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
       driveId={driveId}
       rankings={rows}
       drive={drive}
+      backHref="/faculty/drives"
       isTruncated={isTruncated}
       maxRankingsRows={MAX_RANKINGS_ROWS}
       distribution={distribution}

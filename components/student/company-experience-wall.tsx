@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Search, Star, ThumbsUp, Plus } from "lucide-react";
+import { Search, Star, ThumbsUp, Plus, Briefcase } from "lucide-react";
 
 import MarkdownRenderer from "@/components/shared/markdown-renderer";
+import EmptyState from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -156,7 +157,13 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
               </Card>
             </Link>
           ))}
-          {companies.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-sm text-muted-foreground shadow-sm">No published experiences found for that search yet.</div> : null}
+          {companies.length === 0 ? (
+            <EmptyState
+              icon={Search}
+              title="No companies found"
+              description="No published experiences match your search. Try different filters or keywords."
+            />
+          ) : null}
         </div>
       ) : null}
 
@@ -204,7 +211,13 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
               </div>
             </article>
           ))}
-          {experiences.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-sm text-muted-foreground shadow-sm">No published experiences for this company yet.</div> : null}
+          {experiences.length === 0 ? (
+            <EmptyState
+              icon={Briefcase}
+              title="No experiences yet"
+              description="No published experiences for this company. Be the first to share yours!"
+            />
+          ) : null}
         </div>
       ) : null}
     </div>

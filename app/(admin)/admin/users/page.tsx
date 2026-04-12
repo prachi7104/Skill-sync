@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import EmptyState from "@/components/shared/empty-state";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ import {
   Copy,
   Settings2,
   Search,
+  Users,
 } from "lucide-react";
 import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
@@ -723,7 +725,9 @@ export default function AdminUsersPage() {
                         >
                           <div className="space-y-0.5">
                             <p className="text-sm font-semibold">{user.name}</p>
-                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                            <p className="max-w-[200px] truncate font-mono text-xs text-muted-foreground" title={user.email}>
+                              {user.email}
+                            </p>
                             <p className="text-[10px] text-muted-foreground">
                               Joined{" "}
                               {new Date(user.createdAt).toLocaleDateString("en-IN", {
@@ -809,6 +813,18 @@ export default function AdminUsersPage() {
               </Card>
             );
           })}
+
+          {(["admin", "faculty", "student"] as const).every((role) => grouped[role].length === 0) && (
+            <EmptyState
+              icon={Users}
+              title="No users found"
+              description={debouncedSearch ? `No users match "${debouncedSearch}". Try a different search term or clear filters.` : "No users found."}
+              action={debouncedSearch ? {
+                label: "Clear Search",
+                onClick: () => setSearch("")
+              } : undefined}
+            />
+          )}
 
           {totalCount > pageSize && (
             <Pagination page={page} total={totalCount} pageSize={pageSize} />

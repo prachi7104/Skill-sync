@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { enforceProfileGate, enforceRankingsExist, GuardrailViolation } from "@/lib/guardrails";
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import AnalysisPanel from "./analysis-panel";
 import MarkdownRenderer from "@/components/shared/markdown-renderer";
 
@@ -46,8 +47,17 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
 
   if (!drive.rankingsVisible && user.role === "student") {
     return (
-      <div className="text-center p-12">
-        <p className="text-muted-foreground">Rankings for this drive have not been published yet.</p>
+      <div className="space-y-4 max-w-2xl">
+        <Link
+          href="/student/drives"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors duration-150"
+        >
+          <ChevronLeft size={15} aria-hidden="true" />
+          Back to Drives
+        </Link>
+        <div className="text-center p-12">
+          <p className="text-muted-foreground">Rankings for this drive have not been published yet.</p>
+        </div>
       </div>
     );
   }
@@ -68,6 +78,13 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
   if (guardrailError) {
     return (
       <div className="space-y-6 max-w-2xl">
+        <Link
+          href="/student/drives"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors duration-150"
+        >
+          <ChevronLeft size={15} aria-hidden="true" />
+          Back to Drives
+        </Link>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
             My Ranking — {drive.company}
@@ -112,9 +129,10 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
       <div className="space-y-2">
         <Link
           href="/student/drives"
-          className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors duration-150"
         >
-          ← Back to Drives
+          <ChevronLeft size={15} aria-hidden="true" />
+          Back to Drives
         </Link>
         <div>
         <h1 className="text-2xl font-bold tracking-tight">

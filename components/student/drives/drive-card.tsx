@@ -60,13 +60,13 @@ export default function DriveCard({ drive, ranking }: DriveCardProps) {
 
       <div className='flex-1 space-y-3 p-4'>
         {/* Company initials + name + role */}
-        <div className='flex items-start gap-3 pr-20'>
+        <div className='flex items-start gap-3 pr-16 sm:pr-20'>
           <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10'>
             <span className='text-xs font-bold text-primary'>{companyInitials(drive.company)}</span>
           </div>
           <div className='min-w-0'>
-            <h3 className='truncate text-sm font-semibold leading-snug text-foreground'>{drive.company}</h3>
-            <p className='mt-0.5 truncate text-xs text-muted-foreground'>{drive.roleTitle}</p>
+            <h3 className='truncate text-sm font-semibold leading-snug text-foreground' title={drive.company}>{drive.company}</h3>
+            <p className='mt-0.5 max-w-[180px] truncate text-xs text-muted-foreground sm:max-w-none' title={drive.roleTitle}>{drive.roleTitle}</p>
           </div>
         </div>
 
@@ -108,21 +108,23 @@ export default function DriveCard({ drive, ranking }: DriveCardProps) {
                 {ranking.shortExplanation}
               </p>
             )}
-            <div className='flex flex-wrap gap-1'>
+            <div className='flex max-h-12 flex-wrap gap-1 overflow-hidden'>
               {ranking.matchedSkills.slice(0, 4).map(skill => (
                 <span
                   key={skill}
-                  className='inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold bg-success/10 border border-success/20 text-success'
+                  className='inline-flex max-w-[100px] items-center gap-0.5 truncate rounded bg-success/10 px-1.5 py-0.5 text-[9px] font-bold text-success border border-success/20'
                 >
-                  + {skill}
+                  <span className='shrink-0'>+</span>
+                  <span className='truncate'>{skill}</span>
                 </span>
               ))}
               {ranking.missingSkills.slice(0, 2).map(skill => (
                 <span
                   key={skill}
-                  className='inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold bg-destructive/10 border border-destructive/20 text-destructive'
+                  className='inline-flex max-w-[100px] items-center gap-0.5 truncate rounded bg-destructive/10 px-1.5 py-0.5 text-[9px] font-bold text-destructive border border-destructive/20'
                 >
-                  − {skill}
+                  <span className='shrink-0'>−</span>
+                  <span className='truncate'>{skill}</span>
                 </span>
               ))}
             </div>

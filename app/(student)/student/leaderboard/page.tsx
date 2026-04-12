@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import EmptyState from "@/components/shared/empty-state";
 import {
   Select,
   SelectContent,
@@ -256,9 +257,11 @@ export default function StudentLeaderboardPage() {
       ) : error ? (
         <div className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
       ) : !hasData ? (
-        <div className="rounded-2xl border border-border bg-card px-4 py-6 text-sm text-muted-foreground">
-          No published AMCAT data is available yet.
-        </div>
+        <EmptyState
+          icon={BarChart3}
+          title="No AMCAT scores yet"
+          description="Your leaderboard rank will appear here after you complete an AMCAT session. Scores are published by your placement coordinator."
+        />
       ) : (
         <>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -284,7 +287,9 @@ export default function StudentLeaderboardPage() {
                 {top50.map((row) => (
                   <TableRow key={`${row.rank}-${row.name}`}>
                     <TableCell className="font-semibold">#{row.rank}</TableCell>
-                    <TableCell>{row.name}</TableCell>
+                    <TableCell className="max-w-[160px] font-semibold">
+                      <span className="block truncate" title={row.name}>{row.name}</span>
+                    </TableCell>
                     <TableCell>{row.branch ?? "-"}</TableCell>
                     <TableCell>{row.score}</TableCell>
                     <TableCell>

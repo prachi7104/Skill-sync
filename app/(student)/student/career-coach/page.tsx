@@ -404,11 +404,16 @@ export default function CareerCoachPage() {
               </div>
             ) : null}
 
-            <div className="space-y-2">
+            <div className="sticky bottom-0 bg-card border-t border-border pb-[max(env(safe-area-inset-bottom),8px)] pt-2 px-0 -mx-4 sm:mx-0 sm:px-0 space-y-2">
               <textarea
                 value={chatInput}
                 onChange={(event) => setChatInput(event.target.value)}
                 onKeyDown={onChatInputKeyDown}
+                onFocus={(e) => {
+                  setTimeout(() => {
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }, 300);
+                }}
                 placeholder={
                   sessionComplete ? "Session complete" : "Ask a question..."
                 }
