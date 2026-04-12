@@ -5,14 +5,16 @@ import { students, drives, jobs, users } from "@/lib/db/schema";
 import { eq, and, gte, isNotNull, isNull, sql, desc } from "drizzle-orm";
 import { format, formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Users, Briefcase, TrendingUp } from "lucide-react";
+import PageHeader from "@/components/shared/page-header";
+import StatCard from "@/components/shared/stat-card";
 
 export default async function AdminMasterDashboard() {
   const user = await requireRole(["admin"]);
   if (!user.collegeId) {
     return (
       <div className="max-w-4xl mx-auto p-8 md:p-10">
-        <div className="rounded-md border border-warning/20 bg-warning/10 p-6 text-warning-foreground">
+        <div className="rounded-lg border border-warning/20 bg-warning/10 p-6 text-warning-foreground">
           Admin account is not linked to a college. Dashboard metrics are unavailable.
         </div>
       </div>
@@ -26,7 +28,7 @@ export default async function AdminMasterDashboard() {
   const [
     totalStudents,
     embeddedStudents,
-    noResumeStudents,
+    _noResumeStudents,
     avgCompleteness,
     lowCompletenessStudents,
   ] = await Promise.all([
@@ -38,14 +40,14 @@ export default async function AdminMasterDashboard() {
   ]);
 
   // ── Drive Stats ────────────────────────────────────────────────────────
-  const [totalDrives, activeDrives, rankedDrives] = await Promise.all([
+  const [_totalDrives, activeDrives, rankedDrives] = await Promise.all([
     db.select({ c: sql<number>`count(*)::int` }).from(drives).where(eq(drives.collegeId, user.collegeId)),
     db.select({ c: sql<number>`count(*)::int` }).from(drives).where(and(eq(drives.collegeId, user.collegeId), eq(drives.isActive, true))),
     db.select({ c: sql<number>`count(*)::int` }).from(drives).where(and(eq(drives.collegeId, user.collegeId), sql`ranking_status = 'completed'`)),
   ]);
 
   // ── Ranking Stats ─────────────────────────────────────────────────────
-  const [totalRankings, avgMatchScore] = await Promise.all([
+  const [totalRankings, _avgMatchScore] = await Promise.all([
     db.execute(sql`
       SELECT COUNT(*)::int AS c
       FROM rankings r
@@ -93,44 +95,32 @@ export default async function AdminMasterDashboard() {
     <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 pb-32 sm:px-6 lg:px-8">
       
       {/* Header */}
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
-              <Sparkles className="h-3.5 w-3.5" /> Admin control plane
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-4xl font-black tracking-tight text-foreground">Master Dashboard</h1>
-              <p className="text-sm leading-6 text-muted-foreground">
-                Complete placement platform overview. Last updated {format(now, "MMM d, h:mm a")}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="rounded-2xl border border-border bg-muted/30 px-4 py-3 shadow-sm">
+            <PageHeader
+        eyebrow={<><Sparkles className="h-3.5 w-3.5" /> Admin control plane</>}
+        title="Master Dashboard"
+        description={`Complete placement platform overview. Last updated ${format(now, "MMM d, h:mm a")}`}
+        actions={
+          <>
+            <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 shadow-sm text-left">
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">College scope</p>
               <p className="mt-1 text-sm font-semibold text-foreground">{totalStudents[0]?.c ?? 0} {Number(totalStudents[0]?.c ?? 0) === 1 ? "student" : "students"}</p>
             </div>
-            <Link href="/admin/drives" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+            <Link href="/admin/drives" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 h-full">
               View drives <ArrowRight className="h-4 w-4" />
             </Link>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* Top Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Students", value: totalStudents[0]?.c ?? 0, sub: `${noResumeStudents[0]?.c ?? 0} without resume`, color: "indigo" },
-          { label: "Active Drives", value: activeDrives[0]?.c ?? 0, sub: `${totalDrives[0]?.c ?? 0} total`, color: "emerald" },
-          { label: "Rankings Generated", value: totalRankings[0]?.c ?? 0, sub: `Avg score: ${avgMatchScore[0]?.avg ?? 0}%`, color: "blue" },
-          { label: "Faculty Members", value: facultyCount?.c ?? 0, sub: "Active staff", color: "amber" },
+          {label: "Total Students", value: totalStudents[0]?.c ?? 0, icon: Users, tone: "primary" },
+          { label: "Active Drives", value: activeDrives[0]?.c ?? 0, icon: Briefcase, tone: "success" },
+          { label: "Rankings Generated", value: totalRankings[0]?.c ?? 0, icon: TrendingUp, tone: "primary" },
+          { label: "Faculty Members", value: facultyCount?.c ?? 0, icon: Users, tone: "warning" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card rounded-xl border border-border p-6">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">{stat.label}</p>
-            <p className="text-4xl font-black text-foreground tracking-tighter">{stat.value}</p>
-            <p className="text-xs text-muted-foreground mt-2">{stat.sub}</p>
-          </div>
+          <StatCard key={stat.label} label={stat.label} value={stat.value} icon={stat.icon} tone={stat.tone as "primary"|"success"|"warning"|"destructive"} />
         ))}
       </div>
 
@@ -138,7 +128,7 @@ export default async function AdminMasterDashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         
         {/* AI Pipeline Health */}
-        <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">AI pipeline health</h2>
             <Link href="/admin/health" className="text-xs font-bold text-primary hover:underline">Full system health</Link>
@@ -160,7 +150,7 @@ export default async function AdminMasterDashboard() {
         </section>
 
         {/* Student Readiness */}
-        <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">Student readiness</h2>
             <Link href="/admin/users" className="text-xs font-bold text-primary hover:underline">View students</Link>
@@ -200,7 +190,7 @@ export default async function AdminMasterDashboard() {
       </div>
 
       {/* Recent Drives */}
-      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">Recent drives</h2>
           <Link href="/admin/drives" className="text-xs font-bold text-primary hover:underline">View all</Link>
@@ -234,7 +224,7 @@ export default async function AdminMasterDashboard() {
           { href: "/admin/health", label: "System Health", desc: "Job queue and AI pipeline status", emoji: "⚡" },
         ].map((action) => (
           <Link key={action.href} href={action.href}
-            className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition-colors hover:border-primary/30 hover:bg-muted/30"
+            className="group rounded-xl border border-border bg-card p-6 shadow-sm transition-colors hover:border-primary/30 hover:bg-muted/30"
           >
             <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{action.label}</p>
             <p className="mt-1 text-xs text-muted-foreground">{action.desc}</p>

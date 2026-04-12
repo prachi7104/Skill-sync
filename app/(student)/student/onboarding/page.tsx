@@ -817,7 +817,7 @@ export default function OnboardingPage() {
               const isGatingStep = step.key === "identity" && !done;
 
               return (
-                <button
+                <Button
                   key={step.key}
                   type="button"
                   onClick={() => {
@@ -875,7 +875,7 @@ export default function OnboardingPage() {
                     )}
                     {done && <p className="mt-0.5 text-[10px] text-success">Complete</p>}
                   </div>
-                </button>
+                </Button>
               );
             })}
 
@@ -930,7 +930,7 @@ export default function OnboardingPage() {
           </div>
 
           <div className="mt-6 flex items-center justify-between">
-            <button
+            <Button
               type="button"
               onClick={() => {
                 const prev = currentStepIndex - 1;
@@ -940,7 +940,7 @@ export default function OnboardingPage() {
               className="text-sm text-muted-foreground transition-all hover:text-foreground disabled:opacity-0"
             >
               Back
-            </button>
+            </Button>
 
             <div className="flex items-center gap-3">
               <div className="flex gap-1.5 md:hidden">
@@ -1102,13 +1102,13 @@ function IdentityStep({
         <p className="text-xs text-muted-foreground mt-1">
           Upload your resume to autofill Skills, Projects, and Experience.
           You can also{" "}
-          <button
+          <Button
             type="button"
             className="text-primary hover:text-primary underline underline-offset-2"
             onClick={() => setResumeState("skipped")}
           >
             skip resume →
-          </button>{" "}
+          </Button>{" "}
           and fill manually.
         </p>
       )}
@@ -1383,13 +1383,13 @@ function ProjectsStep({
         <div key={p.id} className="space-y-3 rounded-md border border-border bg-muted/50/30 p-4">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold uppercase text-muted-foreground">Project {idx + 1}</p>
-            <button
+            <Button
               type="button"
               onClick={() => removeProject(p.id)}
               className="text-xs text-destructive hover:text-destructive"
             >
               Remove
-            </button>
+            </Button>
           </div>
           <Input
             value={p.title}
@@ -1418,13 +1418,13 @@ function ProjectsStep({
         </div>
       ))}
 
-      <button
+      <Button
         type="button"
         onClick={addProject}
         className="w-full rounded-md border border-dashed border-border py-3 text-sm text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
       >
         + Add Project
-      </button>
+      </Button>
     </div>
   );
 }
@@ -1477,13 +1477,13 @@ function ExperienceStep({
         <div key={e.id} className="space-y-3 rounded-md border border-border bg-muted/50/30 p-4">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold uppercase text-muted-foreground">Experience {idx + 1}</p>
-            <button
+            <Button
               type="button"
               onClick={() => removeExp(e.id)}
               className="text-xs text-destructive hover:text-destructive"
             >
               Remove
-            </button>
+            </Button>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input
@@ -1532,13 +1532,13 @@ function ExperienceStep({
         </div>
       ))}
 
-      <button
+      <Button
         type="button"
         onClick={addExp}
         className="w-full rounded-md border border-dashed border-border py-3 text-sm text-muted-foreground transition-all hover:border-primary/30 hover:text-primary"
       >
         + Add Experience
-      </button>
+      </Button>
     </div>
   );
 }
@@ -1592,7 +1592,7 @@ function ExtrasStep({
                 placeholder="Year"
                 className="border-border bg-muted/50 text-sm text-foreground"
               />
-              <button
+              <Button
                 type="button"
                 onClick={() =>
                   setField(
@@ -1603,11 +1603,11 @@ function ExtrasStep({
                 className="px-2 text-xs text-destructive hover:text-destructive"
               >
                 X
-              </button>
+              </Button>
             </div>
           </div>
         ))}
-        <button
+        <Button
           type="button"
           onClick={() =>
             setField("certifications", [
@@ -1618,7 +1618,7 @@ function ExtrasStep({
           className="text-xs text-primary hover:text-primary"
         >
           + Add Certification
-        </button>
+        </Button>
       </div>
 
       <div className="space-y-3">
@@ -1674,7 +1674,7 @@ function ExtrasStep({
                 placeholder="Profile URL"
                 className="border-border bg-muted/50 text-sm text-foreground"
               />
-              <button
+              <Button
                 type="button"
                 onClick={() =>
                   setField(
@@ -1685,11 +1685,11 @@ function ExtrasStep({
                 className="px-2 text-xs text-destructive"
               >
                 X
-              </button>
+              </Button>
             </div>
           </div>
         ))}
-        <button
+        <Button
           type="button"
           onClick={() =>
             setField("codingProfiles", [
@@ -1700,7 +1700,7 @@ function ExtrasStep({
           className="text-xs text-primary hover:text-primary"
         >
           + Add Profile
-        </button>
+        </Button>
       </div>
 
       <div className="space-y-3">
@@ -1721,7 +1721,7 @@ function ExtrasStep({
                 placeholder="Paper title"
                 className="flex-1 border-border bg-muted/50 text-sm text-foreground"
               />
-              <button
+              <Button
                 type="button"
                 onClick={() =>
                   setField(
@@ -1732,7 +1732,7 @@ function ExtrasStep({
                 className="px-2 text-xs text-destructive"
               >
                 X
-              </button>
+              </Button>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Input
@@ -1760,7 +1760,7 @@ function ExtrasStep({
             </div>
           </div>
         ))}
-        <button
+        <Button
           type="button"
           onClick={() =>
             setField("researchPapers", [
@@ -1771,7 +1771,7 @@ function ExtrasStep({
           className="text-xs text-primary hover:text-primary"
         >
           + Add Paper
-        </button>
+        </Button>
       </div>
 
       <div className="space-y-2">

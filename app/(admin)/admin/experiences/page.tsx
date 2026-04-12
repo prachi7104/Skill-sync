@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import PageHeader from "@/components/shared/page-header";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -149,12 +150,12 @@ export default function AdminExperiencesPage() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <div className="max-w-2xl space-y-2">
-          <h1 className="text-3xl font-black tracking-tight text-foreground">Company Experiences</h1>
-          <p className="text-sm leading-6 text-muted-foreground">Moderate student submissions and post admin-curated experience reports.</p>
-        </div>
-      </header>
+            <PageHeader
+        eyebrow="Admin"
+        title="Company Experiences"
+        description="Moderate student submissions and post admin-curated experience reports."
+        
+      />
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-card">
           <TabsTrigger value="queue">Pending Queue</TabsTrigger>
@@ -163,7 +164,7 @@ export default function AdminExperiencesPage() {
         </TabsList>
         <TabsContent value="queue" className="space-y-4">
           {rows.map((row) => (
-            <div key={row.id} className={cn("space-y-4 rounded-md border p-6", row.status === "ai_flagged" ? "border-warning/20 bg-warning/10" : "border-border bg-card")}>
+            <div key={row.id} className={cn("space-y-4 rounded-lg border p-6", row.status === "ai_flagged" ? "border-warning/20 bg-warning/10" : "border-border bg-card")}>
               {row.status === "ai_flagged" ? (
                 <div className="flex items-center gap-2 rounded-md border border-warning/20 bg-warning/10 p-3">
                   <AlertTriangle className="h-4 w-4 text-warning" />
@@ -199,7 +200,7 @@ export default function AdminExperiencesPage() {
               </div>
             </div>
           ))}
-          {rows.length === 0 ? <div className="rounded-md border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">No experiences in the moderation queue.</div> : null}
+          {rows.length === 0 ? <div className="rounded-lg border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">No experiences in the moderation queue.</div> : null}
         </TabsContent>
         <TabsContent value="published" className="space-y-4">
           {rows.map((row) => (
@@ -224,13 +225,13 @@ export default function AdminExperiencesPage() {
                 <p className="mt-1 text-xs text-muted-foreground">Updated: {new Date(row.updated_at).toLocaleString("en-IN")}</p>
                 {row.reviewed_by_name ? <p className="mt-1 text-xs text-muted-foreground">Reviewed by: {row.reviewed_by_name}</p> : null}
                 {row.interview_process ? (
-                  <div className="rounded-md border border-border bg-muted/20 p-4">
+                  <div className="rounded-lg border border-border bg-muted/20 p-4">
                     <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Interview Process</p>
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground">{row.interview_process}</p>
                   </div>
                 ) : null}
                 {row.tips ? (
-                  <div className="rounded-md border border-border bg-muted/20 p-4">
+                  <div className="rounded-lg border border-border bg-muted/20 p-4">
                     <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Tips</p>
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground">{row.tips}</p>
                   </div>

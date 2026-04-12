@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,12 +75,11 @@ export default function AdminSandboxPage() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <div className="max-w-2xl space-y-2">
-          <h1 className="text-3xl font-black tracking-tight text-foreground">Admin Sandbox</h1>
-          <p className="text-sm leading-6 text-muted-foreground">Run controlled prompts, inspect payloads, and adjust sandbox limits for the college scope.</p>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Admin"
+        title="Admin Sandbox"
+        description="Run controlled prompts, inspect payloads, and adjust sandbox limits for the college scope."
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
@@ -93,7 +93,7 @@ export default function AdminSandboxPage() {
               <select
                 value={taskType}
                 onChange={(e) => setTaskType(e.target.value)}
-                className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground"
+                className="h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground"
               >
                 <option value="career_advice">career_advice</option>
                 <option value="enhance_jd">enhance_jd</option>

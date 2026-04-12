@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/shared/page-header";
 
 type HealthData = {
   totalStudents: number;
@@ -91,7 +93,7 @@ function Metric({ label, value, status }: { label: string; value: string; status
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
       <div className="mt-2 flex items-center gap-2">
         <p className="text-2xl font-black text-foreground">{value}</p>
@@ -216,7 +218,7 @@ export default function AdminHealthPage() {
           <h1 className="text-3xl font-black text-foreground">System Health</h1>
           <p className="text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-12 text-center text-muted-foreground shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-12 text-center text-muted-foreground shadow-sm">
           Loading health data...
         </div>
       </div>
@@ -233,7 +235,7 @@ export default function AdminHealthPage() {
           <h1 className="text-3xl font-black text-foreground">System Health</h1>
           <p className="text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
         </div>
-        <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-6 text-destructive">
+        <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-6 text-destructive">
           Health data unavailable
         </div>
       </div>
@@ -242,32 +244,31 @@ export default function AdminHealthPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 animate-in fade-in duration-300 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-1">
-          <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
-            Operations monitoring
-          </div>
-          <h1 className="text-3xl font-black text-foreground">System Health</h1>
-          <p className="text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
-        </div>
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-xs font-bold text-foreground shadow-sm transition-colors hover:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          Refresh
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Operations monitoring"
+        title="System Health"
+        description="Operational dashboard — live snapshot"
+        actions={
+          <Button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            variant="outline"
+            className="inline-flex items-center gap-2"
+          >
+            {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Refresh
+          </Button>
+        }
+      />
 
       {error && (
-        <div className="rounded-2xl border border-warning/20 bg-warning/10 p-4 text-sm text-warning-foreground">
+        <div className="rounded-xl border border-warning/20 bg-warning/10 p-4 text-sm text-warning-foreground">
           {error}
         </div>
       )}
 
       {health.degraded ? (
-        <div className="rounded-2xl border border-warning/20 bg-warning/10 p-4 text-sm text-warning-foreground">
+        <div className="rounded-xl border border-warning/20 bg-warning/10 p-4 text-sm text-warning-foreground">
           Partial health data: some checks failed within timeout
           {health.failedChecks && health.failedChecks.length > 0 ? ` (${health.failedChecks.join(", ")})` : ""}.
         </div>
@@ -289,7 +290,7 @@ export default function AdminHealthPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-muted-foreground">Job queue</h2>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
           <Metric label="Pending Total" value={displayCount(pendingTotal)} status={pendingTotal > 0 ? "warning" : "ok"} />
@@ -310,18 +311,18 @@ export default function AdminHealthPage() {
         )}
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-muted-foreground">Manual triggers</h2>
         <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
           {(["resumes", "embeddings", "jd-enhancement", "rankings", "cleanup"] as const).map((type) => (
-            <button
+            <Button
               key={type}
               onClick={() => handleTrigger(type)}
               disabled={!!triggering[type]}
-              className="rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl px-3 py-2 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             >
               {triggering[type] ? "Running..." : type}
-            </button>
+            </Button>
           ))}
         </div>
         {triggerMessage && <p className="mt-3 text-xs text-muted-foreground">{triggerMessage}</p>}

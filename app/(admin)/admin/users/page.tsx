@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PageHeader from "@/components/shared/page-header";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -376,17 +377,11 @@ export default function AdminUsersPage() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl space-y-2">
-            <h1 className="text-3xl font-black tracking-tight text-foreground">User Management</h1>
-            <p className="text-sm leading-6 text-muted-foreground">{totalCount} total users across faculty, students, and admin accounts.</p>
-          </div>
-          <Button variant="outline" size="sm" onClick={fetchUsers} className="gap-2 self-start">
-            <RefreshCw className="h-4 w-4" /> Refresh
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Admin"
+        title="User Management"
+        description={`${totalCount} total users across faculty, students, and admin accounts.`}
+      />
 
       {/* Create Staff Account Card */}
       <Card className="border-t-4 border-t-primary">
@@ -526,7 +521,7 @@ export default function AdminUsersPage() {
               This password is shown <strong>ONCE</strong>. Copy it now and send to the user securely.
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-md bg-card border border-border p-3">
+          <div className="rounded-lg bg-card border border-border p-3">
             <p className="text-xs text-muted-foreground mb-2">Generated Password (shown once)</p>
             <div className="flex items-center gap-3">
               <input

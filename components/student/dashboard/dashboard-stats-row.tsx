@@ -1,13 +1,12 @@
 "use client";
 
-import { BarChart3, Trophy, Briefcase, UserCircle } from 'lucide-react';
+import { BarChart3, Trophy, Briefcase } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface DashboardStatsRowProps {
   amcatScore: number | null;
   leaderboardRank: number | null;
   activeDrives: number | null;
-  profileCompletion: number;
 }
 
 const getStats = (props: DashboardStatsRowProps) => [
@@ -35,14 +34,6 @@ const getStats = (props: DashboardStatsRowProps) => [
     iconBg: 'bg-success/10',
     suffix: '',
   },
-  {
-    label: 'Profile Complete',
-    value: String(props.profileCompletion),
-    icon: UserCircle,
-    iconColor: 'text-primary-hover',
-    iconBg: 'bg-primary-hover/10',
-    suffix: '%',
-  },
 ];
 
 const container = {
@@ -62,7 +53,7 @@ export default function DashboardStatsRow(props: DashboardStatsRowProps) {
       variants={container}
       initial='hidden'
       animate='visible'
-      className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4'
+      className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'
     >
       {stats.map(stat => (
       <motion.div

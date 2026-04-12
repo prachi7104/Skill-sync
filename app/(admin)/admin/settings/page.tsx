@@ -3,6 +3,9 @@
 import { FormEvent, useState } from "react";
 import { useSession } from "next-auth/react";
 
+import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/shared/page-header";
+
 export default function AdminSettingsPage() {
   const { data: session } = useSession();
   const [currentPassword, setCurrentPassword] = useState("");
@@ -43,12 +46,11 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <div className="max-w-2xl space-y-2">
-          <h1 className="text-3xl font-black tracking-tight text-foreground">Admin Settings</h1>
-          <p className="text-sm leading-6 text-muted-foreground">Manage your account and security settings.</p>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Admin"
+        title="Admin Settings"
+        description="Manage your account and security settings."
+      />
 
       <section className="bg-card rounded-xl border border-border p-6 space-y-3">
         <h2 className="font-bold text-foreground">Account Info</h2>
@@ -98,13 +100,13 @@ export default function AdminSettingsPage() {
           required
           className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
         />
-        <button
+        <Button
           type="submit"
           disabled={status === "loading"}
-          className="w-full bg-destructive/10 hover:bg-destructive/10 disabled:bg-card text-foreground font-bold py-3 rounded-md text-sm transition-all"
+          className="w-full bg-destructive/10 hover:bg-destructive/20 disabled:bg-card text-foreground font-bold py-6 rounded-lg text-sm transition-all"
         >
           {status === "loading" ? "Changing..." : "Change Password"}
-        </button>
+        </Button>
       </form>
     </div>
   );

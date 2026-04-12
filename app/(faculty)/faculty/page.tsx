@@ -7,8 +7,9 @@ import { eq, count, avg, sql, and, inArray } from "drizzle-orm";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { Briefcase, Users, Clock, TrendingUp, Activity, PlusCircle, ArrowRight } from "lucide-react";
+import PageHeader from "@/components/shared/page-header";
+import StatCard from "@/components/shared/stat-card";
 import { cn } from "@/lib/utils";
-import type { ElementType } from "react";
 
 // Helpers
 function getActivityLabel(type: string, status: string) {
@@ -23,32 +24,7 @@ function getActivityLabel(type: string, status: string) {
     return { text: "Queued", color: "bg-warning/10 text-warning" };
 }
 
-const statTone = {
-    indigo: "text-primary bg-primary/10",
-    emerald: "text-success bg-success/10",
-    amber: "text-warning bg-warning/10",
-} as const;
 
-interface StatCardProps {
-    label: string;
-    value: string | number;
-    icon: ElementType;
-    color?: 'indigo' | 'emerald' | 'amber';
-}
-
-const StatCard = ({ label, value, icon: Icon, color = 'indigo' }: StatCardProps) => (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div className="mb-4 flex items-start justify-between gap-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
-            {Icon && (
-                <div className={cn("rounded-full p-2", statTone[color as keyof typeof statTone] ?? statTone.indigo)}>
-                    <Icon className="h-4 w-4" />
-                </div>
-            )}
-        </div>
-        <h3 className="text-3xl font-black tracking-tight text-foreground">{value}</h3>
-    </div>
-);
 
 export default async function FacultyDashboardPage({
     searchParams,
@@ -104,47 +80,38 @@ export default async function FacultyDashboardPage({
 
     return (
         <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 px-4 py-8 animate-in fade-in duration-500 sm:px-6 lg:px-8">
-            <header className="rounded-3xl border border-border bg-card/95 p-6 shadow-sm backdrop-blur sm:p-8">
-                <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-                    <div className="max-w-2xl space-y-4">
-                        <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
-                            Faculty dashboard
-                        </div>
-                        <div className="space-y-2">
-                            <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">Good morning, {firstName}</h1>
-                            <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-                                Track live drives, queued ranking jobs, and college-wide placement activity from one neutral shell.
-                            </p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            <Link href="/faculty" className={cn("rounded-full px-3 py-1.5 text-xs font-semibold transition-colors", selectedSeasonId === "all" ? "bg-primary text-primary-foreground" : "border border-border bg-background text-muted-foreground hover:text-foreground")}>
-                                All seasons
-                            </Link>
-                            {seasonRows.map((season) => (
-                                <Link
-                                    key={season.id}
-                                    href={`/faculty?seasonId=${season.id}`}
-                                    className={cn("whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors", selectedSeasonId === season.id ? "bg-primary text-primary-foreground" : "border border-border bg-background text-muted-foreground hover:text-foreground")}
-                                >
-                                    {season.name}
-                                </Link>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3">
-                        <div className="rounded-2xl border border-border bg-muted/30 px-4 py-3 text-sm shadow-sm">
-                            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">Season scope</p>
-                            <p className="mt-1 font-semibold text-foreground">{filteredDrives.length} drives visible</p>
-                        </div>
-                        <Link href="/faculty/drives/new" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
-                            <PlusCircle className="h-4 w-4" /> Create Drive
+                        <PageHeader
+                eyebrow="Faculty dashboard"
+                title={`Good morning, ${firstName}`}
+                description="Track live drives, queued ranking jobs, and college-wide placement activity from one neutral shell."
+                actions={
+                  <>
+                    <div className="flex flex-wrap gap-2 mr-4">
+                        <Link href="/faculty" className={cn("rounded-full px-3 py-1.5 text-xs font-semibold transition-colors flex items-center", selectedSeasonId === "all" ? "bg-primary text-primary-foreground" : "border border-border bg-background text-muted-foreground hover:text-foreground")}>
+                            All seasons
                         </Link>
+                        {seasonRows.map((season) => (
+                            <Link
+                                key={season.id}
+                                href={`/faculty?seasonId=${season.id}`}
+                                className={cn("whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors flex items-center", selectedSeasonId === season.id ? "bg-primary text-primary-foreground" : "border border-border bg-background text-muted-foreground hover:text-foreground")}
+                            >
+                                {season.name}
+                            </Link>
+                        ))}
                     </div>
-                </div>
-            </header>
+                    <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm shadow-sm text-left">
+                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">Season scope</p>
+                        <p className="mt-1 font-semibold text-foreground">{filteredDrives.length} drives visible</p>
+                    </div>
+                    <Link href="/faculty/drives/new" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 h-full">
+                        <PlusCircle className="h-4 w-4" /> Create Drive
+                    </Link>
+                  </>
+                }
+            />
 
-            <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground shadow-sm">
+            <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground shadow-sm">
                 <p className="mb-1 font-semibold text-foreground">Bulk eligibility snapshot</p>
                 <p>
                     Select a drive in the rankings table and query <span className="font-mono">/api/faculty/bulk-eligibility?driveId=...</span> for batch eligibility counts.
@@ -157,15 +124,15 @@ export default async function FacultyDashboardPage({
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <StatCard label="Active Drives" value={activeDriveCount} icon={Briefcase} color="indigo" />
-                <StatCard label="Students Ranked" value={totalRanked} icon={Users} color="emerald" />
-                <StatCard label="Pending Jobs" value={pendingJobCount} icon={Clock} color="amber" />
-                <StatCard label="Avg Match Score" value={avgScore ? `${avgScore}%` : "—"} icon={TrendingUp} color="indigo" />
+                <StatCard label="Active Drives" value={activeDriveCount} icon={Briefcase} tone="primary" />
+                <StatCard label="Students Ranked" value={totalRanked} icon={Users} tone="success" />
+                <StatCard label="Pending Jobs" value={pendingJobCount} icon={Clock} tone="warning" />
+                <StatCard label="Avg Match Score" value={avgScore ? `${avgScore}%` : "—"} icon={TrendingUp} tone="primary" />
             </div>
 
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                 {/* Activity Feed */}
-                <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
                     <h4 className="mb-6 flex items-center justify-between text-sm font-bold text-foreground">
                         Recent activity <span className="text-[10px] font-black tracking-[0.24em] text-muted-foreground">LIVE FEED</span>
                     </h4>
@@ -191,7 +158,7 @@ export default async function FacultyDashboardPage({
                 </section>
 
                 {/* Table */}
-                <section className="lg:col-span-2 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <section className="lg:col-span-2 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                     <div className="flex items-center justify-between border-b border-border p-6">
                         <h4 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">Recent drives</h4>
                         <Link href="/faculty/drives" className="flex items-center text-xs font-bold text-primary transition-colors hover:underline">View all <ArrowRight className="ml-1 h-3 w-3" /></Link>

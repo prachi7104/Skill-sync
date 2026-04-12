@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import PageHeader from "@/components/shared/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -460,17 +461,12 @@ export default function AdminAmcatPage() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl space-y-2">
-            <h1 className="text-3xl font-black tracking-tight text-foreground">AMCAT Upload System</h1>
-            <p className="text-sm leading-6 text-muted-foreground">Upload, review, recalculate and publish session results.</p>
-          </div>
-          <Button variant="outline" size="sm" onClick={fetchSessions} className="gap-2 self-start">
-            <RefreshCw className="h-4 w-4" /> Refresh
-          </Button>
-        </div>
-      </header>
+            <PageHeader
+        eyebrow="Admin"
+        title="AMCAT Upload System"
+        description="Upload, review, recalculate and publish session results."
+        
+      />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-1 border-t-4 border-t-primary">
@@ -489,7 +485,7 @@ export default function AdminAmcatPage() {
             </a>
 
             <div
-              className="border border-dashed rounded-md p-5 text-center bg-muted/20 hover:bg-muted/30 transition-colors"
+              className="border border-dashed rounded-lg p-5 text-center bg-muted/20 hover:bg-muted/30 transition-colors"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import PageHeader from "@/components/shared/page-header";
 import {
   Plus,
   CheckCircle,
@@ -9,6 +10,7 @@ import {
   Activity,
   Trash2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type AIModel = {
   id: string;
@@ -180,51 +182,49 @@ export default function AIModelsPage() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl space-y-2">
-            <h1 className="text-3xl font-black tracking-tight text-foreground">AI Model Registry</h1>
-            <p className="text-sm leading-6 text-muted-foreground">
-              {activeCount} active · {deprecatedCount} deprecated · {unhealthyCount} unhealthy
-            </p>
-          </div>
+      <PageHeader
+        eyebrow="Admin"
+        title="AI Model Registry"
+        description={`${activeCount} active · ${deprecatedCount} deprecated · ${unhealthyCount} unhealthy`}
+        actions={
           <div className="flex gap-3 self-start">
-            <button
+            <Button
               onClick={fetchModels}
-              className="flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-bold text-muted-foreground transition-all hover:bg-muted/40"
+              variant="outline"
+              className="flex items-center gap-2 font-bold"
             >
               <RefreshCw className="w-4 h-4" /> Refresh
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => setShowAddForm((s) => !s)}
-              className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90"
+              className="flex items-center gap-2 font-bold bg-primary hover:bg-primary/90"
             >
               <Plus className="w-4 h-4" /> Add Model
-            </button>
+            </Button>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {showAddForm && (
-        <form onSubmit={createModel} className="bg-card rounded-md border border-border p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <form onSubmit={createModel} className="bg-card rounded-lg border border-border p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           <input
             required
             value={newModel.model_key}
             onChange={(e) => setNewModel((p) => ({ ...p, model_key: e.target.value }))}
             placeholder="model_key"
-            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
+            className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground"
           />
           <input
             required
             value={newModel.display_name}
             onChange={(e) => setNewModel((p) => ({ ...p, display_name: e.target.value }))}
             placeholder="display_name"
-            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
+            className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground"
           />
           <select
             value={newModel.provider}
             onChange={(e) => setNewModel((p) => ({ ...p, provider: e.target.value as "google" | "groq" }))}
-            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
+            className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground"
           >
             <option value="google">google</option>
             <option value="groq">groq</option>
@@ -233,37 +233,37 @@ export default function AIModelsPage() {
             value={newModel.task_types}
             onChange={(e) => setNewModel((p) => ({ ...p, task_types: e.target.value }))}
             placeholder="task1,task2"
-            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
+            className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground"
           />
           <input
             value={newModel.rpm_limit}
             onChange={(e) => setNewModel((p) => ({ ...p, rpm_limit: e.target.value }))}
             placeholder="rpm_limit"
-            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
+            className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground"
           />
           <input
             value={newModel.rpd_limit}
             onChange={(e) => setNewModel((p) => ({ ...p, rpd_limit: e.target.value }))}
             placeholder="rpd_limit"
-            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
+            className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground"
           />
           <input
             value={newModel.tpm_limit}
             onChange={(e) => setNewModel((p) => ({ ...p, tpm_limit: e.target.value }))}
             placeholder="tpm_limit (optional)"
-            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
+            className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground"
           />
           <input
             value={newModel.priority}
             onChange={(e) => setNewModel((p) => ({ ...p, priority: e.target.value }))}
             placeholder="priority"
-            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
+            className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground"
           />
           <input
             value={newModel.notes}
             onChange={(e) => setNewModel((p) => ({ ...p, notes: e.target.value }))}
             placeholder="notes"
-            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground"
+            className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground"
           />
           <div className="md:col-span-2 lg:col-span-3 flex justify-end gap-2 pt-1">
             <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 rounded-md text-sm font-bold text-muted-foreground bg-card hover:bg-muted">
@@ -276,7 +276,7 @@ export default function AIModelsPage() {
         </form>
       )}
 
-      <div className="bg-card rounded-md border border-border overflow-hidden">
+      <div className="bg-card rounded-lg border border-border overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">

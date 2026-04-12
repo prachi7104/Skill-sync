@@ -3,6 +3,9 @@
 import { FormEvent, useState } from "react";
 import { useSession } from "next-auth/react";
 
+import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/shared/page-header";
+
 export default function FacultySettingsPage() {
   const { data: session } = useSession();
   const [currentPassword, setCurrentPassword] = useState("");
@@ -60,10 +63,11 @@ export default function FacultySettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-8 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Account Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your account details and password.</p>
-      </div>
+      <PageHeader
+        eyebrow="Faculty"
+        title="Account Settings"
+        description="Manage your account details and password."
+      />
 
       <section className="bg-card rounded-xl border border-border p-6 space-y-3">
         <h2 className="font-bold text-foreground">Account Info</h2>
@@ -118,13 +122,13 @@ export default function FacultySettingsPage() {
           required
           className="w-full bg-card border border-border text-foreground rounded-md px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
         />
-        <button
+        <Button
           type="submit"
           disabled={status === "loading"}
-          className="w-full bg-primary hover:bg-primary disabled:bg-card text-foreground font-bold py-3 rounded-md text-sm transition-all"
+          className="w-full bg-primary hover:bg-primary/90 disabled:bg-card text-foreground font-bold py-6 rounded-lg text-sm transition-all"
         >
           {status === "loading" ? "Changing..." : "Change Password"}
-        </button>
+        </Button>
       </form>
     </div>
   );

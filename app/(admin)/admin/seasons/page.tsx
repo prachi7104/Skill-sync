@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PageHeader from "@/components/shared/page-header";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -128,20 +129,20 @@ export default function AdminSeasonsPage() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <div className="max-w-2xl space-y-2">
-          <h1 className="text-3xl font-black tracking-tight text-foreground">Season Management</h1>
-          <p className="text-sm leading-6 text-muted-foreground">Create recruiting seasons and control which one is active for your college.</p>
-        </div>
-      </header>
+            <PageHeader
+        eyebrow="Admin"
+        title="Season Management"
+        description="Create recruiting seasons and control which one is active for your college."
+        
+      />
 
       {message ? (
-        <div className="rounded-md border border-border bg-card p-3 text-sm text-foreground">
+        <div className="rounded-lg border border-border bg-card p-3 text-sm text-foreground">
           {message}
         </div>
       ) : null}
 
-      <section className="rounded-md border border-border bg-card p-5 space-y-4">
+      <section className="rounded-lg border border-border bg-card p-5 space-y-4">
         <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Create Season</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
@@ -174,13 +175,13 @@ export default function AdminSeasonsPage() {
       <section className="space-y-3">
         <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Existing Seasons</h2>
         {loading ? (
-          <div className="rounded-md border border-border bg-card p-6 text-sm text-muted-foreground">Loading seasons...</div>
+          <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">Loading seasons...</div>
         ) : null}
         {!loading && rows.length === 0 ? (
-          <div className="rounded-md border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">No seasons created yet.</div>
+          <div className="rounded-lg border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">No seasons created yet.</div>
         ) : null}
         {!loading ? rows.map((row) => (
-          <article key={row.id} className="rounded-md border border-border bg-card p-4">
+          <article key={row.id} className="rounded-lg border border-border bg-card p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="flex items-center gap-2">

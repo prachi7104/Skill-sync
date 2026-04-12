@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { hasComponent, requireRole } from "@/lib/auth/helpers";
+import PageHeader from "@/components/shared/page-header";
 import { db } from "@/lib/db";
 import { drives, rankings, jobs } from "@/lib/db/schema";
 import { eq, count, avg, sql, and, inArray, desc } from "drizzle-orm";
@@ -14,7 +15,7 @@ import { getCompanyColor } from "@/lib/utils/company-color";
 import { DriveConflictsButton } from "@/components/faculty/drive-conflicts-button";
 import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
-import { FolderOpen, Sparkles } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 
 export default async function FacultyDrivesPage({ searchParams }: { searchParams: { page?: string } }) {
   const user = await requireRole(["faculty", "admin"]);
@@ -100,21 +101,13 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
-              <Sparkles className="h-3.5 w-3.5" /> Drive workspace
-            </div>
-            <div className="space-y-1">
-              <h1 className="text-3xl font-black tracking-tight text-foreground">Drives</h1>
-              <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-                Manage {totalDrives} placement drives from one responsive list with clear status, ranking, and deadline context.
-              </p>
-            </div>
-          </div>
+      <PageHeader
+        eyebrow="Faculty"
+        title="Drives"
+        description={`Manage ${totalDrives} placement drives from one responsive list with clear status, ranking, and deadline context.`}
+        actions={
           <div className="flex flex-wrap items-center gap-3">
-            <div className="rounded-2xl border border-border bg-background px-4 py-3 text-sm shadow-sm dark:bg-slate-950/70">
+            <div className="rounded-xl border border-border bg-background px-4 py-3 text-sm shadow-sm dark:bg-slate-950/70">
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">Total drives</p>
               <p className="mt-1 font-semibold text-foreground">{totalDrives}</p>
             </div>
@@ -127,12 +120,12 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
               </Button>
             )}
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {/* Grid */}
       {facultyDrives.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center shadow-sm">
+        <div className="rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
             <FolderOpen className="h-5 w-5" />
           </div>

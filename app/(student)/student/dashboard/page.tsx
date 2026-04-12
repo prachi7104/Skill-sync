@@ -77,7 +77,6 @@ export default async function StudentDashboardPage() {
         amcatScore={amcatData?.[0]?.score ?? null}
         leaderboardRank={leaderboardRank}
         activeDrives={activeDrivesCount}
-        profileCompletion={onboardingProgress}
       />
 
       {/* 3-column bento grid */}

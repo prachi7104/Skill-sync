@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { requireRole } from "@/lib/auth/helpers";
+import PageHeader from "@/components/shared/page-header";
 import { db } from "@/lib/db";
 import { drives, rankings, users, jobs } from "@/lib/db/schema";
 import { count, avg, sql, and, inArray, desc, eq } from "drizzle-orm";
@@ -17,7 +18,7 @@ import {
 import Pagination from "@/components/shared/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, MapPin, IndianRupee, Calendar, ExternalLink, Users, Sparkles } from "lucide-react";
+import { Plus, MapPin, IndianRupee, Calendar, ExternalLink, Users } from "lucide-react";
 import { getCompanyColor } from "@/lib/utils/company-color";
 import { TriggerRankingButton } from "@/components/faculty/trigger-ranking-button";
 import { cn } from "@/lib/utils";
@@ -125,26 +126,18 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-primary">
-              <Sparkles className="h-3.5 w-3.5" /> Drive operations
-            </div>
-            <div className="space-y-1">
-              <h1 className="text-3xl font-black tracking-tight text-foreground">All Placement Drives</h1>
-              <p className="text-sm leading-6 text-muted-foreground">
-                {totalDrives} total · {activeDrives} active · {rankedDrives} ranked · {totalRanked} students ranked
-              </p>
-            </div>
-          </div>
+      <PageHeader
+        eyebrow="Admin"
+        title="All Placement Drives"
+        description={`${totalDrives} total · ${activeDrives} active · ${rankedDrives} ranked · ${totalRanked} students ranked`}
+        actions={
           <Button asChild className="gap-2 bg-primary hover:bg-primary/90">
             <Link href="/admin/drives/new">
               <Plus className="h-4 w-4" /> Create Drive
             </Link>
           </Button>
-        </div>
-      </header>
+        }
+      />
 
       <div className="flex flex-wrap gap-3">
         <Badge variant="outline" className="rounded-full border-border bg-background px-3 py-1 text-sm text-foreground">
@@ -162,7 +155,7 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
       </div>
 
       {totalDrives === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-20 text-center shadow-sm">
+        <div className="rounded-xl border border-dashed border-border bg-card px-6 py-20 text-center shadow-sm">
           <p className="text-sm font-semibold text-foreground">No drives created yet.</p>
           <Button asChild variant="link" className="mt-2 text-primary">
             <Link href="/admin/drives/new">Create your first drive &rarr;</Link>
