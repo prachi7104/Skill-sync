@@ -21,10 +21,14 @@ try {
   const svgBuffer = fs.readFileSync(path.join(ICON_DIR, 'icon.svg'));
 
   Promise.all([
+    sharp(svgBuffer).resize(32, 32).png().toFile(path.join(ICON_DIR, 'favicon-32.png')),
+    sharp(svgBuffer).resize(48, 48).png().toFile(path.join(ICON_DIR, 'favicon-48.png')),
     sharp(svgBuffer).resize(192, 192).png().toFile(path.join(ICON_DIR, 'icon-192.png')),
     sharp(svgBuffer).resize(512, 512).png().toFile(path.join(ICON_DIR, 'icon-512.png')),
   ]).then(() => {
-    console.log('PWA icons generated successfully:');
+    console.log('Icons generated successfully:');
+    console.log('  public/icons/favicon-32.png');
+    console.log('  public/icons/favicon-48.png');
     console.log('  public/icons/icon-192.png');
     console.log('  public/icons/icon-512.png');
   }).catch(err => {

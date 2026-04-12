@@ -12,12 +12,23 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 export const metadata: Metadata = {
   title: 'SkillSync — Placement Intelligence Hub',
   description: 'AI-Native Placement Ecosystem for UPES students, faculty, and administrators.',
-  icons: { icon: '/favicon.ico' },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/favicon-48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/icon-192.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'SkillSync',
+    startupImage: '/icons/icon-512.png',
   },
   formatDetection: { telephone: false },
 };

@@ -1,28 +1,54 @@
 {
-  "name": "SkillSync — Placement Intelligence Hub",
+  "name": "SkillSync — Where your skills meet the right opportunity",
   "short_name": "SkillSync",
   "description": "AI-Native Placement Ecosystem for UPES students and faculty",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ECEEF0",
+  "background_color": "#08112F",
   "theme_color": "#5A77DF",
-  "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en-IN",
+  "categories": ["education", "productivity"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "categories": ["education", "productivity"],
-  "screenshots": []
+  "screenshots": [
+    {
+      "src": "/icons/screenshot-desktop.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "SkillSync Student Dashboard"
+    },
+    {
+      "src": "/icons/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "SkillSync on mobile"
+    }
+  ]
 }
