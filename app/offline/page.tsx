@@ -7,9 +7,9 @@ export const metadata: Metadata = {
 
 export default function OfflinePage() {
   return (
-    <div className="relative min-h-screen bg-zinc-50 dark:bg-[hsl(226,71%,11%)] flex flex-col">
-      <header className="h-14 border-b border-zinc-200/80 dark:border-slate-800 flex items-center px-4 sm:px-6">
-        <span className="font-sans text-base font-black tracking-tight text-zinc-900 dark:text-slate-100 select-none">
+    <div className="relative min-h-screen bg-background flex flex-col">
+      <header className="h-14 border-b border-border/60 flex items-center px-4 sm:px-6">
+        <span className="font-sans text-base font-black tracking-tight text-foreground select-none">
           Skill<span className="text-primary">Sync.</span>
         </span>
       </header>
@@ -19,13 +19,13 @@ export default function OfflinePage() {
           <WifiOff size={32} className="text-muted-foreground" aria-hidden="true" />
         </div>
 
-        <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-slate-400 mb-2">
+        <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-2">
           No Connection
         </p>
-        <h1 className="text-3xl font-black tracking-tight text-zinc-900 dark:text-slate-100 mb-3">
+        <h1 className="text-3xl font-black tracking-tight text-foreground mb-3">
           You&apos;re offline
         </h1>
-        <p className="max-w-sm text-sm leading-relaxed text-zinc-500 dark:text-slate-400 mb-8">
+        <p className="max-w-sm text-sm leading-relaxed text-muted-foreground mb-8">
           Check your internet connection and try again.
           Your progress is saved and will sync when you&apos;re back online.
         </p>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import PageHeader from "@/components/shared/page-header";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -377,11 +376,17 @@ export default function AdminUsersPage() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-32 sm:px-6 lg:px-8">
-      <PageHeader
-        eyebrow="Admin"
-        title="User Management"
-        description={`${totalCount} total users across faculty, students, and admin accounts.`}
-      />
+      <header className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-2">
+            <h1 className="text-3xl font-black tracking-tight text-foreground">User Management</h1>
+            <p className="text-sm leading-6 text-muted-foreground">{totalCount} total users across faculty, students, and admin accounts.</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={fetchUsers} className="gap-2 self-start">
+            <RefreshCw className="h-4 w-4" aria-hidden="true" /> Refresh
+          </Button>
+        </div>
+      </header>
 
       {/* Create Staff Account Card */}
       <Card className="border-t-4 border-t-primary">
@@ -494,7 +499,7 @@ export default function AdminUsersPage() {
               disabled={creating || !newName.trim() || !newEmail.trim() || (!autoGeneratePassword && newPassword.length < 8)}
               className="gap-2 bg-primary hover:bg-primary/90"
             >
-              {creating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+              {creating ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> : <UserPlus className="h-4 w-4" aria-hidden="true" />}
               {creating ? "Creating..." : `Create ${newRole === "admin" ? "Admin" : "Faculty"}`}
             </Button>
           </form>
@@ -521,7 +526,7 @@ export default function AdminUsersPage() {
               This password is shown <strong>ONCE</strong>. Copy it now and send to the user securely.
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-lg bg-card border border-border p-3">
+          <div className="rounded-md bg-card border border-border p-3">
             <p className="text-xs text-muted-foreground mb-2">Generated Password (shown once)</p>
             <div className="flex items-center gap-3">
               <input
@@ -564,7 +569,10 @@ export default function AdminUsersPage() {
             </DialogDescription>
           </DialogHeader>
           {editLoading && !editComponents.length ? (
-            <div className="py-8 text-center text-muted-foreground text-sm">Loading permissions…</div>
+            <div className="py-8 text-center text-muted-foreground text-sm" role="status" aria-label="Loading permissions" aria-live="polite">
+              Loading permissions…
+              <span className="sr-only">Loading...</span>
+            </div>
           ) : (
             <div className="space-y-4 py-2">
               <div className="grid sm:grid-cols-2 gap-3">
@@ -640,7 +648,7 @@ export default function AdminUsersPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditUser(null)} disabled={editLoading}>Cancel</Button>
             <Button onClick={handleSavePermissions} disabled={editLoading} className="gap-2 bg-primary hover:bg-primary/90">
-              {editLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              {editLoading ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Check className="h-4 w-4" aria-hidden="true" />}
               {editLoading ? "Saving…" : "Save Permissions"}
             </Button>
           </DialogFooter>
@@ -681,7 +689,10 @@ export default function AdminUsersPage() {
           {fetchError}
         </div>
       ) : loading ? (
-        <div className="py-16 text-center text-muted-foreground text-sm">Loading users…</div>
+        <div className="py-16 text-center text-muted-foreground text-sm" role="status" aria-label="Loading users" aria-live="polite">
+          Loading users…
+          <span className="sr-only">Loading...</span>
+        </div>
       ) : (
         <div className="space-y-6">
           {(["admin", "faculty", "student"] as const).map((role) => {
@@ -765,9 +776,9 @@ export default function AdminUsersPage() {
                                     className="gap-1.5 text-xs h-7 px-3"
                                   >
                                     {rs?.loading ? (
-                                      <RefreshCw className="h-3 w-3 animate-spin" />
+                                      <RefreshCw className="h-3 w-3 animate-spin" aria-hidden="true" />
                                     ) : (
-                                      <ShieldCheck className="h-3 w-3" />
+                                      <ShieldCheck className="h-3 w-3" aria-hidden="true" />
                                     )}
                                     {rs?.loading ? "Resetting..." : "Reset"}
                                   </Button>

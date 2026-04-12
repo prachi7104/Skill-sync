@@ -5,10 +5,18 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutDashboard, Briefcase, Box, FolderOpen,
-  Menu, X, LucideIcon, Activity, Users, CalendarDays,
-  Building2, LibraryBig, Sparkles, Settings,
-  GraduationCap, BarChart, Star, Bot
+  LayoutDashboard,
+  UserCircle,
+  Briefcase,
+  Box,
+  FolderOpen,
+  Plus,
+  Menu,
+  X,
+  LucideIcon,
+  Activity,
+  Users,
+  CalendarDays,
 } from 'lucide-react';
 import SignOutButton from './sign-out-button';
 import { cn } from '@/lib/utils';
@@ -22,31 +30,21 @@ export interface NavLink {
 
 const ROLE_LINKS: Record<string, NavLink[]> = {
   student: [
-    { href: '/student/companies',    label: 'Companies',    icon: Building2 },
-    { href: '/student/resources',    label: 'Resources',    icon: LibraryBig },
-    { href: '/student/career-coach', label: 'Career Coach', icon: Sparkles },
-    { href: '/student/sandbox',      label: 'AI Sandbox',   icon: Box },
-    { href: '/student/settings',     label: 'Settings',     icon: Settings },
+    { href: '/student/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/student/profile', label: 'My Profile', icon: UserCircle },
+    { href: '/student/drives', label: 'Drives', icon: Briefcase },
+    { href: '/student/sandbox', label: 'AI Sandbox', icon: Box },
   ],
   faculty: [
-    { href: '/faculty',              label: 'Dashboard',    icon: LayoutDashboard, exact: true },
-    { href: '/faculty/drives',       label: 'Drives',       icon: FolderOpen },
-    { href: '/faculty/students',     label: 'Students',     icon: GraduationCap },
-    { href: '/faculty/resources',    label: 'Resources',    icon: LibraryBig },
-    { href: '/faculty/sandbox',      label: 'Sandbox',      icon: Box },
-    { href: '/faculty/settings',     label: 'Settings',     icon: Settings },
+    { href: '/faculty', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+    { href: '/faculty/drives', label: 'My Drives', icon: FolderOpen },
+    { href: '/faculty/drives/new', label: 'New Drive', icon: Plus },
   ],
   admin: [
-    { href: '/admin/health',       label: 'System Health', icon: Activity },
-    { href: '/admin/drives',       label: 'All Drives',    icon: Briefcase },
-    { href: '/admin/users',        label: 'User Mgmt',     icon: Users },
-    { href: '/admin/seasons',      label: 'Seasons',       icon: CalendarDays },
-    { href: '/admin/amcat',        label: 'AMCAT',         icon: BarChart },
-    { href: '/admin/experiences',  label: 'Experiences',   icon: Star },
-    { href: '/admin/resources',    label: 'Resources',     icon: LibraryBig },
-    { href: '/admin/students',     label: 'Students',      icon: GraduationCap },
-    { href: '/admin/ai-models',    label: 'AI Models',     icon: Bot },
-    { href: '/admin/settings',     label: 'Settings',      icon: Settings },
+    { href: '/admin/health', label: 'System Health', icon: Activity },
+    { href: '/admin/drives', label: 'All Drives', icon: Briefcase },
+    { href: '/admin/users', label: 'User Management', icon: Users },
+    { href: '/admin/seasons', label: 'Seasons', icon: CalendarDays },
   ],
 };
 
@@ -150,7 +148,7 @@ export default function MobileNav({
     <>
       {/* Left edge swipe target — touch only, opens drawer in uncontrolled mode */}
       <div
-        className='fixed inset-y-0 left-0 z-30 w-4 touch-pan-y md:hidden'
+        className='md:hidden fixed left-0 top-0 bottom-0 w-4 z-30 touch-pan-y'
         onTouchStart={handleEdgeSwipeStart}
         onTouchMove={handleEdgeSwipeMove}
         onTouchEnd={handleEdgeSwipeEnd}
@@ -161,7 +159,7 @@ export default function MobileNav({
       {forceOpen === undefined && (
         <button
           onClick={handleOpen}
-          className='flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground md:hidden'
+          className='md:hidden flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150'
           aria-label='Open navigation menu'
         >
           <Menu size={20} />
@@ -178,7 +176,7 @@ export default function MobileNav({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
-              className='fixed inset-0 z-40 bg-black/50 md:hidden'
+              className='fixed inset-0 bg-black/50 z-40 md:hidden'
               onClick={handleClose}
               aria-hidden='true'
             />
@@ -197,20 +195,20 @@ export default function MobileNav({
                 if (info.offset.x < -80) handleClose();
               }}
               ref={drawerRef}
-              className='fixed inset-y-0 left-0 z-50 flex w-[280px] touch-pan-y flex-col border-r border-border bg-card md:hidden'
+              className='fixed inset-y-0 left-0 w-[280px] bg-card border-r border-border z-50 flex flex-col md:hidden touch-pan-y'
               role='dialog'
               aria-modal='true'
               aria-label='Mobile navigation menu'
             >
               {/* Drawer header */}
-              <div className='flex h-14 shrink-0 items-center justify-between border-b border-border px-5'>
-                <span className='select-none font-sans text-base font-black tracking-tight text-foreground'>
+              <div className='h-14 shrink-0 flex items-center justify-between px-5 border-b border-border'>
+                <span className='font-sans text-base font-black tracking-tight text-foreground select-none'>
                   Skill<span className='text-primary'>Sync.</span>
                 </span>
                 <button
                   onClick={handleClose}
                   ref={closeButtonRef}
-                  className='flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground'
+                  className='flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-150'
                   aria-label='Close navigation menu'
                 >
                   <X size={18} />
@@ -218,10 +216,7 @@ export default function MobileNav({
               </div>
 
               {/* Nav links */}
-              <nav className='flex-1 overflow-y-auto p-3' aria-label='Mobile navigation'>
-                <p className='px-3 pb-1 pt-3 text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground'>
-                  More
-                </p>
+              <nav className='flex-1 overflow-y-auto py-3 px-3' aria-label='Mobile navigation'>
                 {links.map((link) => {
                   const isActive = link.exact
                     ? pathname === link.href
@@ -246,12 +241,12 @@ export default function MobileNav({
               </nav>
 
               {/* Drawer footer */}
-              <div className='shrink-0 space-y-3 border-t border-border px-5 py-4'>
+              <div className='shrink-0 border-t border-border px-5 py-4 space-y-3'>
                 <div>
-                  <p className='mb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground'>
+                  <p className='text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-1'>
                     Signed in as
                   </p>
-                  <p className='truncate text-sm font-semibold text-foreground'>{userName}</p>
+                  <p className='text-sm font-semibold text-foreground truncate'>{userName}</p>
                 </div>
                 <SignOutButton />
               </div>

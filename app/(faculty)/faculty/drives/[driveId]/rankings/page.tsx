@@ -67,9 +67,7 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
         <div className="space-y-2">
           <h1 className="text-3xl font-black tracking-tight text-foreground">Rankings</h1>
-          <p className="text-sm text-muted-foreground">
-            {drive.company} • {drive.roleTitle}
-          </p>
+          <p className="text-sm text-muted-foreground">{drive.company} • {drive.roleTitle}</p>
         </div>
         <Card className="border-warning/20 bg-card shadow-sm">
           <CardContent className="space-y-4 py-12 text-center">
@@ -135,6 +133,8 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
     return { label: `${min}–${max}`, count };
   });
 
+  const viewerRole: "faculty" | "admin" = user.role === "admin" ? "admin" : "faculty";
+
   return (
     <DriveRankingsView
       driveId={driveId}
@@ -143,7 +143,7 @@ export default async function FacultyDriveRankingsPage({ params }: PageProps) {
       isTruncated={isTruncated}
       maxRankingsRows={MAX_RANKINGS_ROWS}
       distribution={distribution}
-      userRole="faculty"
+      userRole={viewerRole}
     />
   );
 }

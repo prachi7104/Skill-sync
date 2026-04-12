@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/shared/page-header";
@@ -226,8 +226,14 @@ export default function AdminHealthPage() {
           <h1 className="text-3xl font-black text-foreground">System Health</h1>
           <p className="text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-12 text-center text-muted-foreground shadow-sm">
+        <div
+          className="rounded-xl border border-border bg-card p-12 text-center text-muted-foreground shadow-sm"
+          role="status"
+          aria-label="Loading health data"
+          aria-live="polite"
+        >
           Loading health data...
+          <span className="sr-only">Loading...</span>
         </div>
       </div>
     );
@@ -257,15 +263,25 @@ export default function AdminHealthPage() {
         title="System Health"
         description="Operational dashboard — live snapshot"
         actions={
-          <Button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            variant="outline"
-            className="inline-flex items-center gap-2"
-          >
-            {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            Refresh
-          </Button>
+          <>
+            {refreshing && (
+              <span role="status" aria-label="Refreshing health data" className="sr-only">
+                Refreshing...
+              </span>
+            )}
+            <Button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              variant="outline"
+              className="inline-flex items-center gap-2"
+            >
+              <RefreshCw
+                className={cn("h-4 w-4 transition-transform", refreshing && "animate-spin")}
+                aria-hidden="true"
+              />
+              Refresh
+            </Button>
+          </>
         }
       />
 

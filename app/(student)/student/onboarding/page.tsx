@@ -762,8 +762,13 @@ export default function OnboardingPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div
+        className="flex min-h-screen items-center justify-center bg-muted/20"
+        role="status"
+        aria-label="Loading profile setup"
+      >
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
+        <span className="sr-only">Loading...</span>
       </div>
     );
   }
@@ -790,7 +795,7 @@ export default function OnboardingPage() {
         <div className="flex items-center gap-3 text-xs">
           {saveState === "saving" && (
             <span className="flex items-center gap-1 text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" /> Saving...
+              <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> Saving...
             </span>
           )}
           {saveState === "saved" && (
@@ -1057,7 +1062,7 @@ function IdentityStep({
             )}
           >
             {resumeState === "extracting" || resumeState === "analyzing" || resumeState === "uploading" || resumeState === "parsing" ? (
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden="true" />
             ) : resumeState === "done" ? (
               <CheckCircle2 className="h-5 w-5 text-success" />
             ) : (

@@ -8,7 +8,7 @@ describe("DashboardGreetingCard", () => {
     render(
       <DashboardGreetingCard
         studentName="Aniruddh Sharma"
-        profileCompletion={72}
+        progressPercent={72}
         onboardingRequired={false}
       />
     );

@@ -91,8 +91,7 @@ export default function StudentLeaderboardPage() {
 
   function getApiError(data: LeaderboardApiResponse, fallback: string): string {
     if (typeof data.error === "string" && data.error.trim()) return data.error;
-    if (typeof data.message === "string" && data.message.trim())
-      return data.message;
+    if (typeof data.message === "string" && data.message.trim()) return data.message;
     return fallback;
   }
 
@@ -104,13 +103,10 @@ export default function StudentLeaderboardPage() {
       if (sessionId) params.set("sessionId", sessionId);
       if (branch !== "all") params.set("branch", branch);
 
-      const res = await fetch(
-        `/api/student/amcat/leaderboard?${params.toString()}`,
-      );
+      const res = await fetch(`/api/student/amcat/leaderboard?${params.toString()}`);
       const data = await safeReadJson(res);
 
-      if (!res.ok)
-        throw new Error(getApiError(data, "Failed to load leaderboard"));
+      if (!res.ok) throw new Error(getApiError(data, "Failed to load leaderboard"));
       if (!data.hasData) {
         setHasData(false);
         setTop50([]);
@@ -134,21 +130,11 @@ export default function StudentLeaderboardPage() {
       setTop50((data.top50 ?? []) as LeaderboardRow[]);
       setMyRank((data.myRank ?? null) as MyRank);
       setIsInTop50(Boolean(data.isInTop50));
-      setBranches(
-        (data.branches ?? []).filter(
-          (item) => typeof item === "string" && item.trim().length > 0,
-        ),
-      );
+      setBranches((data.branches ?? []).filter((item) => typeof item === "string" && item.trim().length > 0));
       setSelectedSessionId(String(sessionData.id));
-      setSelectedBranch(
-        typeof data.appliedBranch === "string" && data.appliedBranch.trim()
-          ? data.appliedBranch
-          : "all",
-      );
+      setSelectedBranch(typeof data.appliedBranch === "string" && data.appliedBranch.trim() ? data.appliedBranch : "all");
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load leaderboard",
-      );
+      setError(err instanceof Error ? err.message : "Failed to load leaderboard");
     } finally {
       setLoading(false);
     }
@@ -171,13 +157,7 @@ export default function StudentLeaderboardPage() {
   function downloadCsv() {
     const rows = [
       ["Rank", "Name", "Branch", "Score", "Category"],
-      ...top50.map((row) => [
-        row.rank,
-        row.name,
-        row.branch ?? "",
-        row.score,
-        row.category,
-      ]),
+      ...top50.map((row) => [row.rank, row.name, row.branch ?? "", row.score, row.category]),
     ];
 
     if (!isInTop50 && myRank) {
@@ -186,9 +166,7 @@ export default function StudentLeaderboardPage() {
     }
 
     const csv = rows
-      .map((row) =>
-        row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","),
-      )
+      .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))
       .join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -206,16 +184,9 @@ export default function StudentLeaderboardPage() {
       <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
-              AMCAT Leaderboard
-            </p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-foreground md:text-4xl">
-              Published session rankings
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Top performers from published AMCAT sessions, with branch filters
-              and CSV export.
-            </p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">AMCAT Leaderboard</p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-foreground md:text-4xl">Published session rankings</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Top performers from published AMCAT sessions, with branch filters and CSV export.</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -274,14 +245,16 @@ export default function StudentLeaderboardPage() {
       </section>
 
       {loading ? (
-        <div className="flex min-h-[240px] items-center justify-center" role="status" aria-label="Loading">
+        <div
+          className="flex min-h-[240px] items-center justify-center"
+          role="status"
+          aria-label="Loading leaderboard"
+        >
           <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden="true" />
-          <span className="sr-only">Loading…</span>
+          <span className="sr-only">Loading...</span>
         </div>
       ) : error ? (
-        <div className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
+        <div className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
       ) : !hasData ? (
         <div className="rounded-2xl border border-border bg-card px-4 py-6 text-sm text-muted-foreground">
           No published AMCAT data is available yet.
@@ -297,69 +270,51 @@ export default function StudentLeaderboardPage() {
 
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Rank</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Branch</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Category</TableHead>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Rank</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Branch</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead>Category</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {top50.map((row) => (
+                  <TableRow key={`${row.rank}-${row.name}`}>
+                    <TableCell className="font-semibold">#{row.rank}</TableCell>
+                    <TableCell>{row.name}</TableCell>
+                    <TableCell>{row.branch ?? "-"}</TableCell>
+                    <TableCell>{row.score}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={badgeStyles[row.category]}>
+                        {row.category}
+                      </Badge>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {top50.map((row) => (
-                    <TableRow key={`${row.rank}-${row.name}`}>
-                      <TableCell className="font-semibold">
-                        #{row.rank}
-                      </TableCell>
-                      <TableCell>{row.name}</TableCell>
-                      <TableCell>{row.branch ?? "-"}</TableCell>
-                      <TableCell>{row.score}</TableCell>
+                ))}
+
+                {!isInTop50 && myRank && (
+                  <>
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-zinc-500 dark:text-slate-400">...</TableCell>
+                    </TableRow>
+                    <TableRow className="bg-primary/10">
+                      <TableCell className="font-semibold">#{myRank.rank}</TableCell>
+                      <TableCell className="font-semibold">You</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>{myRank.score}</TableCell>
                       <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={badgeStyles[row.category]}
-                        >
-                          {row.category}
+                        <Badge variant="outline" className={cn(badgeStyles[myRank.category], "font-semibold")}>
+                          {myRank.category}
                         </Badge>
                       </TableCell>
                     </TableRow>
-                  ))}
-
-                  {!isInTop50 && myRank && (
-                    <>
-                      <TableRow>
-                        <TableCell
-                          colSpan={5}
-                          className="text-center text-muted-foreground"
-                        >
-                          ...
-                        </TableCell>
-                      </TableRow>
-                      <TableRow className="bg-primary/10">
-                        <TableCell className="font-semibold">
-                          #{myRank.rank}
-                        </TableCell>
-                        <TableCell className="font-semibold">You</TableCell>
-                        <TableCell>-</TableCell>
-                        <TableCell>{myRank.score}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              badgeStyles[myRank.category],
-                              "font-semibold",
-                            )}
-                          >
-                            {myRank.category}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    </>
-                  )}
-                </TableBody>
-              </Table>
+                  </>
+                )}
+              </TableBody>
+            </Table>
             </div>
           </div>
         </>
@@ -371,9 +326,7 @@ export default function StudentLeaderboardPage() {
 function Stat({ title, value }: { title: string; value: number }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-        {title}
-      </p>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{title}</p>
       <p className="mt-2 text-2xl font-black text-foreground">{value}</p>
     </div>
   );
