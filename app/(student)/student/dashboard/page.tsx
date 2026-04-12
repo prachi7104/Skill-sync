@@ -1,11 +1,14 @@
 export const dynamic = 'force-dynamic';
 
+import { Suspense } from 'react';
+
 import { requireRole, getStudentProfile } from '@/lib/auth/helpers';
 import DashboardGreetingCard from '@/components/student/dashboard/dashboard-greeting-card';
 import DashboardAMCATChart from '@/components/student/dashboard/dashboard-amcat-chart';
 import DashboardDrivesPanel from '@/components/student/dashboard/dashboard-drives-panel';
 import DashboardOnboardingCard from '@/components/student/dashboard/dashboard-onboarding-card';
 import DashboardStatsRow from '@/components/student/dashboard/dashboard-stats-row';
+import DashboardSkeleton from '@/components/student/dashboard/dashboard-skeleton';
 import { computeOnboardingProgress } from '@/lib/utils/onboarding';
 import {
   getStudentAMCATData,
@@ -13,7 +16,7 @@ import {
   getStudentActiveDrivesCount,
 } from '@/lib/queries/student-dashboard';
 
-export default async function StudentDashboardPage() {
+async function StudentDashboardContent() {
   const user = await requireRole(['student']);
   const profile = await getStudentProfile(user.id);
 
@@ -98,7 +101,7 @@ export default async function StudentDashboardPage() {
         <div className='xl:col-span-1'>
           <DashboardGreetingCard
             studentName={user.name ?? 'Student'}
-            profileCompletion={onboardingProgress}
+            progressPercent={onboardingProgress}
             onboardingRequired={onboardingRequired}
           />
         </div>
@@ -110,5 +113,20 @@ export default async function StudentDashboardPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function StudentDashboardPage() {
+  return (
+    <Suspense
+      fallback={(
+        <div role='status' aria-label='Loading dashboard'>
+          <span className='sr-only'>Loading dashboard...</span>
+          <DashboardSkeleton />
+        </div>
+      )}
+    >
+      <StudentDashboardContent />
+    </Suspense>
   );
 }

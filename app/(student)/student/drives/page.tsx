@@ -1,5 +1,7 @@
 export const dynamic = "force-dynamic";
 
+import { Suspense } from "react";
+
 import { db } from "@/lib/db";
 import { drives, rankings } from "@/lib/db/schema";
 import { requireStudentProfile } from "@/lib/auth/helpers";
@@ -8,9 +10,10 @@ import { eq } from "drizzle-orm";
 import { format } from "date-fns";
 import { Briefcase, TriangleAlert } from "lucide-react";
 import DrivesGrid, { type SerializedDrive, type SerializedRanking } from "@/components/student/drives/drives-grid";
+import DrivesSkeleton from "@/components/student/drives/drives-skeleton";
 import { filterEligibleDrives } from "@/lib/business/eligibility";
 
-export default async function StudentDrivesPage() {
+async function StudentDrivesContent() {
   const { user, profile } = await requireStudentProfile();
 
   const activeDrives = await db.query.drives.findMany({
@@ -119,5 +122,20 @@ export default async function StudentDrivesPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function StudentDrivesPage() {
+  return (
+    <Suspense
+      fallback={(
+        <div role="status" aria-label="Loading drives">
+          <span className="sr-only">Loading drives...</span>
+          <DrivesSkeleton />
+        </div>
+      )}
+    >
+      <StudentDrivesContent />
+    </Suspense>
   );
 }

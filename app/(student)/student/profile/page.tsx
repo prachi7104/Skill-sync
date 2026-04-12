@@ -3,15 +3,16 @@
 import { useStudent } from "@/app/(student)/providers/student-provider";
 import ProfileView from "./profile-view";
 import { format } from "date-fns";
+import ProfileSkeleton from "@/components/student/profile/profile-skeleton";
 
 export default function StudentProfilePage() {
     const { user, student, isLoading } = useStudent();
 
     if (isLoading || !student || !user) {
         return (
-            <div className="flex min-h-[60vh] items-center justify-center" role="status" aria-label="Loading">
-                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary/30" aria-hidden="true"></div>
-                <span className="sr-only">Loading…</span>
+            <div role="status" aria-label="Loading profile">
+                <span className="sr-only">Loading your profile...</span>
+                <ProfileSkeleton />
             </div>
         );
     }
