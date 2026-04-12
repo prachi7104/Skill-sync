@@ -3,30 +3,46 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Briefcase, ArrowUpRight, Clock } from 'lucide-react';
 import { safeFetch } from '@/lib/api';
-import { toast } from 'sonner';
 
 interface Drive {
   id: string;
   companyName: string;
   role: string;
-  deadline: string;
+  deadline: string | null;
   isEligible: boolean;
+}
+
+interface ApiDrive {
+  id: string;
+  company: string;
+  roleTitle: string;
+  deadline: string | null;
 }
 
 export default function DashboardDrivesPanel({ studentId }: { studentId: string }) {
   const [drives, setDrives] = useState<Drive[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadDrives() {
-      const { data, error } = await safeFetch<{ drives: Drive[] }>(
-        `/api/student/drives?active=true&studentId=${studentId}`
+      const { data, error } = await safeFetch<{ drives: ApiDrive[] }>(
+        '/api/drives?limit=4'
       );
       if (error) {
-        toast.error(error);
+        setLoadError(error);
         setDrives([]);
       } else {
-        setDrives(data?.drives ?? []);
+        setLoadError(null);
+        setDrives(
+          (data?.drives ?? []).map((drive) => ({
+            id: drive.id,
+            companyName: drive.company,
+            role: drive.roleTitle,
+            deadline: drive.deadline,
+            isEligible: true,
+          }))
+        );
       }
       setLoading(false);
     }
@@ -61,7 +77,7 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
           drives.slice(0, 4).map(drive => (
             <Link
               key={drive.id}
-              href={`/student/drives/${drive.id}`}
+              href={`/student/drives/${drive.id}/ranking`}
               className='group flex items-start justify-between rounded-lg border border-zinc-200 p-3 transition-all duration-150 hover:border-primary/30 hover:bg-primary/5 dark:border-slate-800 dark:hover:border-primary/30 dark:hover:bg-primary/10'
             >
               <div className='min-w-0 flex-1'>
@@ -73,11 +89,17 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
                   {drive.isEligible ? 'Eligible' : 'Ineligible'}
                 </span>
                 <span className='flex items-center gap-1 text-[10px] text-zinc-500 dark:text-slate-400'>
-                  <Clock size={9} /> {new Date(drive.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                  <Clock size={9} /> {drive.deadline ? new Date(drive.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'No deadline'}
                 </span>
               </div>
             </Link>
           ))
+        ) : loadError ? (
+          <div className='flex flex-col items-center justify-center h-full py-8 text-center'>
+            <Briefcase size={28} className='mb-2 text-zinc-400 opacity-40 dark:text-slate-500' />
+            <p className='text-[12px] text-zinc-500 dark:text-slate-400'>Could not load drives right now.</p>
+            <p className='mt-1 text-[11px] text-zinc-400 dark:text-slate-500'>Please refresh or try again in a moment.</p>
+          </div>
         ) : (
           <div className='flex flex-col items-center justify-center h-full py-8 text-center'>
             <Briefcase size={28} className='mb-2 text-zinc-400 opacity-40 dark:text-slate-500' />
