@@ -7,6 +7,11 @@ import DashboardDrivesPanel from '@/components/student/dashboard/dashboard-drive
 import DashboardOnboardingCard from '@/components/student/dashboard/dashboard-onboarding-card';
 import DashboardStatsRow from '@/components/student/dashboard/dashboard-stats-row';
 import { computeOnboardingProgress } from '@/lib/utils/onboarding';
+import {
+  getStudentAMCATData,
+  getStudentRank,
+  getStudentActiveDrivesCount,
+} from '@/lib/queries/student-dashboard';
 
 export default async function StudentDashboardPage() {
   const user = await requireRole(['student']);
@@ -15,31 +20,30 @@ export default async function StudentDashboardPage() {
   // Compute onboarding progress (same logic as layout)
   const { progress: onboardingProgress, onboardingRequired } = computeOnboardingProgress(profile);
 
-  // Fetch AMCAT data — graceful failure
+  // Fetch dashboard data via direct DB calls — graceful failure per source
   let amcatData: { session: string; score: number }[] | null = null;
   let leaderboardRank: number | null = null;
   let activeDrivesCount: number | null = null;
 
-  try {
-    const [amcatRes, rankRes, drivesRes] = await Promise.allSettled([
-      fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/student/amcat?studentId=${user.id}`, { cache: 'no-store' }),
-      fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/student/rank?studentId=${user.id}`, { cache: 'no-store' }),
-      fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/student/drives/active?studentId=${user.id}`, { cache: 'no-store' }),
+  if (user.collegeId) {
+    const [amcatResult, rankResult, drivesResult] = await Promise.allSettled([
+      getStudentAMCATData(user.id, user.collegeId),
+      getStudentRank(user.id, user.collegeId),
+      getStudentActiveDrivesCount(user.collegeId),
     ]);
 
-    if (amcatRes.status === 'fulfilled' && amcatRes.value.ok) {
-      amcatData = await amcatRes.value.json();
+    if (amcatResult.status === 'fulfilled' && amcatResult.value?.hasAmcat && !amcatResult.value.isAbsent) {
+      const result = amcatResult.value;
+      amcatData = result.score !== null && result.session_name
+        ? [{ session: result.session_name, score: result.score }]
+        : null;
     }
-    if (rankRes.status === 'fulfilled' && rankRes.value.ok) {
-      const rankJson = await rankRes.value.json();
-      leaderboardRank = rankJson.rank ?? null;
+    if (rankResult.status === 'fulfilled') {
+      leaderboardRank = rankResult.value?.rank ?? null;
     }
-    if (drivesRes.status === 'fulfilled' && drivesRes.value.ok) {
-      const drivesJson = await drivesRes.value.json();
-      activeDrivesCount = drivesJson.count ?? null;
+    if (drivesResult.status === 'fulfilled') {
+      activeDrivesCount = drivesResult.value?.count ?? null;
     }
-  } catch {
-    // All data defaults to null — components show skeletons
   }
 
   return (
