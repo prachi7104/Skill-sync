@@ -15,6 +15,30 @@ export async function GET(req: NextRequest) {
     }
 
     const url = new URL(req.url);
+
+    // ── Fast path: return just filter options ──
+    if (url.searchParams.get("filtersOnly") === "true") {
+      const [branchRows, yearRows] = await Promise.all([
+        db
+          .selectDistinct({ branch: students.branch })
+          .from(students)
+          .where(eq(students.collegeId, user.collegeId!))
+          .then((rows) => rows.map((r) => r.branch).filter((branch): branch is string => Boolean(branch)).sort()),
+        db
+          .selectDistinct({ batchYear: students.batchYear })
+          .from(students)
+          .where(eq(students.collegeId, user.collegeId!))
+          .then((rows) =>
+            rows
+              .map((r) => r.batchYear)
+              .filter((y): y is number => y !== null)
+              .sort((a, b) => b - a)
+          ),
+      ]);
+
+      return NextResponse.json({ branches: branchRows, batchYears: yearRows });
+    }
+
     const q = url.searchParams.get("q") || "";
     const branch = url.searchParams.get("branch") || "";
     const batchYear = url.searchParams.get("batchYear") || "";

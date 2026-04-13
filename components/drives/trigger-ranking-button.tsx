@@ -191,7 +191,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
                 </span>
             )}
             {embeddingCheck && !embeddingCheck.loading && embeddingCheck.withEmbedding < embeddingCheck.total && (
-                <div className="mt-2 w-full rounded-md border border-warning/20 bg-warning/10 p-3 text-left">
+                <div className="mt-2 w-full rounded-lg border border-warning/20 bg-warning/10 p-3 text-left">
                     <p className="text-sm font-medium text-warning">
                         {embeddingCheck.total - embeddingCheck.withEmbedding} of {embeddingCheck.total} eligible students have no embedding yet.
                     </p>

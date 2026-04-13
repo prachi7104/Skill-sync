@@ -122,7 +122,7 @@ export default function QuickSandbox() {
     return (
         <div className="space-y-6">
 
-            <div className="bg-card rounded-md border border-border p-6 md:p-8">
+            <div className="bg-card rounded-lg border border-border p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2.5 bg-primary/10 rounded-md"><Target className="w-5 h-5 text-primary" /></div>
                     <div>
@@ -228,7 +228,7 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
   return (
     <>
       {/* Header Card */}
-      <div className="bg-card  rounded-md border border-border p-8 relative overflow-hidden">
+      <div className="bg-card  rounded-lg border border-border p-8 relative overflow-hidden">
         <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-primary/10 blur-[80px] rounded-full pointer-events-none" />
         
         <div className="relative z-10">
@@ -497,7 +497,7 @@ function ScoreRow({ label, pct }: { label: string; pct: number }) {
 function ResultSectionV1({ result, getScoreColor, REC_STYLE }: { result: SandboxResult; getScoreColor: (score: number) => string; REC_STYLE: Record<string, string> }) {
   return (
     <>
-      <div className="bg-card  rounded-md border border-border p-8 relative overflow-hidden">
+      <div className="bg-card  rounded-lg border border-border p-8 relative overflow-hidden">
         <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-primary/10 blur-[80px] rounded-full pointer-events-none" />
         <p className="text-xs text-muted-foreground mb-6 font-bold">Showing simplified analysis</p>
         <div className="relative z-10">
@@ -546,7 +546,7 @@ function ResultSectionV1({ result, getScoreColor, REC_STYLE }: { result: Sandbox
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="bg-card rounded-md border border-border p-7">
+        <div className="bg-card rounded-lg border border-border p-7">
           <h4 className="text-sm font-bold text-success mb-4 flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5" /> Matched Skills ({result.matchedSkills.length})
           </h4>
@@ -556,7 +556,7 @@ function ResultSectionV1({ result, getScoreColor, REC_STYLE }: { result: Sandbox
             )) : <span className="text-xs text-muted-foreground italic">No skills matched</span>}
           </div>
         </div>
-        <div className="bg-card rounded-md border border-border p-7">
+        <div className="bg-card rounded-lg border border-border p-7">
           <h4 className="text-sm font-bold text-destructive mb-4 flex items-center gap-2">
             <XCircle className="h-5 w-5" /> Missing Skills ({result.missingSkills.length})
           </h4>
@@ -568,7 +568,7 @@ function ResultSectionV1({ result, getScoreColor, REC_STYLE }: { result: Sandbox
         </div>
       </div>
 
-      <div className="bg-card rounded-md border border-border p-8">
+      <div className="bg-card rounded-lg border border-border p-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2.5 bg-primary/10 rounded-md"><Sparkles className="w-5 h-5 text-primary" /></div>
           <h2 className="font-bold text-foreground text-lg">AI Analysis</h2>

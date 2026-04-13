@@ -19,7 +19,7 @@ export default function DashboardGreetingCard({ studentName, progressPercent, on
       {/* Greeting */}
       <div>
         <p className='mb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground'>Welcome back</p>
-        <h2 className='max-w-[180px] truncate text-xl font-black leading-tight tracking-tight text-foreground' title={firstName}>
+        <h2 className='max-w-[240px] truncate text-xl font-black leading-tight tracking-tight text-foreground' title={firstName}>
           {/* Show first name only */}
           {firstName}
         </h2>

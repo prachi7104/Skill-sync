@@ -29,7 +29,7 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
 
   const baseClasses = cn(
     'group relative flex items-center w-full h-10 rounded-md transition-all duration-150 select-none',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-surface',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-primary focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
     'active:scale-[0.98]',
     isCollapsed ? 'justify-center px-0 mx-auto' : 'px-3 gap-3 mx-2',
     isCollapsed ? 'w-10' : 'w-[calc(100%-16px)]', // collapsed: square; expanded: inset 8px each side
@@ -107,7 +107,8 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
   };
 
   const tooltipId = `nav-tooltip-${label.replace(/\s+/g, "-").toLowerCase()}`;
-  const computedTabIndex = isBlocked ? -1 : undefined;
+  // Blocked items stay focusable and expose aria-disabled; callers can attach
+  // a toast handler via onClick when they want a blocked action to explain why.
 
   if (href && !isBlocked) {
     return (
@@ -117,7 +118,6 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
           className={baseClasses}
           aria-label={label}
           aria-describedby={isCollapsed ? tooltipId : undefined}
-          tabIndex={computedTabIndex}
           {...sharedHandlers}
         >
           {content}
@@ -131,12 +131,11 @@ export default function NavItem({ href, onClick, icon: Icon, label, isActive, is
     <div className='relative px-2 mb-0.5'>
       <button
         type='button'
-        onClick={isBlocked ? undefined : onClick}
+        onClick={onClick}
         className={baseClasses}
-        aria-disabled={isBlocked}
+        aria-disabled={isBlocked || undefined}
         aria-label={label}
         aria-describedby={isCollapsed ? tooltipId : undefined}
-        tabIndex={computedTabIndex}
         {...sharedHandlers}
       >
         {content}

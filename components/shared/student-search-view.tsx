@@ -131,7 +131,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
           {student.resumeUrl && (
             <section>
               <h3 className="text-lg font-bold text-foreground mb-4">Resume</h3>
-              <div className="bg-muted/20 border border-border rounded-md p-4">
+              <div className="bg-muted/20 border border-border rounded-lg p-4">
                 <p className="text-sm text-muted-foreground mb-2">File: {student.resumeFilename}</p>
                 <p className="text-sm text-muted-foreground mb-3">
                   Uploaded: {student.resumeUploadedAt ? new Date(student.resumeUploadedAt).toLocaleDateString() : "—"}
@@ -166,7 +166,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
               <h3 className="text-lg font-bold text-foreground mb-4">Projects ({student.projects.length})</h3>
               <div className="space-y-3">
                 {student.projects.map((p, i) => (
-                  <div key={i} className="bg-muted/20 border border-border rounded-md p-4">
+                  <div key={i} className="bg-muted/20 border border-border rounded-lg p-4">
                     <p className="font-semibold text-foreground">{p.title}</p>
                     <p className="text-sm text-muted-foreground mt-1">{p.description}</p>
                     {p.techStack && p.techStack.length > 0 && (
@@ -189,7 +189,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
               <h3 className="text-lg font-bold text-foreground mb-4">Work Experience ({student.workExperience.length})</h3>
               <div className="space-y-3">
                 {student.workExperience.map((exp, i) => (
-                  <div key={i} className="bg-muted/20 border border-border rounded-md p-4">
+                  <div key={i} className="bg-muted/20 border border-border rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-semibold text-foreground">{exp.role}</p>
@@ -209,7 +209,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
               <h3 className="text-lg font-bold text-foreground mb-4">Certifications ({student.certifications.length})</h3>
               <div className="space-y-2">
                 {student.certifications.map((cert, i) => (
-                  <div key={i} className="flex justify-between items-start bg-muted/20 border border-border rounded-md p-3">
+                  <div key={i} className="flex justify-between items-start bg-muted/20 border border-border rounded-lg p-3">
                     <div>
                       <p className="font-semibold text-foreground">{cert.title}</p>
                       <p className="text-sm text-muted-foreground">{cert.issuer}</p>
@@ -226,7 +226,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
               <h3 className="text-lg font-bold text-foreground mb-4">Coding Profiles ({student.codingProfiles.length})</h3>
               <div className="space-y-2">
                 {student.codingProfiles.map((profile, i) => (
-                  <div key={i} className="bg-muted/20 border border-border rounded-md p-3">
+                  <div key={i} className="bg-muted/20 border border-border rounded-lg p-3">
                     <p className="text-sm text-muted-foreground">{profile.platform}</p>
                     <p className="text-foreground font-medium">{profile.username}</p>
                   </div>
@@ -240,7 +240,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
               <h3 className="text-lg font-bold text-foreground mb-4">Research Papers ({student.researchPapers.length})</h3>
               <div className="space-y-2">
                 {student.researchPapers.map((paper, i) => (
-                  <div key={i} className="bg-muted/20 border border-border rounded-md p-3">
+                  <div key={i} className="bg-muted/20 border border-border rounded-lg p-3">
                     <a href={paper.url} target="_blank" rel="noopener noreferrer" className="text-foreground hover:text-primary font-medium">
                       {paper.title}
                     </a>
@@ -256,7 +256,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
               <h3 className="text-lg font-bold text-foreground mb-4">Achievements ({student.achievements.length})</h3>
               <div className="space-y-3">
                 {student.achievements.map((ach, i) => (
-                  <div key={i} className="bg-muted/20 border border-border rounded-md p-4">
+                  <div key={i} className="bg-muted/20 border border-border rounded-lg p-4">
                     <p className="font-semibold text-foreground">{ach.title}</p>
                     <p className="text-sm text-muted-foreground">{ach.description}</p>
                     <p className="text-xs text-muted-foreground mt-2">{ach.date}</p>
@@ -308,6 +308,26 @@ export default function StudentSearchView({
   const [verificationNote, setVerificationNote] = useState("");
   const [verificationSaving, setVerificationSaving] = useState(false);
 
+  // Pre-load filter options on mount (independent of search)
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(`${apiEndpoint}?filtersOnly=true`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data.branches?.length) setBranches(data.branches);
+        if (data.batchYears?.length) setBatchYears(data.batchYears);
+      })
+      .catch(() => {
+        // Keep filters empty on preload failure.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiEndpoint]);
+
   const performSearch = useCallback(
     async (q: string, branch: string, year: string, verification: VerificationFilter, page: number) => {
       if (!q && branch === "all" && year === "all" && verification === "all") {
@@ -337,12 +357,6 @@ export default function StudentSearchView({
         setResults(data.students);
         setTotal(data.total);
         setCurrentPage(page);
-
-        const uniqueBranches = Array.from(new Set(data.students.map((s) => s.branch).filter(Boolean))) as string[];
-        const uniqueYears = Array.from(new Set(data.students.map((s) => s.batchYear).filter(Boolean))) as number[];
-
-        setBranches(uniqueBranches.sort());
-        setBatchYears(uniqueYears.sort((a, b) => b - a));
       } catch (err) {
         console.error("[Search Error]", err);
         setError("Failed to search students. Please try again.");
@@ -487,6 +501,22 @@ export default function StudentSearchView({
                 </option>
               ))}
             </select>
+
+            {(selectedBranch !== "all" || selectedBatchYear !== "all" || searchQuery) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedBranch("all");
+                  setSelectedBatchYear("all");
+                  setResults([]);
+                  setTotal(0);
+                }}
+                className="text-xs font-medium text-destructive hover:underline"
+              >
+                Clear all
+              </button>
+            )}
           </div>
         </div>
 

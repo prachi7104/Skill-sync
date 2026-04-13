@@ -187,7 +187,7 @@ export default function DetailedSandboxClient() {
                 
                 <div className="lg:col-span-5 space-y-6">
                     {/* Resume Upload */}
-                    <div className="bg-card rounded-md border border-border p-6">
+                    <div className="bg-card rounded-lg border border-border p-6">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="p-2 bg-primary/10 rounded-md"><FileText className="w-4 h-4 text-primary" /></div>
                             <h3 className="font-bold text-foreground">Target Resume</h3>
@@ -213,7 +213,7 @@ export default function DetailedSandboxClient() {
                     </div>
 
                     {/* JD Text */}
-                    <div className="bg-card rounded-md border border-border p-6">
+                    <div className="bg-card rounded-lg border border-border p-6">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="p-2 bg-warning/10 rounded-md"><BookOpen className="w-4 h-4 text-warning" /></div>
                             <h3 className="font-bold text-foreground">Job Description</h3>
@@ -225,7 +225,7 @@ export default function DetailedSandboxClient() {
                 {/* ACTION / HERO RAIL */}
                 <div className="lg:col-span-7 flex flex-col h-full min-h-[500px]">
                     {!result ? (
-                        <div className="flex-1 bg-card border-2 border-dashed border-border rounded-md flex flex-col items-center justify-center text-center p-10 relative overflow-hidden group">
+                        <div className="flex-1 bg-card border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center text-center p-10 relative overflow-hidden group">
                             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-info/5 opacity-50" />
                             <div className="p-5 bg-card  rounded-full shadow-sm border border-border mb-6 z-10">
                                 <div className="p-4 bg-card rounded-full">
@@ -236,7 +236,7 @@ export default function DetailedSandboxClient() {
                             <p className="text-muted-foreground text-sm max-w-sm mx-auto leading-relaxed z-10">Provide a resume and JD on the left to generate a multi-dimensional AI competency matrix.</p>
                         </div>
                     ) : (
-                        <div className="bg-card  rounded-md border border-border p-8 flex-1 flex flex-col justify-center relative overflow-hidden">
+                        <div className="bg-card  rounded-lg border border-border p-8 flex-1 flex flex-col justify-center relative overflow-hidden">
                             <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-primary/10 blur-[100px] rounded-full pointer-events-none" />
                             
                             <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-8 text-center">Engine Results</h3>
@@ -283,7 +283,7 @@ export default function DetailedSandboxClient() {
                 <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700 pb-20">
 
                     {/* RADAR CHARTS */}
-                    <div className="bg-card rounded-md border border-border p-8">
+                    <div className="bg-card rounded-lg border border-border p-8">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="p-2.5 bg-info/10 rounded-md"><Shield className="w-5 h-5 text-info" /></div>
                             <h2 className="font-bold text-foreground text-xl">Dimensional Breakdown</h2>
@@ -303,7 +303,7 @@ export default function DetailedSandboxClient() {
                     </div>
 
                     {/* SKILLS MATRIX */}
-                    <div className="bg-card rounded-md border border-border p-8">
+                    <div className="bg-card rounded-lg border border-border p-8">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="p-2.5 bg-success/10 rounded-md"><Target className="w-5 h-5 text-success" /></div>
                             <h2 className="font-bold text-foreground text-xl">Skill Match Matrix</h2>
@@ -323,7 +323,7 @@ export default function DetailedSandboxClient() {
                     </div>
 
                     {/* ACTIONABLE INSIGHTS */}
-                    <div className="bg-card rounded-md border border-border p-8">
+                    <div className="bg-card rounded-lg border border-border p-8">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="p-2.5 bg-warning/10 rounded-md"><Lightbulb className="w-5 h-5 text-warning" /></div>
                             <h2 className="font-bold text-foreground text-xl">Actionable Insights</h2>

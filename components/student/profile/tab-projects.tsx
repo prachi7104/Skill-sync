@@ -127,7 +127,7 @@ export default function TabProjects({
         
         <div className='space-y-4 mb-4'>
           {workFields.map((field, idx) => (
-            <div key={field.id} className='p-6 bg-muted/20 border border-border rounded-md relative space-y-4'>
+            <div key={field.id} className='p-6 bg-muted/20 border border-border rounded-lg relative space-y-4'>
               <button type='button' onClick={() => removeWork(idx)} className='absolute top-4 right-4 p-2 bg-destructive/10 text-destructive rounded-md hover:bg-destructive hover:text-white transition-colors'><Trash2 className='w-4 h-4' /></button>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
                 <FormField control={form.control} name={`workExperience.${idx}.role`} render={({field: f}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Role</FormLabel><FormControl><Input className={inputClass + " h-9 text-sm"} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
@@ -156,7 +156,7 @@ export default function TabProjects({
 
         <div className='space-y-4 mb-4'>
           {projectFields.map((field, idx) => (
-            <div key={field.id} className='p-6 bg-muted/20 border border-border rounded-md relative space-y-4'>
+            <div key={field.id} className='p-6 bg-muted/20 border border-border rounded-lg relative space-y-4'>
               <button type='button' onClick={() => removeProject(idx)} className='absolute top-4 right-4 p-2 bg-destructive/10 text-destructive rounded-md hover:bg-destructive hover:text-white transition-colors'><Trash2 className='w-4 h-4' /></button>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
                 <FormField control={form.control} name={`projects.${idx}.title`} render={({field: f}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Title</FormLabel><FormControl><Input className={inputClass + " h-9 text-sm"} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />

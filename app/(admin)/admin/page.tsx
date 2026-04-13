@@ -188,7 +188,7 @@ export default async function AdminMasterDashboard() {
         </div>
         <div className="space-y-3">
           {recentDrives.map((drive) => (
-            <div key={drive.id} className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background p-4">
+            <div key={drive.id} className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background p-4">
               <div>
                 <p className="font-bold text-foreground text-sm">{drive.company} — {drive.roleTitle}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">

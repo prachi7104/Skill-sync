@@ -56,7 +56,7 @@ export function DriveConflictsButton() {
             {loading ? <p className="text-sm text-muted-foreground">Checking conflicts...</p> : null}
             {!loading && conflicts.length === 0 ? <p className="text-sm text-muted-foreground">No significant conflicts found.</p> : null}
             {!loading ? conflicts.map((conflict) => (
-              <div key={`${conflict.drive1.id}-${conflict.drive2.id}`} className="rounded-md border border-warning/20 bg-warning/10 p-4">
+              <div key={`${conflict.drive1.id}-${conflict.drive2.id}`} className="rounded-lg border border-warning/20 bg-warning/10 p-4">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="mt-0.5 h-5 w-5 text-warning" />
                   <div>

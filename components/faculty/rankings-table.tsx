@@ -302,7 +302,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                                 </div>
 
                                                 {isExpanded ? (
-                                                    <div className="space-y-3 rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground">
+                                                    <div className="space-y-3 rounded-lg border border-border bg-background p-4 text-sm text-muted-foreground">
                                                         {ranking.detailedExplanation.split("\n").map((line, lineIndex) => (
                                                             <p key={lineIndex} className={cn(line.trim() ? "last:mb-0" : "h-2")}>{line}</p>
                                                         ))}

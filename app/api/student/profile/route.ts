@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireStudentProfile } from "@/lib/auth/helpers";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/config";
+import { requireRole, requireStudentProfile } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
-import { jobs, students, users } from "@/lib/db/schema";
+import { jobs, students } from "@/lib/db/schema";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { and, eq, sql } from "drizzle-orm";
 import { studentProfileSchema } from "@/lib/validations/student-profile";
@@ -18,55 +16,40 @@ export const runtime = "nodejs";
 
 export async function GET() {
     try {
-        logger.info("[API] /api/student/profile - Check started");
+        const user = await requireRole(["student"]);
 
-        // 1. Check Session
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.email) {
-            logger.info("[API] /api/student/profile - No Session");
-            return NextResponse.json({ success: false, error: "Unauthorized: No Session" }, { status: 401 });
-        }
-        logger.info(`[API] Session found for: ${session.user.email}`);
-
-        // 2. Check User in DB
-        const user = await db.query.users.findFirst({
-            where: eq(users.email, session.user.email),
-            columns: {
-                id: true,
-                role: true,
-                name: true,
-                email: true,
-                // passwordHash explicitly excluded
-            }
-        });
-
-        if (!user) {
-            logger.info("[API] User not found in DB");
-            return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
-        }
-
-        // 3. Check Student Profile
         const profile = await db.query.students.findFirst({
             where: eq(students.id, user.id),
         });
 
         if (!profile) {
-            logger.info("[API] Student profile missing for user", { userId: user.id });
-            // Do NOT redirect here for API calls
-            return NextResponse.json({ success: false, error: "Profile missing" }, { status: 404 });
+            return NextResponse.json(
+                { success: false, error: "Profile missing" },
+                { status: 404 }
+            );
         }
 
-        logger.info("[API] Success");
-        return NextResponse.json({ success: true, data: { user, profile } });
-
+        return NextResponse.json({
+            success: true,
+            data: {
+                user: {
+                    id: user.id,
+                    role: user.role,
+                    name: user.name,
+                    email: user.email,
+                    // passwordHash explicitly NOT included
+                },
+                profile,
+            },
+        });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         if (isRedirectError(error)) throw error;
-        console.error("[API] Error in /api/student/profile:", error);
-        return NextResponse.json({
-            success: false,
-            error: error.message || "Internal Server Error"
-        }, { status: 500 });
+        console.error("[API] Error in /api/student/profile GET:", error);
+        return NextResponse.json(
+            { success: false, error: error.message || "Internal Server Error" },
+            { status: 500 }
+        );
     }
 }
 
