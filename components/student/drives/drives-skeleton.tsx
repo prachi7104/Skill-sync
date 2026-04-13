@@ -11,7 +11,7 @@ export default function DrivesSkeleton() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div key={i} className="space-y-3 rounded-lg border border-border bg-card p-4 shadow-sm">
             <div className="flex items-start gap-3 pr-16">
               <Skeleton className="h-10 w-10 shrink-0 rounded-md" />
               <div className="flex-1 space-y-1.5">

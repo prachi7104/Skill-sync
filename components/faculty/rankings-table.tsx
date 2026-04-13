@@ -160,7 +160,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                 </Card>
             ) : null}
 
-            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm">
+            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-3 shadow-sm">
                 <div className="relative min-w-[200px] flex-1">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -239,7 +239,7 @@ export default function RankingsTable({ rankings, distribution, driveId, viewerR
                                         : ranking.shortlisted;
 
                                     return (
-                                        <article key={`${ranking.studentId}-${index}`} className={cn("rounded-2xl border border-border bg-card p-4 shadow-sm", currentShortlistState === true && "bg-success/10") }>
+                                        <article key={`${ranking.studentId}-${index}`} className={cn("rounded-lg border border-border bg-card p-4 shadow-sm", currentShortlistState === true && "bg-success/10") }>
                                             <button
                                                 type="button"
                                                 onClick={() => setExpandedId(isExpanded ? null : mobileId)}

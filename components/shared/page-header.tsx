@@ -17,7 +17,7 @@ export default function PageHeader({
 }: PageHeaderProps) {
   return (
     <header className={cn(
-      "rounded-xl border border-border bg-card px-6 py-5 shadow-sm",
+      "rounded-lg border border-border bg-card px-6 py-5 shadow-sm",
       className
     )}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

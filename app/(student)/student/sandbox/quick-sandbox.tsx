@@ -287,7 +287,7 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
                   </div>
 
                   {/* Seniority Fit */}
-                  <div className="bg-card border border-border rounded-md p-6">
+                  <div className="bg-card border border-border rounded-lg p-6">
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Seniority Fit</p>
                     {result.seniorityWarning ? (
                       <p className="text-sm text-warning mb-4">{result.seniorityWarning}</p>
@@ -303,7 +303,7 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
                   </div>
 
                   {/* Soft Skills */}
-                  <div className="bg-card border border-border rounded-md p-6">
+                  <div className="bg-card border border-border rounded-lg p-6">
                     <div className="flex items-center gap-2 mb-3">
                       <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Soft Skills</p>
                       <span className="px-2 py-0.5 bg-card text-muted-foreground text-[10px] font-bold rounded-md">not scored</span>
@@ -365,7 +365,7 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
                 {/* TAB 3: KEYWORDS */}
                 <TabsContent value="keywords" className="space-y-6 mt-0">
                   <div className="grid md:grid-cols-2 gap-6">
-                    <div className="bg-card border border-border rounded-md p-6">
+                    <div className="bg-card border border-border rounded-lg p-6">
                       <p className="text-xs font-bold text-destructive uppercase tracking-wider mb-4">Missing from Resume</p>
                       <div className="flex flex-wrap gap-2">
                         {result.missingSkills.length > 0 ? (
@@ -380,7 +380,7 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
                       </div>
                     </div>
 
-                    <div className="bg-card border border-border rounded-md p-6">
+                    <div className="bg-card border border-border rounded-lg p-6">
                       <p className="text-xs font-bold text-success uppercase tracking-wider mb-4">Already Present</p>
                       <div className="flex flex-wrap gap-2">
                         {result.matchedSkills.length > 0 ? (
@@ -435,7 +435,7 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
 
 function DimensionCard({ title, score, bullets, note }: { title: string; score: number; bullets: string[]; note?: string | null }) {
   return (
-    <div className={`bg-card border ${score >= 80 ? "border-success/20" : score >= 60 ? "border-warning/20" : "border-destructive/20"} rounded-md p-5`}>
+    <div className={`bg-card border ${score >= 80 ? "border-success/20" : score >= 60 ? "border-warning/20" : "border-destructive/20"} rounded-lg p-5`}>
       <div className="flex items-center justify-between mb-4">
         <h4 className="text-sm font-bold text-foreground">{title}</h4>
         <span className={`text-lg font-black ${score >= 80 ? "text-success" : score >= 60 ? "text-warning" : "text-destructive"}`}>
@@ -464,7 +464,7 @@ function FeedbackCard({ item }: { item: CardFeedback["feedback"][0] }) {
   const colors = typeColors[item.type] || typeColors.format;
 
   return (
-    <div className="bg-card border border-border rounded-md p-5">
+    <div className="bg-card border border-border rounded-lg p-5">
       <div className="flex items-start justify-between gap-4 mb-3">
         <h5 className="text-sm font-bold text-foreground flex-1">{item.title}</h5>
         <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border whitespace-nowrap ${colors.badge}`}>

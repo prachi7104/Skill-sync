@@ -4,7 +4,7 @@ const companies = ['Microsoft', 'Amazon', 'Deloitte', 'Infosys', 'Accenture', 'T
 
 export default function LandingProofStrip() {
   return (
-    <section id='proof' className='w-full border-b border-zinc-200/80 bg-zinc-50 px-4 py-14 sm:px-6 lg:px-8 dark:border-slate-800 dark:bg-[hsl(226,71%,11%)]'>
+    <section id='proof' className='w-full border-b border-border bg-background px-4 py-14 sm:px-6 lg:px-8'>
       <div className='mx-auto max-w-[1200px]'>
         <div className='mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3'>
           {[
@@ -12,21 +12,21 @@ export default function LandingProofStrip() {
             { value: '180+', label: 'Drives' },
             { value: '60+', label: 'Companies' },
           ].map((item) => (
-            <div key={item.label} className='rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900'>
-              <p className='text-2xl font-black tracking-tight text-zinc-900 dark:text-slate-100'>{item.value}</p>
-              <p className='mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-slate-400'>
+            <div key={item.label} className='rounded-2xl border border-border bg-card p-5 shadow-sm'>
+              <p className='text-2xl font-black tracking-tight text-foreground'>{item.value}</p>
+              <p className='mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground'>
                 {item.label}
               </p>
             </div>
           ))}
         </div>
 
-        <div className='rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900'>
+        <div className='rounded-2xl border border-border bg-card p-5 shadow-sm'>
           <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6'>
             {companies.map((company) => (
               <div
                 key={company}
-                className='rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-3 text-center text-sm font-semibold text-zinc-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200'
+                className='rounded-xl border border-border bg-background px-3 py-3 text-center text-sm font-semibold text-foreground'
               >
                 {company}
               </div>

@@ -4,7 +4,7 @@ export default function FacultyResourcesPage() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
 
-      <header className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <header className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <div className="max-w-2xl space-y-1.5">
           <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
             Resource Library

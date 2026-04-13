@@ -315,7 +315,7 @@ export default function ResourceLibrary() {
         </TabsList>
         <TabsContent value={section}>
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-[260px_1fr]">
-            <aside className="space-y-4 rounded-md border border-border bg-card p-4">
+            <aside className="space-y-4 rounded-lg border border-border bg-card p-4">
               <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search resources" className="border-border bg-muted/20 text-foreground" />
               {(viewerRole === "faculty" || viewerRole === "admin") ? (
                 <div className="grid grid-cols-2 gap-2">
@@ -402,7 +402,7 @@ export default function ResourceLibrary() {
                  />
                ) : null}
               {!loading ? resources.map((resource) => (
-                <article key={resource.id} className="rounded-md border border-border bg-card p-5 transition-all hover:border-border">
+                <article key={resource.id} className="rounded-lg border border-border bg-card p-5 transition-all hover:border-border">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="mb-2 flex items-center gap-2">
@@ -523,7 +523,7 @@ export default function ResourceLibrary() {
                 </select>
               </div>
             ) : null}
-            <div className="space-y-2 rounded-md border border-border bg-card p-4">
+            <div className="space-y-2 rounded-lg border border-border bg-card p-4">
               <Label>Preview</Label>
               {form.body ? <MarkdownRenderer content={form.body} /> : <p className="text-sm text-muted-foreground">Markdown preview will appear here.</p>}
             </div>

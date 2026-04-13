@@ -43,7 +43,7 @@ export default function DriveCard({ drive, ranking }: DriveCardProps) {
     <motion.div
       whileHover={shouldReduceMotion ? undefined : { y: -1 }}
       transition={{ duration: 0.15 }}
-      className='group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-[border-color,box-shadow] duration-200 hover:border-primary/40 hover:shadow-sm'
+      className='group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card transition-[border-color,box-shadow] duration-200 hover:border-primary/40 hover:shadow-sm'
     >
       {/* Rank badge — absolute top-right */}
       {ranking && (

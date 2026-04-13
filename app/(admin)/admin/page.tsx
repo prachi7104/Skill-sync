@@ -119,7 +119,7 @@ export default async function AdminMasterDashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         
         {/* AI Pipeline Health */}
-        <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">AI pipeline health</h2>
             <Link href="/admin/health" className="text-xs font-bold text-primary hover:underline">Full system health</Link>
@@ -141,7 +141,7 @@ export default async function AdminMasterDashboard() {
         </section>
 
         {/* Student Readiness */}
-        <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">Student readiness</h2>
             <Link href="/admin/users" className="text-xs font-bold text-primary hover:underline">View students</Link>
@@ -181,7 +181,7 @@ export default async function AdminMasterDashboard() {
       </div>
 
       {/* Recent Drives */}
-      <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">Recent drives</h2>
           <Link href="/admin/drives" className="text-xs font-bold text-primary hover:underline">View all</Link>
@@ -215,7 +215,7 @@ export default async function AdminMasterDashboard() {
           { href: "/admin/health", label: "System Health", desc: "Job queue and AI pipeline status", emoji: "⚡" },
         ].map((action) => (
           <Link key={action.href} href={action.href}
-            className="group rounded-xl border border-border bg-card p-6 shadow-sm transition-colors hover:border-primary/30 hover:bg-muted/30"
+            className="group rounded-lg border border-border bg-card p-6 shadow-sm transition-colors hover:border-primary/30 hover:bg-muted/30"
           >
             <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{action.label}</p>
             <p className="mt-1 text-xs text-muted-foreground">{action.desc}</p>

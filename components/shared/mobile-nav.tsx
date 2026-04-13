@@ -195,7 +195,7 @@ export default function MobileNav({
                 if (info.offset.x < -80) handleClose();
               }}
               ref={drawerRef}
-              className='fixed inset-y-0 left-0 w-[280px] bg-card border-r border-border z-50 flex flex-col md:hidden touch-pan-y'
+              className='fixed inset-y-0 left-0 w-[min(280px,85vw)] bg-card border-r border-border z-50 flex flex-col md:hidden touch-pan-y'
               role='dialog'
               aria-modal='true'
               aria-label='Mobile navigation menu'

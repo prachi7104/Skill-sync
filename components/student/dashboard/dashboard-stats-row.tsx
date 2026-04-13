@@ -77,7 +77,7 @@ export default function DashboardStatsRow(props: DashboardStatsRowProps) {
       <motion.div
         key={stat.label}
         variants={item}
-        className='rounded-xl border border-border bg-card p-4 shadow-sm'
+        className='rounded-lg border border-border bg-card p-4 shadow-sm'
         aria-label={`${stat.label}: ${stat.value ?? 'not available'}${stat.suffix}`}
       >
           <div className='mb-3 flex items-start justify-between gap-2'>

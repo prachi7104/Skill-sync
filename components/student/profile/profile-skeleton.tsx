@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function ProfileSkeleton() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8" aria-hidden="true">
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <div className="flex items-center gap-4">
           <Skeleton className="h-16 w-16 rounded-full" />
           <div className="space-y-2">
@@ -20,7 +20,7 @@ export default function ProfileSkeleton() {
         ))}
       </div>
 
-      <div className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="space-y-4 rounded-lg border border-border bg-card p-6 shadow-sm">
         <Skeleton className="h-5 w-32" />
         <div className="grid grid-cols-2 gap-4">
           {[...Array(6)].map((_, i) => (

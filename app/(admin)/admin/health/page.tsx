@@ -96,7 +96,7 @@ function Metric({ label, value, status }: { label: string; value: string; status
   const isUnavailable = value === "N/A";
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+    <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
       <div className="mt-2 flex items-center gap-2">
         <p className={cn(
@@ -227,7 +227,7 @@ export default function AdminHealthPage() {
           <p className="text-sm text-muted-foreground">Operational dashboard — live snapshot</p>
         </div>
         <div
-          className="rounded-xl border border-border bg-card p-6 text-center text-muted-foreground shadow-sm"
+          className="rounded-lg border border-border bg-card p-6 text-center text-muted-foreground shadow-sm"
           role="status"
           aria-label="Loading health data"
           aria-live="polite"
@@ -314,7 +314,7 @@ export default function AdminHealthPage() {
         </div>
       </section>
 
-      <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
         <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-muted-foreground">Job queue</h2>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
           <Metric label="Pending Total" value={displayCount(pendingTotal)} status={pendingTotal > 0 ? "warning" : "ok"} />
@@ -335,7 +335,7 @@ export default function AdminHealthPage() {
         )}
       </section>
 
-      <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
         <h2 className="text-sm font-bold uppercase tracking-[0.24em] text-muted-foreground">Manual triggers</h2>
         <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
           {(["resumes", "embeddings", "jd-enhancement", "rankings", "cleanup"] as const).map((type) => (

@@ -111,7 +111,7 @@ export default async function FacultyDashboardPage({
                 }
             />
 
-            <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground shadow-sm">
                 <p className="mb-1 font-semibold text-foreground">Bulk eligibility snapshot</p>
                 <p>
                     Select a drive in the rankings table and query <span className="font-mono">/api/faculty/bulk-eligibility?driveId=...</span> for batch eligibility counts.
@@ -132,7 +132,7 @@ export default async function FacultyDashboardPage({
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 {/* Activity Feed */}
-                <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+                <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
                     <h4 className="mb-6 flex items-center justify-between text-sm font-bold text-foreground">
                         Recent activity <span className="text-[10px] font-black tracking-[0.24em] text-muted-foreground">LIVE FEED</span>
                     </h4>
@@ -158,7 +158,7 @@ export default async function FacultyDashboardPage({
                 </section>
 
                 {/* Table */}
-                <section className="lg:col-span-2 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                <section className="lg:col-span-2 overflow-hidden rounded-lg border border-border bg-card shadow-sm">
                     <div className="flex items-center justify-between border-b border-border p-6">
                         <h4 className="text-sm font-bold uppercase tracking-[0.24em] text-foreground">Recent drives</h4>
                         <Link href="/faculty/drives" className="flex items-center text-xs font-bold text-primary transition-colors hover:underline">View all <ArrowRight className="ml-1 h-3 w-3" /></Link>

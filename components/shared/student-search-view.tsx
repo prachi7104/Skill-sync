@@ -52,7 +52,7 @@ interface StudentSearchViewProps {
 export function ProfileModal({ student, onClose }: { student: StudentProfile; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-card shadow-2xl">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-border bg-card shadow-2xl">
         <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-8 py-6">
           <div>
             <h2 className="text-2xl font-bold text-foreground">{student.name}</h2>
@@ -370,7 +370,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
           <p className="text-sm text-muted-foreground">Filter by branch, batch, and search terms to review college profiles quickly.</p>
         </div>
 
-        <div className="mb-8 rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <div className="mb-8 rounded-lg border border-border bg-card p-6 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
@@ -452,7 +452,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
               {results.map((student) => (
                 <div
                   key={student.id}
-                  className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm transition hover:bg-muted/30"
+                  className="flex items-center justify-between rounded-lg border border-border bg-card p-4 shadow-sm transition hover:bg-muted/30"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-4 flex-wrap">

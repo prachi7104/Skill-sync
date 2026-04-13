@@ -19,7 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className='min-h-screen bg-background flex flex-col font-sans text-foreground antialiased'>
 
       {/* ── Header ── */}
-      <header className='h-14 shrink-0 sticky top-0 z-50 bg-background border-b border-border flex items-center justify-between px-4 sm:px-6'>
+      <header className='h-14 shrink-0 sticky top-0 z-50 bg-card border-b border-border shadow-sm flex items-center justify-between px-4 sm:px-6'>
         {/* Left: Logo + badge */}
         <div className='flex items-center gap-3'>
           <Link

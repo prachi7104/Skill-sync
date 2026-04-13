@@ -946,7 +946,7 @@ export default function OnboardingPage() {
               ✓ Profile autofilled from your resume. Review and continue.
             </div>
           )}
-          <div className="space-y-6 rounded-md border border-border bg-card p-6 shadow-lg">
+          <div className="space-y-6 rounded-lg border border-border bg-card p-6 shadow-lg">
             {activeStep === "identity" && (
               <IdentityStep
                 form={form}

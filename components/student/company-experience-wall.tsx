@@ -119,7 +119,7 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
         ) : null}
       </div>
 
-      <div className="grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm md:grid-cols-[1fr_auto_auto]">
+      <div className="grid gap-4 rounded-lg border border-border bg-card p-5 shadow-sm md:grid-cols-[1fr_auto_auto]">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by company name" className="border-border bg-background pl-10 text-foreground" />
@@ -136,7 +136,7 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
         </div>
       </div>
 
-      {loading ? <div className="rounded-2xl border border-border bg-card p-8 text-sm text-muted-foreground shadow-sm">Loading experiences...</div> : null}
+      {loading ? <div className="rounded-lg border border-border bg-card p-8 text-sm text-muted-foreground shadow-sm">Loading experiences...</div> : null}
 
       {!loading && !isDetailView ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -170,7 +170,7 @@ export default function CompanyExperienceWall({ companySlug }: { companySlug?: s
       {!loading && isDetailView ? (
         <div className="space-y-4">
           {experiences.map((experience) => (
-            <article key={experience.id} className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <article key={experience.id} className="space-y-4 rounded-lg border border-border bg-card p-6 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-bold text-foreground">{experience.show_name ? experience.student_name : experience.is_admin_posted ? "Anonymous — Shared by Admin" : "Anonymous"}</p>

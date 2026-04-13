@@ -26,7 +26,7 @@ export function StatusCard({ title, description, actionLabel, onAction, variant 
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-2xl border border-border bg-card px-5 py-6 text-sm text-foreground",
+        "flex flex-col gap-3 rounded-lg border border-border bg-card px-5 py-6 text-sm text-foreground",
         variant === "error" && "border-destructive/40 bg-destructive/5 text-destructive",
         variant === "empty" && "border-border bg-card text-muted-foreground",
         variant === "info" && "border-border bg-card text-muted-foreground",

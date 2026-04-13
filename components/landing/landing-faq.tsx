@@ -25,13 +25,13 @@ export default function LandingFaq() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section id='faq' className='w-full border-b border-zinc-200/80 bg-zinc-50 px-4 py-16 sm:px-6 lg:px-8 dark:border-slate-800 dark:bg-[hsl(226,71%,11%)]'>
+    <section id='faq' className='w-full border-b border-border bg-background px-4 py-16 sm:px-6 lg:px-8'>
       <div className='mx-auto max-w-[900px]'>
         <div className='mb-8'>
-          <p className='text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-slate-400'>
+          <p className='text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground'>
             FAQ
           </p>
-          <h2 className='mt-2 text-2xl font-black tracking-tight text-zinc-900 sm:text-3xl dark:text-slate-100'>
+          <h2 className='mt-2 text-2xl font-black tracking-tight text-foreground sm:text-3xl'>
             Quick answers
           </h2>
         </div>
@@ -39,11 +39,11 @@ export default function LandingFaq() {
         <div className='space-y-3'>
           {faqs.map((faq, index) => {
             const item = (
-              <details className='group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900'>
-                <summary className='cursor-pointer list-none pr-6 text-sm font-bold text-zinc-900 marker:content-none dark:text-slate-100'>
+              <details className='group rounded-2xl border border-border bg-card p-5 shadow-sm'>
+                <summary className='cursor-pointer list-none pr-6 text-sm font-bold text-foreground marker:content-none'>
                   {faq.q}
                 </summary>
-                <p className='mt-3 text-sm leading-relaxed text-zinc-600 dark:text-slate-300'>{faq.a}</p>
+                <p className='mt-3 text-sm leading-relaxed text-muted-foreground'>{faq.a}</p>
               </details>
             );
 

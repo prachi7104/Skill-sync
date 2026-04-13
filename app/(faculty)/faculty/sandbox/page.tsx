@@ -74,7 +74,7 @@ export default function FacultySandboxPage() {
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6">
 
       {/* Page header */}
-      <header className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <header className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <div className="flex items-center gap-3">
           <Sparkles size={20} className="text-primary" aria-hidden="true" />
           <div>
@@ -92,7 +92,7 @@ export default function FacultySandboxPage() {
       </header>
 
       {/* Input card */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
+      <div className="rounded-lg border border-border bg-card p-6 shadow-sm space-y-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-1.5">
             <Label htmlFor="sandbox-prompt" className="text-sm font-semibold text-foreground">
@@ -142,7 +142,7 @@ export default function FacultySandboxPage() {
 
       {/* Result card */}
       {result && (
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-3">
+        <div className="rounded-lg border border-border bg-card p-6 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-foreground">Result</h2>
             <Button

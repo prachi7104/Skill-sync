@@ -50,7 +50,7 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
   }, [studentId]);
 
   return (
-    <div className='flex h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-sm'>
+    <div className='flex h-full flex-col rounded-lg border border-border bg-card p-5 shadow-sm'>
         <div className='mb-4 flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <div className='flex h-8 w-8 items-center justify-center rounded-md bg-success/10'>

@@ -17,7 +17,7 @@ export default function StudentSettingsPage() {
       </div>
 
       {/* Account info card */}
-      <section className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+      <section className="space-y-4 rounded-lg border border-border bg-card p-6 shadow-sm">
         <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">Account</h2>
 
         <div className="flex items-center gap-3">
@@ -42,7 +42,7 @@ export default function StudentSettingsPage() {
       </section>
 
       {/* Name / profile edits — redirect to onboarding/profile */}
-      <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">Profile Details</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Your name, SAP ID, branch, and academic details are managed through your{" "}

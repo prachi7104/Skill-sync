@@ -182,7 +182,7 @@ export default function StudentLeaderboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 pb-32 pt-6 text-foreground animate-in fade-in duration-500 sm:px-6 md:p-10">
-      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">AMCAT Leaderboard</p>
@@ -271,7 +271,7 @@ export default function StudentLeaderboardPage() {
             <Stat title="Gamma" value={stats.gamma} />
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
             <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -330,7 +330,7 @@ export default function StudentLeaderboardPage() {
 
 function Stat({ title, value }: { title: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+    <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{title}</p>
       <p className="mt-2 text-2xl font-black text-foreground">{value}</p>
     </div>

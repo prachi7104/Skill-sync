@@ -243,7 +243,7 @@ export default function CareerCoachPage() {
   return (
     <div className="min-h-screen bg-muted px-4 py-8 text-foreground sm:px-6 lg:px-10">
       <div className="mx-auto w-full max-w-7xl space-y-8">
-        <header className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <header className="flex flex-col gap-4 rounded-lg border border-border bg-card p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
               Career Coach
@@ -372,7 +372,7 @@ export default function CareerCoachPage() {
                 <div className="flex justify-start">
                   <div
                     data-testid="typing-indicator"
-                    className="flex items-center gap-1 rounded-md border border-border bg-card px-3 py-2"
+                    className="flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-2"
                     role="status"
                     aria-live="polite"
                     aria-label="Waiting for coach response"
@@ -419,7 +419,7 @@ export default function CareerCoachPage() {
                 }
                 disabled={!canSend}
                 rows={3}
-                className="w-full resize-none rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/30"
+                className="w-full resize-none rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/30"
               />
               <div className="flex items-center justify-between mt-2">
                 <div>
@@ -463,7 +463,7 @@ export default function CareerCoachPage() {
               <div
                 key={i}
                 data-testid="skill-skeleton"
-                className="space-y-3 rounded-2xl border border-border bg-card p-5 shadow-sm"
+                className="space-y-3 rounded-lg border border-border bg-card p-5 shadow-sm"
               >
                 <div className="h-6 w-1/2 animate-pulse rounded bg-muted" />
                 <div className="h-4 w-full animate-pulse rounded bg-muted" />
@@ -499,7 +499,7 @@ export default function CareerCoachPage() {
             {skills.map((skill, index) => (
               <Card
                 key={`${skill.skill}-${index}`}
-                className="rounded-2xl border border-border bg-card shadow-sm"
+                className="rounded-lg border border-border bg-card shadow-sm"
               >
                 <CardHeader className="space-y-3">
                   <div className="flex items-center justify-between gap-3">

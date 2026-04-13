@@ -4,111 +4,137 @@
 
 @layer base {
   :root {
-    --background:         210 12% 93%;   /* page surface */
-    --foreground:         226 71% 11%;   /* body text */
+    /* ═══════════════════════════════════════════════════════════════════════
+       LIGHT MODE — Salt & Pepper
+       Page: warm off-white (#F5F5F5)
+       Cards: pure white (#FFFFFF) with subtle shadow
+       Text: near-black (#212121)
+       Accent: steel-gray (#566C7A)
+       ═══════════════════════════════════════════════════════════════════════ */
 
-    --card:               0 0% 100%;     /* white card surfaces */
-    --card-foreground:    226 71% 11%;
+    /* Page surface — warm off-white, NOT pure white */
+    --background:         0 0% 96%;        /* #F5F5F5 */
+    --foreground:         0 0% 13%;        /* #212121 */
 
+    /* Card surfaces — pure white, lifted via shadow (applied in component) */
+    --card:               0 0% 100%;       /* #FFFFFF */
+    --card-foreground:    0 0% 13%;
+
+    /* Popovers, dropdowns — match card */
     --popover:            0 0% 100%;
-    --popover-foreground: 226 71% 11%;
+    --popover-foreground: 0 0% 13%;
 
-    --primary:            227 68% 61%;
+    /* Brand accent — muted steel-gray, NOT blue */
+    --primary:            200 15% 38%;     /* #4D6672 — steel-gray */
     --primary-foreground: 0 0% 100%;
-    --primary-hover:      227 52% 44%;
+    --primary-hover:      200 15% 30%;     /* darker on hover */
 
-    --secondary:          214 22% 90%;
-    --secondary-foreground: 226 71% 11%;
+    /* Secondary surfaces — slightly darker than background */
+    --secondary:          0 0% 90%;        /* #E6E6E6 */
+    --secondary-foreground: 0 0% 13%;
 
-    --muted:              214 22% 93%;
-    --muted-foreground:   227 40% 42%;
+    /* Muted — form field backgrounds, disabled states, skeletons */
+    --muted:              0 0% 93%;        /* #EDEDED */
+    --muted-foreground:   0 0% 40%;        /* #666666 — passes AA on white */
 
-    --accent:             227 68% 96%;
-    --accent-foreground:  226 71% 11%;
+    /* Accent — subtle hover highlight */
+    --accent:             0 0% 95%;        /* #F2F2F2 */
+    --accent-foreground:  0 0% 13%;
 
-    --border:             214 22% 78%;
-    --input:              214 22% 78%;
-    --ring:               227 68% 61%;
+    /* Borders */
+    --border:             0 0% 83%;        /* #D4D4D4 */
+    --input:              0 0% 80%;        /* #CCCCCC — slightly stronger for inputs */
+    --ring:               200 15% 38%;     /* matches primary for focus rings */
 
     --radius: 12px;
 
-    --success:            142 71% 45%;
+    /* Semantic status colors */
+    --success:            152 60% 36%;     /* #249A5C — muted green */
     --success-foreground: 0 0% 100%;
-    --warning:            38 92% 50%;
+    --warning:            38 85% 50%;      /* #EDAA11 — amber */
     --warning-foreground: 0 0% 9%;
-    --info:               199 89% 48%;
+    --info:               200 65% 45%;     /* #2889B5 — teal */
     --info-foreground:    0 0% 100%;
-    --destructive:        0 84% 60%;
+    --destructive:        0 65% 52%;       /* #C93E3E — muted red */
     --destructive-foreground: 0 0% 100%;
 
-    /* Sidebar — invariant, always dark, DO NOT CHANGE */
-    --sidebar:              226 71% 11%;
-    --sidebar-surface:      226 40% 26%;
-    --sidebar-fg:           210 12% 93%;
-    --sidebar-fg-muted:     214 22% 55%;
-    --sidebar-primary:      227 68% 61%;
-    --sidebar-primary-hover: 227 52% 44%;
-    --sidebar-border:       227 20% 18%;
-    --sidebar-active-bg:    226 40% 26%;
+    /* ───────────────────────────────────────────────────────────────────────
+       Sidebar — ALWAYS charcoal dark in both modes
+       ─────────────────────────────────────────────────────────────────────── */
+    --sidebar:              0 0% 15%;      /* #262626 — charcoal */
+    --sidebar-surface:      0 0% 20%;      /* #333333 — hover/active bg */
+    --sidebar-fg:           0 0% 92%;      /* #EBEBEB — primary text */
+    --sidebar-fg-muted:     0 0% 62%;      /* #9E9E9E — 4.7:1 contrast on #262626 ✓ AA */
+    --sidebar-primary:      200 15% 55%;   /* #708F9E — lighter steel for dark bg */
+    --sidebar-primary-hover: 200 15% 65%;
+    --sidebar-border:       0 0% 22%;      /* #383838 */
+    --sidebar-active-bg:    0 0% 20%;      /* #333333 */
   }
 
   .dark {
-    /* Page and surface layers */
-    --background:         226 71% 11%;   /* #08112F — deepest layer */
-    --foreground:         210 12% 93%;   /* near-white body text */
+    /* ═══════════════════════════════════════════════════════════════════════
+       DARK MODE — Ink Wash
+       Page: deep ink (#1A1C20)
+       Cards: slightly elevated (#24272C)
+       Text: warm ivory (#EDE8DF)
+       Accent: slate-blue (#6D8196)
+       ═══════════════════════════════════════════════════════════════════════ */
 
-    /* Card surfaces — must be visibly lighter than background */
-    --card:               226 40% 20%;   /* #1e2a4a — mid-dark card */
-    --card-foreground:    210 12% 93%;
+    /* Page surface — deep ink, warm undertone */
+    --background:         220 8% 11%;      /* #1A1C20 */
+    --foreground:         38 20% 90%;      /* #EDE8DF — warm ivory */
 
-    /* Popover — same as card */
-    --popover:            226 40% 20%;
-    --popover-foreground: 210 12% 93%;
+    /* Card surfaces — elevated from background */
+    --card:               220 8% 15%;      /* #24272C */
+    --card-foreground:    38 20% 90%;
 
-    /* Brand */
-    --primary:            227 68% 61%;   /* #5A77DF — unchanged */
+    /* Popovers — match card */
+    --popover:            220 8% 15%;
+    --popover-foreground: 38 20% 90%;
+
+    /* Brand accent — slate-blue from Ink Wash palette */
+    --primary:            210 18% 52%;     /* #6D8196 */
     --primary-foreground: 0 0% 100%;
-    --primary-hover:      227 52% 50%;
+    --primary-hover:      210 18% 60%;
 
-    /* Secondary surface — slightly different from card */
-    --secondary:          226 35% 24%;
-    --secondary-foreground: 210 12% 93%;
+    /* Secondary surfaces */
+    --secondary:          220 8% 18%;      /* #2A2D33 */
+    --secondary-foreground: 38 20% 90%;
 
-    /* Muted surface — form fields, chip backgrounds, skeletons */
-    --muted:              226 35% 17%;   /* distinctly darker than card */
-    --muted-foreground:   214 25% 65%;   /* #CCD4DE region — passes WCAG AA */
+    /* Muted — form fields, skeletons */
+    --muted:              220 8% 13%;      /* #1F2125 */
+    --muted-foreground:   220 6% 58%;      /* #8A8F96 — passes AA on #24272C */
 
-    /* Accent — subtle interactive highlight, NOT same as muted-foreground */
-    --accent:             227 40% 32%;
-    --accent-foreground:  210 12% 93%;
+    /* Accent */
+    --accent:             220 8% 20%;
+    --accent-foreground:  38 20% 90%;
 
-    /* Borders — must be visibly distinct from muted-foreground */
-    --border:             227 30% 25%;   /* darker than muted-fg, lighter than card */
-    --input:              227 30% 28%;   /* input borders slightly lighter than border */
-    --ring:               227 68% 61%;   /* focus ring = primary */
+    /* Borders */
+    --border:             220 8% 20%;      /* #303338 */
+    --input:              220 8% 22%;
+    --ring:               210 18% 52%;     /* matches primary */
 
-    /* Radius — unchanged */
     --radius: 12px;
 
-    /* Semantic status colors — unchanged */
-    --destructive:            0 63% 50%;
+    /* Semantic status colors — slightly desaturated for dark mode */
+    --destructive:        0 55% 48%;
     --destructive-foreground: 0 0% 100%;
-    --success:                142 71% 45%;
-    --success-foreground:     0 0% 100%;
-    --warning:                38 92% 50%;
-    --warning-foreground:     0 0% 9%;
-    --info:                   199 89% 48%;
-    --info-foreground:        0 0% 100%;
+    --success:            152 45% 38%;
+    --success-foreground: 0 0% 100%;
+    --warning:            38 75% 50%;
+    --warning-foreground: 0 0% 9%;
+    --info:               200 55% 48%;
+    --info-foreground:    0 0% 100%;
 
-    /* Sidebar — invariant (always dark), unchanged */
-    --sidebar:              226 71% 11%;
-    --sidebar-surface:      226 40% 20%;
-    --sidebar-fg:           210 12% 93%;
-    --sidebar-fg-muted:     214 22% 55%;
-    --sidebar-primary:      227 68% 61%;
-    --sidebar-primary-hover: 227 52% 50%;
-    --sidebar-border:       227 25% 18%;
-    --sidebar-active-bg:    226 40% 20%;
+    /* Sidebar — slightly darker than page background in dark mode */
+    --sidebar:              220 8% 9%;     /* #161819 */
+    --sidebar-surface:      220 8% 14%;    /* #222528 */
+    --sidebar-fg:           38 20% 90%;    /* warm ivory */
+    --sidebar-fg-muted:     220 6% 56%;    /* #878C92 — 4.5:1 on #161819 ✓ AA */
+    --sidebar-primary:      210 18% 58%;   /* lighter blue for dark bg */
+    --sidebar-primary-hover: 210 18% 66%;
+    --sidebar-border:       220 8% 16%;
+    --sidebar-active-bg:    220 8% 15%;
   }
 }
 

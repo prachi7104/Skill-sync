@@ -9,7 +9,7 @@ export default function DashboardOnboardingCard({ progress }: { progress: number
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className='flex flex-col items-start gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center'
+      className='flex flex-col items-start gap-4 rounded-lg border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center'
     >
       <div className='flex-1'>
         <div className='flex items-center gap-2 mb-2'>

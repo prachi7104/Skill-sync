@@ -15,7 +15,7 @@ export default function DashboardGreetingCard({ studentName, progressPercent, on
   const firstName = studentName.trim().split(/\s+/)[0] || 'Student';
 
   return (
-    <div className='flex h-full flex-col gap-5 rounded-2xl border border-border bg-card p-5 shadow-sm'>
+    <div className='flex h-full flex-col gap-5 rounded-lg border border-border bg-card p-5 shadow-sm'>
       {/* Greeting */}
       <div>
         <p className='mb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground'>Welcome back</p>

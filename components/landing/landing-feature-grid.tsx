@@ -62,7 +62,7 @@ function FeatureCard({ feature, index }: { feature: typeof features[number]; ind
     </>
   );
 
-  const className = 'group flex h-full flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 dark:border-slate-800 dark:bg-slate-900';
+  const className = 'group flex h-full flex-col gap-4 rounded-lg border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5';
 
   if (prefersReducedMotion) {
     return <div className={className}>{content}</div>;
@@ -83,13 +83,13 @@ function FeatureCard({ feature, index }: { feature: typeof features[number]; ind
 
 export default function LandingFeatureGrid() {
   return (
-    <section id='capabilities' className='w-full border-b border-zinc-200/80 bg-zinc-50 px-4 py-14 sm:px-6 lg:px-8 dark:border-slate-800 dark:bg-[hsl(226,71%,11%)]'>
+    <section id='capabilities' className='w-full border-b border-border bg-background px-4 py-14 sm:px-6 lg:px-8'>
       <div className='mx-auto max-w-[1200px]'>
         <div className='mb-9'>
-          <span className='text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-slate-400'>
+          <span className='text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground'>
             Capabilities
           </span>
-          <h2 className='mt-1.5 max-w-[18ch] text-2xl font-black tracking-tight text-zinc-900 sm:text-3xl dark:text-slate-100'>
+          <h2 className='mt-1.5 max-w-[18ch] text-2xl font-black tracking-tight text-foreground sm:text-3xl'>
             Core placement flows
           </h2>
         </div>

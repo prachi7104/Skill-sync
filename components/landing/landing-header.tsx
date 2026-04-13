@@ -6,10 +6,10 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function LandingHeader() {
   return (
-    <header className="sticky top-0 z-50 h-14 border-b border-zinc-200/80 bg-zinc-50/85 backdrop-blur supports-[backdrop-filter]:bg-zinc-50/70 dark:border-slate-800 dark:bg-[hsl(226,71%,11%)]/85 dark:supports-[backdrop-filter]:bg-slate-950/70">
+    <header className="sticky top-0 z-50 h-14 border-b border-border bg-card/85 backdrop-blur supports-[backdrop-filter]:bg-card/70">
       <div className="flex h-full w-full items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/">
-          <span className="select-none font-sans text-lg font-black tracking-tight text-zinc-900 dark:text-slate-100">
+          <span className="select-none font-sans text-lg font-black tracking-tight text-foreground">
             Skill<span className="text-primary">Sync.</span>
           </span>
         </Link>
