@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db";
 import { students, users } from "@/lib/db/schema";
-import { eq, and, ilike, or } from "drizzle-orm";
+import { eq, and, ilike, or, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
     const q = url.searchParams.get("q") || "";
     const branch = url.searchParams.get("branch") || "";
     const batchYear = url.searchParams.get("batchYear") || "";
+    const verificationFilter = url.searchParams.get("verification") || "";
     const page = parseInt(url.searchParams.get("page") || "1", 10);
 
     // Build WHERE conditions array
@@ -61,6 +62,10 @@ export async function GET(req: NextRequest) {
     // Batch year filter
     if (batchYear && batchYear !== "all") {
       whereConditions.push(eq(students.batchYear, parseInt(batchYear, 10)));
+    }
+
+    if (verificationFilter && verificationFilter !== "all") {
+      whereConditions.push(eq(sql<string>`verification_status`, verificationFilter));
     }
 
     // Get total count
@@ -102,6 +107,7 @@ export async function GET(req: NextRequest) {
         researchPapers: students.researchPapers,
         achievements: students.achievements,
         softSkills: students.softSkills,
+        verificationStatus: sql<string>`verification_status`.as("verificationStatus"),
         embedding: students.embedding,
       })
       .from(students)

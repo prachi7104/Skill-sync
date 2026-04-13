@@ -16,29 +16,38 @@ export default function SidebarShell({ children, label }: SidebarShellProps) {
   const [isMounted, setIsMounted] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const storeIsCollapsed = useSidebarStore(state => state.isCollapsed);
-  const { toggle, collapse } = useSidebarStore();
+  const toggle = useSidebarStore(state => state.toggle);
   const isCollapsed = isMounted ? storeIsCollapsed : false;
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // On mount: if viewport is mobile, ensure sidebar is collapsed
+  // On mount: set up viewport-aware collapse/expand
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
     const handleResize = () => {
+      const state = useSidebarStore.getState();
+
       if (window.innerWidth < BREAKPOINT_MD) {
-        collapse();
+        // Below mobile breakpoint -> always collapse, mark as viewport-forced
+        if (!state.isCollapsed) {
+          state.collapseForViewport();
+        }
       } else {
-        // re-open once wide enough
-        if (storeIsCollapsed) toggle();
+        // Above breakpoint -> only auto-expand if collapse was viewport-forced
+        if (state.isCollapsed && state.collapsedByViewport) {
+          state.expand();
+        }
+        // If user manually collapsed, DO NOTHING - respect their intent
       }
     };
+
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [collapse, toggle, storeIsCollapsed]);
+  }, []);
 
   return (
     <motion.div

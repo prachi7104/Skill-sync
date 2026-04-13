@@ -11,7 +11,12 @@ export default function AdminStudentsPage() {
         title="Student Lookup"
         description="Search student profiles, review readiness, and inspect profile completeness."
       />
-      <StudentSearchView apiEndpoint={"/api/admin/students/search"} />
+      <StudentSearchView
+        apiEndpoint={"/api/admin/students/search"}
+        showVerificationFilters
+        showVerificationActions
+        verificationEndpointBase={"/api/admin/students"}
+      />
     </div>
   );
 }

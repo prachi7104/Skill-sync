@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Search, Filter, Loader, AlertCircle, ExternalLink, X } from "lucide-react";
+import { Search, Filter, Loader, AlertCircle, ExternalLink, X, BadgeCheck, Flag } from "lucide-react";
 
 const debounce = <T extends unknown[]>(func: (...args: T) => void, delay: number) => {
   let timeout: NodeJS.Timeout;
@@ -16,6 +16,7 @@ export interface StudentProfile {
   name: string;
   email: string;
   sapId: string | null;
+  verificationStatus?: string | null;
   rollNo: string | null;
   branch: string | null;
   batchYear: number | null;
@@ -47,7 +48,13 @@ interface SearchResponse {
 
 interface StudentSearchViewProps {
   apiEndpoint: string;
+  showVerificationFilters?: boolean;
+  showVerificationActions?: boolean;
+  verificationEndpointBase?: string;
 }
+
+type VerificationFilter = "all" | "unverified" | "flagged";
+type VerificationAction = "admin_verified" | "flagged";
 
 export function ProfileModal({ student, onClose }: { student: StudentProfile; onClose: () => void }) {
   return (
@@ -277,10 +284,16 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
   );
 }
 
-export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProps) {
+export default function StudentSearchView({
+  apiEndpoint,
+  showVerificationFilters = false,
+  showVerificationActions = false,
+  verificationEndpointBase = "/api/admin/students",
+}: StudentSearchViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("all");
   const [selectedBatchYear, setSelectedBatchYear] = useState("all");
+  const [selectedVerification, setSelectedVerification] = useState<VerificationFilter>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [results, setResults] = useState<StudentProfile[]>([]);
   const [total, setTotal] = useState(0);
@@ -289,10 +302,15 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
   const [selectedStudent, setSelectedStudent] = useState<StudentProfile | null>(null);
   const [branches, setBranches] = useState<string[]>([]);
   const [batchYears, setBatchYears] = useState<number[]>([]);
+  const [verificationStudent, setVerificationStudent] = useState<StudentProfile | null>(null);
+  const [verificationAction, setVerificationAction] = useState<VerificationAction>("admin_verified");
+  const [verificationSapId, setVerificationSapId] = useState("");
+  const [verificationNote, setVerificationNote] = useState("");
+  const [verificationSaving, setVerificationSaving] = useState(false);
 
   const performSearch = useCallback(
-    async (q: string, branch: string, year: string, page: number) => {
-      if (!q && branch === "all" && year === "all") {
+    async (q: string, branch: string, year: string, verification: VerificationFilter, page: number) => {
+      if (!q && branch === "all" && year === "all" && verification === "all") {
         setResults([]);
         setTotal(0);
         return;
@@ -306,6 +324,7 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
         if (q) params.append("q", q);
         if (branch !== "all") params.append("branch", branch);
         if (year !== "all") params.append("batchYear", year);
+        if (verification !== "all") params.append("verification", verification);
         params.append("page", page.toString());
 
         const res = await fetch(`${apiEndpoint}?${params}`);
@@ -319,12 +338,8 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
         setTotal(data.total);
         setCurrentPage(page);
 
-        const uniqueBranches = Array.from(
-          new Set(data.students.map((s) => s.branch).filter(Boolean))
-        ) as string[];
-        const uniqueYears = Array.from(
-          new Set(data.students.map((s) => s.batchYear).filter(Boolean))
-        ) as number[];
+        const uniqueBranches = Array.from(new Set(data.students.map((s) => s.branch).filter(Boolean))) as string[];
+        const uniqueYears = Array.from(new Set(data.students.map((s) => s.batchYear).filter(Boolean))) as number[];
 
         setBranches(uniqueBranches.sort());
         setBatchYears(uniqueYears.sort((a, b) => b - a));
@@ -339,24 +354,55 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
   );
 
   const debouncedSearch = useCallback(
-    debounce((q: string, branch: string, year: string, page: number) => {
-      performSearch(q, branch, year, page);
+    debounce((q: string, branch: string, year: string, verification: VerificationFilter, page: number) => {
+      performSearch(q, branch, year, verification, page);
     }, 300),
     [performSearch]
   );
 
   useEffect(() => {
-    if (searchQuery || selectedBranch !== "all" || selectedBatchYear !== "all") {
-      debouncedSearch(searchQuery, selectedBranch, selectedBatchYear, 1);
+    if (searchQuery || selectedBranch !== "all" || selectedBatchYear !== "all" || selectedVerification !== "all") {
+      debouncedSearch(searchQuery, selectedBranch, selectedBatchYear, selectedVerification, 1);
     } else {
       setResults([]);
       setTotal(0);
       setError(null);
     }
-  }, [searchQuery, selectedBranch, selectedBatchYear, debouncedSearch]);
+  }, [searchQuery, selectedBranch, selectedBatchYear, selectedVerification, debouncedSearch]);
 
   const handlePageChange = (newPage: number) => {
-    performSearch(searchQuery, selectedBranch, selectedBatchYear, newPage);
+    performSearch(searchQuery, selectedBranch, selectedBatchYear, selectedVerification, newPage);
+  };
+
+  const handleVerificationSubmit = async () => {
+    if (!verificationStudent) return;
+
+    setVerificationSaving(true);
+    try {
+      const response = await fetch(`${verificationEndpointBase}/${verificationStudent.id}/verify`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: verificationAction,
+          sapId: verificationSapId.trim() || undefined,
+          note: verificationNote.trim() || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Verification update failed");
+      }
+
+      setVerificationStudent(null);
+      setVerificationSapId("");
+      setVerificationNote("");
+      await performSearch(searchQuery, selectedBranch, selectedBatchYear, selectedVerification, currentPage);
+    } catch (submitError) {
+      console.error("[Verification Error]", submitError);
+      setError("Failed to update verification status. Please try again.");
+    } finally {
+      setVerificationSaving(false);
+    }
   };
 
   return (
@@ -371,6 +417,33 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
         </div>
 
         <div className="mb-8 rounded-lg border border-border bg-card p-6 shadow-sm">
+          {showVerificationFilters && (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {[
+                { key: "all", label: "All" },
+                { key: "unverified", label: "Unverified" },
+                { key: "flagged", label: "Flagged" },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    setSelectedVerification(tab.key as VerificationFilter);
+                    setCurrentPage(1);
+                  }}
+                  className={
+                    `rounded-full border px-4 py-2 text-sm font-semibold transition-colors ` +
+                    (selectedVerification === tab.key
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground")
+                  }
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="flex flex-col gap-4 md:flex-row">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
@@ -466,6 +539,11 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                         </span>
                       </div>
                       <div className="text-sm text-muted-foreground">{student.batchYear || "—"}</div>
+                      {showVerificationActions && student.verificationStatus && (
+                        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {student.verificationStatus.replace(/_/g, " ")}
+                        </div>
+                      )}
                       <div className="text-sm font-semibold text-primary">
                         CGPA: {student.cgpa?.toFixed(2) || "—"}
                       </div>
@@ -475,12 +553,42 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => setSelectedStudent(student)}
-                    className="ml-4 shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
-                  >
-                    View Profile
-                  </button>
+                  <div className="ml-4 flex shrink-0 items-center gap-2">
+                    {showVerificationActions && (student.verificationStatus === "unverified" || student.verificationStatus === "flagged") && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVerificationStudent(student);
+                            setVerificationAction("admin_verified");
+                            setVerificationSapId(student.sapId ?? "");
+                            setVerificationNote("");
+                          }}
+                          className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary transition hover:bg-primary/15"
+                        >
+                          <BadgeCheck className="h-4 w-4" /> Verify
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVerificationStudent(student);
+                            setVerificationAction("flagged");
+                            setVerificationSapId("");
+                            setVerificationNote("");
+                          }}
+                          className="inline-flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive transition hover:bg-destructive/15"
+                        >
+                          <Flag className="h-4 w-4" /> Flag
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => setSelectedStudent(student)}
+                      className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+                    >
+                      View Profile
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -511,6 +619,72 @@ export default function StudentSearchView({ apiEndpoint }: StudentSearchViewProp
 
         {selectedStudent && (
           <ProfileModal student={selectedStudent} onClose={() => setSelectedStudent(null)} />
+        )}
+
+        {verificationStudent && showVerificationActions && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-lg border border-border bg-card shadow-2xl">
+              <div className="flex items-center justify-between border-b border-border px-6 py-4">
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">
+                    {verificationAction === "admin_verified" ? "Verify Student" : "Flag Student"}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">{verificationStudent.name}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setVerificationStudent(null)}
+                  className="rounded-lg p-2 transition hover:bg-muted/40"
+                >
+                  <X className="h-5 w-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              <div className="space-y-4 px-6 py-5">
+                {verificationAction === "admin_verified" && (
+                  <label className="block space-y-2 text-sm">
+                    <span className="font-semibold text-foreground">SAP ID (optional)</span>
+                    <input
+                      value={verificationSapId}
+                      onChange={(e) => setVerificationSapId(e.target.value)}
+                      placeholder="500123456"
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </label>
+                )}
+
+                <label className="block space-y-2 text-sm">
+                  <span className="font-semibold text-foreground">Note</span>
+                  <textarea
+                    value={verificationNote}
+                    onChange={(e) => setVerificationNote(e.target.value)}
+                    rows={4}
+                    placeholder="Optional review note"
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </label>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setVerificationStudent(null)}
+                    className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted/40"
+                    disabled={verificationSaving}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleVerificationSubmit}
+                    disabled={verificationSaving}
+                    className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {verificationSaving ? "Saving..." : verificationAction === "admin_verified" ? "Verify" : "Flag"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

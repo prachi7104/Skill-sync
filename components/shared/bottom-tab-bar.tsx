@@ -7,9 +7,11 @@ import { motion, useReducedMotion } from 'framer-motion';
 import {
   LayoutDashboard, Briefcase, UserCircle, Trophy,
   MoreHorizontal, Activity, Users, GraduationCap,
-  FolderOpen, LucideIcon
+  FolderOpen, LucideIcon,
+  Building2, LibraryBig, Sparkles, Box, Settings,
+  FolderPlus, Star, BarChart, CalendarDays, Bot,
 } from 'lucide-react';
-import MobileNav from '@/components/shared/mobile-nav';
+import BottomDrawer, { type DrawerLink } from '@/components/shared/bottom-drawer';
 import { cn } from '@/lib/utils';
 
 type Tab = {
@@ -48,6 +50,38 @@ const TABS_BY_ROLE: Record<string, Tab[]> = {
   admin: ADMIN_TABS,
 };
 
+const STUDENT_MORE: DrawerLink[] = [
+  { href: '/student/companies', label: 'Companies', icon: Building2 },
+  { href: '/student/resources', label: 'Resources', icon: LibraryBig },
+  { href: '/student/career-coach', label: 'Career Coach', icon: Sparkles },
+  { href: '/student/sandbox', label: 'AI Sandbox', icon: Box },
+  { href: '/student/settings', label: 'Settings', icon: Settings },
+];
+
+const FACULTY_MORE: DrawerLink[] = [
+  { href: '/faculty/drives/new', label: 'New Drive', icon: FolderPlus },
+  { href: '/faculty/resources', label: 'Resources', icon: LibraryBig },
+  { href: '/faculty/sandbox', label: 'Sandbox', icon: Box },
+  { href: '/faculty/settings', label: 'Settings', icon: Settings },
+];
+
+const ADMIN_MORE: DrawerLink[] = [
+  { href: '/admin/experiences', label: 'Experiences', icon: Star },
+  { href: '/admin/resources', label: 'Resources', icon: LibraryBig },
+  { href: '/admin/amcat', label: 'AMCAT', icon: BarChart },
+  { href: '/admin/seasons', label: 'Seasons', icon: CalendarDays },
+  { href: '/admin/students', label: 'Students', icon: GraduationCap },
+  { href: '/admin/ai-models', label: 'AI Models', icon: Bot },
+  { href: '/admin/sandbox', label: 'Sandbox', icon: Box },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
+];
+
+const MORE_BY_ROLE: Record<string, DrawerLink[]> = {
+  student: STUDENT_MORE,
+  faculty: FACULTY_MORE,
+  admin: ADMIN_MORE,
+};
+
 interface BottomTabBarProps {
   userRole: 'student' | 'faculty' | 'admin';
   userName: string;
@@ -58,11 +92,16 @@ export default function BottomTabBar({ userRole, userName }: BottomTabBarProps) 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const tabs = TABS_BY_ROLE[userRole] ?? STUDENT_TABS;
+  const moreLinks = MORE_BY_ROLE[userRole] ?? STUDENT_MORE;
 
   const isTabActive = (tab: Tab) => {
     if (!tab.href) return false;
     return tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
   };
+
+  const isMoreActive = moreLinks.some((link) =>
+    link.exact ? pathname === link.href : pathname.startsWith(link.href)
+  );
 
   return (
     <>
@@ -77,19 +116,24 @@ export default function BottomTabBar({ userRole, userName }: BottomTabBarProps) 
           tabs.length === 4 ? 'grid-cols-4' : 'grid-cols-5'
         )}>
           {tabs.map((tab) => {
-            const active = isTabActive(tab);
+            const active = tab.isMore ? isMoreActive : isTabActive(tab);
 
             if (tab.isMore) {
-            return (
-              <button
-                key='more'
-                onClick={() => setDrawerOpen(true)}
-                className='flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-foreground transition-all duration-150 active:scale-[0.92]'
-                aria-label='More navigation options'
-                aria-haspopup='dialog'
-                aria-expanded={drawerOpen}
-              >
-                <tab.icon size={22} />
+              return (
+                <button
+                  key='more'
+                  onClick={() => setDrawerOpen(true)}
+                  className={cn(
+                    'flex flex-col items-center justify-center gap-0.5 transition-all duration-150 active:scale-[0.92]',
+                    isMoreActive || drawerOpen
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                  aria-label='More navigation options'
+                  aria-haspopup='dialog'
+                  aria-expanded={drawerOpen}
+                >
+                  <tab.icon size={22} />
                   <span className='text-[10px] font-semibold'>{tab.label}</span>
                 </button>
               );
@@ -133,15 +177,12 @@ export default function BottomTabBar({ userRole, userName }: BottomTabBarProps) 
         </div>
       </nav>
 
-      {/* MobileNav drawer — triggered by More tab */}
-      {drawerOpen && (
-        <MobileNav
-          userName={userName}
-          userRole={userRole}
-          forceOpen={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-        />
-      )}
+      <BottomDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        links={moreLinks}
+        userName={userName}
+      />
     </>
   );
 }

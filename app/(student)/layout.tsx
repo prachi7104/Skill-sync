@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 
 import { requireRole, getStudentProfile } from "@/lib/auth/helpers";
 import SignOutButton from "@/components/shared/sign-out-button";
-import MobileNav from "@/components/shared/mobile-nav";
 import { StudentProvider } from "@/app/(student)/providers/student-provider";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
@@ -14,17 +13,7 @@ import { TriangleAlert } from "lucide-react";
 import HeaderSearchTrigger from "@/components/shared/header-search-trigger";
 import BottomTabBar from "@/components/shared/bottom-tab-bar";
 import { computeOnboardingProgress } from "@/lib/utils/onboarding";
-
-function deriveSapFromEmail(email: string): string | null {
-    if (!email.toLowerCase().includes("stu.upes.ac.in")) return null;
-    const username = email.split("@")[0].toLowerCase();
-    const match = username.match(/\.(\d+)$/);
-    if (!match) return null;
-    const digits = match[1];
-    const padded = digits.padStart(6, "0");
-    const prefix = digits.length >= 6 ? "500" : "590";
-    return prefix + padded;
-}
+import { deriveSapFromEmailPublic } from "@/lib/auth/derive-sap";
 
 export default async function StudentLayout({
     children,
@@ -37,25 +26,32 @@ export default async function StudentLayout({
     if (!profile) {
         try {
             if (user.collegeId) {
+                const sapId = user.email ? deriveSapFromEmailPublic(user.email) : null;
+                const verificationStatus = sapId ? "auto_verified" : "unverified";
+
                 await db.insert(students).values({
                     id: user.id,
                     collegeId: user.collegeId,
-                }).onConflictDoNothing();
-            }
+                    sapId,
+                    verificationStatus,
+                    sapIdLocked: sapId ? true : false,
+                } as any).onConflictDoNothing();
 
-            // Backfill SAP ID if missing (derived from Microsoft email)
-            const freshProfile = await getStudentProfile(user.id);
-            if (freshProfile && !freshProfile.sapId && user.email) {
-                const sapId = deriveSapFromEmail(user.email);
-                if (sapId) {
+                const freshProfile = await getStudentProfile(user.id);
+                if (freshProfile && !freshProfile.sapId && sapId) {
                     await db.update(students)
-                        .set({ sapId, updatedAt: new Date() })
+                        .set({
+                            sapId,
+                            verificationStatus: "auto_verified",
+                            sapIdLocked: true,
+                            updatedAt: new Date(),
+                        } as any)
                         .where(eq(students.id, user.id))
                         .catch(() => {});
                 }
-            }
 
-            profile = await getStudentProfile(user.id);
+                profile = freshProfile ?? await getStudentProfile(user.id);
+            }
         } catch (e) {
             console.error("[StudentLayout] Failed to auto-create profile:", e);
         }
@@ -111,7 +107,6 @@ export default async function StudentLayout({
                         <div className='sm:hidden'>
                             <HeaderSearchTrigger userRole='student' />
                         </div>
-                        <MobileNav userName={user.name!} userRole='student' />
                         <ThemeToggle />
                         <SignOutButton />
                     </div>

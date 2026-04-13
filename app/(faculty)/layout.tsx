@@ -5,7 +5,6 @@ import Link from "next/link";
 import SidebarNav from "@/components/faculty/sidebar-nav";
 import SidebarShell from "@/components/shared/sidebar-shell";
 import SignOutButton from "@/components/shared/sign-out-button";
-import MobileNav from "@/components/shared/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import HeaderSearchTrigger from "@/components/shared/header-search-trigger";
 import BottomTabBar from "@/components/shared/bottom-tab-bar";
@@ -45,7 +44,6 @@ export default async function FacultyLayout({ children }: { children: React.Reac
           <div className='sm:hidden'>
             <HeaderSearchTrigger userRole='faculty' />
           </div>
-          <MobileNav userName={name} userRole='faculty' />
           <ThemeToggle />
           <SignOutButton />
         </div>

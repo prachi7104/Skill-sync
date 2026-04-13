@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     const q = url.searchParams.get("q") || "";
     const branch = url.searchParams.get("branch") || "";
     const batchYear = url.searchParams.get("batchYear") || "";
+    const verificationFilter = url.searchParams.get("verification") || "";
     const pageValue = Number(url.searchParams.get("page") || "1");
     const page = Number.isFinite(pageValue) && pageValue > 0 ? Math.floor(pageValue) : 1;
 
@@ -43,6 +44,10 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Invalid batchYear" }, { status: 400 });
       }
       whereConditions.push(eq(students.batchYear, parsedBatchYear));
+    }
+
+    if (verificationFilter && verificationFilter !== "all") {
+      whereConditions.push(eq(sql<string>`verification_status`, verificationFilter));
     }
 
     const whereClause = whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions);
@@ -81,6 +86,7 @@ export async function GET(req: NextRequest) {
         researchPapers: students.researchPapers,
         achievements: students.achievements,
         softSkills: students.softSkills,
+        verificationStatus: sql<string>`verification_status`.as("verificationStatus"),
         hasEmbedding: sql<boolean>`${students.embedding} IS NOT NULL`.as("hasEmbedding"),
       })
       .from(students)

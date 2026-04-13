@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import Link from "next/link";
 import SignOutButton from "@/components/shared/sign-out-button";
-import MobileNav from "@/components/shared/mobile-nav";
 import AdminNav from "@/components/admin/admin-nav";
 import SidebarShell from "@/components/shared/sidebar-shell";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -47,7 +46,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className='sm:hidden'>
             <HeaderSearchTrigger userRole='admin' />
           </div>
-          <MobileNav userName={name} userRole='admin' />
           <ThemeToggle />
           <SignOutButton />
         </div>
