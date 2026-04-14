@@ -37,7 +37,7 @@ export default function DashboardAMCATChart({ data }: DashboardAMCATChartProps) 
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={!prefersReducedMotion ? { rotateX, rotateY, transformPerspective: 800 } : undefined}
-      className='flex h-[320px] flex-col rounded-lg border border-border bg-card p-5 shadow-sm'
+      className='flex h-[320px] flex-col rounded-lg border border-border bg-card p-5'
     >
       <div className='mb-6 flex items-center justify-between'>
         <div className='flex items-center gap-2'>

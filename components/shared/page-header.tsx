@@ -17,7 +17,7 @@ export default function PageHeader({
 }: PageHeaderProps) {
   return (
     <header className={cn(
-      "rounded-lg border border-border bg-card px-6 py-5 shadow-sm",
+      "rounded-lg border border-border px-6 py-5",
       className
     )}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -27,7 +27,7 @@ export default function PageHeader({
               {eyebrow}
             </div>
           )}
-          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             {title}
           </h1>
           {description && (

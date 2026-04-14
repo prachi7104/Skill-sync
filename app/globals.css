@@ -5,136 +5,136 @@
 @layer base {
   :root {
     /* ═══════════════════════════════════════════════════════════════════════
-       LIGHT MODE — Salt & Pepper
-       Page: warm off-white (#F5F5F5)
-       Cards: pure white (#FFFFFF) with subtle shadow
-       Text: near-black (#212121)
-       Accent: steel-gray (#566C7A)
+       LIGHT MODE — Notion Document
+       Page: pure white (#FFFFFF) — the canvas
+       Cards: pure white — melt into background, separated by 1px borders
+       Text: deep charcoal (#1F1F1F) — never pure black
+       Primary: deep indigo (#00004D) — sharp, utilitarian
        ═══════════════════════════════════════════════════════════════════════ */
 
-    /* Page surface — warm off-white, NOT pure white */
-    --background:         0 0% 96%;        /* #F5F5F5 */
-    --foreground:         0 0% 13%;        /* #212121 */
+    /* Page canvas — pure white, not off-white */
+    --background:         0 0% 100%;       /* #FFFFFF */
+    --foreground:         0 0% 12%;        /* #1F1F1F — deep charcoal */
 
-    /* Card surfaces — pure white, lifted via shadow (applied in component) */
+    /* Card surfaces — match background exactly; borders provide separation */
     --card:               0 0% 100%;       /* #FFFFFF */
-    --card-foreground:    0 0% 13%;
+    --card-foreground:    0 0% 12%;
 
-    /* Popovers, dropdowns — match card */
+    /* Popovers, dropdowns */
     --popover:            0 0% 100%;
-    --popover-foreground: 0 0% 13%;
+    --popover-foreground: 0 0% 12%;
 
-    /* Brand accent — muted steel-gray, NOT blue */
-    --primary:            200 15% 38%;     /* #4D6672 — steel-gray */
+    /* Deep indigo — sharp & utilitarian primary action */
+    --primary:            230 100% 15%;    /* #00004D */
     --primary-foreground: 0 0% 100%;
-    --primary-hover:      200 15% 30%;     /* darker on hover */
+    --primary-hover:      230 100% 10%;    /* darker on hover */
 
-    /* Secondary surfaces — slightly darker than background */
-    --secondary:          0 0% 90%;        /* #E6E6E6 */
-    --secondary-foreground: 0 0% 13%;
+    /* Secondary / hover surfaces — barely-there gray */
+    --secondary:          0 0% 96%;        /* #F5F5F5 */
+    --secondary-foreground: 0 0% 12%;
 
-    /* Muted — form field backgrounds, disabled states, skeletons */
-    --muted:              0 0% 93%;        /* #EDEDED */
-    --muted-foreground:   0 0% 40%;        /* #666666 — passes AA on white */
+    /* Muted — skeletons, disabled, subtle backgrounds */
+    --muted:              0 0% 96%;        /* #F5F5F5 */
+    --muted-foreground:   0 0% 45%;        /* #737373 — crisp secondary text */
 
-    /* Accent — subtle hover highlight */
-    --accent:             0 0% 95%;        /* #F2F2F2 */
-    --accent-foreground:  0 0% 13%;
+    /* Accent — hover highlight */
+    --accent:             0 0% 96%;        /* #F5F5F5 */
+    --accent-foreground:  0 0% 12%;
 
-    /* Borders */
-    --border:             0 0% 83%;        /* #D4D4D4 */
-    --input:              0 0% 80%;        /* #CCCCCC — slightly stronger for inputs */
-    --ring:               200 15% 38%;     /* matches primary for focus rings */
+    /* Ultra-faint borders — the Notion aesthetic */
+    --border:             0 0% 90%;        /* #E6E6E6 */
+    --input:              0 0% 88%;        /* #E0E0E0 */
+    --ring:               230 100% 15%;    /* focus ring matches primary */
 
-    --radius: 12px;
+    --radius: 8px;
 
     /* Semantic status colors */
-    --success:            152 60% 36%;     /* #249A5C — muted green */
+    --success:            152 60% 36%;     /* #249A5C */
     --success-foreground: 0 0% 100%;
-    --warning:            38 85% 50%;      /* #EDAA11 — amber */
+    --warning:            38 85% 50%;      /* #EDAA11 */
     --warning-foreground: 0 0% 9%;
-    --info:               200 65% 45%;     /* #2889B5 — teal */
+    --info:               200 65% 45%;     /* #2889B5 */
     --info-foreground:    0 0% 100%;
-    --destructive:        0 65% 52%;       /* #C93E3E — muted red */
+    --destructive:        0 65% 52%;       /* #C93E3E */
     --destructive-foreground: 0 0% 100%;
 
     /* ───────────────────────────────────────────────────────────────────────
-       Sidebar — light in light mode, dark in dark mode
+       Sidebar — warm off-white; blends gently, separated by faint border-r
        ─────────────────────────────────────────────────────────────────────── */
-    --sidebar:              0 0% 98%;      /* #FAFAFA — near-white */
-    --sidebar-surface:      0 0% 93%;      /* #EDEDED — hover bg */
-    --sidebar-fg:           0 0% 13%;      /* #212121 — matches --foreground */
-    --sidebar-fg-muted:     0 0% 42%;      /* #6B6B6B — AA on #FAFAFA */
-    --sidebar-primary:      200 15% 38%;   /* #4D6672 — matches --primary */
-    --sidebar-primary-hover: 200 15% 30%;
-    --sidebar-border:       0 0% 83%;      /* #D4D4D4 — matches --border */
-    --sidebar-active-bg:    0 0% 90%;      /* #E6E6E6 */
+    --sidebar:              60 5% 97%;     /* #F7F7F5 — warm off-white */
+    --sidebar-surface:      60 5% 93%;     /* hover bg */
+    --sidebar-fg:           0 0% 12%;      /* matches --foreground */
+    --sidebar-fg-muted:     0 0% 45%;      /* matches --muted-foreground */
+    --sidebar-primary:      230 100% 15%;  /* matches --primary */
+    --sidebar-primary-hover: 230 100% 10%;
+    --sidebar-border:       0 0% 90%;      /* ultra-faint, matches --border */
+    --sidebar-active-bg:    0 0% 94%;      /* #F0F0F0 */
   }
 
   .dark {
     /* ═══════════════════════════════════════════════════════════════════════
-       DARK MODE — Ink Wash
-       Page: deep ink (#1A1C20)
-       Cards: slightly elevated (#24272C)
-       Text: warm ivory (#EDE8DF)
-       Accent: slate-blue (#6D8196)
+       DARK MODE — Apple SaaS
+       Page: OLED pure black (#000000) — non-negotiable
+       Cards: deep cool slate (#17171A) — elevated via glass-edge border
+       Text: pure white (#FFFFFF) primary, aggressively muted secondary
+       Primary: Apple system blue (#3399FF) — pops on black
        ═══════════════════════════════════════════════════════════════════════ */
 
-    /* Page surface — deep ink, warm undertone */
-    --background:         220 8% 11%;      /* #1A1C20 */
-    --foreground:         38 20% 90%;      /* #EDE8DF — warm ivory */
+    /* OLED black canvas */
+    --background:         0 0% 0%;         /* #000000 */
+    --foreground:         0 0% 100%;       /* #FFFFFF — crisp white */
 
-    /* Card surfaces — elevated from background */
-    --card:               220 8% 15%;      /* #24272C */
-    --card-foreground:    38 20% 90%;
+    /* Elevated cool slate — separated from void by glass-edge border */
+    --card:               240 5% 10%;      /* #17171A */
+    --card-foreground:    0 0% 100%;
 
-    /* Popovers — match card */
-    --popover:            220 8% 15%;
-    --popover-foreground: 38 20% 90%;
+    /* Popovers sit slightly above cards */
+    --popover:            240 5% 12%;      /* #1A1A1E */
+    --popover-foreground: 0 0% 100%;
 
-    /* Brand accent — slate-blue from Ink Wash palette */
-    --primary:            210 18% 52%;     /* #6D8196 */
+    /* Apple system blue — high-energy against black */
+    --primary:            210 100% 60%;    /* #3399FF */
     --primary-foreground: 0 0% 100%;
-    --primary-hover:      210 18% 60%;
+    --primary-hover:      210 100% 70%;    /* #66B2FF — lighter on hover */
 
-    /* Secondary surfaces */
-    --secondary:          220 8% 18%;      /* #2A2D33 */
-    --secondary-foreground: 38 20% 90%;
+    /* Elevated surfaces */
+    --secondary:          240 5% 15%;      /* #222226 */
+    --secondary-foreground: 0 0% 100%;
 
-    /* Muted — form fields, skeletons */
-    --muted:              220 8% 13%;      /* #1F2125 */
-    --muted-foreground:   220 6% 58%;      /* #8A8F96 — passes AA on #24272C */
+    /* Muted */
+    --muted:              240 5% 12%;      /* #1A1A1E */
+    --muted-foreground:   240 5% 60%;      /* #99999E — aggressively muted hierarchy */
 
     /* Accent */
-    --accent:             220 8% 20%;
-    --accent-foreground:  38 20% 90%;
+    --accent:             240 5% 18%;      /* #282830 */
+    --accent-foreground:  0 0% 100%;
 
-    /* Borders */
-    --border:             220 8% 20%;      /* #303338 */
-    --input:              220 8% 22%;
-    --ring:               210 18% 52%;     /* matches primary */
+    /* "Glass edge" — 1px translucent white creates crisp card separation on OLED black */
+    --border:             0 0% 18%;        /* rgba(255,255,255,0.18) equivalent */
+    --input:              0 0% 20%;
+    --ring:               210 100% 60%;    /* matches primary */
 
-    --radius: 12px;
+    --radius: 8px;
 
-    /* Semantic status colors — slightly desaturated for dark mode */
-    --destructive:        0 55% 48%;
+    /* Semantic status — more vibrant to pop on black */
+    --destructive:        0 72% 55%;
     --destructive-foreground: 0 0% 100%;
-    --success:            152 45% 38%;
+    --success:            142 70% 45%;
     --success-foreground: 0 0% 100%;
-    --warning:            38 75% 50%;
+    --warning:            38 90% 55%;
     --warning-foreground: 0 0% 9%;
-    --info:               200 55% 48%;
+    --info:               200 80% 55%;
     --info-foreground:    0 0% 100%;
 
-    /* Sidebar — slightly darker than page background in dark mode */
-    --sidebar:              220 8% 9%;     /* #161819 */
-    --sidebar-surface:      220 8% 14%;    /* #222528 */
-    --sidebar-fg:           38 20% 90%;    /* warm ivory */
-    --sidebar-fg-muted:     220 6% 56%;    /* #878C92 — 4.5:1 on #161819 ✓ AA */
-    --sidebar-primary:      210 18% 58%;   /* lighter blue for dark bg */
-    --sidebar-primary-hover: 210 18% 66%;
-    --sidebar-border:       220 8% 16%;
-    --sidebar-active-bg:    220 8% 15%;
+    /* Sidebar — slightly elevated from pure black */
+    --sidebar:              240 5% 6%;     /* #0D0D0F */
+    --sidebar-surface:      240 5% 12%;    /* hover bg */
+    --sidebar-fg:           0 0% 85%;      /* #D9D9D9 */
+    --sidebar-fg-muted:     240 5% 50%;    /* #7A7A81 */
+    --sidebar-primary:      210 100% 60%;  /* matches --primary */
+    --sidebar-primary-hover: 210 100% 70%;
+    --sidebar-border:       0 0% 15%;
+    --sidebar-active-bg:    240 5% 14%;
   }
 }
 
@@ -145,9 +145,49 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Typography tracking — the Notion clean feel */
+  h1,
+  h2 {
+    letter-spacing: -0.025em;
+  }
+  h3 {
+    letter-spacing: -0.015em;
+  }
 }
 
 @layer utilities {
+  /* ─────────────────────────────────────────────────────────────────────────
+     Shadow neutralization
+     Depth is expressed via borders + background elevation, not box shadows.
+     Floating elements (dialogs, dropdowns, command) use shadow-lg / shadow-2xl
+     and are unaffected by this override.
+     ───────────────────────────────────────────────────────────────────────── */
+  .shadow-sm {
+    --tw-shadow: 0 0 #0000;
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     Glass header utility
+     Used by all 3 role layout sticky headers.
+     Light mode: solid pure white with faint border-b.
+     Dark mode: frosted glass over scrolled content (Apple iOS/macOS feel).
+     ───────────────────────────────────────────────────────────────────────── */
+  .header-glass {
+    background: hsl(var(--background));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  @supports (backdrop-filter: blur(1px)) {
+    .dark .header-glass {
+      background: hsl(0 0% 0% / 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+  }
+
+  /* Scrollbar — thin, unobtrusive */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {

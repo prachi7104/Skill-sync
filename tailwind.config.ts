@@ -91,12 +91,12 @@ const config = {
       },
       borderRadius: {
         none: '0',
-        sm: 'calc(var(--radius) - 8px)',   // 4px — badges, chips, tiny elements
-        DEFAULT: 'calc(var(--radius) - 4px)', // 8px — buttons, inputs, small cards
-        md: 'calc(var(--radius) - 4px)',   // 8px
-        lg: 'var(--radius)',               // 12px — cards, panels, modals
-        xl: 'calc(var(--radius) + 4px)',   // 16px — large feature cards
-        '2xl': 'calc(var(--radius) + 8px)', // 20px — hero section elements
+        sm: 'calc(var(--radius) - 4px)',   // 4px — badges, chips, tiny elements
+        DEFAULT: 'calc(var(--radius) - 4px)', // 4px — buttons, inputs, small cards
+        md: 'calc(var(--radius) - 4px)',   // 4px
+        lg: 'var(--radius)',               // 8px — cards, panels, modals
+        xl: 'calc(var(--radius) + 4px)',   // 12px — large feature cards
+        '2xl': 'calc(var(--radius) + 8px)', // 16px — hero section elements
         full: '9999px',                    // pills, avatars
       },
       keyframes: {

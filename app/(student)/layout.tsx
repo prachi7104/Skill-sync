@@ -92,7 +92,7 @@ export default async function StudentLayout({
             <div className='h-screen bg-background flex flex-col font-sans text-foreground antialiased'>
 
                 {/* ── Header ── */}
-                <header className='h-14 shrink-0 sticky top-0 z-50 bg-card border-b border-border shadow-sm flex items-center justify-between px-4 sm:px-6'>
+                <header className='h-14 shrink-0 sticky top-0 z-50 header-glass flex items-center justify-between px-4 sm:px-6'>
                     <div className='flex items-center gap-3'>
                         <MobileNavToggle />
                         <span className='font-sans text-base font-black tracking-tight text-foreground select-none'>
