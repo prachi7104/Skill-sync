@@ -8,6 +8,8 @@ import { students } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import StudentSidebarNav from "@/components/student/student-sidebar-nav";
 import SidebarShell from "@/components/shared/sidebar-shell";
+import MobileNavToggle from "@/components/shared/mobile-nav-toggle";
+import MobileSidebarOverlay from "@/components/shared/mobile-sidebar-overlay";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TriangleAlert } from "lucide-react";
 import HeaderSearchTrigger from "@/components/shared/header-search-trigger";
@@ -87,11 +89,12 @@ export default async function StudentLayout({
             onboardingRequired={onboardingRequired}
             onboardingProgress={onboardingProgress}
         >
-            <div className='min-h-screen bg-background flex flex-col font-sans text-foreground antialiased'>
+            <div className='h-screen bg-background flex flex-col font-sans text-foreground antialiased'>
 
                 {/* ── Header ── */}
                 <header className='h-14 shrink-0 sticky top-0 z-50 bg-card border-b border-border shadow-sm flex items-center justify-between px-4 sm:px-6'>
                     <div className='flex items-center gap-3'>
+                        <MobileNavToggle />
                         <span className='font-sans text-base font-black tracking-tight text-foreground select-none'>
                             Skill<span className='text-primary'>Sync.</span>
                         </span>
@@ -113,12 +116,17 @@ export default async function StudentLayout({
                 </header>
 
                 {/* ── Body ── */}
-                <div className='flex flex-1 overflow-hidden' style={{ height: 'calc(100vh - 56px)' }}>
+                <div className='flex flex-1 overflow-hidden'>
 
                     {/* Sidebar slot */}
                     <SidebarShell label='Student Menu'>
                         <StudentSidebarNav />
                     </SidebarShell>
+
+                    {/* Mobile overlay sidebar */}
+                    <MobileSidebarOverlay label='Student Menu'>
+                        <StudentSidebarNav />
+                    </MobileSidebarOverlay>
 
                     {/* Main scrollable content */}
                     <main className='flex-1 overflow-y-auto'>

@@ -5,6 +5,8 @@ import Link from "next/link";
 import SignOutButton from "@/components/shared/sign-out-button";
 import AdminNav from "@/components/admin/admin-nav";
 import SidebarShell from "@/components/shared/sidebar-shell";
+import MobileNavToggle from "@/components/shared/mobile-nav-toggle";
+import MobileSidebarOverlay from "@/components/shared/mobile-sidebar-overlay";
 import { ThemeToggle } from "@/components/theme-toggle";
 import HeaderSearchTrigger from "@/components/shared/header-search-trigger";
 import BottomTabBar from "@/components/shared/bottom-tab-bar";
@@ -15,12 +17,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const name = session?.user?.name ?? "Admin";
 
   return (
-    <div className='min-h-screen bg-background flex flex-col font-sans text-foreground antialiased'>
+    <div className='h-screen bg-background flex flex-col font-sans text-foreground antialiased'>
 
       {/* ── Header ── */}
       <header className='h-14 shrink-0 sticky top-0 z-50 bg-card border-b border-border shadow-sm flex items-center justify-between px-4 sm:px-6'>
-        {/* Left: Logo + badge */}
+        {/* Left: Hamburger (mobile) + Logo + badge */}
         <div className='flex items-center gap-3'>
+          <MobileNavToggle />
           <Link
             href='/admin/health'
             className='font-sans text-base font-black tracking-tight text-foreground select-none hover:text-primary transition-colors duration-150'
@@ -52,11 +55,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </header>
 
       {/* ── Body ── */}
-      <div className='flex h-[calc(100dvh-56px)] flex-1 overflow-hidden'>
+      <div className='flex flex-1 overflow-hidden'>
 
         <SidebarShell label='Admin'>
           <AdminNav />
         </SidebarShell>
+
+        {/* Mobile overlay sidebar */}
+        <MobileSidebarOverlay label='Admin'>
+          <AdminNav />
+        </MobileSidebarOverlay>
 
         {/* Main scrollable content */}
         <main className='flex-1 overflow-y-auto'>

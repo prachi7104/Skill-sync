@@ -59,16 +59,16 @@
     --destructive-foreground: 0 0% 100%;
 
     /* ───────────────────────────────────────────────────────────────────────
-       Sidebar — ALWAYS charcoal dark in both modes
+       Sidebar — light in light mode, dark in dark mode
        ─────────────────────────────────────────────────────────────────────── */
-    --sidebar:              0 0% 15%;      /* #262626 — charcoal */
-    --sidebar-surface:      0 0% 20%;      /* #333333 — hover/active bg */
-    --sidebar-fg:           0 0% 92%;      /* #EBEBEB — primary text */
-    --sidebar-fg-muted:     0 0% 62%;      /* #9E9E9E — 4.7:1 contrast on #262626 ✓ AA */
-    --sidebar-primary:      200 15% 55%;   /* #708F9E — lighter steel for dark bg */
-    --sidebar-primary-hover: 200 15% 65%;
-    --sidebar-border:       0 0% 22%;      /* #383838 */
-    --sidebar-active-bg:    0 0% 20%;      /* #333333 */
+    --sidebar:              0 0% 98%;      /* #FAFAFA — near-white */
+    --sidebar-surface:      0 0% 93%;      /* #EDEDED — hover bg */
+    --sidebar-fg:           0 0% 13%;      /* #212121 — matches --foreground */
+    --sidebar-fg-muted:     0 0% 42%;      /* #6B6B6B — AA on #FAFAFA */
+    --sidebar-primary:      200 15% 38%;   /* #4D6672 — matches --primary */
+    --sidebar-primary-hover: 200 15% 30%;
+    --sidebar-border:       0 0% 83%;      /* #D4D4D4 — matches --border */
+    --sidebar-active-bg:    0 0% 90%;      /* #E6E6E6 */
   }
 
   .dark {

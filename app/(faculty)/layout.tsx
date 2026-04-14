@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth/config";
 import Link from "next/link";
 import SidebarNav from "@/components/faculty/sidebar-nav";
 import SidebarShell from "@/components/shared/sidebar-shell";
+import MobileNavToggle from "@/components/shared/mobile-nav-toggle";
+import MobileSidebarOverlay from "@/components/shared/mobile-sidebar-overlay";
 import SignOutButton from "@/components/shared/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import HeaderSearchTrigger from "@/components/shared/header-search-trigger";
@@ -16,12 +18,13 @@ export default async function FacultyLayout({ children }: { children: React.Reac
   const role = session?.user?.role ?? "faculty";
 
   return (
-    <div className='min-h-screen bg-background flex flex-col font-sans text-foreground antialiased'>
+    <div className='h-screen bg-background flex flex-col font-sans text-foreground antialiased'>
 
       {/* ── Header ── */}
       <header className='h-14 shrink-0 sticky top-0 z-50 bg-card border-b border-border shadow-sm flex items-center justify-between px-4 sm:px-6'>
-        {/* Left: Logo + badge */}
+        {/* Left: Hamburger (mobile) + Logo */}
         <div className='flex items-center gap-3'>
+          <MobileNavToggle />
           <Link
             href='/faculty'
             className='font-sans text-base font-black tracking-tight text-foreground select-none hover:text-primary transition-colors duration-150'
@@ -50,12 +53,17 @@ export default async function FacultyLayout({ children }: { children: React.Reac
       </header>
 
       {/* ── Body ── */}
-      <div className='flex h-[calc(100dvh-56px)] flex-1 overflow-hidden'>
+      <div className='flex flex-1 overflow-hidden'>
 
         {/* Sidebar slot */}
         <SidebarShell label='Faculty'>
           <SidebarNav />
         </SidebarShell>
+
+        {/* Mobile overlay sidebar */}
+        <MobileSidebarOverlay label='Faculty'>
+          <SidebarNav />
+        </MobileSidebarOverlay>
 
         {/* Main scrollable content */}
         <main className='flex-1 overflow-y-auto'>
