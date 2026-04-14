@@ -40,7 +40,7 @@ yarn-error.log*
 .idea/
 *.swp
 *.swo
-/.claud[e]/
+/.claude/
 
 # OS
 Thumbs.db
