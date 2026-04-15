@@ -92,7 +92,7 @@ export default function DashboardAMCATChart({ history, latest, studentName }: Da
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={!prefersReducedMotion ? { rotateX, rotateY, transformPerspective: 800 } : undefined}
-      className='flex min-h-[360px] flex-col rounded-2xl border border-border bg-card/95 p-5 sm:p-6'
+      className='flex min-h-[320px] flex-col rounded-2xl border border-border bg-card/95 p-5 sm:min-h-[340px] sm:p-6 xl:min-h-[440px]'
     >
       <div className='mb-5 flex flex-wrap items-start justify-between gap-3'>
         <div className='flex items-center gap-2'>
@@ -127,7 +127,7 @@ export default function DashboardAMCATChart({ history, latest, studentName }: Da
         {hasLatest ? (
           <>
             {hasTrend ? (
-              <div className='h-[240px] sm:h-[255px]'>
+              <div className='h-[220px] sm:h-[250px] xl:h-[280px]'>
                 <ResponsiveContainer width='100%' height='100%'>
                   <LineChart data={orderedHistory} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray='3 3' stroke='hsl(var(--border))' vertical={false} />

@@ -16,7 +16,7 @@ export default function DashboardGreetingCard({ studentName, progressPercent, on
   const firstName = studentName.trim().split(/\s+/)[0] || 'Student';
 
   return (
-    <div className='flex h-full flex-col gap-5 rounded-2xl border border-border bg-card/95 p-5 sm:p-6'>
+    <div className='flex min-h-[220px] flex-col gap-5 rounded-2xl border border-border bg-card/95 p-5 sm:min-h-[240px] sm:p-6 xl:min-h-[260px]'>
       <div className='flex items-start justify-between gap-3'>
         <div>
           <p className='mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground'>Welcome back</p>
@@ -45,7 +45,7 @@ export default function DashboardGreetingCard({ studentName, progressPercent, on
             <span className='text-sm font-black text-foreground' aria-hidden="true">{progressPercent}%</span>
           </div>
         </div>
-        <div className='min-w-0 flex-1 space-y-2'>
+        <div className='min-w-0 flex-1 space-y-2 max-h-[220px] overflow-y-auto pr-1 sm:max-h-none'>
           <p className='text-sm font-semibold text-foreground'>
             {onboardingRequired ? 'Finish onboarding to unlock the full placement workspace.' : 'Your profile is ready for drives, ranking, and coach insights.'}
           </p>
@@ -57,13 +57,15 @@ export default function DashboardGreetingCard({ studentName, progressPercent, on
         </div>
       </div>
 
-      <Link
-        href={onboardingRequired ? '/student/onboarding' : '/student/profile'}
-        className='mt-auto inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-primary transition-colors duration-150 hover:text-primary-hover'
-      >
-        {onboardingRequired ? 'Complete setup' : 'View profile'}
-        <ArrowRight size={13} />
-      </Link>
+      <div className='mt-4 max-h-[220px] overflow-y-auto pr-1 sm:max-h-none'>
+        <Link
+          href={onboardingRequired ? '/student/onboarding' : '/student/profile'}
+          className='inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-primary transition-colors duration-150 hover:text-primary-hover'
+        >
+          {onboardingRequired ? 'Complete setup' : 'View profile'}
+          <ArrowRight size={13} />
+        </Link>
+      </div>
     </div>
   );
 }

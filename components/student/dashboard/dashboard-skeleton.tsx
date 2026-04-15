@@ -26,17 +26,17 @@ export default function DashboardSkeleton() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="rounded-2xl border border-border bg-card p-5 xl:col-span-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+        <div className="rounded-2xl border border-border bg-card p-5 xl:min-h-[440px]">
           <Skeleton className="mb-4 h-4 w-32" />
-          <Skeleton className="h-[260px] w-full" />
+          <Skeleton className="h-[280px] w-full xl:h-[360px]" />
         </div>
-        <div className="space-y-4 xl:col-span-1">
-          <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="space-y-4 xl:self-start">
+          <div className="rounded-2xl border border-border bg-card p-5 xl:min-h-[260px]">
             <Skeleton className="mb-4 h-4 w-28" />
-            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-32 w-full xl:h-40" />
           </div>
-          <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="rounded-2xl border border-border bg-card p-5 xl:min-h-[260px]">
             <Skeleton className="mb-4 h-4 w-24" />
             <Skeleton className="mx-auto mb-3 h-20 w-20 rounded-full" />
             <Skeleton className="mx-auto h-4 w-32" />
@@ -44,16 +44,16 @@ export default function DashboardSkeleton() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="rounded-2xl border border-border bg-card p-5 xl:col-span-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)]">
+        <div className="rounded-2xl border border-border bg-card p-5 xl:min-h-[360px]">
           <Skeleton className="mb-4 h-4 w-28" />
           <div className="space-y-2">
             {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              <Skeleton key={i} className="h-16 w-full rounded-xl xl:h-16" />
             ))}
           </div>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-5 xl:col-span-1">
+        <div className="rounded-2xl border border-border bg-card p-5 xl:min-h-[320px]">
           <Skeleton className="mb-4 h-4 w-28" />
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (

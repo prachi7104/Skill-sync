@@ -24,7 +24,7 @@ export default function DashboardLeaderboardCard({ latest }: DashboardLeaderboar
   const hasScore = latest?.score !== null && latest?.score !== undefined;
 
   return (
-    <section className='flex h-full flex-col rounded-2xl border border-border bg-card/95 p-5 sm:p-6'>
+    <section className='flex min-h-[220px] flex-col rounded-2xl border border-border bg-card/95 p-5 sm:min-h-[240px] sm:p-6 xl:min-h-[260px]'>
       <div className='mb-4 flex items-start justify-between gap-3'>
         <div className='flex items-center gap-2'>
           <div className='flex h-9 w-9 items-center justify-center rounded-md bg-warning/10'>
@@ -83,13 +83,15 @@ export default function DashboardLeaderboardCard({ latest }: DashboardLeaderboar
         </div>
       )}
 
-      <Link
-        href='/student/leaderboard'
-        className='mt-auto inline-flex items-center gap-2 text-[12px] font-bold text-primary transition-colors duration-150 hover:text-primary-hover'
-      >
-        View full leaderboard
-        <ArrowRight size={13} />
-      </Link>
+      <div className='mt-4 max-h-[260px] overflow-y-auto pr-1 sm:max-h-none'>
+        <Link
+          href='/student/leaderboard'
+          className='inline-flex items-center gap-2 text-[12px] font-bold text-primary transition-colors duration-150 hover:text-primary-hover'
+        >
+          View full leaderboard
+          <ArrowRight size={13} />
+        </Link>
+      </div>
     </section>
   );
 }

@@ -126,8 +126,9 @@ export default async function StudentLayout({
                     </MobileSidebarOverlay>
 
                     {/* Main scrollable content */}
-                    <main className='flex-1 overflow-y-auto'>
-                        <div className='px-4 sm:px-6 py-6 md:pb-6 pb-[calc(56px+max(env(safe-area-inset-bottom),8px))]'>
+                    <main className='flex-1 overflow-y-auto scroll-smooth'
+                        style={{ scrollPaddingBottom: 'calc(56px + max(env(safe-area-inset-bottom), 16px) + 12px)' }}>
+                        <div className='px-4 sm:px-6 py-6 md:pb-6 pb-[calc(56px+max(env(safe-area-inset-bottom),16px)+12px)]'>
                             {children}
                         </div>
                     </main>

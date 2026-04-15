@@ -13,7 +13,6 @@ interface Drive {
   companyName: string;
   role: string;
   deadline: string | null;
-  isEligible: boolean;
   ranking?: {
     matchScore?: number | null;
   } | null;
@@ -29,7 +28,7 @@ interface ApiDrive {
   } | null;
 }
 
-export default function DashboardDrivesPanel({ studentId }: { studentId: string }) {
+export default function DashboardDrivesPanel() {
   const [drives, setDrives] = useState<Drive[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -50,7 +49,6 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
             companyName: drive.company,
             role: drive.roleTitle,
             deadline: drive.deadline,
-            isEligible: true,
             ranking: drive.ranking ?? null,
           }))
         );
@@ -58,10 +56,10 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
       setLoading(false);
     }
     loadDrives();
-  }, [studentId]);
+  }, []);
 
   return (
-    <div className='flex h-full flex-col rounded-2xl border border-border bg-card/95 p-5 sm:p-6'>
+    <div className='flex min-h-[280px] flex-col rounded-2xl border border-border bg-card/95 p-5 sm:min-h-[320px] sm:p-6 xl:min-h-[360px]'>
       <div className='mb-4 flex items-center justify-between gap-3'>
         <div className='flex items-center gap-2'>
           <div className='flex h-9 w-9 items-center justify-center rounded-md bg-success/10'>
@@ -79,7 +77,8 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
         ) : null}
       </div>
 
-      <div className='flex-1 space-y-2 overflow-y-auto'>
+      <div className='relative max-h-[360px] space-y-2 overflow-y-auto pr-1 xl:max-h-[420px]'>
+        <div className='pointer-events-none sticky top-0 z-10 h-4 bg-gradient-to-b from-card/95 to-transparent' />
         {loading ? (
           <div role='status' aria-label='Loading drives' aria-busy='true' className='space-y-2'>
             {[1, 2, 3].map((i) => (
@@ -146,6 +145,7 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
             <p className='mt-1 text-[11px] text-muted-foreground'>Check back soon or open the full drives page.</p>
           </div>
         )}
+        <div className='pointer-events-none sticky bottom-0 z-10 h-4 bg-gradient-to-t from-card/95 to-transparent' />
       </div>
     </div>
   );

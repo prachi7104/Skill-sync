@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LucideIcon } from 'lucide-react';
 import SignOutButton from './sign-out-button';
+import { useSidebarStore } from '@/lib/stores/sidebar-store';
 import { cn } from '@/lib/utils';
 
 export interface DrawerLink {
@@ -25,9 +26,12 @@ interface BottomDrawerProps {
 export default function BottomDrawer({ open, onClose, links, userName }: BottomDrawerProps) {
   const pathname = usePathname();
   const firstLinkRef = useRef<HTMLAnchorElement>(null);
+  const closeMobileSidebar = useSidebarStore((state) => state.closeMobile);
 
   useEffect(() => {
     if (!open) return;
+
+    closeMobileSidebar();
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -50,7 +54,7 @@ export default function BottomDrawer({ open, onClose, links, userName }: BottomD
       document.body.style.overflow = previousOverflow;
       window.clearTimeout(timer);
     };
-  }, [open, onClose]);
+  }, [open, onClose, closeMobileSidebar]);
 
   return (
     <AnimatePresence>

@@ -82,13 +82,13 @@ export default function DashboardStatsRow(props: DashboardStatsRowProps) {
       variants={container}
       initial='hidden'
       animate='visible'
-      className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4'
+      className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:gap-4'
     >
       {stats.map(stat => (
       <motion.div
         key={stat.label}
         variants={item}
-        className='rounded-2xl border border-border bg-card/95 p-4 sm:p-4.5'
+        className='min-h-[108px] rounded-2xl border border-border bg-card/95 p-4 sm:p-4.5'
         aria-label={`${stat.label}: ${stat.value ?? 'not available'}${stat.suffix}`}
       >
           <div className='mb-3 flex items-start justify-between gap-2'>

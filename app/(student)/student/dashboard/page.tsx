@@ -103,8 +103,8 @@ async function StudentDashboardContent() {
         profileCompletion={onboardingProgress}
       />
 
-      <div className='grid grid-cols-1 gap-4 xl:grid-cols-3'>
-        <div className='xl:col-span-2'>
+      <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]'>
+        <div>
           <DashboardAMCATChart
             history={amcatHistory}
             latest={latestAmcat}
@@ -112,7 +112,7 @@ async function StudentDashboardContent() {
           />
         </div>
 
-        <div className='space-y-4 xl:col-span-1'>
+        <div className='space-y-4 xl:self-start'>
           <DashboardLeaderboardCard latest={latestAmcat} />
           <DashboardGreetingCard
             studentName={user.name ?? 'Student'}
@@ -122,12 +122,12 @@ async function StudentDashboardContent() {
         </div>
       </div>
 
-      <div className='grid grid-cols-1 gap-4 xl:grid-cols-3'>
-        <div className='xl:col-span-2'>
-          <DashboardDrivesPanel studentId={user.id} />
+      <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)]'>
+        <div>
+          <DashboardDrivesPanel />
         </div>
 
-        <div className='xl:col-span-1'>
+        <div className='xl:self-start'>
           <DashboardCareerCoachCard />
         </div>
       </div>

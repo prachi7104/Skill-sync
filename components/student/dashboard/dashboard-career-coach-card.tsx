@@ -78,7 +78,7 @@ export default function DashboardCareerCoachCard() {
   const topSkills = payload?.priority_skills ?? [];
 
   return (
-    <section className='flex h-full flex-col rounded-2xl border border-border bg-card/95 p-5 sm:p-6'>
+    <section className='flex min-h-[260px] flex-col rounded-2xl border border-border bg-card/95 p-5 sm:min-h-[300px] sm:p-6 xl:min-h-[320px]'>
       <div className='mb-4 flex items-start justify-between gap-3'>
         <div className='flex items-center gap-2'>
           <div className='flex h-9 w-9 items-center justify-center rounded-md bg-primary/10'>
@@ -109,7 +109,8 @@ export default function DashboardCareerCoachCard() {
           </div>
 
           {topSkills.length > 0 ? (
-            <div className='space-y-2'>
+            <div className='relative max-h-[220px] space-y-2 overflow-y-auto pr-1 xl:max-h-[260px]'>
+              <div className='pointer-events-none sticky top-0 z-10 h-4 bg-gradient-to-b from-card/95 to-transparent' />
               {topSkills.slice(0, 3).map((skill, index) => (
                 <div key={skill.skill} className='rounded-xl border border-border bg-background/40 p-3'>
                   <div className='flex items-start justify-between gap-3'>
@@ -123,6 +124,7 @@ export default function DashboardCareerCoachCard() {
                   </div>
                 </div>
               ))}
+              <div className='pointer-events-none sticky bottom-0 z-10 h-4 bg-gradient-to-t from-card/95 to-transparent' />
             </div>
           ) : null}
         </div>
@@ -135,7 +137,7 @@ export default function DashboardCareerCoachCard() {
       <Link
         href='/student/career-coach'
         className={cn(
-          'mt-auto inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-primary transition-colors duration-150 hover:text-primary-hover',
+          'mt-4 inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-primary transition-colors duration-150 hover:text-primary-hover',
           loading && 'pointer-events-none opacity-80',
         )}
       >
