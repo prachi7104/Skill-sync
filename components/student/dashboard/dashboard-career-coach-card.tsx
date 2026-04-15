@@ -78,15 +78,15 @@ export default function DashboardCareerCoachCard() {
   const topSkills = payload?.priority_skills ?? [];
 
   return (
-    <section className='flex h-full flex-col rounded-2xl border border-border bg-card/95 p-5'>
+    <section className='flex h-full flex-col rounded-2xl border border-border bg-card/95 p-5 sm:p-6'>
       <div className='mb-4 flex items-start justify-between gap-3'>
         <div className='flex items-center gap-2'>
           <div className='flex h-9 w-9 items-center justify-center rounded-md bg-primary/10'>
             <Sparkles size={16} className='text-primary' />
           </div>
           <div>
-            <p className='text-[13px] font-bold text-foreground'>Career Coach</p>
-            <p className='text-[11px] text-muted-foreground'>Skill gaps and next best moves</p>
+            <p className='text-[13px] font-bold tracking-tight text-foreground'>Career Coach</p>
+            <p className='text-[11px] uppercase tracking-[0.08em] text-muted-foreground'>Skill gaps and next best moves</p>
           </div>
         </div>
         <Badge variant='info' className='text-[11px] font-semibold'>Live guidance</Badge>
@@ -135,7 +135,7 @@ export default function DashboardCareerCoachCard() {
       <Link
         href='/student/career-coach'
         className={cn(
-          'mt-auto inline-flex items-center gap-2 text-[12px] font-bold text-primary transition-colors duration-150 hover:text-primary-hover',
+          'mt-auto inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-primary transition-colors duration-150 hover:text-primary-hover',
           loading && 'pointer-events-none opacity-80',
         )}
       >

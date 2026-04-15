@@ -92,7 +92,7 @@ export default function DashboardAMCATChart({ history, latest, studentName }: Da
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={!prefersReducedMotion ? { rotateX, rotateY, transformPerspective: 800 } : undefined}
-      className='flex min-h-[360px] flex-col rounded-2xl border border-border bg-card/95 p-5'
+      className='flex min-h-[360px] flex-col rounded-2xl border border-border bg-card/95 p-5 sm:p-6'
     >
       <div className='mb-5 flex flex-wrap items-start justify-between gap-3'>
         <div className='flex items-center gap-2'>
@@ -100,8 +100,8 @@ export default function DashboardAMCATChart({ history, latest, studentName }: Da
             <BarChart3 size={17} className='text-primary' />
           </div>
           <div>
-            <p className='text-[13px] font-bold text-foreground'>AMCAT Intelligence</p>
-            <p className='text-[11px] text-muted-foreground'>Score trend, session context, and section balance</p>
+            <p className='text-[13px] font-bold tracking-tight text-foreground'>AMCAT Intelligence</p>
+            <p className='text-[11px] uppercase tracking-[0.08em] text-muted-foreground'>Score trend and section balance</p>
           </div>
         </div>
         {hasLatest ? (
@@ -194,7 +194,7 @@ export default function DashboardAMCATChart({ history, latest, studentName }: Da
 
                     return (
                       <div key={section.label} className='space-y-1.5'>
-                        <div className='flex items-center justify-between text-xs font-semibold text-foreground'>
+                        <div className='flex items-center justify-between text-[11px] font-semibold text-foreground'>
                           <span>{section.label}</span>
                           <span className='text-muted-foreground'>{section.value ?? '—'}</span>
                         </div>

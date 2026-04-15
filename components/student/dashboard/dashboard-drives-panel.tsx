@@ -61,15 +61,15 @@ export default function DashboardDrivesPanel({ studentId }: { studentId: string 
   }, [studentId]);
 
   return (
-    <div className='flex h-full flex-col rounded-2xl border border-border bg-card/95 p-5'>
+    <div className='flex h-full flex-col rounded-2xl border border-border bg-card/95 p-5 sm:p-6'>
       <div className='mb-4 flex items-center justify-between gap-3'>
         <div className='flex items-center gap-2'>
           <div className='flex h-9 w-9 items-center justify-center rounded-md bg-success/10'>
             <Briefcase size={16} className='text-success' />
           </div>
           <div>
-            <p className='text-[13px] font-bold text-foreground'>Eligible Drives</p>
-            <p className='text-[11px] text-muted-foreground'>Matched to your current profile</p>
+            <p className='text-[13px] font-bold tracking-tight text-foreground'>Eligible Drives</p>
+            <p className='text-[11px] uppercase tracking-[0.08em] text-muted-foreground'>Matched to your current profile</p>
           </div>
         </div>
         {drives && drives.length > 0 ? (

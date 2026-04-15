@@ -9,7 +9,7 @@ export default function DashboardOnboardingCard({ progress }: { progress: number
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className='flex flex-col items-start gap-4 rounded-2xl border border-border bg-card/95 p-5 sm:flex-row sm:items-center'
+      className='flex flex-col items-start gap-4 rounded-2xl border border-border bg-card/95 p-5 sm:flex-row sm:items-center sm:p-6'
     >
       <div className='flex-1'>
         <div className='flex items-center gap-2 mb-2'>
@@ -30,7 +30,7 @@ export default function DashboardOnboardingCard({ progress }: { progress: number
       </div>
       <Link
         href='/student/onboarding'
-        className='shrink-0 inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-[12px] font-bold text-primary-foreground transition-colors duration-150 hover:bg-primary-hover'
+        className='shrink-0 inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-[11px] font-bold uppercase tracking-[0.08em] text-primary-foreground transition-colors duration-150 hover:bg-primary-hover'
       >
         Continue setup
         <ArrowRight size={13} />

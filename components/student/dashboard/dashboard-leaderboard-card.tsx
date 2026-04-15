@@ -24,15 +24,15 @@ export default function DashboardLeaderboardCard({ latest }: DashboardLeaderboar
   const hasScore = latest?.score !== null && latest?.score !== undefined;
 
   return (
-    <section className='flex h-full flex-col rounded-2xl border border-border bg-card/95 p-5'>
+    <section className='flex h-full flex-col rounded-2xl border border-border bg-card/95 p-5 sm:p-6'>
       <div className='mb-4 flex items-start justify-between gap-3'>
         <div className='flex items-center gap-2'>
           <div className='flex h-9 w-9 items-center justify-center rounded-md bg-warning/10'>
             <Trophy size={16} className='text-warning' />
           </div>
           <div>
-            <p className='text-[13px] font-bold text-foreground'>Leaderboard context</p>
-            <p className='text-[11px] text-muted-foreground'>Latest published AMCAT session</p>
+            <p className='text-[13px] font-bold tracking-tight text-foreground'>Leaderboard context</p>
+            <p className='text-[11px] uppercase tracking-[0.08em] text-muted-foreground'>Latest published AMCAT session</p>
           </div>
         </div>
         {topPercent !== null ? (
@@ -43,7 +43,7 @@ export default function DashboardLeaderboardCard({ latest }: DashboardLeaderboar
       {rank ? (
         <div className='space-y-4'>
           <div className='rounded-xl border border-border bg-background/40 p-4'>
-            <div className='flex items-end justify-between gap-4'>
+            <div className='flex items-end justify-between gap-4 border-b border-border/80 pb-3'>
               <div>
                 <p className='text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground'>Current rank</p>
                 <p className='mt-2 text-4xl font-black tracking-tight text-foreground'>#{rank}</p>

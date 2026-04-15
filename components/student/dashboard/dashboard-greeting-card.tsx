@@ -16,7 +16,7 @@ export default function DashboardGreetingCard({ studentName, progressPercent, on
   const firstName = studentName.trim().split(/\s+/)[0] || 'Student';
 
   return (
-    <div className='flex h-full flex-col gap-5 rounded-2xl border border-border bg-card/95 p-5'>
+    <div className='flex h-full flex-col gap-5 rounded-2xl border border-border bg-card/95 p-5 sm:p-6'>
       <div className='flex items-start justify-between gap-3'>
         <div>
           <p className='mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground'>Welcome back</p>
@@ -59,7 +59,7 @@ export default function DashboardGreetingCard({ studentName, progressPercent, on
 
       <Link
         href={onboardingRequired ? '/student/onboarding' : '/student/profile'}
-        className='mt-auto inline-flex items-center gap-2 text-[12px] font-bold text-primary transition-colors duration-150 hover:text-primary-hover'
+        className='mt-auto inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-primary transition-colors duration-150 hover:text-primary-hover'
       >
         {onboardingRequired ? 'Complete setup' : 'View profile'}
         <ArrowRight size={13} />

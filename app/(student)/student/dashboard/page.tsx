@@ -58,8 +58,9 @@ async function StudentDashboardContent() {
   }
 
   return (
-    <div className='space-y-6 text-foreground'>
-      <section className='overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/5 via-card to-card p-6 sm:p-7'>
+    <div className='space-y-5 text-foreground sm:space-y-6'>
+      <section className='relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/5 via-card to-card p-5 sm:p-7'>
+        <div className='pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent' />
         <PageHeader
           className='border-0 bg-transparent p-0'
           eyebrow='Student Dashboard'
@@ -77,7 +78,7 @@ async function StudentDashboardContent() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className='inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-background/70 px-3 text-[12px] font-semibold text-foreground transition-colors duration-150 hover:border-primary/30 hover:bg-primary/5'
+                    className='inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-background/70 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground transition-colors duration-150 hover:border-primary/30 hover:bg-primary/5'
                   >
                     <Icon size={13} className='text-primary' />
                     {item.label}

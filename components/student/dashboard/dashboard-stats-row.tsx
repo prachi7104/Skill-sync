@@ -88,11 +88,11 @@ export default function DashboardStatsRow(props: DashboardStatsRowProps) {
       <motion.div
         key={stat.label}
         variants={item}
-        className='rounded-2xl border border-border bg-card/95 p-4'
+        className='rounded-2xl border border-border bg-card/95 p-4 sm:p-4.5'
         aria-label={`${stat.label}: ${stat.value ?? 'not available'}${stat.suffix}`}
       >
           <div className='mb-3 flex items-start justify-between gap-2'>
-            <p className='text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground'>
+            <p className='text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground'>
               {stat.label}
             </p>
             <div className={cn('rounded-full p-1.5 shrink-0', stat.iconBg)}>
@@ -101,7 +101,7 @@ export default function DashboardStatsRow(props: DashboardStatsRowProps) {
           </div>
 
           {stat.value !== null ? (
-            <p className='text-3xl font-black tracking-tight text-foreground'>
+            <p className='text-[2rem] font-black leading-none tracking-tight text-foreground'>
               {stat.value}{stat.suffix}
             </p>
           ) : (
