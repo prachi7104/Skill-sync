@@ -146,12 +146,12 @@ export default async function StudentDriveRankingPage({ params }: PageProps) {
 
       {!myRanking ? (
         <Card>
-          <CardContent className="py-12 text-center">
+          <CardContent className="py-12 text-center space-y-2">
             <p className="text-muted-foreground font-medium">
-              You are not ranked for this drive.
+              No ranking found for your profile on this drive.
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Rankings may not have been generated yet, or you may not be eligible for this drive.
+            <p className="text-sm text-muted-foreground">
+              You may not have been included in the ranking run, or your profile was incomplete at the time. Check back after the next ranking cycle.
             </p>
           </CardContent>
         </Card>

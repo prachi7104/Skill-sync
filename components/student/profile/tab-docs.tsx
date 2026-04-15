@@ -1,7 +1,7 @@
 'use client';
 
 import { UseFormReturn, UseFieldArrayReturn } from 'react-hook-form';
-import { FormField, FormControl, FormItem } from '@/components/ui/form';
+import { FormField, FormControl, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, FileText, Upload, Download, Loader2, Award, Code2, BookOpen, Trophy, ExternalLink } from 'lucide-react';
 import type {
@@ -146,10 +146,10 @@ export default function TabDocs({
               <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-lg relative space-y-4'>
                 <button type='button' onClick={() => removeCert(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
-                  <FormField control={form.control} name={`certifications.${idx}.title`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Title' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
-                  <FormField control={form.control} name={`certifications.${idx}.issuer`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Issuer' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  <FormField control={form.control} name={`certifications.${idx}.title`} render={({field: f, fieldState}) => <FormItem><FormControl><Input className={`${inputClass}${fieldState.error ? ' border-destructive' : ''}`} placeholder='Title *' {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
+                  <FormField control={form.control} name={`certifications.${idx}.issuer`} render={({field: f, fieldState}) => <FormItem><FormControl><Input className={`${inputClass}${fieldState.error ? ' border-destructive' : ''}`} placeholder='Issuer *' {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                   <FormField control={form.control} name={`certifications.${idx}.dateIssued`} render={({field: f}) => <FormItem><FormControl><Input type='month' className={inputClass} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
-                  <FormField control={form.control} name={`certifications.${idx}.url`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='URL' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  <FormField control={form.control} name={`certifications.${idx}.url`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='URL (optional)' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                 </div>
               </div>
             ))}
@@ -192,10 +192,10 @@ export default function TabDocs({
               <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-lg relative space-y-4'>
                 <button type='button' onClick={() => removeCoding(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
-                  <FormField control={form.control} name={`codingProfiles.${idx}.platform`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Platform (e.g. GitHub, LeetCode)' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
-                  <FormField control={form.control} name={`codingProfiles.${idx}.username`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Username' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                  <FormField control={form.control} name={`codingProfiles.${idx}.platform`} render={({field: f, fieldState}) => <FormItem><FormControl><Input className={`${inputClass}${fieldState.error ? ' border-destructive' : ''}`} placeholder='Platform * (e.g. GitHub, LeetCode)' {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
+                  <FormField control={form.control} name={`codingProfiles.${idx}.username`} render={({field: f, fieldState}) => <FormItem><FormControl><Input className={`${inputClass}${fieldState.error ? ' border-destructive' : ''}`} placeholder='Username *' {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                   <div className='md:col-span-2'>
-                    <FormField control={form.control} name={`codingProfiles.${idx}.url`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Profile URL' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                    <FormField control={form.control} name={`codingProfiles.${idx}.url`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Profile URL (optional)' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                   </div>
                 </div>
               </div>

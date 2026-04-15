@@ -30,7 +30,7 @@ export interface StudentProfile {
   resumeFilename: string | null;
   resumeUploadedAt: string | null;
   skills: Array<{ name: string; proficiency?: string }>;
-  projects: Array<{ title: string; description: string; techStack?: string[] }>;
+  projects: Array<{ title: string; description: string; techStack?: string[]; url?: string | null }>;
   workExperience: Array<{ company: string; role: string; startDate: string; endDate: string; description: string }>;
   certifications: Array<{ title: string; issuer: string; date: string }>;
   codingProfiles: Array<{ platform: string; username: string }>;
@@ -76,15 +76,57 @@ function getPlatformUrl(platform: string, username: string): string | null {
   return fn ? fn(username) : null;
 }
 
-export function ProfileModal({ student, onClose }: { student: StudentProfile; onClose: () => void }) {
+function ResumeViewModal({ url, filename, onClose }: { url: string; filename: string | null; onClose: () => void }) {
   return (
+    <div className="fixed inset-0 z-[60] flex flex-col bg-black/95">
+      <div className="flex items-center justify-between border-b border-border/30 bg-card/90 px-4 py-3 backdrop-blur">
+        <p className="text-sm font-semibold text-foreground truncate max-w-xs">{filename || "Resume"}</p>
+        <div className="flex items-center gap-2">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/60 transition"
+          >
+            <ExternalLink className="h-3.5 w-3.5" /> Open in new tab
+          </a>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-2 transition hover:bg-muted/40"
+          >
+            <X className="h-5 w-5 text-muted-foreground" />
+          </button>
+        </div>
+      </div>
+      <div className="flex-1 overflow-hidden">
+        <iframe
+          src={url}
+          className="h-full w-full"
+          title="Resume Preview"
+        />
+      </div>
+    </div>
+  );
+}
+
+export function ProfileModal({ student, onClose }: { student: StudentProfile; onClose: () => void }) {
+  const [resumeOpen, setResumeOpen] = useState(false);
+  return (
+    <>
+      {resumeOpen && student.resumeUrl && (
+        <ResumeViewModal
+          url={student.resumeUrl}
+          filename={student.resumeFilename}
+          onClose={() => setResumeOpen(false)}
+        />
+      )}
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-border bg-card shadow-2xl">
         <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-8 py-6">
           <div>
             <h2 className="text-2xl font-bold text-foreground">{student.name}</h2>
             <p className="text-sm text-warning mt-1">
-              📌 Read-only view. Students manage their own profiles.
+              Read-only view. Students manage their own profiles.
             </p>
           </div>
           <button
@@ -151,38 +193,19 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
           {student.resumeUrl && (
             <section>
               <h3 className="text-lg font-bold text-foreground mb-4">Resume</h3>
-              <div className="bg-muted/20 border border-border rounded-lg p-4 space-y-3">
-                <p className="text-sm text-muted-foreground">File: {student.resumeFilename}</p>
-                <p className="text-sm text-muted-foreground">
-                  Uploaded: {student.resumeUploadedAt ? new Date(student.resumeUploadedAt).toLocaleDateString() : "—"}
-                </p>
-                {student.resumeUrl.toLowerCase().includes(".pdf") ? (
-                  <>
-                    <iframe
-                      src={student.resumeUrl}
-                      className="w-full rounded border border-border"
-                      style={{ height: "65vh" }}
-                      title="Resume Preview"
-                    />
-                    <a
-                      href={student.resumeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-semibold transition"
-                    >
-                      Download PDF <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </>
-                ) : (
-                  <a
-                    href={student.resumeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-semibold transition"
-                  >
-                    View Resume <ExternalLink className="h-4 w-4" />
-                  </a>
-                )}
+              <div className="bg-muted/20 border border-border rounded-lg p-4 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{student.resumeFilename || "Resume"}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {student.resumeUploadedAt ? new Date(student.resumeUploadedAt).toLocaleDateString() : "—"}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setResumeOpen(true)}
+                  className="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-semibold transition"
+                >
+                  View Resume <ExternalLink className="h-4 w-4" />
+                </button>
               </div>
             </section>
           )}
@@ -206,7 +229,14 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
               <div className="space-y-3">
                 {student.projects.map((p, i) => (
                   <div key={i} className="bg-muted/20 border border-border rounded-lg p-4">
-                    <p className="font-semibold text-foreground">{p.title}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold text-foreground">{p.title}</p>
+                      {p.url && (
+                        <a href={p.url} target="_blank" rel="noopener noreferrer" className="shrink-0 hover:text-primary transition-colors">
+                          <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                        </a>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground mt-1">{p.description}</p>
                     {p.techStack && p.techStack.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-2">
@@ -335,6 +365,7 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
         </div>
       </div>
     </div>
+    </>
   );
 }
 

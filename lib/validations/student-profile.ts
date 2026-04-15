@@ -53,7 +53,7 @@ export const projectSchema = z.object({
     title: z.string().min(1, "Project title is required").max(200),
     description: z.string().max(2000, "Description must be less than 2000 characters").optional().nullable(),
     techStack: z.array(z.string().max(50)).max(15).optional(),
-    url: z.string().url("Must be a valid URL").optional().or(z.literal("")).nullable(),
+    url: z.string().optional().or(z.literal("")).nullable(),
     startDate: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")).nullable(),
     endDate: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")).nullable(),
 });
@@ -61,7 +61,7 @@ export const projectSchema = z.object({
 export const codingProfileSchema = z.object({
     platform: z.string().min(1, "Platform name is required").max(50),
     username: z.string().min(1, "Username is required").max(100),
-    url: z.string().url("Must be a valid URL").optional().or(z.literal("")).nullable(),
+    url: z.string().optional().or(z.literal("")).nullable(),
     rating: z.number().int().min(0).optional(),
     problemsSolved: z.number().int().min(0).optional(),
 });
@@ -79,7 +79,7 @@ export const certificationSchema = z.object({
     title: z.string().min(1, "Title is required").max(200),
     issuer: z.string().min(1, "Issuer is required").max(200),
     dateIssued: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")),
-    url: z.string().url().optional().or(z.literal("")),
+    url: z.string().optional().or(z.literal("")),
 });
 
 export const achievementSchema = z.object({
@@ -92,7 +92,7 @@ export const achievementSchema = z.object({
 export const researchPaperSchema = z.object({
     title: z.string().min(1, "Title is required").max(200),
     abstract: z.string().max(1000).optional(),
-    url: z.string().url().optional().or(z.literal("")),
+    url: z.string().optional().or(z.literal("")),
     datePublished: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")),
 });
 

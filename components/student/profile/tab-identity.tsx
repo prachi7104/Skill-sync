@@ -1,8 +1,9 @@
 'use client';
 
 import { UseFormReturn } from 'react-hook-form';
-import { FormField, FormControl, FormItem, FormLabel } from '@/components/ui/form';
+import { FormField, FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Lock } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { StudentProfileInput } from '@/lib/validations/student-profile';
 
@@ -78,15 +79,27 @@ export default function TabIdentity({ form, isEditing, profile, batchYears }: Ta
       <h3 className='text-xs font-semibold text-muted-foreground uppercase tracking-widest'>Academic Details</h3>
 
       <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-        {/* SAP ID */}
-        <FormField control={form.control} name='sapId' render={({ field }) => (
-          <FormItem>
-            <FormLabel className='text-xs font-medium text-muted-foreground uppercase tracking-wide'>SAP ID</FormLabel>
-            <FormControl>
-              <Input {...field} value={field.value ?? ''} placeholder='500XXXXXXX' className='h-9 text-sm bg-muted/40 border-border' />
-            </FormControl>
-          </FormItem>
-        )} />
+        {/* SAP ID — locked once set, derived from college email */}
+        {profile.sapId ? (
+          <div>
+            <p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5'>SAP ID</p>
+            <div className='flex items-center gap-2 h-9 px-3 rounded-md bg-muted/60 border border-border text-sm text-foreground'>
+              <span className='flex-1 font-mono'>{profile.sapId}</span>
+              <Lock size={12} className='text-muted-foreground shrink-0' />
+            </div>
+            <p className='text-[10px] text-muted-foreground mt-1'>Auto-derived from college email. Contact admin to change.</p>
+          </div>
+        ) : (
+          <FormField control={form.control} name='sapId' render={({ field, fieldState }) => (
+            <FormItem>
+              <FormLabel className='text-xs font-medium text-muted-foreground uppercase tracking-wide'>SAP ID</FormLabel>
+              <FormControl>
+                <Input {...field} value={field.value ?? ''} placeholder='500XXXXXXX' className={`h-9 text-sm bg-muted/40 border-border${fieldState.error ? ' border-destructive' : ''}`} />
+              </FormControl>
+              <FormMessage className='text-xs' />
+            </FormItem>
+          )} />
+        )}
 
         {/* Roll Number */}
         <FormField control={form.control} name='rollNo' render={({ field }) => (

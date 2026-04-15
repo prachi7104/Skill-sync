@@ -45,34 +45,32 @@ export default function DriveCard({ drive, ranking }: DriveCardProps) {
       transition={{ duration: 0.15 }}
       className='group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card transition-[border-color,box-shadow] duration-200 hover:border-primary/40 hover:shadow-sm'
     >
-      {/* Rank badge — absolute top-right */}
-      {ranking && (
-        <Link
-          href={`/student/drives/${drive.id}/ranking`}
-          className='absolute top-3 right-3 z-10'
-        >
-          <span className={cn(
-            'inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-bold',
-            hasRankPosition
-              ? 'bg-primary/10 border-primary/30 text-primary'
-              : 'bg-muted border-border text-muted-foreground'
-          )}>
-            <Award size={10} />
-            {hasRankPosition ? `#${ranking.rankPosition} · ${Math.round(ranking.matchScore)}%` : 'Pending'}
-          </span>
-        </Link>
-      )}
-
       <div className='flex-1 space-y-3 p-4'>
-        {/* Company initials + name + role */}
-        <div className='flex items-start gap-3 pr-16 sm:pr-20'>
+        {/* Company initials + name + role + rank badge inline */}
+        <div className='flex items-start gap-3'>
           <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10'>
             <span className='text-xs font-bold text-primary'>{companyInitials(companyName)}</span>
           </div>
-          <div className='min-w-0'>
+          <div className='min-w-0 flex-1'>
             <h3 className='truncate text-sm font-semibold leading-snug text-foreground' title={companyName}>{companyName}</h3>
-            <p className='mt-0.5 max-w-[180px] truncate text-xs text-muted-foreground sm:max-w-none' title={roleTitle}>{roleTitle}</p>
+            <p className='mt-0.5 truncate text-xs text-muted-foreground' title={roleTitle}>{roleTitle}</p>
           </div>
+          {ranking && (
+            <Link
+              href={`/student/drives/${drive.id}/ranking`}
+              className='shrink-0'
+            >
+              <span className={cn(
+                'inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-bold whitespace-nowrap',
+                hasRankPosition
+                  ? 'bg-primary/10 border-primary/30 text-primary'
+                  : 'bg-muted border-border text-muted-foreground'
+              )}>
+                <Award size={10} />
+                {hasRankPosition ? `#${ranking.rankPosition} · ${Math.round(ranking.matchScore)}%` : 'Pending'}
+              </span>
+            </Link>
+          )}
         </div>
 
         {/* Info pills */}

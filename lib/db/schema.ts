@@ -845,8 +845,6 @@ export const companyExperiences = pgTable("company_experiences", {
   wouldRecommend: boolean("would_recommend"),
   showName: boolean("show_name").notNull().default(false),
   isAdminPosted: boolean("is_admin_posted").notNull().default(false),
-  studentName: varchar("student_name", { length: 255 }),
-  studentEmail: varchar("student_email", { length: 320 }),
   batchYear: integer("batch_year"),
   category: batchCategoryEnum("category_snapshot"),
   aiScreenScore: real("ai_screen_score").notNull().default(1),

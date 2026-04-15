@@ -811,7 +811,12 @@ export class AntigravityRouter {
         }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (e: any) {
-        console.warn(`[antigravity] ⚠️ Prompt Guard check failed: ${e.message}`);
+        const isAuthError = /401|403|invalid.*key|unauthorized/i.test(e.message ?? "");
+        if (isAuthError) {
+          console.error(`[antigravity] 🔑 Prompt Guard unavailable — check GROQ_API_KEY: ${e.message}`);
+        } else {
+          console.warn(`[antigravity] ⚠️ Prompt Guard check failed: ${e.message}`);
+        }
         // Strict enforcement: Fail safe if guard cannot verify
         return { success: false, error: "Safety Check Failed (Guard Execution Error)" };
       }

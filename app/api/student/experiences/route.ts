@@ -252,13 +252,13 @@ Return ONLY valid JSON: {"score": 0.0-1.0, "flag": true/false, "reason": "brief 
         college_id, author_id, company_name, company_normalized,
         role_title, drive_type, outcome, interview_process, tips,
         difficulty, would_recommend, show_name, is_admin_posted,
-        student_name, student_email, batch_year, category_snapshot,
+        batch_year, category_snapshot,
         ai_screen_score, ai_screen_passed, ai_screen_reason, ai_screened_at, status
       ) VALUES (
         ${user.collegeId}, ${user.id}, ${companyName}, ${companyNormalized},
         ${roleTitle ?? null}, ${driveType ?? "placement"}, ${outcome ?? "not_disclosed"}, ${interviewProcess ?? null}, ${tips ?? null},
         ${difficulty ?? 3}, ${wouldRecommend ?? null}, ${showName ?? false}, false,
-        ${user.name}, ${user.email}, ${profile.batchYear ?? null}, ${profile.category ?? null},
+        ${profile.batchYear ?? null}, ${profile.category ?? null},
         ${aiScreenScore}, ${aiScreenPassed}, ${aiScreenReason}, NOW(), ${status}
       )
     `);

@@ -1,7 +1,7 @@
 'use client';
 
 import { UseFormReturn, UseFieldArrayReturn } from 'react-hook-form';
-import { FormField, FormControl, FormItem, FormLabel } from '@/components/ui/form';
+import { FormField, FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, ExternalLink, Briefcase, FolderOpen } from 'lucide-react';
 import type { StudentProfileInput, projectSchema, workExperienceSchema } from '@/lib/validations/student-profile';
@@ -130,8 +130,8 @@ export default function TabProjects({
             <div key={field.id} className='p-6 bg-muted/20 border border-border rounded-lg relative space-y-4'>
               <button type='button' onClick={() => removeWork(idx)} className='absolute top-4 right-4 p-2 bg-destructive/10 text-destructive rounded-md hover:bg-destructive hover:text-white transition-colors'><Trash2 className='w-4 h-4' /></button>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
-                <FormField control={form.control} name={`workExperience.${idx}.role`} render={({field: f}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Role</FormLabel><FormControl><Input className={inputClass + " h-9 text-sm"} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
-                <FormField control={form.control} name={`workExperience.${idx}.company`} render={({field: f}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Company</FormLabel><FormControl><Input className={inputClass + " h-9 text-sm"} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                <FormField control={form.control} name={`workExperience.${idx}.role`} render={({field: f, fieldState}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Role *</FormLabel><FormControl><Input className={`${inputClass} h-9 text-sm${fieldState.error ? ' border-destructive' : ''}`} {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
+                <FormField control={form.control} name={`workExperience.${idx}.company`} render={({field: f, fieldState}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Company *</FormLabel><FormControl><Input className={`${inputClass} h-9 text-sm${fieldState.error ? ' border-destructive' : ''}`} {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                 <FormField control={form.control} name={`workExperience.${idx}.startDate`} render={({field: f}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Start Date</FormLabel><FormControl><Input type='month' className={inputClass + " h-9 text-sm"} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                 <FormField control={form.control} name={`workExperience.${idx}.endDate`} render={({field: f}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>End Date</FormLabel><FormControl><Input type='month' className={inputClass + " h-9 text-sm"} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                 <div className='md:col-span-2'>
@@ -159,8 +159,8 @@ export default function TabProjects({
             <div key={field.id} className='p-6 bg-muted/20 border border-border rounded-lg relative space-y-4'>
               <button type='button' onClick={() => removeProject(idx)} className='absolute top-4 right-4 p-2 bg-destructive/10 text-destructive rounded-md hover:bg-destructive hover:text-white transition-colors'><Trash2 className='w-4 h-4' /></button>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
-                <FormField control={form.control} name={`projects.${idx}.title`} render={({field: f}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Title</FormLabel><FormControl><Input className={inputClass + " h-9 text-sm"} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
-                <FormField control={form.control} name={`projects.${idx}.url`} render={({field: f}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>URL</FormLabel><FormControl><Input className={inputClass + " h-9 text-sm"} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
+                <FormField control={form.control} name={`projects.${idx}.title`} render={({field: f, fieldState}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Title *</FormLabel><FormControl><Input className={`${inputClass} h-9 text-sm${fieldState.error ? ' border-destructive' : ''}`} {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
+                <FormField control={form.control} name={`projects.${idx}.url`} render={({field: f}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>URL (optional)</FormLabel><FormControl><Input className={inputClass + " h-9 text-sm"} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                 <div className='md:col-span-2'>
                   <FormField control={form.control} name={`projects.${idx}.techStack`} render={({field: f}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Tech Stack (comma separated)</FormLabel><FormControl><Input className={inputClass + " h-9 text-sm"} value={f.value?.join(', ') || ''} onChange={(e) => f.onChange(e.target.value.split(',').map(s=>s.trim()).filter(Boolean))}/></FormControl></FormItem>} />
                 </div>
