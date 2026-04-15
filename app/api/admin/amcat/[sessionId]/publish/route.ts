@@ -82,7 +82,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       studentsUpdated: updated,
-      message: `Published. ${updated} student categories updated in SkillSync.`,
+      message: `Published. ${updated} student categories updated in SkillSync`,
     });
   } catch (error) {
     if (isRedirectError(error)) throw error;

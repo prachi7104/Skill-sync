@@ -10,7 +10,7 @@ export default function OfflinePage() {
     <div className="relative min-h-screen bg-background flex flex-col">
       <header className="h-14 border-b border-border/60 flex items-center px-4 sm:px-6">
         <span className="font-sans text-base font-black tracking-tight text-foreground select-none">
-          Skill<span className="text-primary">Sync.</span>
+          Skill<span className="text-primary">Sync</span>
         </span>
       </header>
 

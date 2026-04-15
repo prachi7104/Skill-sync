@@ -22,7 +22,7 @@ async function makeScreenshot(w, h, label, outPath) {
       <rect x="${w/2 - 120}" y="${h/2 - 60}" width="240" height="80" rx="12" fill="#1e2a4a"/>
       <text x="${w/2}" y="${h/2 - 16}" text-anchor="middle" font-family="system-ui, sans-serif"
             font-size="28" font-weight="900" fill="#5A77DF" letter-spacing="-0.5">
-        SkillSync.
+        SkillSync
       </text>
       <text x="${w/2}" y="${h/2 + 18}" text-anchor="middle" font-family="system-ui, sans-serif"
             font-size="13" fill="#CCD4DE">

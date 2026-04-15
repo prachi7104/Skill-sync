@@ -10,7 +10,7 @@ export default function LandingHeader() {
       <div className="flex h-full w-full items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/">
           <span className="select-none font-sans text-lg font-black tracking-tight text-foreground">
-            Skill<span className="text-primary">Sync.</span>
+            Skill<span className="text-primary">Sync</span>
           </span>
         </Link>
         <nav className="flex items-center gap-4">

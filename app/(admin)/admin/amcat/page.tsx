@@ -922,7 +922,7 @@ export default function AdminAmcatPage() {
             <DialogTitle>Publish AMCAT Results</DialogTitle>
             <DialogDescription>
               You are about to publish results for "{selectedSession?.session_name}".
-              This will update categories for {summary.linked} students in SkillSync.
+              This will update categories for {summary.linked} students in SkillSync
               {" "}{summary.unmatched} students have no SkillSync account and will not be updated.
               {" "}{summary.overridden} categories were manually overridden.
             </DialogDescription>

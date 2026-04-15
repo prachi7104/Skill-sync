@@ -44,7 +44,7 @@ export default function LoginBrandPanel() {
 
       <div className='relative z-10'>
         <span className='select-none font-sans text-2xl font-black tracking-tight'>
-          Skill<span className='text-primary'>Sync.</span>
+          Skill<span className='text-primary'>Sync</span>
         </span>
         <h2 className='mt-5 max-w-[18ch] text-3xl font-black leading-tight tracking-tight text-foreground'>
           One-stop complete placement platform

@@ -20,7 +20,7 @@ export default function LandingFooterStrip() {
 
         {/* LogoMark */}
         <span className='select-none font-sans text-base font-black tracking-tight text-foreground'>
-          Skill<span className='text-primary'>Sync.</span>
+          Skill<span className='text-primary'>Sync</span>
         </span>
 
         {/* Copyright */}

@@ -92,7 +92,7 @@ export default function LoginFormPanel({
 
         {/* 2. Logotype */}
         <h1 className='mb-2 select-none text-4xl font-black leading-none tracking-tight text-foreground sm:text-5xl'>
-          Skill<span className='text-primary'>Sync.</span>
+          Skill<span className='text-primary'>Sync</span>
         </h1>
         <p className='mb-4 text-sm font-medium leading-relaxed text-muted-foreground'>
           SkillSync — Where your skills meet the right opportunity.
