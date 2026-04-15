@@ -6,6 +6,7 @@ import { z } from "zod";
 import { hasComponent, requireRole } from "@/lib/auth/helpers";
 import { deleteCloudinaryRawByUrl, uploadRawFileToCloudinary } from "@/lib/cloudinary";
 import { db } from "@/lib/db";
+import { SOFTSKILLS_RESOURCE_CATEGORIES, TECHNICAL_RESOURCE_CATEGORIES } from "@/lib/phase8-10";
 
 const updateResourceSchema = z.object({
   section: z.enum(["technical", "softskills"]).optional(),
@@ -17,6 +18,15 @@ const updateResourceSchema = z.object({
   companyName: z.string().max(255).nullable().optional(),
   status: z.enum(["draft", "published", "archived"]).optional(),
 });
+
+const CATEGORY_BY_SECTION = {
+  technical: new Set(TECHNICAL_RESOURCE_CATEGORIES),
+  softskills: new Set(SOFTSKILLS_RESOURCE_CATEGORIES),
+} as const;
+
+function isValidCategoryForSection(section: "technical" | "softskills", category: string) {
+  return CATEGORY_BY_SECTION[section].has(category as never);
+}
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -134,6 +144,9 @@ export async function PATCH(
     }
 
     const nextSection = payload.section ?? resource.section;
+    if (payload.category && !isValidCategoryForSection(nextSection, payload.category)) {
+      return NextResponse.json({ error: "Invalid resource category for the selected section" }, { status: 400 });
+    }
     if (user.role !== "admin") {
       const allowed = await hasComponent(getRequiredComponent(nextSection));
       if (!allowed) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, Eye, LayoutGrid, List, Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { getCache, setCache, invalidatePrefix } from "@/lib/client-cache";
 import { toast } from "sonner";
@@ -18,19 +18,16 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { formatCategoryLabel, SOFTSKILLS_RESOURCE_CATEGORIES, TECHNICAL_RESOURCE_CATEGORIES } from "@/lib/phase8-10";
+import { formatCategoryLabel, SOFTSKILLS_RESOURCE_CATEGORIES } from "@/lib/phase8-10";
 import { stripMarkdown } from "@/lib/content-utils";
 import { safeFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { StatusCard } from "@/components/ui/status-card";
 import { useConfirmDialog } from "@/components/shared/use-confirm-dialog";
 
-const CATEGORY_MAP = {
-  technical: TECHNICAL_RESOURCE_CATEGORIES,
-  softskills: SOFTSKILLS_RESOURCE_CATEGORIES,
-} as const;
+const RESOURCE_SECTION = "softskills" as const;
+const CATEGORY_OPTIONS = SOFTSKILLS_RESOURCE_CATEGORIES;
 
 type ResourceRow = {
   id: string;
@@ -77,7 +74,6 @@ type EditResourceForm = {
 
 export default function ResourceLibrary() {
   const { confirm, ConfirmDialog } = useConfirmDialog();
-  const [section, setSection] = useState<"technical" | "softskills">("technical");
   const [category, setCategory] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [resources, setResources] = useState<ResourceRow[]>([]);
@@ -85,7 +81,6 @@ export default function ResourceLibrary() {
   const [canCreate, setCanCreate] = useState(false);
   const [viewerRole, setViewerRole] = useState<"student" | "faculty" | "admin" | null>(null);
   const [viewerId, setViewerId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published" | "archived">("all");
   const [selected, setSelected] = useState<ResourceRow | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -95,7 +90,7 @@ export default function ResourceLibrary() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "stack">("stack");
   const [form, setForm] = useState<CreateResourceForm>({
-    category: TECHNICAL_RESOURCE_CATEGORIES[0],
+    category: CATEGORY_OPTIONS[0],
     title: "",
     body: "",
     tags: "",
@@ -104,8 +99,8 @@ export default function ResourceLibrary() {
     file: null as File | null,
   });
   const [editForm, setEditForm] = useState<EditResourceForm>({
-    section: "technical" as "technical" | "softskills",
-    category: TECHNICAL_RESOURCE_CATEGORIES[0],
+    section: RESOURCE_SECTION,
+    category: CATEGORY_OPTIONS[0],
     title: "",
     body: "",
     tags: "",
@@ -115,17 +110,9 @@ export default function ResourceLibrary() {
     removeAttachment: false,
   });
 
-  useEffect(() => {
-    setCategory("all");
-    setForm((current) => ({
-      ...current,
-      category: CATEGORY_MAP[section][0],
-    }));
-  }, [section]);
-
   async function refreshCurrentList(showLoading = false) {
     if (showLoading) setLoading(true);
-    const cacheKey = `resources:${section}:${category}:${statusFilter}:${search}`;
+    const cacheKey = `resources:${RESOURCE_SECTION}:${category}:${search}`;
     try {
       // Fast path: serve from cache on non-forced refreshes
       if (!showLoading) {
@@ -145,10 +132,9 @@ export default function ResourceLibrary() {
         }
       }
 
-      const params = new URLSearchParams({ section });
+      const params = new URLSearchParams({ section: RESOURCE_SECTION });
       if (category !== "all") params.set("category", category);
       if (search) params.set("q", search);
-      if (statusFilter !== "all") params.set("status", statusFilter);
 
       const { data, error } = await safeFetch<{
         resources: ResourceRow[];
@@ -182,7 +168,7 @@ export default function ResourceLibrary() {
 
   useEffect(() => {
     refreshCurrentList(true);
-  }, [category, search, section, statusFilter]);
+  }, [category, search]);
 
   async function openResource(resource: ResourceRow) {
     setSelected(resource);
@@ -199,7 +185,7 @@ export default function ResourceLibrary() {
     invalidatePrefix("resources:");
     try {
       const body = new FormData();
-      body.append("section", section);
+      body.append("section", RESOURCE_SECTION);
       body.append("category", form.category);
       body.append("title", form.title);
       body.append("body", form.body);
@@ -216,7 +202,7 @@ export default function ResourceLibrary() {
       toast.success(form.status === "draft" ? "Resource saved as draft" : "Resource created");
       setCreateOpen(false);
       setForm({
-        category: CATEGORY_MAP[section][0],
+        category: CATEGORY_OPTIONS[0],
         title: "",
         body: "",
         tags: "",
@@ -233,7 +219,7 @@ export default function ResourceLibrary() {
   function startEdit(resource: ResourceRow) {
     setEditing(resource);
     setEditForm({
-      section: resource.section,
+      section: RESOURCE_SECTION,
       category: resource.category,
       title: resource.title,
       body: resource.body ?? "",
@@ -260,7 +246,7 @@ export default function ResourceLibrary() {
       const res = (editForm.file || editForm.removeAttachment)
         ? await (async () => {
           const body = new FormData();
-          body.append("section", editForm.section);
+          body.append("section", RESOURCE_SECTION);
           body.append("category", editForm.category);
           body.append("title", editForm.title);
           body.append("body", editForm.body);
@@ -280,7 +266,7 @@ export default function ResourceLibrary() {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            section: editForm.section,
+            section: RESOURCE_SECTION,
             category: editForm.category,
             title: editForm.title,
             body: editForm.body || null,
@@ -333,23 +319,26 @@ export default function ResourceLibrary() {
     return Boolean(viewerId && resource.author_id === viewerId);
   }
 
-  const sideCategories = useMemo(() => CATEGORY_MAP[section], [section]);
-  const editCategoryOptions = useMemo(() => CATEGORY_MAP[editForm.section], [editForm.section]);
+  const editCategoryOptions = CATEGORY_OPTIONS;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight text-foreground">Resource Library</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Browse technical and soft-skills content curated for your college.</p>
+    <div className="w-full space-y-6">
+      <div className="rounded-2xl border border-border/60 bg-card/60 p-4 shadow-sm backdrop-blur sm:p-5 xl:p-6">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div className="max-w-3xl space-y-1.5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">Resource Library</p>
+          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">Browse resources</h1>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Search and filter soft skills resources by tag, then open or manage the content you need.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center rounded-md border border-border overflow-hidden">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <div className="flex w-full items-center overflow-hidden rounded-md border border-border sm:w-auto">
             <button
               type="button"
               onClick={() => setViewMode("stack")}
               className={cn(
-                "p-2 transition-colors",
+                "flex-1 p-2 transition-colors sm:flex-none",
                 viewMode === "stack"
                   ? "bg-primary text-primary-foreground"
                   : "bg-card text-muted-foreground hover:bg-muted",
@@ -362,7 +351,7 @@ export default function ResourceLibrary() {
               type="button"
               onClick={() => setViewMode("grid")}
               className={cn(
-                "p-2 transition-colors",
+                "flex-1 p-2 transition-colors sm:flex-none",
                 viewMode === "grid"
                   ? "bg-primary text-primary-foreground"
                   : "bg-card text-muted-foreground hover:bg-muted",
@@ -373,155 +362,125 @@ export default function ResourceLibrary() {
             </button>
           </div>
           {canCreate ? (
-            <Button onClick={() => setCreateOpen(true)} className="gap-2 bg-primary hover:bg-primary/90">
+            <Button onClick={() => setCreateOpen(true)} className="w-full gap-2 bg-primary hover:bg-primary/90 sm:w-auto">
               <Plus className="h-4 w-4" /> New Resource
             </Button>
           ) : null}
         </div>
+        </div>
       </div>
 
-      <Tabs value={section} onValueChange={(value) => setSection(value as "technical" | "softskills")}>
-        <TabsList className="bg-card text-muted-foreground">
-          <TabsTrigger value="technical">Technical</TabsTrigger>
-          <TabsTrigger value="softskills">Soft Skills</TabsTrigger>
-        </TabsList>
-        <TabsContent value={section}>
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-[260px_1fr]">
-            <aside className="space-y-4 rounded-lg border border-border bg-card p-4">
-              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search resources" className="border-border bg-muted/20 text-foreground" />
-              {(viewerRole === "faculty" || viewerRole === "admin") ? (
-                <div className="grid grid-cols-2 gap-2">
-                {(["all", "published", "draft", "archived"] as const).map((statusKey) => {
-                  const isActive = statusFilter === statusKey;
-                  return (
-                    <Button
-                      key={statusKey}
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      aria-pressed={isActive}
-                      onClick={() => setStatusFilter(statusKey)}
-                      className={cn(
-                        "justify-start rounded-md px-3 py-2 text-xs font-semibold text-left",
-                        isActive
-                          ? "bg-primary text-primary-foreground hover:bg-primary/80"
-                          : "text-muted-foreground hover:bg-muted/80"
-                      )}
-                    >
-                      {statusKey === "all" ? "All" : statusKey.charAt(0).toUpperCase() + statusKey.slice(1)}
-                    </Button>
-                  );
-                })}
-                </div>
-              ) : null}
-              <div className="space-y-2">
-                <button
+      <div className="grid gap-6 grid-cols-1 xl:grid-cols-[300px_1fr]">
+        <aside className="space-y-4 rounded-2xl border border-border/60 bg-card/80 p-4 shadow-sm backdrop-blur sm:p-5 xl:sticky xl:top-6 xl:self-start">
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search resources"
+            className="border-border bg-muted/20 text-foreground"
+          />
+          <div className="flex flex-wrap gap-2">
+            {CATEGORY_OPTIONS.map((item) => {
+              const isActive = category === item;
+              return (
+                <Button
+                  key={item}
                   type="button"
-                  onClick={() => setCategory("all")}
+                  variant="outline"
+                  size="sm"
+                  aria-pressed={isActive}
+                  onClick={() => setCategory(isActive ? "all" : item)}
                   className={cn(
-                    "w-full rounded-md px-4 py-3 text-left text-sm font-semibold",
-                    category === "all" ? "bg-primary text-foreground" : "bg-muted/20 text-muted-foreground hover:bg-muted"
+                    "min-h-9 justify-start rounded-full px-4 py-2 text-left text-sm font-semibold",
+                    isActive
+                      ? "bg-primary text-primary-foreground hover:bg-primary/80"
+                      : "text-muted-foreground hover:bg-muted/80"
                   )}
                 >
-                  All Categories
-                </button>
-                {sideCategories.map((item) => {
-                  const isActive = category === item;
-                  return (
-                    <Button
-                      key={item}
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      aria-pressed={isActive}
-                      onClick={() => setCategory(item)}
-                      className={cn(
-                        "w-full justify-start rounded-md px-4 py-3 text-left text-sm font-semibold",
-                        isActive
-                          ? "bg-primary text-primary-foreground hover:bg-primary/80"
-                          : "text-muted-foreground hover:bg-muted/80"
-                      )}
-                    >
-                      {formatCategoryLabel(item)}
-                    </Button>
-                  );
-                })}
-              </div>
-            </aside>
-
-            <div className="space-y-4">
-               {loading ? (
-                 <StatusCard
-                   variant="loading"
-                   title="Loading resources"
-                   description="Please wait while we fetch the latest entries."
-                 />
-               ) : null}
-               {!loading && fetchError ? (
-                 <StatusCard
-                   variant="error"
-                   title="Unable to load resources"
-                   description={fetchError}
-                   actionLabel="Try again"
-                   onAction={() => refreshCurrentList(true)}
-                 />
-               ) : null}
-               {!loading && !fetchError && resources.length === 0 ? (
-                 <StatusCard
-                   variant="empty"
-                   title="No resources found"
-                   description="Try broadening your filters or keywords."
-                 />
-               ) : null}
-              {!loading && resources.length > 0 ? (
-                <div className={viewMode === "grid"
-                  ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
-                  : "space-y-4"}>
-                  {resources.map((resource) => (
-                    <article key={resource.id} className="rounded-lg border border-border bg-card p-5 transition-all hover:border-border">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-2 flex items-center gap-2 flex-wrap">
-                            <Badge className="border border-border bg-card text-foreground">{formatCategoryLabel(resource.category)}</Badge>
-                            {resource.status && resource.status !== "published" ? (
-                              <Badge className="border border-warning/20 bg-warning/10 text-warning">
-                                {resource.status.toUpperCase()}
-                              </Badge>
-                            ) : null}
-                            {resource.attachment_url ? <Upload className="h-3.5 w-3.5 text-muted-foreground" /> : null}
-                          </div>
-                          <h3 className="text-sm font-bold leading-tight text-foreground">{resource.title}</h3>
-                          {resource.body ? <p className="mt-1.5 line-clamp-2 text-xs text-muted-foreground">{stripMarkdown(resource.body)}</p> : null}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button variant="outline" className="border-border bg-muted/20 text-foreground hover:bg-muted" onClick={() => openResource(resource)}>
-                            Open
-                          </Button>
-                          {canManageResource(resource) ? (
-                            <Button variant="outline" className="gap-1 border-border bg-muted/20 text-foreground hover:bg-muted" onClick={() => startEdit(resource)}>
-                              <Pencil className="h-3 w-3" /> Edit
-                            </Button>
-                          ) : null}
-                          {canManageResource(resource) ? (
-                            <Button variant="outline" className="gap-1 border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20" onClick={() => deleteResource(resource)}>
-                              <Trash2 className="h-3 w-3" /> Delete
-                            </Button>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div className="mt-3 flex items-center gap-4 border-t border-border pt-3">
-                        <span className="text-xs text-muted-foreground">By {resource.author_name}</span>
-                        <span className="text-xs text-muted-foreground">{new Date(resource.created_at).toLocaleDateString()}</span>
-                        <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground"><Eye className="h-3 w-3" /> {resource.view_count}</span>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+                  {formatCategoryLabel(item)}
+                </Button>
+              );
+            })}
           </div>
-        </TabsContent>
-      </Tabs>
+        </aside>
+
+        <div className="space-y-4">
+          {loading ? (
+            <StatusCard
+              variant="loading"
+              title="Loading resources"
+              description="Please wait while we fetch the latest entries."
+            />
+          ) : null}
+          {!loading && fetchError ? (
+            <StatusCard
+              variant="error"
+              title="Unable to load resources"
+              description={fetchError}
+              actionLabel="Try again"
+              onAction={() => refreshCurrentList(true)}
+            />
+          ) : null}
+          {!loading && !fetchError && resources.length === 0 ? (
+            <StatusCard
+              variant="empty"
+              title="No resources found"
+              description="Try broadening your filters or keywords."
+            />
+          ) : null}
+          {!loading && resources.length > 0 ? (
+            <div
+              className={viewMode === "grid"
+                ? "grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3"
+                : "space-y-4"}
+            >
+              {resources.map((resource) => (
+                <article key={resource.id} className="flex h-full flex-col rounded-2xl border border-border/60 bg-card p-5 shadow-sm transition-all hover:border-border/80">
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className="border border-border bg-card text-foreground">{formatCategoryLabel(resource.category)}</Badge>
+                      {resource.status && resource.status !== "published" ? (
+                        <Badge className="border border-warning/20 bg-warning/10 text-warning">
+                          {resource.status.toUpperCase()}
+                        </Badge>
+                      ) : null}
+                      {resource.attachment_url ? <Upload className="h-3.5 w-3.5 text-muted-foreground" /> : null}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <h3 className="text-base font-bold leading-snug text-foreground sm:text-lg">{resource.title}</h3>
+                      {resource.body ? <p className="text-sm leading-6 text-muted-foreground">{stripMarkdown(resource.body)}</p> : null}
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <span>By {resource.author_name}</span>
+                      <span>{new Date(resource.created_at).toLocaleDateString()}</span>
+                      <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {resource.view_count}</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
+                      <Button variant="outline" className="w-full border-border bg-muted/20 text-foreground hover:bg-muted sm:w-auto" onClick={() => openResource(resource)}>
+                        Open
+                      </Button>
+                      {canManageResource(resource) ? (
+                        <Button variant="outline" className="w-full gap-1 border-border bg-muted/20 text-foreground hover:bg-muted sm:w-auto" onClick={() => startEdit(resource)}>
+                          <Pencil className="h-3 w-3" /> Edit
+                        </Button>
+                      ) : null}
+                      {canManageResource(resource) ? (
+                        <Button variant="outline" className="w-full gap-1 border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20 sm:w-auto" onClick={() => deleteResource(resource)}>
+                          <Trash2 className="h-3 w-3" /> Delete
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
 
       <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
         <DialogContent className="flex flex-col w-full max-w-full h-[100dvh] rounded-none sm:w-[calc(100vw-2rem)] sm:max-w-3xl sm:h-auto sm:max-h-[90vh] sm:rounded-xl border-border bg-muted/20 text-foreground overflow-hidden">
@@ -572,7 +531,7 @@ export default function ResourceLibrary() {
       <DialogContent className="w-[calc(100vw-1rem)] max-w-[48rem] max-h-[90vh] overflow-hidden border-border bg-muted/20 text-foreground sm:w-[calc(100vw-2rem)]">
           <DialogHeader>
             <DialogTitle>Create Resource</DialogTitle>
-            <DialogDescription>Post a new {section === "technical" ? "technical" : "soft skills"} resource for your college.</DialogDescription>
+            <DialogDescription>Post a new soft skills resource for your college.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 max-h-[72vh] overflow-y-auto pr-1">
             <div className="grid gap-4 md:grid-cols-2">
@@ -583,7 +542,7 @@ export default function ResourceLibrary() {
                   onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
                   className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground"
                 >
-                  {CATEGORY_MAP[section].map((option) => (
+                  {CATEGORY_OPTIONS.map((option) => (
                     <option key={option} value={option}>{formatCategoryLabel(option)}</option>
                   ))}
                 </select>
@@ -648,21 +607,6 @@ export default function ResourceLibrary() {
           <div className="grid gap-4 max-h-[72vh] overflow-y-auto pr-1">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Section</Label>
-                <select
-                  value={editForm.section}
-                  onChange={(event) => setEditForm((current) => ({
-                    ...current,
-                    section: event.target.value as "technical" | "softskills",
-                    category: CATEGORY_MAP[event.target.value as "technical" | "softskills"][0],
-                  }))}
-                  className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground"
-                >
-                  <option value="technical">Technical</option>
-                  <option value="softskills">Soft Skills</option>
-                </select>
-              </div>
-              <div className="space-y-2">
                 <Label>Category</Label>
                 <select
                   value={editForm.category}
@@ -674,12 +618,12 @@ export default function ResourceLibrary() {
                   ))}
                 </select>
               </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Title</Label>
                 <Input value={editForm.title} onChange={(event) => setEditForm((current) => ({ ...current, title: event.target.value }))} className="border-border bg-card text-foreground" />
               </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Company Name (optional)</Label>
                 <Input value={editForm.companyName} onChange={(event) => setEditForm((current) => ({ ...current, companyName: event.target.value }))} className="border-border bg-card text-foreground" />

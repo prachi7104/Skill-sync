@@ -36,7 +36,7 @@ export function StatusCard({ title, description, actionLabel, onAction, variant 
       aria-live={variant === "error" || variant === "empty" ? "polite" : "off"}
     >
       <div className="flex items-center gap-3">
-        <Icon className={cn("h-5 w-5 shrink-0", variant === "error" ? "text-destructive" : "text-muted-foreground")} aria-hidden="true" />
+        <Icon className={cn("h-5 w-5 shrink-0", variant === "loading" && "animate-spin", variant === "error" ? "text-destructive" : "text-muted-foreground")} aria-hidden="true" />
         <p className="text-base font-bold text-foreground">{title}</p>
       </div>
       {description ? <p className="text-[13px] text-muted-foreground">{description}</p> : null}

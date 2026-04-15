@@ -6,7 +6,7 @@ import { z } from "zod";
 import { requireAuth, requireRole, hasComponent } from "@/lib/auth/helpers";
 import { uploadRawFileToCloudinary } from "@/lib/cloudinary";
 import { db } from "@/lib/db";
-import { formatCategoryLabel } from "@/lib/phase8-10";
+import { formatCategoryLabel, SOFTSKILLS_RESOURCE_CATEGORIES, TECHNICAL_RESOURCE_CATEGORIES } from "@/lib/phase8-10";
 
 const resourceSchema = z.object({
   section: z.enum(["technical", "softskills"]),
@@ -18,6 +18,15 @@ const resourceSchema = z.object({
   companyName: z.string().max(255).optional().nullable(),
   status: z.enum(["draft", "published", "archived"]).optional(),
 });
+
+const CATEGORY_BY_SECTION = {
+  technical: new Set(TECHNICAL_RESOURCE_CATEGORIES),
+  softskills: new Set(SOFTSKILLS_RESOURCE_CATEGORIES),
+} as const;
+
+function isValidCategoryForSection(section: "technical" | "softskills", category: string) {
+  return CATEGORY_BY_SECTION[section].has(category as never);
+}
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -205,6 +214,10 @@ export async function POST(req: NextRequest) {
       if (!allowed) {
         return NextResponse.json({ error: `Requires ${requiredComponent} permission` }, { status: 403 });
       }
+    }
+
+    if (!isValidCategoryForSection(parsedBody.section, parsedBody.category)) {
+      return NextResponse.json({ error: "Invalid resource category for the selected section" }, { status: 400 });
     }
 
     const normalizedBody = parsedBody.body?.trim() ? parsedBody.body : null;
