@@ -1,11 +1,18 @@
-
+import "server-only";
 import { NextResponse } from "next/server";
+import { requireRole } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { sql, eq } from "drizzle-orm";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Admin-only DB diagnostic route.
+ * Verifies connectivity, schema, and basic CRUD against the live database.
+ * Protected: requires admin role.
+ */
 export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const diagnostics: any = {
@@ -17,6 +24,8 @@ export async function GET() {
     };
 
     try {
+        await requireRole(["admin"]);
+
         // 1. Test Connectivity
         const now = await db.execute(sql`SELECT NOW()`);
         diagnostics.connectivity = "success";
@@ -56,7 +65,6 @@ export async function GET() {
         // 4. Test Insert/Delete
         const testEmail = `db-test-${Date.now()}@example.com`;
 
-        // Insert
         const [inserted] = await db.insert(users).values({
             email: testEmail,
             name: "DB Diagnostic Test User",
@@ -66,12 +74,9 @@ export async function GET() {
         if (inserted && inserted.id) {
             diagnostics.crud = "insert_success";
 
-            // Verify fetch
             const fetched = await db.select().from(users).where(eq(users.id, inserted.id));
             if (fetched.length > 0) {
                 diagnostics.crud = "read_success";
-
-                // Delete
                 await db.delete(users).where(eq(users.id, inserted.id));
                 diagnostics.crud = "delete_success (full cycle)";
             } else {
@@ -88,11 +93,11 @@ export async function GET() {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
+        if (isRedirectError(error)) throw error;
         console.error("DB Diagnostic Error:", error);
         return NextResponse.json({
             status: "error",
             message: error.message,
-            stack: error.stack,
             ...diagnostics
         }, { status: 500 });
     }

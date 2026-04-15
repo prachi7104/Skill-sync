@@ -21,6 +21,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import Groq from "groq-sdk";
 import { env } from "@/lib/env";
+import { logger } from "@/lib/logger";
 
 // ============================================================================
 // PROVIDER CLIENTS — Initialized once at module scope
@@ -465,7 +466,7 @@ function parseWithRegex(resumeText: string): ParsedResumeData {
  */
 export async function parseResumeWithAI(resumeText: string): Promise<ParsedResumeData> {
     if (!resumeText || resumeText.length < 50) {
-        console.warn("[AI Parser] Resume text too short, returning empty result");
+        logger.warn("[AI Parser] Resume text too short, returning empty result");
         return { ...EMPTY_RESULT, coding_profiles: [], education_history: [], experience: [], projects: [], skills: [], research_papers: [], certifications: [], achievements: [], soft_skills: [] };
     }
 
@@ -489,14 +490,14 @@ export async function parseResumeWithAI(resumeText: string): Promise<ParsedResum
                 // Extract JSON from raw response
                 const jsonObj = extractJSON(rawResponse);
                 if (!jsonObj) {
-                    console.error(`[AI Parser] ❌ ${model.label}: Could not extract JSON.`);
+                    logger.error(`[AI Parser] ${model.label}: Could not extract JSON.`);
                     break; // Bad output, skip to next model (no retry)
                 }
 
                 // Validate and build typed result
                 const parsed = validateAndBuild(jsonObj);
                 if (!parsed) {
-                    console.error(`[AI Parser] ❌ ${model.label}: Validation failed`);
+                    logger.error(`[AI Parser] ${model.label}: Validation failed`);
                     break; // Schema fail, skip to next model
                 }
 
@@ -505,8 +506,7 @@ export async function parseResumeWithAI(resumeText: string): Promise<ParsedResum
 
                 // Accept if score is good enough (≥30 = at least name + some data)
                 if (score >= 30) {
-                    // eslint-disable-next-line no-console
-                console.log(`[AI Parser] ✅ ${model.label} succeeded (score ${score}, attempt ${attempts})`);
+                    logger.info(`[AI Parser] ${model.label} succeeded (score ${score}, attempt ${attempts})`);
                     return parsed;
                 }
 
@@ -520,12 +520,11 @@ export async function parseResumeWithAI(resumeText: string): Promise<ParsedResum
 
             } catch (error: unknown) {
                 const msg = error instanceof Error ? error.message : String(error);
-                console.error(`[AI Parser] ❌ ${model.label} attempt ${attempts} failed: ${msg}`);
+                logger.error(`[AI Parser] ${model.label} attempt ${attempts} failed: ${msg}`);
 
                 if (attempts < maxAttempts && isRetriable(error)) {
                     const delay = 300 + jitterMs();
-                    // eslint-disable-next-line no-console
-                    console.log(`[AI Parser] ⏳ Retrying ${model.label} in ${delay}ms...`);
+                    logger.info(`[AI Parser] Retrying ${model.label} in ${delay}ms...`);
                     await new Promise(r => setTimeout(r, delay));
                     continue;
                 }
@@ -536,12 +535,12 @@ export async function parseResumeWithAI(resumeText: string): Promise<ParsedResum
 
     // If we have a partial result from any model, use it even if score < 30
     if (bestResult && bestScore > 0) {
-        console.warn(`[AI Parser] ⚠️ Using best partial result from ${bestModel} (score ${bestScore})`);
+        logger.warn(`[AI Parser] Using best partial result from ${bestModel} (score ${bestScore})`);
         return bestResult;
     }
 
     // Absolute fallback: regex
-    console.warn("[AI Parser] ⚠️ All AI models failed, using regex fallback");
+    logger.warn("[AI Parser] All AI models failed, using regex fallback");
     return parseWithRegex(resumeText);
 }
 

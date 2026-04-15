@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { jobs, students, drives } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { generateEmbedding, composeStudentEmbeddingText, composeJDEmbeddingText } from "@/lib/embeddings";
+import { logger } from "@/lib/logger";
 
 const MAX_JOBS_PER_TICK = 3;
 
@@ -15,8 +16,7 @@ export async function processEmbeddingJobs() {
         return { processed: 0, failed: 0 };
     }
 
-    // eslint-disable-next-line no-console
-    console.log("[Worker:Embeddings] Checking for pending generate_embedding jobs...");
+    logger.info("[Worker:Embeddings] Checking for pending generate_embedding jobs...");
 
     let processed = 0;
     let failed = 0;
@@ -56,8 +56,7 @@ export async function processEmbeddingJobs() {
                 targetId: string;
             };
 
-            // eslint-disable-next-line no-console
-            console.log(
+            logger.info(
                 `[Worker:Embeddings] Processing job ${job.id} for ${targetType} ${targetId}`,
             );
 
@@ -163,14 +162,13 @@ export async function processEmbeddingJobs() {
                 })
                 .where(eq(jobs.id, job.id));
 
-            // eslint-disable-next-line no-console
-            console.log(`[Worker:Embeddings] Job ${job.id} completed successfully.`);
+            logger.info(`[Worker:Embeddings] Job ${job.id} completed successfully.`);
             processed++;
             await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error: unknown) {
             const message =
                 error instanceof Error ? error.message : "Unknown error";
-            console.error(`[Worker:Embeddings] Job ${job.id} failed:`, message);
+            logger.error(`[Worker:Embeddings] Job ${job.id} failed: ${message}`);
 
             const newRetryCount = (job.retryCount ?? 0) + 1;
             const maxRetries = job.maxRetries ?? 3;

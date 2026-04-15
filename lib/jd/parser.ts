@@ -1,4 +1,5 @@
 import { getRouter } from "@/lib/antigravity/instance";
+import { logger } from "@/lib/logger";
 
 
 // ============================================================================
@@ -449,8 +450,7 @@ export async function parseJD(rawJd: string, titleHint?: string, companyHint?: s
   const router = getRouter();
 
 
-  // eslint-disable-next-line no-console
-  console.log("[JD Parser] Starting advanced JD parsing via Antigravity Router...");
+  logger.info("[JD Parser] Starting advanced JD parsing via Antigravity Router...");
 
   let prompt = JD_PARSER_SYSTEM_PROMPT + "\n\nRAW JD TEXT:\n" + rawJd;
   if (titleHint || companyHint) {
@@ -482,8 +482,7 @@ export async function parseJD(rawJd: string, titleHint?: string, companyHint?: s
     throw new Error("Failed to parse JD response: Invalid JSON or malformed response");
   }
 
-  // eslint-disable-next-line no-console
-  console.log(`[JD Parser] Success via ${result.modelUsed}`);
+  logger.info(`[JD Parser] Success via ${result.modelUsed}`);
   return validateAndFillDefaults(parsed, titleHint, companyHint);
 }
 
