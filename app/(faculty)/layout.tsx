@@ -27,9 +27,9 @@ export default async function FacultyLayout({ children }: { children: React.Reac
           <MobileNavToggle />
           <Link
             href='/faculty'
-            className='font-sans text-base font-black tracking-tight text-foreground select-none hover:text-primary transition-colors duration-150'
+            className='font-sans text-lg font-black tracking-tight text-foreground select-none hover:text-primary transition-colors duration-150'
           >
-            Skill<span className='text-primary'>Sync.</span>
+            Skill<span className='text-primary'>Sync</span>
           </Link>
         </div>
 

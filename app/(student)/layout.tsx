@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { requireRole, getStudentProfile } from "@/lib/auth/helpers";
+import Link from "next/link";
 import SignOutButton from "@/components/shared/sign-out-button";
 import { StudentProvider } from "@/app/(student)/providers/student-provider";
 import { db } from "@/lib/db";
@@ -95,9 +96,12 @@ export default async function StudentLayout({
                 <header className='h-14 shrink-0 sticky top-0 z-50 header-glass flex items-center justify-between px-4 sm:px-6'>
                     <div className='flex items-center gap-3'>
                         <MobileNavToggle />
-                        <span className='font-sans text-base font-black tracking-tight text-foreground select-none'>
-                            Skill<span className='text-primary'>Sync.</span>
-                        </span>
+                        <Link
+                            href='/student/dashboard'
+                            className='font-sans text-lg font-black tracking-tight text-foreground select-none hover:text-primary transition-colors duration-150'
+                        >
+                            Skill<span className='text-primary'>Sync</span>
+                        </Link>
                     </div>
                     <div className='hidden sm:flex flex-1 justify-center px-4 max-w-xs lg:max-w-sm mx-auto'>
                         <HeaderSearchTrigger userRole='student' />

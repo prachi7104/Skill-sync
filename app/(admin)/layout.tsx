@@ -1,34 +1,28 @@
 import { requireRole } from "@/lib/auth/helpers";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/config";
 import Link from "next/link";
 import SignOutButton from "@/components/shared/sign-out-button";
 import AdminNav from "@/components/admin/admin-nav";
 import SidebarShell from "@/components/shared/sidebar-shell";
-import MobileNavToggle from "@/components/shared/mobile-nav-toggle";
-import MobileSidebarOverlay from "@/components/shared/mobile-sidebar-overlay";
 import { ThemeToggle } from "@/components/theme-toggle";
 import HeaderSearchTrigger from "@/components/shared/header-search-trigger";
 import BottomTabBar from "@/components/shared/bottom-tab-bar";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  await requireRole(["admin"]);
-  const session = await getServerSession(authOptions);
-  const name = session?.user?.name ?? "Admin";
+  const user = await requireRole(["admin"]);
+  const name = user.name ?? "Admin";
 
   return (
     <div className='h-screen bg-background flex flex-col font-sans text-foreground antialiased'>
 
       {/* ── Header ── */}
       <header className='h-14 shrink-0 sticky top-0 z-50 header-glass flex items-center justify-between px-4 sm:px-6'>
-        {/* Left: Hamburger (mobile) + Logo + badge */}
+        {/* Left: Logo + badge */}
         <div className='flex items-center gap-3'>
-          <MobileNavToggle />
           <Link
             href='/admin/health'
-            className='font-sans text-base font-black tracking-tight text-foreground select-none hover:text-primary transition-colors duration-150'
+            className='font-sans text-lg font-black tracking-tight text-foreground select-none hover:text-primary transition-colors duration-150'
           >
-            Skill<span className='text-primary'>Sync.</span>
+            Skill<span className='text-primary'>Sync</span>
           </Link>
           <span className='hidden sm:inline-flex items-center h-5 px-2 rounded-sm bg-primary/10 border border-primary/20 text-[10px] font-black uppercase tracking-[0.15em] text-primary'>
             Master
@@ -60,11 +54,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <SidebarShell label='Admin'>
           <AdminNav />
         </SidebarShell>
-
-        {/* Mobile overlay sidebar */}
-        <MobileSidebarOverlay label='Admin'>
-          <AdminNav />
-        </MobileSidebarOverlay>
 
         {/* Main scrollable content */}
         <main className='flex-1 overflow-y-auto'>
