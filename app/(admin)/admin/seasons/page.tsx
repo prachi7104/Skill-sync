@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useConfirmDialog } from "@/components/shared/use-confirm-dialog";
 
 type SeasonRow = {
   id: string;
@@ -23,6 +24,7 @@ function toIsoDate(dateInput: string): string | null {
 }
 
 export default function AdminSeasonsPage() {
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [rows, setRows] = useState<SeasonRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -117,7 +119,12 @@ export default function AdminSeasonsPage() {
   }
 
   async function deleteSeason(row: SeasonRow) {
-    const confirmed = window.confirm(`Delete season "${row.name}"?`);
+    const confirmed = await confirm({
+      title: `Delete season "${row.name}"?`,
+      description: "This action cannot be undone.",
+      confirmText: "Delete",
+      confirmVariant: "destructive",
+    });
     if (!confirmed) return;
 
     setErrorMsg(null);
@@ -225,6 +232,7 @@ export default function AdminSeasonsPage() {
           </article>
         )) : null}
       </section>
+      {ConfirmDialog}
     </div>
   );
 }

@@ -4,7 +4,6 @@ import SignOutButton from "@/components/shared/sign-out-button";
 import AdminNav from "@/components/admin/admin-nav";
 import SidebarShell from "@/components/shared/sidebar-shell";
 import { ThemeToggle } from "@/components/theme-toggle";
-import HeaderSearchTrigger from "@/components/shared/header-search-trigger";
 import BottomTabBar from "@/components/shared/bottom-tab-bar";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -29,20 +28,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </span>
         </div>
 
-        {/* Center: Search trigger — grows to fill space on desktop */}
-        <div className='hidden sm:flex flex-1 justify-center px-4 max-w-xs lg:max-w-sm mx-auto'>
-          <HeaderSearchTrigger userRole='admin' />
-        </div>
-
         {/* Right: User info + controls */}
         <div className='flex items-center gap-2 sm:gap-3'>
           <span className='hidden md:block text-[13px] font-medium text-muted-foreground'>
             {name}
             <span className='text-primary/60 font-normal ml-1'>(admin)</span>
           </span>
-          <div className='sm:hidden'>
-            <HeaderSearchTrigger userRole='admin' />
-          </div>
           <ThemeToggle />
           <SignOutButton />
         </div>

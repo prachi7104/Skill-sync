@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useConfirmDialog } from "@/components/shared/use-confirm-dialog";
 
 type ModerationRow = {
   id: string;
@@ -33,6 +34,7 @@ type ModerationRow = {
 };
 
 export default function AdminExperiencesPage() {
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [rows, setRows] = useState<ModerationRow[]>([]);
   const [tab, setTab] = useState("queue");
   const [rejectionReason, setRejectionReason] = useState<Record<string, string>>({});
@@ -78,7 +80,11 @@ export default function AdminExperiencesPage() {
 
   async function moderate(id: string, action: "approve" | "reject") {
     if (action === "reject") {
-      const confirmed = window.confirm("Reject this experience submission?");
+      const confirmed = await confirm({
+        title: "Reject this experience submission?",
+        confirmText: "Reject",
+        confirmVariant: "destructive",
+      });
       if (!confirmed) return;
     }
 
@@ -124,9 +130,12 @@ export default function AdminExperiencesPage() {
   }
 
   async function deleteExperience(row: ModerationRow) {
-    const confirmed = window.confirm(
-      `Delete this experience permanently?\n\n${row.company_name} - ${row.role_title ?? "Unknown role"}`,
-    );
+    const confirmed = await confirm({
+      title: "Delete this experience permanently?",
+      description: `${row.company_name} - ${row.role_title ?? "Unknown role"}`,
+      confirmText: "Delete",
+      confirmVariant: "destructive",
+    });
     if (!confirmed) {
       return;
     }
@@ -278,6 +287,7 @@ export default function AdminExperiencesPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      {ConfirmDialog}
     </div>
   );
 }

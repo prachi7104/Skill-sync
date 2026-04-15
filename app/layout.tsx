@@ -8,9 +8,10 @@ import AuthProvider from "@/components/providers/auth-provider";
 import ClientToaster from "@/components/providers/client-toaster";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { APP_NAME } from "@/lib/constants/branding";
 
 export const metadata: Metadata = {
-  title: 'SkillSync — Placement Intelligence Hub',
+  title: APP_NAME,
   description: 'AI-Native Placement Ecosystem for UPES students, faculty, and administrators.',
   icons: {
     icon: [
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'SkillSync',
+    title: APP_NAME,
     startupImage: '/icons/icon-512.png',
   },
   formatDetection: { telephone: false },

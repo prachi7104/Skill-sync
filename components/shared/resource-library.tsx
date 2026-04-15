@@ -25,6 +25,7 @@ import { stripMarkdown } from "@/lib/content-utils";
 import { safeFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { StatusCard } from "@/components/ui/status-card";
+import { useConfirmDialog } from "@/components/shared/use-confirm-dialog";
 
 const CATEGORY_MAP = {
   technical: TECHNICAL_RESOURCE_CATEGORIES,
@@ -75,6 +76,7 @@ type EditResourceForm = {
 };
 
 export default function ResourceLibrary() {
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [section, setSection] = useState<"technical" | "softskills">("technical");
   const [category, setCategory] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -305,7 +307,12 @@ export default function ResourceLibrary() {
   }
 
   async function deleteResource(resource: ResourceRow) {
-    const confirmed = window.confirm("Delete this resource permanently?");
+    const confirmed = await confirm({
+      title: "Delete resource permanently?",
+      description: "This action cannot be undone.",
+      confirmText: "Delete",
+      confirmVariant: "destructive",
+    });
     if (!confirmed) return;
     invalidatePrefix("resources:");
 
@@ -737,6 +744,7 @@ export default function ResourceLibrary() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {ConfirmDialog}
     </div>
   );
 }

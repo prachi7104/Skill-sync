@@ -8,7 +8,6 @@ import MobileNavToggle from "@/components/shared/mobile-nav-toggle";
 import MobileSidebarOverlay from "@/components/shared/mobile-sidebar-overlay";
 import SignOutButton from "@/components/shared/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import HeaderSearchTrigger from "@/components/shared/header-search-trigger";
 import BottomTabBar from "@/components/shared/bottom-tab-bar";
 
 export default async function FacultyLayout({ children }: { children: React.ReactNode }) {
@@ -33,20 +32,12 @@ export default async function FacultyLayout({ children }: { children: React.Reac
           </Link>
         </div>
 
-        {/* Center: Search trigger — grows to fill space on desktop */}
-        <div className='hidden sm:flex flex-1 justify-center px-4 max-w-xs lg:max-w-sm mx-auto'>
-          <HeaderSearchTrigger userRole='faculty' />
-        </div>
-
         {/* Right: User info + controls */}
         <div className='flex items-center gap-2 sm:gap-3'>
           <span className='hidden md:block text-[13px] font-medium text-muted-foreground'>
             {name}
             <span className='text-primary/60 font-normal ml-1.5 capitalize'>({role})</span>
           </span>
-          <div className='sm:hidden'>
-            <HeaderSearchTrigger userRole='faculty' />
-          </div>
           <ThemeToggle />
           <SignOutButton />
         </div>

@@ -44,7 +44,7 @@ async function main() {
   await makeScreenshot(
     DESKTOP.width,
     DESKTOP.height,
-    'Placement Intelligence Hub',
+    'Where your skills meet the right opportunity',
     path.join(iconsDir, 'screenshot-desktop.png')
   );
 

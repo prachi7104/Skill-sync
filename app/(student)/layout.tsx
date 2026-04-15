@@ -13,7 +13,6 @@ import MobileNavToggle from "@/components/shared/mobile-nav-toggle";
 import MobileSidebarOverlay from "@/components/shared/mobile-sidebar-overlay";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TriangleAlert } from "lucide-react";
-import HeaderSearchTrigger from "@/components/shared/header-search-trigger";
 import BottomTabBar from "@/components/shared/bottom-tab-bar";
 import { computeOnboardingProgress } from "@/lib/utils/onboarding";
 import { deriveSapFromEmailPublic } from "@/lib/auth/derive-sap";
@@ -103,17 +102,11 @@ export default async function StudentLayout({
                             Skill<span className='text-primary'>Sync</span>
                         </Link>
                     </div>
-                    <div className='hidden sm:flex flex-1 justify-center px-4 max-w-xs lg:max-w-sm mx-auto'>
-                        <HeaderSearchTrigger userRole='student' />
-                    </div>
                     <div className='flex items-center gap-2 sm:gap-3'>
                         <span className='hidden md:block text-[13px] font-medium text-muted-foreground'>
                             {user.name}
                             <span className='text-primary/60 font-normal ml-1'>(student)</span>
                         </span>
-                        <div className='sm:hidden'>
-                            <HeaderSearchTrigger userRole='student' />
-                        </div>
                         <ThemeToggle />
                         <SignOutButton />
                     </div>

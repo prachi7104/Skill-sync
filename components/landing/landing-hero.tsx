@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowRight, LogIn } from 'lucide-react';
+import { APP_FULL_NAME } from '@/lib/constants/branding';
 
 const container = {
   hidden: {},
@@ -10,7 +11,7 @@ const container = {
 };
 
 const item = {
-  hidden: { opacity: 0, y: 14 },
+  hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.38, ease: [0.25, 0.46, 0.45, 0.94] } }
 };
 
@@ -42,7 +43,7 @@ function HeroLeft() {
       {/* 2. Main headline */}
       <motion.div variants={item} className="mb-5">
         <h1 className='max-w-[12ch] text-[2.7rem] font-black leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-[3.55rem]'>
-          SkillSync — Where your skills meet the right opportunity
+          {APP_FULL_NAME}
         </h1>
       </motion.div>
 

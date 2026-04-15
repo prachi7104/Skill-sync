@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Loader2, AlertCircle, ChevronRight, Eye, EyeOff, Lock, LogIn } from 'lucide-react';
+import { APP_FULL_NAME } from '@/lib/constants/branding';
 
 export interface LoginFormPanelProps {
   errorMessage: string | null;
@@ -95,7 +96,7 @@ export default function LoginFormPanel({
           Skill<span className='text-primary'>Sync</span>
         </h1>
         <p className='mb-4 text-sm font-medium leading-relaxed text-muted-foreground'>
-          SkillSync — Where your skills meet the right opportunity.
+           {APP_FULL_NAME}.
         </p>
         <div className='mb-8 flex flex-wrap gap-2'>
           {LOGIN_HIGHLIGHTS.map((label) => (

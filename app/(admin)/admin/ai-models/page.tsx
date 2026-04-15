@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getCache, setCache, invalidateCache } from "@/lib/client-cache";
+import { useConfirmDialog } from "@/components/shared/use-confirm-dialog";
 
 type AIModel = {
   id: string;
@@ -54,6 +55,7 @@ function isEmbeddingModel(model: AIModel) {
 }
 
 export default function AIModelsPage() {
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [models, setModels] = useState<AIModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [pinging, setPinging] = useState<string | null>(null);
@@ -182,7 +184,14 @@ export default function AIModelsPage() {
   }
 
   async function deleteModel(model: AIModel) {
-    if (!confirm(`Delete model "${model.display_name}"? This cannot be undone.`)) return;
+    const confirmed = await confirm({
+      title: `Delete model "${model.display_name}"?`,
+      description: "This cannot be undone.",
+      confirmText: "Delete",
+      confirmVariant: "destructive",
+    });
+    if (!confirmed) return;
+
     invalidateCache("admin:ai-models");
     setDeletingModelId(model.id);
     try {
@@ -487,6 +496,7 @@ export default function AIModelsPage() {
           </tbody>
         </table>
       </div>
+      {ConfirmDialog}
     </div>
   );
 }
