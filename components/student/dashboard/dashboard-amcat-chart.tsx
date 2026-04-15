@@ -1,17 +1,55 @@
-"use client";
+'use client';
 
 import { motion, useMotionValue, useTransform, useReducedMotion } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { BarChart3 } from 'lucide-react';
+import {
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
+} from 'recharts';
+import { BarChart3, TrendingUp, Minus } from 'lucide-react';
 import { useRef } from 'react';
+
+import { Badge } from '@/components/ui/badge';
 import { StatusCard } from '@/components/ui/status-card';
 
 interface DashboardAMCATChartProps {
-  data: { session: string; score: number }[] | null;
+  history: {
+    session_name: string;
+    score: number;
+    rank: number | null;
+    category: string | null;
+    test_date: string | null;
+    total_students: number | null;
+  }[] | null;
+  latest: {
+    score: number | null;
+    category: string | null;
+    rank: number | null;
+    cs_score: number | null;
+    cp_score: number | null;
+    automata_score: number | null;
+    automata_fix_score: number | null;
+    quant_score: number | null;
+    total_students: number | null;
+    session_name: string | null;
+    test_date: string | null;
+  } | null;
   studentName: string;
 }
 
-export default function DashboardAMCATChart({ data }: DashboardAMCATChartProps) {
+const SECTION_BREAKDOWN = [
+  { key: 'cs_score', label: 'CS' },
+  { key: 'cp_score', label: 'CP' },
+  { key: 'automata_score', label: 'Automata' },
+  { key: 'automata_fix_score', label: 'Automata Fix' },
+  { key: 'quant_score', label: 'Quant' },
+] as const;
+
+export default function DashboardAMCATChart({ history, latest, studentName }: DashboardAMCATChartProps) {
   const prefersReducedMotion = useReducedMotion();
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
@@ -25,11 +63,28 @@ export default function DashboardAMCATChart({ data }: DashboardAMCATChartProps) 
     mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
     mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
   };
-  
+
   const handleMouseLeave = () => {
     mouseX.set(0);
     mouseY.set(0);
   };
+
+  const orderedHistory = [...(history ?? [])].reverse();
+  const latestPoint = history?.[0] ?? null;
+  const previousPoint = history?.[1] ?? null;
+  const average = history && history.length > 0
+    ? Math.round(history.reduce((total, entry) => total + entry.score, 0) / history.length)
+    : null;
+  const delta = latestPoint && previousPoint ? latestPoint.score - previousPoint.score : null;
+  const hasTrend = orderedHistory.length > 1;
+  const hasLatest = Boolean(latest?.score !== null || latestPoint);
+  const sectionBreakdown = latest
+    ? SECTION_BREAKDOWN.map((section) => ({
+      label: section.label,
+      value: latest[section.key],
+    }))
+    : [];
+  const maxSectionScore = Math.max(...sectionBreakdown.map((section) => section.value ?? 0), 1);
 
   return (
     <motion.div
@@ -37,68 +92,130 @@ export default function DashboardAMCATChart({ data }: DashboardAMCATChartProps) 
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={!prefersReducedMotion ? { rotateX, rotateY, transformPerspective: 800 } : undefined}
-      className='flex h-[320px] flex-col rounded-lg border border-border bg-card p-5'
+      className='flex min-h-[360px] flex-col rounded-2xl border border-border bg-card/95 p-5'
     >
-      <div className='mb-6 flex items-center justify-between'>
+      <div className='mb-5 flex flex-wrap items-start justify-between gap-3'>
         <div className='flex items-center gap-2'>
-          <div className='flex h-8 w-8 items-center justify-center rounded-md bg-primary/10'>
-            <BarChart3 size={16} className='text-primary' />
+          <div className='flex h-9 w-9 items-center justify-center rounded-md bg-primary/10'>
+            <BarChart3 size={17} className='text-primary' />
           </div>
-          <p className='text-[13px] font-bold text-foreground'>AMCAT History</p>
+          <div>
+            <p className='text-[13px] font-bold text-foreground'>AMCAT Intelligence</p>
+            <p className='text-[11px] text-muted-foreground'>Score trend, session context, and section balance</p>
+          </div>
         </div>
-        {data && data.length > 0 ? (
-          <div className='flex items-center gap-2 text-[12px]'>
-            <span className='font-bold text-foreground'>Avg: {Math.round(data.reduce((a, b) => a + b.score, 0) / data.length)}</span>
+        {hasLatest ? (
+          <div className='flex flex-wrap items-center gap-2 text-[12px]'>
+            {latestPoint?.session_name ? (
+              <Badge variant='neutral' className='border-border bg-muted/60 text-[11px] font-semibold'>
+                {latestPoint.session_name}
+              </Badge>
+            ) : null}
+            {average !== null ? (
+              <span className='font-bold text-foreground'>Avg: {average}</span>
+            ) : null}
+            {delta !== null ? (
+              <Badge variant={delta >= 0 ? 'success' : 'warning'} className='text-[11px] font-semibold'>
+                {delta >= 0 ? <TrendingUp size={11} /> : <Minus size={11} />} {delta >= 0 ? '+' : ''}{delta}
+              </Badge>
+            ) : null}
           </div>
         ) : null}
       </div>
 
-      <div className='min-h-0 flex-1 relative'>
-        {data && data.length > 0 ? (
+      <div className='min-h-0 flex-1'>
+        {hasLatest ? (
           <>
-            <ResponsiveContainer width='100%' height='100%'>
-              <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <XAxis 
-                  dataKey='session'
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 500 }}
-                  tickMargin={8}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis hide domain={['dataMin - 50', 'dataMax + 20']} />
-                <Tooltip
-                  cursor={{ fill: 'hsl(var(--muted))', radius: 4 }}
-                  contentStyle={{
-                    background: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    padding: '6px 10px',
-                  }}
-                  itemStyle={{ color: 'hsl(var(--foreground))' }}
-                  labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
-                />
-                <Bar dataKey='score' radius={[4, 4, 0, 0]}>
-                  {data.map((entry, index) => {
-                    const isHighest = entry.score === Math.max(...data.map(d => d.score));
+            {hasTrend ? (
+              <div className='h-[240px] sm:h-[255px]'>
+                <ResponsiveContainer width='100%' height='100%'>
+                  <LineChart data={orderedHistory} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray='3 3' stroke='hsl(var(--border))' vertical={false} />
+                    <XAxis
+                      dataKey='session_name'
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 500 }}
+                      tickMargin={10}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis hide domain={['dataMin - 50', 'dataMax + 20']} />
+                    <Tooltip
+                      cursor={{ stroke: 'hsl(var(--border))', strokeDasharray: '4 4' }}
+                      contentStyle={{
+                        background: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        padding: '8px 12px',
+                      }}
+                      itemStyle={{ color: 'hsl(var(--foreground))' }}
+                      labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
+                    />
+                    <Line
+                      type='monotone'
+                      dataKey='score'
+                      stroke='hsl(var(--primary))'
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: 'hsl(var(--card))', stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
+                      activeDot={{ r: 6, fill: 'hsl(var(--primary-hover))', stroke: 'hsl(var(--card))', strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className='grid gap-4 lg:grid-cols-[0.9fr_1.1fr]'>
+                <div className='rounded-xl border border-border bg-muted/20 p-4'>
+                  <p className='text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground'>Latest score</p>
+                  <div className='mt-3 flex items-end gap-3'>
+                    <p className='text-4xl font-black tracking-tight text-foreground'>{latest?.score ?? latestPoint?.score ?? '—'}</p>
+                    {latest?.category ? (
+                      <Badge variant='neutral' className='mb-1 border-border bg-background text-[11px] font-semibold'>
+                        {latest.category}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <div className='mt-3 space-y-2 text-xs text-muted-foreground'>
+                    <p>{latest?.session_name ?? latestPoint?.session_name ?? `${studentName}'s latest session`}</p>
+                    <p>
+                      {latest?.rank && latest?.total_students
+                        ? `Rank #${latest.rank} of ${latest.total_students}`
+                        : latestPoint?.rank && latestPoint?.total_students
+                          ? `Rank #${latestPoint.rank} of ${latestPoint.total_students}`
+                          : 'Rank information will appear once the session is published.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className='space-y-3'>
+                  {sectionBreakdown.map((section) => {
+                    const value = section.value ?? 0;
+                    const width = Math.max(4, Math.round((value / maxSectionScore) * 100));
+
                     return (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={isHighest ? 'hsl(var(--primary-hover))' : 'hsl(var(--primary))'}
-                        opacity={isHighest ? 1 : 0.75}
-                      />
+                      <div key={section.label} className='space-y-1.5'>
+                        <div className='flex items-center justify-between text-xs font-semibold text-foreground'>
+                          <span>{section.label}</span>
+                          <span className='text-muted-foreground'>{section.value ?? '—'}</span>
+                        </div>
+                        <div className='h-2 rounded-full bg-muted'>
+                          <div
+                            className='h-full rounded-full bg-primary'
+                            style={{ width: `${width}%` }}
+                          />
+                        </div>
+                      </div>
                     );
                   })}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <StatusCard
             variant='empty'
             title='AMCAT history unavailable'
-            description='We could not load your recent AMCAT sessions. Try refreshing when the network is stable.'
+            description={`We could not load recent AMCAT sessions for ${studentName}. Try refreshing when the network is stable.`}
             actionLabel='Reload'
             onAction={() => window.location.reload()}
           />

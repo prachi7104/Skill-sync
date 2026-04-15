@@ -34,6 +34,15 @@ export interface AMCATResult {
   isAbsent?: boolean;
 }
 
+export interface AMCATHistoryResult {
+  score: number;
+  rank: number | null;
+  category: string | null;
+  session_name: string;
+  test_date: string | null;
+  total_students: number | null;
+}
+
 export interface StudentRankResult {
   rank: number | null;
 }
@@ -98,6 +107,48 @@ export async function getStudentAMCATData(
     test_date: result.test_date as string | null,
     batch_year: result.batch_year as number | null,
   };
+}
+
+/**
+ * Fetches recent published AMCAT sessions for the student.
+ * Used for dashboard trend visualization.
+ */
+export async function getStudentAMCATHistory(
+  studentId: string,
+  collegeId: string,
+  limit = 5,
+): Promise<AMCATHistoryResult[]> {
+  const safeLimit = Math.max(1, Math.min(Math.floor(limit), 8));
+
+  const rows = await db.execute(sql`
+    SELECT
+      ar.computed_total AS score,
+      ar.rank_in_session AS rank,
+      ar.final_category AS category,
+      s.session_name,
+      s.test_date,
+      s.total_students
+    FROM amcat_results ar
+    JOIN amcat_sessions s ON s.id = ar.session_id
+    JOIN students st ON st.id = ar.student_id
+    WHERE ar.student_id = ${studentId}
+      AND s.status = 'published'
+      AND st.college_id = ${collegeId}
+      AND COALESCE(ar.status, '') != 'Absent'
+      AND ar.computed_total IS NOT NULL
+      AND ar.computed_total >= 0
+    ORDER BY s.published_at DESC, ar.created_at DESC
+    LIMIT ${safeLimit}
+  `) as unknown as Array<Record<string, unknown>>;
+
+  return rows.map((row) => ({
+    score: Number(row.score ?? 0),
+    rank: row.rank == null ? null : Number(row.rank),
+    category: row.category as string | null,
+    session_name: String(row.session_name ?? ''),
+    test_date: row.test_date as string | null,
+    total_students: row.total_students == null ? null : Number(row.total_students),
+  }));
 }
 
 /**

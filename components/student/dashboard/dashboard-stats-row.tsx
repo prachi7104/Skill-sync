@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Trophy, Briefcase, LucideIcon } from 'lucide-react';
+import { BarChart3, Trophy, Briefcase, LucideIcon, BadgeCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -8,6 +8,7 @@ interface DashboardStatsRowProps {
   amcatScore: number | null;
   leaderboardRank: number | null;
   activeDrives: number | null;
+  profileCompletion: number | null;
 }
 
 interface StatDef {
@@ -52,6 +53,16 @@ const getStats = (props: DashboardStatsRowProps): StatDef[] => [
     iconBg: 'bg-success/10',
     suffix: '',
   },
+  {
+    label: 'Profile Ready',
+    value: props.profileCompletion !== null ? String(props.profileCompletion) : null,
+    nullLabel: '0',
+    nullHint: 'Complete your profile to unlock better drive matches.',
+    icon: BadgeCheck,
+    iconColor: 'text-info',
+    iconBg: 'bg-info/10',
+    suffix: '%',
+  },
 ];
 
 const container = {
@@ -71,13 +82,13 @@ export default function DashboardStatsRow(props: DashboardStatsRowProps) {
       variants={container}
       initial='hidden'
       animate='visible'
-      className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'
+      className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4'
     >
       {stats.map(stat => (
       <motion.div
         key={stat.label}
         variants={item}
-        className='rounded-lg border border-border bg-card p-4 shadow-sm'
+        className='rounded-2xl border border-border bg-card/95 p-4'
         aria-label={`${stat.label}: ${stat.value ?? 'not available'}${stat.suffix}`}
       >
           <div className='mb-3 flex items-start justify-between gap-2'>
