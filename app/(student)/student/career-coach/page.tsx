@@ -241,9 +241,9 @@ export default function CareerCoachPage() {
   }
 
   return (
-    <div className="bg-muted px-4 py-8 text-foreground sm:px-6 lg:px-10">
-      <div className="mx-auto w-full max-w-7xl space-y-8">
-        <header className="flex flex-col gap-4 rounded-lg border border-border bg-card p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-5 text-foreground">
+      <section className="rounded-2xl border border-border bg-gradient-to-br from-primary/5 via-card to-card p-5 sm:p-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
               Career Coach
@@ -272,9 +272,10 @@ export default function CareerCoachPage() {
             />
             Refresh
           </Button>
-        </header>
+        </div>
+      </section>
 
-        <Card className="border border-border bg-card shadow-sm">
+      <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground">
               <Sparkles className="h-5 w-5" />
@@ -304,9 +305,9 @@ export default function CareerCoachPage() {
               </p>
             )}
           </CardContent>
-        </Card>
+      </Card>
 
-        <Card className="border border-border bg-card shadow-sm">
+      <Card className="border border-border bg-card shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle className="flex items-center gap-2 text-foreground">
               <MessageSquare className="h-5 w-5" />
@@ -337,11 +338,7 @@ export default function CareerCoachPage() {
               </div>
             ) : null}
 
-            <div
-              className="max-h-[420px] space-y-3 overflow-y-auto rounded-2xl border border-border bg-muted p-3"
-              aria-live="polite"
-              aria-label="Coach conversation"
-            >
+            <div className="space-y-3 rounded-2xl border border-border bg-muted p-3" aria-live="polite" aria-label="Coach conversation">
               {messages.map((message, index) => (
                 <div
                   key={`${message.role}-${index}`}
@@ -404,16 +401,11 @@ export default function CareerCoachPage() {
               </div>
             ) : null}
 
-            <div className="sticky bottom-0 bg-card border-t border-border pb-[max(env(safe-area-inset-bottom),8px)] pt-2 px-0 -mx-4 sm:mx-0 sm:px-0 space-y-2">
+            <div className="space-y-2 border-t border-border pt-4 pb-[max(env(safe-area-inset-bottom),8px)]">
               <textarea
                 value={chatInput}
                 onChange={(event) => setChatInput(event.target.value)}
                 onKeyDown={onChatInputKeyDown}
-                onFocus={(e) => {
-                  setTimeout(() => {
-                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }, 300);
-                }}
                 placeholder={
                   sessionComplete ? "Session complete" : "Ask a question..."
                 }
@@ -452,7 +444,7 @@ export default function CareerCoachPage() {
           </CardContent>
         </Card>
 
-        {loading ? (
+      {loading ? (
           <section
             className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"
             role="status"
@@ -548,7 +540,7 @@ export default function CareerCoachPage() {
           </section>
         )}
 
-        {!loading && payload?.amcat_tip && !errorText ? (
+      {!loading && payload?.amcat_tip && !errorText ? (
           <Card className="border border-warning/20 bg-warning/10 dark:bg-warning/10">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-warning">
@@ -561,7 +553,6 @@ export default function CareerCoachPage() {
             </CardContent>
           </Card>
         ) : null}
-      </div>
     </div>
   );
 }

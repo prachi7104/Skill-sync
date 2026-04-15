@@ -77,8 +77,7 @@ export default function DashboardDrivesPanel() {
         ) : null}
       </div>
 
-      <div className='relative max-h-[360px] space-y-2 overflow-y-auto pr-1 xl:max-h-[420px]'>
-        <div className='pointer-events-none sticky top-0 z-10 h-4 bg-gradient-to-b from-card/95 to-transparent' />
+      <div className='space-y-2'>
         {loading ? (
           <div role='status' aria-label='Loading drives' aria-busy='true' className='space-y-2'>
             {[1, 2, 3].map((i) => (
@@ -145,7 +144,6 @@ export default function DashboardDrivesPanel() {
             <p className='mt-1 text-[11px] text-muted-foreground'>Check back soon or open the full drives page.</p>
           </div>
         )}
-        <div className='pointer-events-none sticky bottom-0 z-10 h-4 bg-gradient-to-t from-card/95 to-transparent' />
       </div>
     </div>
   );

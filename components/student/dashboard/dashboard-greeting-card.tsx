@@ -45,7 +45,7 @@ export default function DashboardGreetingCard({ studentName, progressPercent, on
             <span className='text-sm font-black text-foreground' aria-hidden="true">{progressPercent}%</span>
           </div>
         </div>
-        <div className='min-w-0 flex-1 space-y-2 max-h-[220px] overflow-y-auto pr-1 sm:max-h-none'>
+        <div className='min-w-0 flex-1 space-y-2'>
           <p className='text-sm font-semibold text-foreground'>
             {onboardingRequired ? 'Finish onboarding to unlock the full placement workspace.' : 'Your profile is ready for drives, ranking, and coach insights.'}
           </p>
@@ -57,7 +57,7 @@ export default function DashboardGreetingCard({ studentName, progressPercent, on
         </div>
       </div>
 
-      <div className='mt-4 max-h-[220px] overflow-y-auto pr-1 sm:max-h-none'>
+      <div className='mt-auto pt-1'>
         <Link
           href={onboardingRequired ? '/student/onboarding' : '/student/profile'}
           className='inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-primary transition-colors duration-150 hover:text-primary-hover'

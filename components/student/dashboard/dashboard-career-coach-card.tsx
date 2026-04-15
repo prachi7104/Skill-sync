@@ -109,8 +109,7 @@ export default function DashboardCareerCoachCard() {
           </div>
 
           {topSkills.length > 0 ? (
-            <div className='relative max-h-[220px] space-y-2 overflow-y-auto pr-1 xl:max-h-[260px]'>
-              <div className='pointer-events-none sticky top-0 z-10 h-4 bg-gradient-to-b from-card/95 to-transparent' />
+            <div className='space-y-2'>
               {topSkills.slice(0, 3).map((skill, index) => (
                 <div key={skill.skill} className='rounded-xl border border-border bg-background/40 p-3'>
                   <div className='flex items-start justify-between gap-3'>
@@ -124,7 +123,6 @@ export default function DashboardCareerCoachCard() {
                   </div>
                 </div>
               ))}
-              <div className='pointer-events-none sticky bottom-0 z-10 h-4 bg-gradient-to-t from-card/95 to-transparent' />
             </div>
           ) : null}
         </div>
