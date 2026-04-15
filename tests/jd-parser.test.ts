@@ -1,94 +1,85 @@
 import { describe, it, expect } from "vitest";
+import { normalizeJDRequirements } from "@/lib/jd/normalize";
 
-// Inline the validateAndFillDefaults logic for testing
-function validateAndFillDefaults(data: any, titleHint?: string, companyHint?: string) {
-  const safeData = { ...data };
-  if (!safeData.role_metadata) {
-    safeData.role_metadata = {
-      job_title: titleHint || "Unknown Role",
-      company_info: { name: companyHint || "Unknown Company", industry: "Tech", stage: "Unknown" },
-      role_type: "Unknown",
-      seniority_level: "Entry",
-      work_arrangement: "Unknown",
-      employment_type: "Full-time",
-      location: "Unknown"
-    };
-  }
-  if (!safeData.requirements) {
-    safeData.requirements = {
-      hard_requirements: { technical_skills: [], education: { degree_level: "Unknown", field: "Unknown", mandatory: false }, experience: { total_years: "0" } },
-      soft_requirements: { technical_skills: [] }
-    };
-  }
-  // Ensure primary_cluster is never empty string
-  if (safeData.tech_stack_cluster) {
-    if (!safeData.tech_stack_cluster.primary_cluster || safeData.tech_stack_cluster.primary_cluster === "") {
-      safeData.tech_stack_cluster.primary_cluster = "General Software Engineering";
-    }
-  }
-  return safeData;
-}
+describe("JD normalization — null safety", () => {
+  it("creates empty requirement arrays when requirements is missing", () => {
+    const result = normalizeJDRequirements(undefined);
 
-describe("validateAndFillDefaults — null safety", () => {
-  it("should fill missing role_metadata with titleHint and companyHint", () => {
-    const result = validateAndFillDefaults({}, "SDE Intern", "Google");
-    expect(result.role_metadata.job_title).toBe("SDE Intern");
-    expect(result.role_metadata.company_info.name).toBe("Google");
+    expect(result.hard_requirements.technical_skills).toEqual([]);
+    expect(result.soft_requirements.technical_skills).toEqual([]);
+    expect(result.hard_requirements.education.degree_level).toBe("Unknown");
+    expect(result.hard_requirements.experience.total_years).toBe("0");
   });
 
-  it("should fill missing requirements with empty arrays", () => {
-    const result = validateAndFillDefaults({ role_metadata: { job_title: "Test" } });
-    expect(result.requirements.hard_requirements.technical_skills).toEqual([]);
-    expect(result.requirements.soft_requirements.technical_skills).toEqual([]);
+  it("preserves valid technical skill arrays", () => {
+    const result = normalizeJDRequirements({
+      hard_requirements: {
+        technical_skills: [{ skill: "Python", proficiency_level: "Expert" }],
+        education: { degree_level: "Bachelor's", field: "CS", mandatory: true },
+        experience: { total_years: "1" },
+      },
+      soft_requirements: {
+        technical_skills: [{ skill: "Docker", proficiency_level: "Familiar" }],
+      },
+    });
+
+    expect(result.hard_requirements.technical_skills).toHaveLength(1);
+    expect(result.hard_requirements.technical_skills[0]).toMatchObject({
+      skill: "Python",
+      proficiency_level: "Expert",
+    });
+    expect(result.soft_requirements.technical_skills).toHaveLength(1);
+    expect(result.soft_requirements.technical_skills[0]).toMatchObject({
+      skill: "Docker",
+      proficiency_level: "Familiar",
+    });
   });
 
-  it("should NOT overwrite existing requirements", () => {
-    const data = {
-      role_metadata: { job_title: "Intern" },
-      requirements: {
-        hard_requirements: {
-          technical_skills: [{ skill: "Python" }],
-          education: { degree_level: "Bachelor's", field: "CS", mandatory: true },
-          experience: { total_years: "0" }
-        },
-        soft_requirements: { technical_skills: [] }
-      }
-    };
-    const result = validateAndFillDefaults(data);
-    expect(result.requirements.hard_requirements.technical_skills).toHaveLength(1);
-    expect(result.requirements.hard_requirements.technical_skills[0].skill).toBe("Python");
-  });
-});
+  it("coerces malformed technical skill values to arrays", () => {
+    const result = normalizeJDRequirements({
+      hard_requirements: {
+        technical_skills: null as unknown as never,
+        education: { degree_level: "Bachelor's", field: "CS", mandatory: true },
+        experience: { total_years: "2" },
+      },
+      soft_requirements: {
+        technical_skills: undefined as unknown as never,
+      },
+    });
 
-describe("validateAndFillDefaults — primary_cluster cannot be empty", () => {
-  it("should replace empty primary_cluster with General Software Engineering", () => {
-    const data = {
-      tech_stack_cluster: { primary_cluster: "", related_clusters: [], core_technologies: [] }
-    };
-    const result = validateAndFillDefaults(data);
-    expect(result.tech_stack_cluster.primary_cluster).toBe("General Software Engineering");
-    expect(result.tech_stack_cluster.primary_cluster).not.toBe("");
+    expect(result.hard_requirements.technical_skills).toEqual([]);
+    expect(result.soft_requirements.technical_skills).toEqual([]);
   });
 
-  it("should replace null primary_cluster with General Software Engineering", () => {
-    const data = {
-      tech_stack_cluster: { primary_cluster: null, related_clusters: [] }
-    };
-    const result = validateAndFillDefaults(data);
-    expect(result.tech_stack_cluster.primary_cluster).toBe("General Software Engineering");
-  });
+  it("converts string technical skill entries into structured objects", () => {
+    const result = normalizeJDRequirements({
+      hard_requirements: {
+        technical_skills: ["Python", "  ", "Docker"] as any,
+        education: { degree_level: "Bachelor's", field: "CS", mandatory: true },
+        experience: { total_years: "2" },
+      },
+      soft_requirements: {
+        technical_skills: ["Communication"] as any,
+      },
+    });
 
-  it("should preserve a valid primary_cluster", () => {
-    const data = {
-      tech_stack_cluster: { primary_cluster: "Automation/No-Code", related_clusters: [] }
-    };
-    const result = validateAndFillDefaults(data);
-    expect(result.tech_stack_cluster.primary_cluster).toBe("Automation/No-Code");
+    expect(result.hard_requirements.technical_skills).toHaveLength(2);
+    expect(result.hard_requirements.technical_skills[0]).toMatchObject({
+      skill: "Python",
+      proficiency_level: "Unknown",
+    });
+    expect(result.hard_requirements.technical_skills[1]).toMatchObject({
+      skill: "Docker",
+      proficiency_level: "Unknown",
+    });
+    expect(result.soft_requirements.technical_skills[0]).toMatchObject({
+      skill: "Communication",
+      proficiency_level: "Unknown",
+    });
   });
 });
 
 describe("Cluster detection — stack alignment scoring", () => {
-  // Inline calculateStackAlignment for testing
   const RELATED_CLUSTERS: Record<string, string[]> = {
     "Automation/No-Code": ["Python Web", "MERN Stack", "DevOps/SRE"],
     "AI/LLM Engineering": ["Python ML/AI", "Python Web", "MERN Stack"],
@@ -125,6 +116,6 @@ describe("Cluster detection — stack alignment scoring", () => {
     const result = calculateStackAlignment("", "MERN Stack");
     expect(typeof result).toBe("number");
     expect(isNaN(result)).toBe(false);
-    expect(result).toBe(0.3); // falls through to unrelated default
+    expect(result).toBe(0.3);
   });
 });

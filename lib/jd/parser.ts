@@ -1,5 +1,6 @@
 import { getRouter } from "@/lib/antigravity/instance";
 import { logger } from "@/lib/logger";
+import { normalizeJDRequirements } from "./normalize";
 
 
 // ============================================================================
@@ -527,12 +528,7 @@ function validateAndFillDefaults(data: StructuredJD, titleHint?: string, company
     else if (!safeData.role_metadata.company_info.name && companyHint) safeData.role_metadata.company_info.name = companyHint;
   }
 
-  if (!safeData.requirements) {
-    safeData.requirements = {
-      hard_requirements: { technical_skills: [], education: { degree_level: "Unknown", field: "Unknown", mandatory: false }, experience: { total_years: "0" } },
-      soft_requirements: { technical_skills: [] }
-    };
-  }
+  safeData.requirements = normalizeJDRequirements(safeData.requirements);
 
   // Ensure primary_cluster is never an empty string
   if (safeData.tech_stack_cluster) {

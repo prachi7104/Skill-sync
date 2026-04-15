@@ -1,5 +1,6 @@
 
 import { StructuredJD } from "@/lib/jd/parser";
+import { normalizeJDRequirements } from "@/lib/jd/normalize";
 import { ParsedResumeData } from "@/lib/resume/ai-parser";
 import { EnhancedResume } from "./types";
 import { matchSkills } from "./matching";
@@ -398,6 +399,11 @@ export async function performDetailedAnalysis(
     studentProfile: z.infer<typeof studentProfileSchema>,
     studentProfileEmbedding: number[] | null
 ): Promise<DetailedAnalysisResult> {
+
+    jd = {
+        ...jd,
+        requirements: normalizeJDRequirements(jd.requirements),
+    };
 
     // 1. Generate Resume Embedding (fail gracefully if embedding service is down)
     let resumeEmbedding: number[] | null = null;

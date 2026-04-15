@@ -1,6 +1,7 @@
 
 import { EnhancedResume, SkillMatch, MissingSkill, SkillAnalysis, EvidenceLevel } from "./types";
 import { StructuredJD } from "@/lib/jd/parser";
+import { normalizeJDRequirements } from "@/lib/jd/normalize";
 import { SKILL_ALIASES } from "./constants";
 import { extractSemanticSkills, matchSkillSemantically, combineEvidence, SemanticSkillEvidence } from "./semantic-skills";
 
@@ -165,6 +166,11 @@ export function matchSkills(jd: StructuredJD, resume: EnhancedResume): SkillAnal
     const missing: MissingSkill[] = [];
     const partial: SkillAnalysis["partial_matches"] = [];
     const transferable: SkillAnalysis["transferable_strengths"] = [];
+
+    jd = {
+        ...jd,
+        requirements: normalizeJDRequirements(jd.requirements),
+    };
 
     // ═══════════════════════════════════════════════════════════════════════
     // Step 1: Extract ALL semantic evidence from the resume ONCE
