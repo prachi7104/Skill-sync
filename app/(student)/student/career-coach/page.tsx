@@ -241,7 +241,7 @@ export default function CareerCoachPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted px-4 py-8 text-foreground sm:px-6 lg:px-10">
+    <div className="bg-muted px-4 py-8 text-foreground sm:px-6 lg:px-10">
       <div className="mx-auto w-full max-w-7xl space-y-8">
         <header className="flex flex-col gap-4 rounded-lg border border-border bg-card p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>

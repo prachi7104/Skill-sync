@@ -14,6 +14,7 @@ import DashboardStatsRow from '@/components/student/dashboard/dashboard-stats-ro
 import DashboardLeaderboardCard from '@/components/student/dashboard/dashboard-leaderboard-card';
 import DashboardCareerCoachCard from '@/components/student/dashboard/dashboard-career-coach-card';
 import DashboardSkeleton from '@/components/student/dashboard/dashboard-skeleton';
+import { computeCompleteness } from '@/lib/profile/completeness';
 import { computeOnboardingProgress } from '@/lib/utils/onboarding';
 import {
   getStudentAMCATData,
@@ -28,6 +29,11 @@ async function StudentDashboardContent() {
 
   // Compute onboarding progress (same logic as layout)
   const { progress: onboardingProgress, onboardingRequired } = computeOnboardingProgress(profile);
+  const { score: profileCompleteness } = computeCompleteness({
+    ...profile,
+    name: user.name,
+    email: user.email,
+  });
 
   // Fetch dashboard data via direct DB calls — graceful failure per source
   let latestAmcat: Awaited<ReturnType<typeof getStudentAMCATData>> = null;
@@ -100,7 +106,7 @@ async function StudentDashboardContent() {
         amcatScore={latestAmcat?.score ?? null}
         leaderboardRank={leaderboardRank ?? latestAmcat?.rank ?? null}
         activeDrives={activeDrivesCount}
-        profileCompletion={onboardingProgress}
+        profileCompletion={profileCompleteness}
       />
 
       <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]'>
@@ -116,7 +122,7 @@ async function StudentDashboardContent() {
           <DashboardLeaderboardCard latest={latestAmcat} />
           <DashboardGreetingCard
             studentName={user.name ?? 'Student'}
-            progressPercent={onboardingProgress}
+            progressPercent={profileCompleteness}
             onboardingRequired={onboardingRequired}
           />
         </div>

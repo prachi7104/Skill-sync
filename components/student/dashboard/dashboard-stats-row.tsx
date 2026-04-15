@@ -54,10 +54,10 @@ const getStats = (props: DashboardStatsRowProps): StatDef[] => [
     suffix: '',
   },
   {
-    label: 'Profile Ready',
+    label: 'Profile Completeness',
     value: props.profileCompletion !== null ? String(props.profileCompletion) : null,
     nullLabel: '0',
-    nullHint: 'Complete your profile to unlock better drive matches.',
+    nullHint: 'Completeness is calculated from your full profile.',
     icon: BadgeCheck,
     iconColor: 'text-info',
     iconBg: 'bg-info/10',

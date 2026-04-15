@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
 import { getRouter } from "@/lib/antigravity/instance";
 import { getCurrentUser, getStudentProfile, requireStudentProfile } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import type { ParsedJD } from "@/lib/db/schema";
-import { drives, users } from "@/lib/db/schema";
+import { drives } from "@/lib/db/schema";
 import { buildSkillGapFrequency, extractRequiredSkills } from "@/lib/phase8-10";
 import { getRedis } from "@/lib/redis";
-import { expandBranches } from "@/lib/constants/branches";
+import { filterEligibleDrives } from "@/lib/business/eligibility";
+import { and, desc, eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -19,49 +19,32 @@ type ChatMessage = {
   content: string;
 };
 
-function isDriveEligibleForStudent(drive: {
-  minCgpa: number | null;
-  eligibleBranches: string[] | null;
-  eligibleBatchYears: number[] | null;
-  eligibleCategories: string[] | null;
-}, profile: {
-  cgpa: number | null;
-  branch: string | null;
-  batchYear: number | null;
-  category: string | null;
-}) {
-  if (drive.minCgpa !== null && drive.minCgpa !== undefined) {
-    if (profile.cgpa === null || profile.cgpa === undefined || profile.cgpa < drive.minCgpa) return false;
-  }
-  if (drive.eligibleBranches?.length) {
-    if (!profile.branch) return false;
-    const expanded = expandBranches(drive.eligibleBranches).map((b) => b.toLowerCase().trim());
-    if (!expanded.includes(profile.branch.toLowerCase().trim())) return false;
-  }
-  if (drive.eligibleBatchYears?.length) {
-    if (profile.batchYear === null || profile.batchYear === undefined || !drive.eligibleBatchYears.includes(profile.batchYear)) return false;
-  }
-  if (drive.eligibleCategories?.length) {
-    if (!profile.category || !drive.eligibleCategories.includes(profile.category)) return false;
-  }
-  return true;
-}
-
 export async function GET(req: Request) {
   try {
     const { user, profile } = await requireStudentProfile();
     const redis = getRedis();
-    const cacheKey = `career_coach:${user.id}`;
     const refresh = new URL(req.url).searchParams.get("refresh") === "1";
 
-    if (redis && refresh) {
-      await redis.del(cacheKey).catch(() => undefined);
-    }
+    const latestActiveDrive = user.collegeId
+      ? await db.query.drives.findFirst({
+          where: and(eq(drives.isActive, true), eq(drives.collegeId, user.collegeId)),
+          columns: { updatedAt: true },
+          orderBy: [desc(drives.updatedAt)],
+        })
+      : null;
+
+    const profileUpdatedAt = profile.updatedAt ? new Date(profile.updatedAt as string | Date).getTime() : 0;
+    const driveUpdatedAt = latestActiveDrive?.updatedAt ? new Date(latestActiveDrive.updatedAt as string | Date).getTime() : 0;
+    const cacheKey = `career_coach:${user.id}:${profileUpdatedAt}:${driveUpdatedAt}`;
 
     if (redis && !refresh) {
       const cached = await redis.get<string>(cacheKey);
       if (cached) {
-        return NextResponse.json({ cached: true, ...JSON.parse(cached) });
+        try {
+          return NextResponse.json({ cached: true, ...JSON.parse(cached) });
+        } catch {
+          await redis.del(cacheKey).catch(() => undefined);
+        }
       }
     }
 
@@ -76,11 +59,10 @@ export async function GET(req: Request) {
         eligibleCategories: drives.eligibleCategories,
       })
       .from(drives)
-      .innerJoin(users, eq(users.id, drives.createdBy))
-      .where(and(eq(drives.isActive, true), eq(users.collegeId, user.collegeId ?? "")))
+      .where(and(eq(drives.isActive, true), eq(drives.collegeId, user.collegeId ?? "")))
       .limit(12);
 
-    const eligibleDrives = availableDrives.filter((drive) => isDriveEligibleForStudent(drive, profile)).slice(0, 5);
+    const eligibleDrives = filterEligibleDrives(availableDrives, profile).slice(0, 5);
 
     if (eligibleDrives.length === 0) {
       return NextResponse.json({
@@ -140,12 +122,25 @@ Return ONLY valid JSON:
       }, { status: 503 });
     }
 
-    const parsed = typeof result.data === "string"
-      ? JSON.parse(result.data.replace(/```json\n?|```\n?/g, "").trim())
-      : result.data;
+    let parsed: unknown;
+    if (typeof result.data === "string") {
+      try {
+        parsed = JSON.parse(result.data.replace(/```json\n?|```\n?/g, "").trim());
+      } catch (parseError) {
+        console.error("[career-coach] Failed to parse AI payload:", parseError);
+        return NextResponse.json({
+          error: "Career advisor returned an unreadable response. Please retry.",
+          retryable: true,
+        }, { status: 503 });
+      }
+    } else {
+      parsed = result.data;
+    }
+
+    const parsedPayload = parsed && typeof parsed === "object" ? parsed as Record<string, unknown> : {};
 
     const response = {
-      ...parsed,
+      ...parsedPayload,
       cached: false,
       generatedAt: new Date().toISOString(),
       analyzedCompanies: eligibleDrives.map((drive) => ({
@@ -162,7 +157,7 @@ Return ONLY valid JSON:
     return NextResponse.json(response);
   } catch (error) {
     if (isRedirectError(error)) throw error;
-    return NextResponse.json({ error: "Failed to build career coach" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to build career coach", retryable: true }, { status: 503 });
   }
 }
 
