@@ -61,7 +61,7 @@ export const projectSchema = z.object({
 export const codingProfileSchema = z.object({
     platform: z.string().min(1, "Platform name is required").max(50),
     username: z.string().min(1, "Username is required").max(100),
-    url: z.string().optional().or(z.literal("")).nullable(),
+    url: z.string().url("Coding profile URL must be a valid URL").optional().or(z.literal("")).nullable(),
     rating: z.number().int().min(0).optional(),
     problemsSolved: z.number().int().min(0).optional(),
 });
