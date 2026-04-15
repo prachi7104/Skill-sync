@@ -1,57 +1,79 @@
+import { cache } from "react";
 import { getCachedSession } from "@/lib/auth/session-cache";
 import { db } from "@/lib/db";
-import { users, students } from "@/lib/db/schema";
+import { students } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 /**
- * Retrieves the currently authenticated user from the database.
- * Returns null if not authenticated or user not found.
- * Use this in Server Components and Route Handlers.
- * 
- * PERFORMANCE: Uses cached session to avoid redundant NextAuth calls.
+ * Lightweight user object derived purely from the signed JWT cookie.
+ * No database query — the JWT is refreshed every 5 minutes by the jwt callback
+ * and already contains id, role, name, email, and collegeId.
  */
-export async function getCurrentUser() {
+export type SessionUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: "student" | "faculty" | "admin";
+  collegeId: string | null;
+};
 
-    const session = await getCachedSession();
+/**
+ * Reads the current user from the JWT session without hitting the database.
+ * Wrapped in React cache() so multiple calls within the same server request
+ * are deduplicated (one JWT decode per request).
+ *
+ * PERFORMANCE: This replaces the old getCurrentUser() which queried the DB on
+ * every request. The JWT is signed and trusted; role/collegeId are authoritative
+ * because the jwt callback refreshes them from DB every 5 minutes.
+ */
+const getSessionUser = cache(async (): Promise<SessionUser | null> => {
+  const session = await getCachedSession();
+  if (!session?.user?.id || !session?.user?.role) return null;
+  return {
+    id: session.user.id,
+    email: session.user.email!,
+    name: session.user.name ?? "",
+    role: session.user.role,
+    collegeId: session.user.collegeId ?? null,
+  };
+});
 
-    if (!session?.user?.email) {
-        return null;
-    }
-
-    const currentUser = await db.query.users.findFirst({
-        where: eq(users.email, session.user.email),
-    });
-
-    return currentUser || null;
+/**
+ * Returns the current authenticated user from the JWT.
+ * Returns null if not authenticated.
+ *
+ * Use this in Server Components and Route Handlers.
+ * No database query — all data comes from the signed cookie.
+ */
+export async function getCurrentUser(): Promise<SessionUser | null> {
+  return getSessionUser();
 }
 
 /**
- * Enforces authentication. Redirects to login if not logged in.
+ * Enforces authentication. Redirects to /login if not logged in.
  * Use this in Server Components (layouts, pages).
  */
-export async function requireAuth() {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        redirect("/login");
-    }
-
-    return user;
+export async function requireAuth(): Promise<SessionUser> {
+  const user = await getSessionUser();
+  if (!user) {
+    redirect("/login");
+  }
+  return user;
 }
 
 /**
  * Enforces specific roles. Redirects if user is not authenticated OR lacks role.
  * @param allowedRoles Array of allowed roles ('student', 'faculty', 'admin')
  */
-export async function requireRole(allowedRoles: ("student" | "faculty" | "admin")[]) {
-    const user = await requireAuth();
-
-    if (!allowedRoles.includes(user.role)) {
-        redirect("/unauthorized");
-    }
-
-    return user;
+export async function requireRole(
+  allowedRoles: ("student" | "faculty" | "admin")[],
+): Promise<SessionUser> {
+  const user = await requireAuth();
+  if (!allowedRoles.includes(user.role)) {
+    redirect("/unauthorized");
+  }
+  return user;
 }
 
 /**
@@ -59,11 +81,10 @@ export async function requireRole(allowedRoles: ("student" | "faculty" | "admin"
  * Returns null if not found (does not throw).
  */
 export async function getStudentProfile(userId: string) {
-    const profile = await db.query.students.findFirst({
-        where: eq(students.id, userId),
-    });
-
-    return profile || null;
+  const profile = await db.query.students.findFirst({
+    where: eq(students.id, userId),
+  });
+  return profile || null;
 }
 
 /**
@@ -72,15 +93,12 @@ export async function getStudentProfile(userId: string) {
  * Returns both user and profile.
  */
 export async function requireStudentProfile() {
-    const user = await requireRole(["student"]);
-
-    const profile = await getStudentProfile(user.id);
-
-    if (!profile) {
-        redirect("/student/onboarding");
-    }
-
-    return { user, profile };
+  const user = await requireRole(["student"]);
+  const profile = await getStudentProfile(user.id);
+  if (!profile) {
+    redirect("/student/onboarding");
+  }
+  return { user, profile };
 }
 
 /**
@@ -88,17 +106,17 @@ export async function requireStudentProfile() {
  * Admins always return true. Faculty must have the component in their granted_components array.
  */
 export async function hasComponent(component: string): Promise<boolean> {
-    const user = await getCurrentUser();
-    if (!user) return false;
-    if (user.role === "admin") return true;
-    if (user.role === "student") return false;
+  const user = await getSessionUser();
+  if (!user) return false;
+  if (user.role === "admin") return true;
+  if (user.role === "student") return false;
 
-    const [profile] = await db.execute(sql`
-        SELECT granted_components FROM staff_profiles WHERE user_id = ${user.id}
-    `) as unknown as Array<{ granted_components: string[] }>;
+  const [profile] = (await db.execute(sql`
+    SELECT granted_components FROM staff_profiles WHERE user_id = ${user.id}
+  `)) as unknown as Array<{ granted_components: string[] }>;
 
-    if (!profile) return false;
-    return profile.granted_components.includes(component);
+  if (!profile) return false;
+  return profile.granted_components.includes(component);
 }
 
 /**
@@ -106,13 +124,13 @@ export async function hasComponent(component: string): Promise<boolean> {
  * Redirects to /unauthorized if not.
  */
 export async function requireComponent(component: string) {
-    const user = await requireAuth();
-    if (user.role === "admin") return user; // admin bypasses
+  const user = await requireAuth();
+  if (user.role === "admin") return user; // admin bypasses
 
-    const allowed = await hasComponent(component);
-    if (!allowed) redirect("/unauthorized");
+  const allowed = await hasComponent(component);
+  if (!allowed) redirect("/unauthorized");
 
-    return user;
+  return user;
 }
 
 /**
@@ -120,11 +138,11 @@ export async function requireComponent(component: string) {
  * Used to scope all data queries. Throws if missing (not redirect — safe for API routes too).
  */
 export async function getCurrentCollegeId(): Promise<string> {
-    const session = await getCachedSession();
-    if (!session?.user?.collegeId) {
-        throw new Error("No college associated with this account");
-    }
-    return session.user.collegeId;
+  const session = await getCachedSession();
+  if (!session?.user?.collegeId) {
+    throw new Error("No college associated with this account");
+  }
+  return session.user.collegeId;
 }
 
 /**

@@ -32,7 +32,8 @@ import {
 } from "@/components/ui/table";
 import Pagination from "@/components/shared/pagination";
 import { cn } from "@/lib/utils";
-import { AlertCircle, Check, RefreshCw, Trash2, UploadCloud } from "lucide-react";
+import { AlertCircle, Check, ChevronDown, RefreshCw, Trash2, UploadCloud } from "lucide-react";
+import { getCache, setCache, invalidateCache } from "@/lib/client-cache";
 
 type SessionRow = {
   id: string;
@@ -160,6 +161,7 @@ export default function AdminAmcatPage() {
   const [publishing, setPublishing] = useState(false);
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
+  const [sessionsOpen, setSessionsOpen] = useState(false);
 
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [pendingOverride, setPendingOverride] = useState<{
@@ -195,11 +197,17 @@ export default function AdminAmcatPage() {
     setSessionsLoading(true);
     setSessionsError(null);
     try {
-      const res = await fetch("/api/admin/amcat");
-      const data = await safeReadJson(res);
-      if (!res.ok) throw new Error(getApiError(data, "Failed to load sessions"));
-
-      const fetched = Array.isArray(data.sessions) ? (data.sessions as SessionRow[]) : [];
+      const cached = getCache<SessionRow[]>("admin:amcat:sessions");
+      let fetched: SessionRow[];
+      if (cached) {
+        fetched = cached;
+      } else {
+        const res = await fetch("/api/admin/amcat");
+        const data = await safeReadJson(res);
+        if (!res.ok) throw new Error(getApiError(data, "Failed to load sessions"));
+        fetched = Array.isArray(data.sessions) ? (data.sessions as SessionRow[]) : [];
+        setCache("admin:amcat:sessions", fetched, 30_000);
+      }
       setSessions(fetched);
 
       if (!selectedSessionId && fetched.length > 0) {
@@ -316,6 +324,7 @@ export default function AdminAmcatPage() {
       setAcademicYear("");
       setUploadFile(null);
 
+      invalidateCache("admin:amcat:sessions");
       await fetchSessions();
       const sessionId = typeof data.sessionId === "string" ? data.sessionId : null;
       if (sessionId) {
@@ -441,6 +450,7 @@ export default function AdminAmcatPage() {
 
       const deletedCount = typeof data.deletedSessions === "number" ? data.deletedSessions : 0;
 
+      invalidateCache("admin:amcat:sessions");
       setSessions([]);
       setSelectedSessionId(null);
       setSelectedSession(null);
@@ -532,7 +542,14 @@ export default function AdminAmcatPage() {
 
             <div className="pt-4 border-t">
               <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold">Past Sessions</p>
+                <button
+                  type="button"
+                  onClick={() => setSessionsOpen((open) => !open)}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-primary transition-colors"
+                >
+                  Sessions ({sessions.length})
+                  <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", sessionsOpen && "rotate-180")} />
+                </button>
                 <Button
                   type="button"
                   variant="destructive"
@@ -544,39 +561,41 @@ export default function AdminAmcatPage() {
                   <Trash2 className="h-3.5 w-3.5" /> Delete All
                 </Button>
               </div>
-              <div className="space-y-2 max-h-[280px] overflow-auto pr-1">
-                {sessionsLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading sessions...</p>
-                ) : sessions.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No AMCAT sessions yet.</p>
-                ) : (
-                  sessions.map((session) => (
-                    <button
-                      key={session.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedSessionId(session.id);
-                        setSelectedSession(session);
-                        setResultsPage(1);
-                      }}
-                      className={cn(
-                        "w-full text-left border rounded-md p-3 transition-colors",
-                        selectedSessionId === session.id ? "border-primary/30 bg-primary/5" : "hover:bg-muted/50",
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium truncate">{session.session_name}</p>
-                        <Badge variant="outline" className={categoryClass(session.status === "published" ? "alpha" : session.status === "review" ? "beta" : "gamma")}>
-                          {session.status}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {session.total_students} students
-                      </p>
-                    </button>
-                  ))
-                )}
-              </div>
+              {sessionsOpen && (
+                <div className="space-y-2 max-h-[280px] overflow-auto pr-1">
+                  {sessionsLoading ? (
+                    <p className="text-sm text-muted-foreground">Loading sessions...</p>
+                  ) : sessions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No AMCAT sessions yet.</p>
+                  ) : (
+                    sessions.map((session) => (
+                      <button
+                        key={session.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedSessionId(session.id);
+                          setSelectedSession(session);
+                          setResultsPage(1);
+                        }}
+                        className={cn(
+                          "w-full text-left border rounded-md p-3 transition-colors",
+                          selectedSessionId === session.id ? "border-primary/30 bg-primary/5" : "hover:bg-muted/50",
+                        )}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium truncate">{session.session_name}</p>
+                          <Badge variant="outline" className={categoryClass(session.status === "published" ? "alpha" : session.status === "review" ? "beta" : "gamma")}>
+                            {session.status}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {session.total_students} students
+                        </p>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -788,7 +807,8 @@ export default function AdminAmcatPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
+          <div className="overflow-x-auto">
+          <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow>
                 <TableHead>#</TableHead>
@@ -878,10 +898,19 @@ export default function AdminAmcatPage() {
               )}
             </TableBody>
           </Table>
+          </div>
 
           {resultsTotal > pageSize && (
             <div className="mt-4">
-              <Pagination page={resultsPage} total={resultsTotal} pageSize={pageSize} />
+              <Pagination
+                page={resultsPage}
+                total={resultsTotal}
+                pageSize={pageSize}
+                onChange={(p) => {
+                  setResultsPage(p);
+                  if (selectedSessionId) fetchSessionResults(selectedSessionId, p);
+                }}
+              />
             </div>
           )}
         </CardContent>

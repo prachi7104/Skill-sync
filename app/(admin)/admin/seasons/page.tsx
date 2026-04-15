@@ -26,7 +26,8 @@ export default function AdminSeasonsPage() {
   const [rows, setRows] = useState<SeasonRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [startsAt, setStartsAt] = useState("");
@@ -35,17 +36,18 @@ export default function AdminSeasonsPage() {
 
   async function loadRows() {
     setLoading(true);
-    setMessage(null);
+    setErrorMsg(null);
+    setSuccessMsg(null);
     try {
       const res = await fetch("/api/admin/seasons", { cache: "no-store" });
       const json = await res.json();
       if (!res.ok) {
-        setMessage(json.message ?? "Failed to load seasons");
+        setErrorMsg(json.message ?? "Failed to load seasons");
         return;
       }
       setRows((json.seasons ?? []) as SeasonRow[]);
     } catch {
-      setMessage("Failed to load seasons");
+      setErrorMsg("Failed to load seasons");
     } finally {
       setLoading(false);
     }
@@ -57,12 +59,14 @@ export default function AdminSeasonsPage() {
 
   async function createSeason() {
     if (!name.trim()) {
-      setMessage("Season name is required");
+      setErrorMsg("Season name is required");
+      setSuccessMsg(null);
       return;
     }
 
     setSaving(true);
-    setMessage(null);
+    setErrorMsg(null);
+    setSuccessMsg(null);
     try {
       const res = await fetch("/api/admin/seasons", {
         method: "POST",
@@ -77,7 +81,7 @@ export default function AdminSeasonsPage() {
 
       const json = await res.json();
       if (!res.ok) {
-        setMessage(json.message ?? "Failed to create season");
+        setErrorMsg(json.message ?? "Failed to create season");
         return;
       }
 
@@ -85,17 +89,18 @@ export default function AdminSeasonsPage() {
       setStartsAt("");
       setEndsAt("");
       setIsActive(true);
-      setMessage("Season created");
+      setSuccessMsg("Season created");
       await loadRows();
     } catch {
-      setMessage("Failed to create season");
+      setErrorMsg("Failed to create season");
     } finally {
       setSaving(false);
     }
   }
 
   async function toggleSeason(row: SeasonRow, nextActive: boolean) {
-    setMessage(null);
+    setErrorMsg(null);
+    setSuccessMsg(null);
     const res = await fetch(`/api/admin/seasons/${row.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -103,27 +108,28 @@ export default function AdminSeasonsPage() {
     });
     const json = await res.json();
     if (!res.ok) {
-      setMessage(json.message ?? "Failed to update season");
+      setErrorMsg(json.message ?? "Failed to update season");
       return;
     }
 
-    setMessage(nextActive ? "Season activated" : "Season deactivated");
+    setSuccessMsg(nextActive ? "Season activated" : "Season deactivated");
     await loadRows();
   }
 
   async function deleteSeason(row: SeasonRow) {
-    const confirmed = window.confirm(`Delete season \"${row.name}\"?`);
+    const confirmed = window.confirm(`Delete season "${row.name}"?`);
     if (!confirmed) return;
 
-    setMessage(null);
+    setErrorMsg(null);
+    setSuccessMsg(null);
     const res = await fetch(`/api/admin/seasons/${row.id}`, { method: "DELETE" });
     const json = await res.json();
     if (!res.ok) {
-      setMessage(json.message ?? "Failed to delete season");
+      setErrorMsg(json.message ?? "Failed to delete season");
       return;
     }
 
-    setMessage("Season deleted");
+    setSuccessMsg("Season deleted");
     await loadRows();
   }
 
@@ -136,11 +142,16 @@ export default function AdminSeasonsPage() {
         
       />
 
-      {message ? (
-        <div className="rounded-lg border border-border bg-card p-3 text-sm text-foreground">
-          {message}
+      {errorMsg && (
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+          {errorMsg}
         </div>
-      ) : null}
+      )}
+      {successMsg && (
+        <div className="rounded-lg border border-success/20 bg-success/10 p-3 text-sm text-success">
+          {successMsg}
+        </div>
+      )}
 
       <section className="rounded-lg border border-border bg-card p-5 space-y-4">
         <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Create Season</h2>

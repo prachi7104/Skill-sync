@@ -56,6 +56,26 @@ interface StudentSearchViewProps {
 type VerificationFilter = "all" | "unverified" | "flagged";
 type VerificationAction = "admin_verified" | "flagged";
 
+const PLATFORM_URL: Record<string, (u: string) => string> = {
+  github:        (u) => `https://github.com/${u}`,
+  linkedin:      (u) => `https://linkedin.com/in/${u}`,
+  leetcode:      (u) => `https://leetcode.com/u/${u}`,
+  codeforces:    (u) => `https://codeforces.com/profile/${u}`,
+  codechef:      (u) => `https://codechef.com/users/${u}`,
+  hackerrank:    (u) => `https://hackerrank.com/profile/${u}`,
+  geeksforgeeks: (u) => `https://geeksforgeeks.org/user/${u}`,
+  kaggle:        (u) => `https://kaggle.com/${u}`,
+  twitter:       (u) => `https://twitter.com/${u}`,
+  instagram:     (u) => `https://instagram.com/${u}`,
+};
+
+function getPlatformUrl(platform: string, username: string): string | null {
+  if (username.startsWith("http")) return username;
+  const key = platform.toLowerCase().replace(/[^a-z]/g, "");
+  const fn = PLATFORM_URL[key];
+  return fn ? fn(username) : null;
+}
+
 export function ProfileModal({ student, onClose }: { student: StudentProfile; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -131,19 +151,38 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
           {student.resumeUrl && (
             <section>
               <h3 className="text-lg font-bold text-foreground mb-4">Resume</h3>
-              <div className="bg-muted/20 border border-border rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-2">File: {student.resumeFilename}</p>
-                <p className="text-sm text-muted-foreground mb-3">
+              <div className="bg-muted/20 border border-border rounded-lg p-4 space-y-3">
+                <p className="text-sm text-muted-foreground">File: {student.resumeFilename}</p>
+                <p className="text-sm text-muted-foreground">
                   Uploaded: {student.resumeUploadedAt ? new Date(student.resumeUploadedAt).toLocaleDateString() : "—"}
                 </p>
-                <a
-                  href={student.resumeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary text-foreground rounded-lg text-sm font-semibold transition"
-                >
-                  View Resume <ExternalLink className="h-4 w-4" />
-                </a>
+                {student.resumeUrl.toLowerCase().includes(".pdf") ? (
+                  <>
+                    <iframe
+                      src={student.resumeUrl}
+                      className="w-full rounded border border-border"
+                      style={{ height: "65vh" }}
+                      title="Resume Preview"
+                    />
+                    <a
+                      href={student.resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-semibold transition"
+                    >
+                      Download PDF <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </>
+                ) : (
+                  <a
+                    href={student.resumeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-semibold transition"
+                  >
+                    View Resume <ExternalLink className="h-4 w-4" />
+                  </a>
+                )}
               </div>
             </section>
           )}
@@ -225,12 +264,27 @@ export function ProfileModal({ student, onClose }: { student: StudentProfile; on
             <section>
               <h3 className="text-lg font-bold text-foreground mb-4">Coding Profiles ({student.codingProfiles.length})</h3>
               <div className="space-y-2">
-                {student.codingProfiles.map((profile, i) => (
-                  <div key={i} className="bg-muted/20 border border-border rounded-lg p-3">
-                    <p className="text-sm text-muted-foreground">{profile.platform}</p>
-                    <p className="text-foreground font-medium">{profile.username}</p>
-                  </div>
-                ))}
+                {student.codingProfiles.map((profile, i) => {
+                  const url = getPlatformUrl(profile.platform, profile.username);
+                  return (
+                    <div key={i} className="bg-muted/20 border border-border rounded-lg p-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm text-muted-foreground">{profile.platform}</p>
+                        <p className="text-foreground font-medium truncate">{profile.username}</p>
+                      </div>
+                      {url && (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-primary/10 border border-primary/20 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
+                        >
+                          Open <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </section>
           )}

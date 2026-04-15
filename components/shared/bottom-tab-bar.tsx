@@ -38,9 +38,9 @@ const FACULTY_TABS: Tab[] = [
 ];
 
 const ADMIN_TABS: Tab[] = [
-  { href: '/admin/health',  label: 'Health',  icon: Activity },
-  { href: '/admin/drives',  label: 'Drives',  icon: Briefcase },
-  { href: '/admin/users',   label: 'Users',   icon: Users },
+  { href: '/admin/students', label: 'Students', icon: GraduationCap },
+  { href: '/admin/drives',   label: 'Drives',   icon: Briefcase },
+  { href: '/admin/users',    label: 'Users',    icon: Users },
   { label: 'More', icon: MoreHorizontal, isMore: true },
 ];
 
@@ -66,14 +66,14 @@ const FACULTY_MORE: DrawerLink[] = [
 ];
 
 const ADMIN_MORE: DrawerLink[] = [
-  { href: '/admin/experiences', label: 'Experiences', icon: Star },
-  { href: '/admin/resources', label: 'Resources', icon: LibraryBig },
-  { href: '/admin/amcat', label: 'AMCAT', icon: BarChart },
-  { href: '/admin/seasons', label: 'Seasons', icon: CalendarDays },
-  { href: '/admin/students', label: 'Students', icon: GraduationCap },
-  { href: '/admin/ai-models', label: 'AI Models', icon: Bot },
-  { href: '/admin/sandbox', label: 'Sandbox', icon: Box },
-  { href: '/admin/settings', label: 'Settings', icon: Settings },
+  { href: '/admin/health',      label: 'System Health', icon: Activity },
+  { href: '/admin/experiences', label: 'Experiences',   icon: Star },
+  { href: '/admin/resources',   label: 'Resources',     icon: LibraryBig },
+  { href: '/admin/amcat',       label: 'AMCAT',         icon: BarChart },
+  { href: '/admin/seasons',     label: 'Seasons',       icon: CalendarDays },
+  { href: '/admin/ai-models',   label: 'AI Models',     icon: Bot },
+  { href: '/admin/sandbox',     label: 'Sandbox',       icon: Box },
+  { href: '/admin/settings',    label: 'Settings',      icon: Settings },
 ];
 
 const MORE_BY_ROLE: Record<string, DrawerLink[]> = {

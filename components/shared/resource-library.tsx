@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Download, Eye, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { Download, Eye, LayoutGrid, List, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { getCache, setCache, invalidatePrefix } from "@/lib/client-cache";
 import { toast } from "sonner";
 
 import MarkdownRenderer from "@/components/shared/markdown-renderer";
@@ -90,6 +91,7 @@ export default function ResourceLibrary() {
   const [editing, setEditing] = useState<ResourceRow | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "stack">("stack");
   const [form, setForm] = useState<CreateResourceForm>({
     category: TECHNICAL_RESOURCE_CATEGORIES[0],
     title: "",
@@ -121,7 +123,26 @@ export default function ResourceLibrary() {
 
   async function refreshCurrentList(showLoading = false) {
     if (showLoading) setLoading(true);
+    const cacheKey = `resources:${section}:${category}:${statusFilter}:${search}`;
     try {
+      // Fast path: serve from cache on non-forced refreshes
+      if (!showLoading) {
+        const cached = getCache<{
+          resources: ResourceRow[];
+          canCreate: boolean;
+          viewerRole: "student" | "faculty" | "admin" | null;
+          viewerId: string | null;
+        }>(cacheKey);
+        if (cached) {
+          setResources(cached.resources);
+          setCanCreate(Boolean(cached.canCreate));
+          setViewerRole(cached.viewerRole ?? null);
+          setViewerId(cached.viewerId ?? null);
+          setFetchError(null);
+          return;
+        }
+      }
+
       const params = new URLSearchParams({ section });
       if (category !== "all") params.set("category", category);
       if (search) params.set("q", search);
@@ -139,10 +160,17 @@ export default function ResourceLibrary() {
         setResources([]);
         setFetchError(error);
       } else {
-        setResources(data?.resources ?? []);
-        setCanCreate(Boolean(data?.canCreate));
-        setViewerRole(data?.viewerRole ?? null);
-        setViewerId(data?.viewerId ?? null);
+        const payload = {
+          resources: data?.resources ?? [],
+          canCreate: Boolean(data?.canCreate),
+          viewerRole: data?.viewerRole ?? null,
+          viewerId: data?.viewerId ?? null,
+        };
+        setCache(cacheKey, payload, 60_000);
+        setResources(payload.resources);
+        setCanCreate(payload.canCreate);
+        setViewerRole(payload.viewerRole);
+        setViewerId(payload.viewerId);
         setFetchError(null);
       }
     } finally {
@@ -166,6 +194,7 @@ export default function ResourceLibrary() {
 
   async function createResource() {
     setSubmitting(true);
+    invalidatePrefix("resources:");
     try {
       const body = new FormData();
       body.append("section", section);
@@ -218,6 +247,7 @@ export default function ResourceLibrary() {
   async function saveEdit() {
     if (!editing) return;
 
+    invalidatePrefix("resources:");
     setSavingEdit(true);
     try {
       const tags = editForm.tags
@@ -277,6 +307,7 @@ export default function ResourceLibrary() {
   async function deleteResource(resource: ResourceRow) {
     const confirmed = window.confirm("Delete this resource permanently?");
     if (!confirmed) return;
+    invalidatePrefix("resources:");
 
     const res = await fetch(`/api/resources/${resource.id}`, { method: "DELETE" });
     const json = await res.json();
@@ -305,7 +336,41 @@ export default function ResourceLibrary() {
           <h1 className="text-3xl font-black tracking-tight text-foreground">Resource Library</h1>
           <p className="mt-1 text-sm text-muted-foreground">Browse technical and soft-skills content curated for your college.</p>
         </div>
-        {canCreate ? <Button onClick={() => setCreateOpen(true)} className="gap-2 bg-primary hover:bg-primary/90"><Plus className="h-4 w-4" /> New Resource</Button> : null}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center rounded-md border border-border overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setViewMode("stack")}
+              className={cn(
+                "p-2 transition-colors",
+                viewMode === "stack"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card text-muted-foreground hover:bg-muted",
+              )}
+              aria-label="Stack view"
+            >
+              <List className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("grid")}
+              className={cn(
+                "p-2 transition-colors",
+                viewMode === "grid"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card text-muted-foreground hover:bg-muted",
+              )}
+              aria-label="Grid view"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+          </div>
+          {canCreate ? (
+            <Button onClick={() => setCreateOpen(true)} className="gap-2 bg-primary hover:bg-primary/90">
+              <Plus className="h-4 w-4" /> New Resource
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <Tabs value={section} onValueChange={(value) => setSection(value as "technical" | "softskills")}>
@@ -401,66 +466,95 @@ export default function ResourceLibrary() {
                    description="Try broadening your filters or keywords."
                  />
                ) : null}
-              {!loading ? resources.map((resource) => (
-                <article key={resource.id} className="rounded-lg border border-border bg-card p-5 transition-all hover:border-border">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-2 flex items-center gap-2">
-                        <Badge className="border border-border bg-card text-foreground">{formatCategoryLabel(resource.category)}</Badge>
-                        {resource.status && resource.status !== "published" ? (
-                          <Badge className="border border-warning/20 bg-warning/10 text-warning">
-                            {resource.status.toUpperCase()}
-                          </Badge>
-                        ) : null}
-                        {resource.attachment_url ? <Upload className="h-3.5 w-3.5 text-muted-foreground" /> : null}
+              {!loading && resources.length > 0 ? (
+                <div className={viewMode === "grid"
+                  ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+                  : "space-y-4"}>
+                  {resources.map((resource) => (
+                    <article key={resource.id} className="rounded-lg border border-border bg-card p-5 transition-all hover:border-border">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-2 flex items-center gap-2 flex-wrap">
+                            <Badge className="border border-border bg-card text-foreground">{formatCategoryLabel(resource.category)}</Badge>
+                            {resource.status && resource.status !== "published" ? (
+                              <Badge className="border border-warning/20 bg-warning/10 text-warning">
+                                {resource.status.toUpperCase()}
+                              </Badge>
+                            ) : null}
+                            {resource.attachment_url ? <Upload className="h-3.5 w-3.5 text-muted-foreground" /> : null}
+                          </div>
+                          <h3 className="text-sm font-bold leading-tight text-foreground">{resource.title}</h3>
+                          {resource.body ? <p className="mt-1.5 line-clamp-2 text-xs text-muted-foreground">{stripMarkdown(resource.body)}</p> : null}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button variant="outline" className="border-border bg-muted/20 text-foreground hover:bg-muted" onClick={() => openResource(resource)}>
+                            Open
+                          </Button>
+                          {canManageResource(resource) ? (
+                            <Button variant="outline" className="gap-1 border-border bg-muted/20 text-foreground hover:bg-muted" onClick={() => startEdit(resource)}>
+                              <Pencil className="h-3 w-3" /> Edit
+                            </Button>
+                          ) : null}
+                          {canManageResource(resource) ? (
+                            <Button variant="outline" className="gap-1 border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20" onClick={() => deleteResource(resource)}>
+                              <Trash2 className="h-3 w-3" /> Delete
+                            </Button>
+                          ) : null}
+                        </div>
                       </div>
-                      <h3 className="text-sm font-bold leading-tight text-foreground">{resource.title}</h3>
-                      {resource.body ? <p className="mt-1.5 line-clamp-2 text-xs text-muted-foreground">{stripMarkdown(resource.body)}</p> : null}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {resource.attachment_url ? (
-                        <a href={resource.attachment_url} target="_blank" className="flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/20 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/30">
-                          <Download className="h-3 w-3" /> PDF
-                        </a>
-                      ) : null}
-                      <Button variant="outline" className="border-border bg-muted/20 text-foreground hover:bg-muted" onClick={() => openResource(resource)}>
-                        Open
-                      </Button>
-                      {canManageResource(resource) ? (
-                        <Button variant="outline" className="gap-1 border-border bg-muted/20 text-foreground hover:bg-muted" onClick={() => startEdit(resource)}>
-                          <Pencil className="h-3 w-3" /> Edit
-                        </Button>
-                      ) : null}
-                      {canManageResource(resource) ? (
-                        <Button variant="outline" className="gap-1 border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20" onClick={() => deleteResource(resource)}>
-                          <Trash2 className="h-3 w-3" /> Delete
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center gap-4 border-t border-border pt-3">
-                    <span className="text-xs text-muted-foreground">By {resource.author_name}</span>
-                    <span className="text-xs text-muted-foreground">{new Date(resource.created_at).toLocaleDateString()}</span>
-                    <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground"><Eye className="h-3 w-3" /> {resource.view_count}</span>
-                  </div>
-                </article>
-              )) : null}
+                      <div className="mt-3 flex items-center gap-4 border-t border-border pt-3">
+                        <span className="text-xs text-muted-foreground">By {resource.author_name}</span>
+                        <span className="text-xs text-muted-foreground">{new Date(resource.created_at).toLocaleDateString()}</span>
+                        <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground"><Eye className="h-3 w-3" /> {resource.view_count}</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
         </TabsContent>
       </Tabs>
 
       <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
-      <DialogContent className="w-[calc(100vw-1rem)] max-w-[48rem] max-h-[90vh] overflow-hidden border-border bg-muted/20 text-foreground sm:w-[calc(100vw-2rem)]">
+        <DialogContent className="flex flex-col w-full max-w-full h-[100dvh] rounded-none sm:w-[calc(100vw-2rem)] sm:max-w-3xl sm:h-auto sm:max-h-[90vh] sm:rounded-xl border-border bg-muted/20 text-foreground overflow-hidden">
           {selected ? (
             <>
-              <DialogHeader>
+              <DialogHeader className="shrink-0">
                 <DialogTitle>{selected.title}</DialogTitle>
                 <DialogDescription>{formatCategoryLabel(selected.category)} • {selected.author_name}</DialogDescription>
               </DialogHeader>
-              <div className="max-h-[70vh] overflow-y-auto space-y-4">
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1">
                 {selected.body ? <MarkdownRenderer content={selected.body} /> : null}
-                {selected.attachment_url ? <a href={selected.attachment_url} target="_blank" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-foreground"><Download className="h-4 w-4" /> Download attachment</a> : null}
+                {selected.attachment_url ? (
+                  selected.attachment_url.toLowerCase().includes(".pdf") ? (
+                    <div className="space-y-3">
+                      <iframe
+                        src={selected.attachment_url}
+                        className="w-full rounded border border-border"
+                        style={{ height: "65vh" }}
+                        title={selected.attachment_name ?? "Preview"}
+                      />
+                      <a
+                        href={selected.attachment_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-foreground"
+                      >
+                        <Download className="h-4 w-4" /> Download PDF
+                      </a>
+                    </div>
+                  ) : (
+                    <a
+                      href={selected.attachment_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-foreground"
+                    >
+                      <Download className="h-4 w-4" /> Download attachment
+                    </a>
+                  )
+                ) : null}
               </div>
             </>
           ) : null}
