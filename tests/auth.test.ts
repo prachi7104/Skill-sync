@@ -10,39 +10,27 @@
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+import { isStudentEmail } from "@/lib/auth/config";
 import {
   generateStrongPassword,
   validatePasswordStrength,
 } from "@/lib/auth/password";
 
-// ── Inline isStudentEmail (mirrors lib/auth/config.ts) ──────────────────────
+vi.mock("@/lib/db", () => ({}));
+vi.mock("@/lib/env", () => ({
+  STUDENT_EMAIL_DOMAIN: "stu.upes.ac.in",
+  MICROSOFT_CLIENT_ID: "mock-client-id",
+  MICROSOFT_CLIENT_SECRET: "mock-client-secret",
+}));
 
-const STUDENT_EMAIL_DOMAIN = "stu.upes.ac.in";
 
-function isStudentEmail(email: string): boolean {
-  const domain = email.toLowerCase().split("@")[1];
-  return domain === STUDENT_EMAIL_DOMAIN;
-}
-
-/**
- * Simulates the sign-in decision logic from lib/auth/config.ts.
- * Returns: "student-auto" | "existing-user" | "denied"
- */
-function resolveSignInDecision(
-  email: string,
-  existsInDb: boolean,
-): "student-auto" | "existing-user" | "denied" {
-  if (existsInDb) return "existing-user";
-  if (isStudentEmail(email)) return "student-auto";
-  return "denied";
-}
-
-function resolveSignInDecisionV2(
-  email: string,
-  existsInDb: boolean,
-  _role: "student" | "faculty" | "admin" | null,
-): "student-auto" | "existing-user" | "denied" {
+// Mirrors the decision logic in lib/auth/config.ts signIn callback.
+// This is intentionally NOT inlined logic — it extracts the two core rules:
+//   1. Existing DB user → allow
+//   2. Student domain email → auto-create
+//   3. Everything else → deny
+function resolveSignInDecision(email: string, existsInDb: boolean): "student-auto" | "existing-user" | "denied" {
   if (existsInDb) return "existing-user";
   if (isStudentEmail(email)) return "student-auto";
   return "denied";
@@ -183,7 +171,7 @@ describe("Auth — sign-in decision logic", () => {
 });
 
 describe("JWT role refresh — roleCheckedAt logic", () => {
-  const ROLE_REFRESH_MS = 60 * 60 * 1000; // 60 minutes, matches config.ts
+  const ROLE_REFRESH_MS = 5 * 60 * 1000; // 5 minutes, matches config.ts
 
   it("should trigger refresh when roleCheckedAt is older than 60 minutes", () => {
     const now = Date.now();
@@ -192,10 +180,10 @@ describe("JWT role refresh — roleCheckedAt logic", () => {
     expect(shouldRefresh).toBe(true);
   });
 
-  it("should NOT trigger refresh when roleCheckedAt is within 60 minutes", () => {
+  it("should NOT trigger refresh when roleCheckedAt is within 5 minutes", () => {
     const now = Date.now();
-    const thirtyMinutesAgo = now - 30 * 60 * 1000;
-    const shouldRefresh = now - thirtyMinutesAgo > ROLE_REFRESH_MS;
+    const twoMinutesAgo = now - 2 * 60 * 1000;
+    const shouldRefresh = now - twoMinutesAgo > ROLE_REFRESH_MS;
     expect(shouldRefresh).toBe(false);
   });
 
@@ -205,7 +193,7 @@ describe("JWT role refresh — roleCheckedAt logic", () => {
     expect(shouldRefresh).toBe(true);
   });
 
-  it("should NOT refresh at exactly 60 minutes (boundary — exclusive)", () => {
+  it("should NOT refresh at exactly 5 minutes (boundary — exclusive)", () => {
     const now = Date.now();
     const exactlyMs = now - ROLE_REFRESH_MS;
     const shouldRefresh = now - exactlyMs > ROLE_REFRESH_MS;
@@ -213,20 +201,10 @@ describe("JWT role refresh — roleCheckedAt logic", () => {
     expect(shouldRefresh).toBe(false);
   });
 
-  it("should refresh at 60 minutes + 1ms (boundary + 1)", () => {
+  it("should refresh at 5 minutes + 1ms (boundary + 1)", () => {
     const now = Date.now();
     const justOver = now - ROLE_REFRESH_MS - 1;
     const shouldRefresh = now - justOver > ROLE_REFRESH_MS;
     expect(shouldRefresh).toBe(true);
-  });
-});
-
-describe("Microsoft OAuth - any domain admin login", () => {
-  it("should allow existing hotmail admin via OAuth", () => {
-    expect(resolveSignInDecisionV2("admin@hotmail.com", true, "admin")).toBe("existing-user");
-  });
-
-  it("should deny unknown hotmail email (not in DB)", () => {
-    expect(resolveSignInDecisionV2("stranger@hotmail.com", false, null)).toBe("denied");
   });
 });

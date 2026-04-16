@@ -1,56 +1,70 @@
 import { describe, expect, it } from "vitest";
+import { studentProfileSchema } from "@/lib/validations/student-profile";
 
-type PatchPayload = {
-  rollNo?: string | null;
-  sapId?: string | null;
-  batchYear?: number | null;
-};
-
-type ExistingProfile = {
-  rollNo: string | null;
-  sapId: string | null;
-  batchYear: number | null;
-};
-
-function applyProfilePatch(existing: ExistingProfile, payload: PatchPayload): number {
-  // Mirrors route lock behavior for sapId and batchYear.
-  if (payload.sapId !== undefined && payload.sapId !== null) {
-    if (existing.sapId && payload.sapId !== existing.sapId) return 400;
-  }
-  if (payload.batchYear !== undefined && payload.batchYear !== null) {
-    if (existing.batchYear !== null && payload.batchYear !== existing.batchYear) return 400;
-  }
-
-  // PATCH accepts partial payloads; empty rollNo should be treated as no-op.
-  if (payload.rollNo === "") {
-    payload.rollNo = undefined;
-  }
-
-  return 200;
-}
-
-describe("profile route PATCH", () => {
-  it("patchProfile_emptyRollNo_returns200", () => {
-    const status = applyProfilePatch(
-      { rollNo: null, sapId: null, batchYear: null },
-      { rollNo: "" },
-    );
-    expect(status).toBe(200);
+describe("profile route PATCH — validation", () => {
+  it("rejects invalid SAP ID format", () => {
+    const result = studentProfileSchema.partial().safeParse({ sapId: "12345" });
+    expect(result.success).toBe(false);
   });
 
-  it("patchProfile_lockedSapId_returns400", () => {
-    const status = applyProfilePatch(
-      { rollNo: "R2142233333", sapId: "500126666", batchYear: 2027 },
-      { sapId: "500126667" },
-    );
-    expect(status).toBe(400);
+  it("accepts valid SAP ID format", () => {
+    const result = studentProfileSchema.partial().safeParse({ sapId: "500126666" });
+    expect(result.success).toBe(true);
   });
 
-  it("patchProfile_newSapId_returns200", () => {
-    const status = applyProfilePatch(
-      { rollNo: "R2142233333", sapId: null, batchYear: 2027 },
-      { sapId: "500126666" },
-    );
-    expect(status).toBe(200);
+  it("rejects invalid roll number format", () => {
+    const result = studentProfileSchema.partial().safeParse({ rollNo: "ABC" });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts valid roll number format", () => {
+    const result = studentProfileSchema.partial().safeParse({ rollNo: "R2142233333" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts null sapId (clearing the field)", () => {
+    const result = studentProfileSchema.partial().safeParse({ sapId: null });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts empty partial payload", () => {
+    const result = studentProfileSchema.partial().safeParse({});
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects CGPA above 10", () => {
+    const result = studentProfileSchema.partial().safeParse({ cgpa: 11 });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects skills array exceeding max 50", () => {
+    const skills = Array.from({ length: 51 }, (_, i) => ({ name: `Skill${i}`, proficiency: 3 }));
+    const result = studentProfileSchema.partial().safeParse({ skills });
+    expect(result.success).toBe(false);
+  });
+});
+
+// Test the lock-field behavior as pure logic (mirrors route.ts lines 70-85)
+describe("profile route PATCH — locked field logic", () => {
+  function isFieldLocked(currentValue: unknown, incomingValue: unknown): boolean {
+    if (incomingValue === undefined || incomingValue === null) return false;
+    if (currentValue === null || currentValue === undefined || currentValue === "") return false;
+    return incomingValue !== currentValue;
+  }
+
+  it("allows setting sapId when current is null", () => {
+    expect(isFieldLocked(null, "500126666")).toBe(false);
+  });
+
+  it("blocks changing sapId when already set", () => {
+    expect(isFieldLocked("500126666", "500126667")).toBe(true);
+  });
+
+  it("allows sending same sapId value", () => {
+    expect(isFieldLocked("500126666", "500126666")).toBe(false);
+  });
+
+  it("allows omitting sapId (undefined)", () => {
+    expect(isFieldLocked("500126666", undefined)).toBe(false);
   });
 });
