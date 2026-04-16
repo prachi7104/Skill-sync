@@ -44,14 +44,14 @@ export type AcademicsInput = z.infer<typeof academicsSchema>;
 // ── Item schemas (with array limits & date validation — Prompt 3.8) ──────────
 
 export const skillSchema = z.object({
-    name: z.string().min(1, "Skill name is required").max(100),
+    name: z.string().trim().min(1, "Skill name is required").max(100),
     proficiency: z.number().min(1).max(5).optional(),
-    category: z.string().max(50).optional(),
+    category: z.string().trim().max(50).optional(),
 });
 
 export const projectSchema = z.object({
-    title: z.string().min(1, "Project title is required").max(200),
-    description: z.string().max(2000, "Description must be less than 2000 characters").optional().nullable(),
+    title: z.string().trim().min(1, "Project title is required").max(200),
+    description: z.string().trim().max(2000, "Description must be less than 2000 characters").optional().nullable(),
     techStack: z.array(z.string().max(50)).max(15).optional(),
     url: z.string().optional().or(z.literal("")).nullable(),
     startDate: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")).nullable(),
@@ -59,16 +59,16 @@ export const projectSchema = z.object({
 });
 
 export const codingProfileSchema = z.object({
-    platform: z.string().min(1, "Platform name is required").max(50),
-    username: z.string().min(1, "Username is required").max(100),
+    platform: z.string().trim().min(1, "Platform name is required").max(50),
+    username: z.string().trim().min(1, "Username is required").max(100),
     url: z.string().url("Coding profile URL must be a valid URL").optional().or(z.literal("")).nullable(),
     rating: z.number().int().min(0).optional(),
     problemsSolved: z.number().int().min(0).optional(),
 });
 
 export const workExperienceSchema = z.object({
-    company: z.string().min(1, "Company is required").max(200),
-    role: z.string().min(1, "Role is required").max(200),
+    company: z.string().trim().min(1, "Company is required").max(200),
+    role: z.string().trim().min(1, "Role is required").max(200),
     description: z.string().max(1000).optional().or(z.literal("")),
     startDate: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")),
     endDate: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")),
@@ -76,22 +76,22 @@ export const workExperienceSchema = z.object({
 });
 
 export const certificationSchema = z.object({
-    title: z.string().min(1, "Title is required").max(200),
-    issuer: z.string().min(1, "Issuer is required").max(200),
+    title: z.string().trim().min(1, "Title is required").max(200),
+    issuer: z.string().trim().min(1, "Issuer is required").max(200),
     dateIssued: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")),
     url: z.string().optional().or(z.literal("")),
 });
 
 export const achievementSchema = z.object({
-    title: z.string().min(1, "Title is required").max(200),
-    description: z.string().max(500).optional(),
+    title: z.string().trim().min(1, "Title is required").max(200),
+    description: z.string().trim().max(500).optional(),
     date: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")),
     issuer: z.string().max(200).optional(),
 });
 
 export const researchPaperSchema = z.object({
-    title: z.string().min(1, "Title is required").max(200),
-    abstract: z.string().max(1000).optional(),
+    title: z.string().trim().min(1, "Title is required").max(200),
+    abstract: z.string().trim().max(1000).optional(),
     url: z.string().optional().or(z.literal("")),
     datePublished: z.string().regex(dateMonthRegex, "Use YYYY-MM format").optional().or(z.literal("")),
 });
@@ -102,24 +102,27 @@ export const studentProfileSchema = z.object({
     // Identity fields (Compulsory)
     // Roll No: e.g. R2142233333 (R + 10 digits)
     rollNo: z.string()
+        .trim()
         .regex(/^R\d{10}$/, "Roll Number must be format 'R' followed by 10 digits (e.g., R2142233333)")
         .optional()
         .nullable(),
 
     // SAP ID: e.g. 500126666 (9 digits)
     sapId: z.string()
+        .trim()
         .regex(/^\d{9}$/, "SAP ID must be exactly 9 digits (e.g., 500126666)")
         .optional()
         .nullable(),
 
     // Contact fields
     phone: z.string()
+        .trim()
         .max(20, "Phone must be ≤ 20 characters")
         .regex(/^\+?[\d\s\-()]+$/, "Phone must contain only digits, spaces, hyphens, parentheses, and optional leading +")
         .optional()
         .nullable(),
-
     linkedin: z.string()
+        .trim()
         .max(500, "LinkedIn URL must be ≤ 500 characters")
         .url("Must be a valid URL")
         .optional()
@@ -148,7 +151,7 @@ export const studentProfileSchema = z.object({
         .min(1, "Semester must be ≥ 1")
         .max(10, "Semester must be ≤ 10")
         .nullable().optional(),
-    branch: z.string({ required_error: "Branch is required" }).min(1, "Branch is required").max(100).nullable().optional(),
+    branch: z.string({ required_error: "Branch is required" }).trim().min(1, "Branch is required").max(100).nullable().optional(),
     batchYear: z
         .number({ required_error: "Batch Year is required" })
         .int()

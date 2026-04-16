@@ -1,0 +1,538 @@
+/**
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * Onboarding Styling Module
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *
+ * Premium theme-aware CSS utilities for onboarding UI
+ * Implements design tokens, animations, and responsive patterns
+ *
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ */
+
+/* Layout - Responsive Grid System */
+.onboarding-layout {
+  --onboarding-gap-xs: 1rem;
+  --onboarding-gap-sm: 1.5rem;
+  --onboarding-gap-md: 2rem;
+  --onboarding-gap-lg: 2.5rem;
+
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--onboarding-gap-xs);
+
+  @media (min-width: 768px) {
+    grid-template-columns: 280px 1fr;
+    gap: var(--onboarding-gap-md);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: 300px 1fr;
+    gap: var(--onboarding-gap-lg);
+  }
+}
+
+/* Sidebar Navigation - Gestalt: Proximity */
+.onboarding-sidebar {
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+
+  @media (max-width: 767px) {
+    display: none;
+  }
+}
+
+.onboarding-sidebar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+
+  @media (prefers-color-scheme: dark) {
+    background: hsl(var(--card) / 0.98);
+    border-color: hsl(var(--border) / 0.5);
+  }
+}
+
+/* Step Item - Gestalt: Similarity & Figure-Ground */
+.onboarding-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover:not(:disabled) {
+    background-color: hsl(var(--muted) / 0.4);
+
+    @media (prefers-color-scheme: dark) {
+      background-color: hsl(var(--muted) / 0.3);
+    }
+  }
+
+  &.active {
+    background-color: hsl(var(--primary) / 0.1);
+    border: 1px solid hsl(var(--primary) / 0.2);
+
+    @media (prefers-color-scheme: dark) {
+      background-color: hsl(var(--primary) / 0.15);
+      border-color: hsl(var(--primary) / 0.25);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* Step Indicator Circle - Gestalt: Closure */
+.onboarding-step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.completed {
+    background-color: hsl(var(--success) / 0.15);
+    color: hsl(var(--success));
+
+    @media (prefers-color-scheme: dark) {
+      background-color: hsl(var(--success) / 0.2);
+      color: hsl(var(--success) / 0.9);
+    }
+  }
+
+  &.active {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    box-shadow: 0 4px 12px hsl(var(--primary) / 0.3);
+
+    @media (prefers-color-scheme: dark) {
+      box-shadow: 0 4px 12px hsl(var(--primary) / 0.2);
+    }
+  }
+
+  &.locked {
+    background-color: hsl(var(--muted) / 0.5);
+    color: hsl(var(--muted-foreground));
+
+    @media (prefers-color-scheme: dark) {
+      background-color: hsl(var(--muted) / 0.4);
+    }
+  }
+
+  &.pending {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+  }
+}
+
+/* Content Area */
+.onboarding-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+
+  @media (min-width: 768px) {
+    gap: 2.5rem;
+  }
+}
+
+/* Card - Gestalt: Figure-Ground */
+.onboarding-card {
+  border-radius: 1.5rem;
+  border: 1px solid hsl(var(--border) / 0.5);
+  background: hsl(var(--card));
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px hsl(0 0% 0% / 0.05);
+
+  @media (min-width: 640px) {
+    padding: 2rem;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 2.5rem;
+    border-radius: 2rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    background: hsl(var(--card) / 0.98);
+    border-color: hsl(var(--border) / 0.3);
+    box-shadow: 0 1px 3px hsl(0 0% 0% / 0.1);
+  }
+
+  /* Gradient overlay */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary) / 0.03) 0%,
+      transparent 100%
+    );
+    pointer-events: none;
+
+    @media (prefers-color-scheme: dark) {
+      background: linear-gradient(
+        135deg,
+        hsl(var(--primary) / 0.05) 0%,
+        transparent 100%
+      );
+    }
+  }
+}
+
+/* Input Fields */
+.onboarding-input {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--input));
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  &::placeholder {
+    color: hsl(var(--muted-foreground) / 0.6);
+  }
+
+  &:hover {
+    border-color: hsl(var(--input) / 0.8);
+  }
+
+  &:focus {
+    outline: none;
+    ring: 2px hsl(var(--primary) / 0.5);
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  @media (min-width: 640px) {
+    padding: 0.75rem 1rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    background-color: hsl(var(--background));
+
+    &::placeholder {
+      color: hsl(var(--muted-foreground) / 0.5);
+    }
+
+    &:focus {
+      ring-color: hsl(var(--primary) / 0.4);
+    }
+  }
+
+  &.error {
+    border-color: hsl(var(--destructive));
+
+    &:focus {
+      ring-color: hsl(var(--destructive) / 0.5);
+    }
+  }
+}
+
+/* Button Styles */
+.onboarding-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+
+  @media (min-width: 640px) {
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  /* Primary */
+  &.primary {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)),
+      hsl(var(--primary) / 0.85)
+    );
+    color: hsl(var(--primary-foreground));
+    box-shadow: 0 4px 12px hsl(var(--primary) / 0.3);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px hsl(var(--primary) / 0.35);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+  }
+
+  /* Secondary */
+  &.secondary {
+    background-color: hsl(var(--muted) / 0.4);
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--border));
+
+    &:hover:not(:disabled) {
+      background-color: hsl(var(--muted) / 0.6);
+      border-color: hsl(var(--border) / 0.8);
+    }
+  }
+
+  /* Success */
+  &.success {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--success)),
+      hsl(var(--success) / 0.85)
+    );
+    color: hsl(var(--success-foreground));
+    box-shadow: 0 4px 12px hsl(var(--success) / 0.3);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px hsl(var(--success) / 0.35);
+    }
+  }
+
+  /* Disabled state */
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+}
+
+/* Progress Bar - Gestalt: Continuity */
+.onboarding-progress-bar {
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 0.25rem;
+  background-color: hsl(var(--muted) / 0.3);
+  overflow: hidden;
+
+  @media (prefers-color-scheme: dark) {
+    background-color: hsl(var(--muted) / 0.2);
+  }
+
+  &__fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary)),
+      hsl(var(--primary) / 0.7)
+    );
+    box-shadow: 0 0 8px hsl(var(--primary) / 0.4);
+    transition: width 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    @media (prefers-color-scheme: dark) {
+      box-shadow: 0 0 8px hsl(var(--primary) / 0.2);
+    }
+  }
+}
+
+/* Alert/Info Messages */
+.onboarding-alert {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border-left: 4px solid transparent;
+  font-size: 0.875rem;
+  line-height: 1.5;
+
+  &.info {
+    background-color: hsl(var(--primary) / 0.05);
+    border-color: hsl(var(--primary) / 0.3);
+    color: hsl(var(--primary) / 0.9);
+
+    @media (prefers-color-scheme: dark) {
+      background-color: hsl(var(--primary) / 0.08);
+      border-color: hsl(var(--primary) / 0.25);
+      color: hsl(var(--primary) / 0.8);
+    }
+  }
+
+  &.success {
+    background-color: hsl(var(--success) / 0.05);
+    border-color: hsl(var(--success) / 0.3);
+    color: hsl(var(--success) / 0.9);
+
+    @media (prefers-color-scheme: dark) {
+      background-color: hsl(var(--success) / 0.08);
+      border-color: hsl(var(--success) / 0.25);
+      color: hsl(var(--success) / 0.8);
+    }
+  }
+
+  &.warning {
+    background-color: hsl(var(--warning) / 0.05);
+    border-color: hsl(var(--warning) / 0.3);
+    color: hsl(var(--warning) / 0.9);
+
+    @media (prefers-color-scheme: dark) {
+      background-color: hsl(var(--warning) / 0.08);
+      border-color: hsl(var(--warning) / 0.25);
+      color: hsl(var(--warning) / 0.8);
+    }
+  }
+
+  &.error {
+    background-color: hsl(var(--destructive) / 0.05);
+    border-color: hsl(var(--destructive) / 0.3);
+    color: hsl(var(--destructive) / 0.9);
+
+    @media (prefers-color-scheme: dark) {
+      background-color: hsl(var(--destructive) / 0.08);
+      border-color: hsl(var(--destructive) / 0.25);
+      color: hsl(var(--destructive) / 0.8);
+    }
+  }
+}
+
+/* Field Group - Gestalt: Proximity */
+.onboarding-field-group {
+  display: grid;
+  gap: 1rem;
+
+  &.cols-2 {
+    @media (min-width: 640px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  &.cols-3 {
+    @media (min-width: 1024px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    @media (min-width: 640px) and (max-width: 1023px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+}
+
+/* Divider - Gestalt: Continuity */
+.onboarding-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--border) / 0.5),
+    transparent
+  );
+  margin: 2rem 0;
+
+  @media (prefers-color-scheme: dark) {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--border) / 0.3),
+      transparent
+    );
+  }
+}
+
+/* Label */
+.onboarding-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+/* Helper Text */
+.onboarding-hint {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground) / 0.7);
+}
+
+/* Animations */
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px hsl(var(--primary) / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+  }
+}
+
+.onboarding-animate-in {
+  animation: slide-in-up 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.onboarding-pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Responsive Utilities */
+@media (max-width: 639px) {
+  .onboarding-hide-mobile {
+    display: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .onboarding-show-tablet {
+    display: block;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .onboarding-layout {
+    display: block;
+  }
+
+  .onboarding-sidebar {
+    display: none;
+  }
+}

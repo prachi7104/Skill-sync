@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { studentProfileSchema, type StudentProfileInput } from "@/lib/validations/student-profile";
+import { sanitizeProfilePayload } from "@/lib/profile/sanitize";
 import { computeCompleteness } from "@/lib/profile/completeness";
 import { extractTextFromResume, cleanResumeText } from "@/lib/resume/text-extractor";
 import { toResumeDownloadUrl } from "@/lib/resume/download-url";
@@ -48,6 +49,16 @@ function sleep(ms: number): Promise<void> {
 }
 
 export default function ProfileView({ user, profile }: ProfileViewProps) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    
+    // Get active tab from URL query param, default to 'identity'
+    const tabFromUrl = searchParams.get('tab') as ProfileTab | null;
+    const isValidTab = (tab: string | null): tab is ProfileTab => {
+        return tab === 'identity' || tab === 'skills' || tab === 'projects' || tab === 'documents';
+    };
+    const defaultTab: ProfileTab = isValidTab(tabFromUrl) ? tabFromUrl : 'identity';
+
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -56,8 +67,6 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
     const [pendingResumeFile, setPendingResumeFile] = useState<File | null>(null);
     const [isApplyingMerge, setIsApplyingMerge] = useState(false);
     const [softSkillInput, setSoftSkillInput] = useState("");
-    const [activeTab, setActiveTab] = useState<ProfileTab>('identity');
-    const router = useRouter();
 
     const { score } = computeCompleteness({
         ...profile,
@@ -107,13 +116,21 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
         setIsEditing(false);
     };
 
+    // Update URL when tab changes (URL-backed state)
+    const handleTabChange = (tab: ProfileTab) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('tab', tab);
+        router.push(`?${params.toString()}`);
+    };
+
     const onSubmit = async (data: StudentProfileInput) => {
         setIsLoading(true);
         try {
+            const sanitized = sanitizeProfilePayload(data);
             const res = await fetch("/api/student/profile", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
+                body: JSON.stringify(sanitized),
             });
             const payload = await res.json().catch(() => ({}));
             if (!res.ok) {
@@ -341,20 +358,20 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
 
                 {/* Tab navigation */}
                 <div className='bg-card border border-border rounded-lg overflow-hidden'>
-                    <ProfileTabNav active={activeTab} onChange={setActiveTab} />
+                    <ProfileTabNav active={defaultTab} onChange={handleTabChange} />
 
                     {/* Tab content */}
                     <Form {...form}>
                     <AnimatePresence mode='wait' initial={false}>
                         <motion.div
-                        key={activeTab}
+                        key={defaultTab}
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.15 }}
                         className='p-5 sm:p-6'
                         >
-                        {activeTab === 'identity' && (
+                        {defaultTab === 'identity' && (
                             <TabIdentity
                             form={form}
                             isEditing={isEditing}
@@ -362,7 +379,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                             batchYears={batchYears}
                             />
                         )}
-                        {activeTab === 'skills' && (
+                        {defaultTab === 'skills' && (
                             <TabSkills
                             form={form}
                             isEditing={isEditing}
@@ -374,7 +391,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                             profile={profile}
                             />
                         )}
-                        {activeTab === 'projects' && (
+                        {defaultTab === 'projects' && (
                             <TabProjects
                             form={form}
                             isEditing={isEditing}
@@ -387,7 +404,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                             profile={profile}
                             />
                         )}
-                        {activeTab === 'documents' && (
+                        {defaultTab === 'documents' && (
                             <TabDocs
                             form={form}
                             isEditing={isEditing}

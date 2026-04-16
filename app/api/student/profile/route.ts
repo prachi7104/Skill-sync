@@ -9,6 +9,7 @@ import { jobs, students } from "@/lib/db/schema";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { and, eq, sql } from "drizzle-orm";
 import { studentProfileSchema } from "@/lib/validations/student-profile";
+import { sanitizeProfilePayload } from "@/lib/profile/sanitize";
 import { computeCompleteness } from "@/lib/profile/completeness";
 import { processEmbeddingJobs } from "@/lib/workers/generate-embedding";
 import { normalizeBranch } from "@/lib/constants/branches";
@@ -68,9 +69,13 @@ export async function PATCH(req: NextRequest) {
         // Validate - allow partial updates for PATCH
         const validatedData = studentProfileSchema.partial().parse(body);
 
+        // Defensive sanitization: clean before processing
+        // (client should have sanitized, but this prevents stale clients from introducing bad data)
+        const sanitizedData = sanitizeProfilePayload(validatedData);
+
         const LOCKED_FIELDS = ["batchYear", "sapId"] as const;
         for (const field of LOCKED_FIELDS) {
-            const incoming = (validatedData as Record<string, unknown>)[field];
+            const incoming = (sanitizedData as Record<string, unknown>)[field];
             if (incoming === undefined || incoming === null) continue;
 
             const current = (profile as Record<string, unknown>)[field];
@@ -91,65 +96,65 @@ export async function PATCH(req: NextRequest) {
         const updateData: Record<string, unknown> = {};
 
         // Academic fields - editable by students
-        if (validatedData.rollNo !== undefined) {
-            updateData.rollNo = validatedData.rollNo;
+        if (sanitizedData.rollNo !== undefined) {
+            updateData.rollNo = sanitizedData.rollNo;
         }
-        if (validatedData.sapId !== undefined) {
-            updateData.sapId = validatedData.sapId;
+        if (sanitizedData.sapId !== undefined) {
+            updateData.sapId = sanitizedData.sapId;
         }
-        if (validatedData.tenthPercentage !== undefined) {
-            updateData.tenthPercentage = validatedData.tenthPercentage;
+        if (sanitizedData.tenthPercentage !== undefined) {
+            updateData.tenthPercentage = sanitizedData.tenthPercentage;
         }
-        if (validatedData.twelfthPercentage !== undefined) {
-            updateData.twelfthPercentage = validatedData.twelfthPercentage;
+        if (sanitizedData.twelfthPercentage !== undefined) {
+            updateData.twelfthPercentage = sanitizedData.twelfthPercentage;
         }
-        if (validatedData.cgpa !== undefined) {
-            updateData.cgpa = validatedData.cgpa;
+        if (sanitizedData.cgpa !== undefined) {
+            updateData.cgpa = sanitizedData.cgpa;
         }
-        if (validatedData.semester !== undefined) {
-            updateData.semester = validatedData.semester;
+        if (sanitizedData.semester !== undefined) {
+            updateData.semester = sanitizedData.semester;
         }
-        if (validatedData.branch !== undefined) {
-            updateData.branch = validatedData.branch
-                ? normalizeBranch(validatedData.branch)
+        if (sanitizedData.branch !== undefined) {
+            updateData.branch = sanitizedData.branch
+                ? normalizeBranch(sanitizedData.branch)
                 : null;
         }
-        if (validatedData.batchYear !== undefined) {
-            updateData.batchYear = validatedData.batchYear;
+        if (sanitizedData.batchYear !== undefined) {
+            updateData.batchYear = sanitizedData.batchYear;
         }
 
         // Contact fields
-        if (validatedData.phone !== undefined) {
-            updateData.phone = validatedData.phone;
+        if (sanitizedData.phone !== undefined) {
+            updateData.phone = sanitizedData.phone;
         }
-        if (validatedData.linkedin !== undefined) {
-            updateData.linkedin = validatedData.linkedin;
+        if (sanitizedData.linkedin !== undefined) {
+            updateData.linkedin = sanitizedData.linkedin;
         }
 
         // Array fields
-        if (validatedData.skills !== undefined) {
-            updateData.skills = validatedData.skills;
+        if (sanitizedData.skills !== undefined) {
+            updateData.skills = sanitizedData.skills;
         }
-        if (validatedData.projects !== undefined) {
-            updateData.projects = validatedData.projects;
+        if (sanitizedData.projects !== undefined) {
+            updateData.projects = sanitizedData.projects;
         }
-        if (validatedData.workExperience !== undefined) {
-            updateData.workExperience = validatedData.workExperience;
+        if (sanitizedData.workExperience !== undefined) {
+            updateData.workExperience = sanitizedData.workExperience;
         }
-        if (validatedData.certifications !== undefined) {
-            updateData.certifications = validatedData.certifications;
+        if (sanitizedData.certifications !== undefined) {
+            updateData.certifications = sanitizedData.certifications;
         }
-        if (validatedData.codingProfiles !== undefined) {
-            updateData.codingProfiles = validatedData.codingProfiles;
+        if (sanitizedData.codingProfiles !== undefined) {
+            updateData.codingProfiles = sanitizedData.codingProfiles;
         }
-        if (validatedData.achievements !== undefined) {
-            updateData.achievements = validatedData.achievements;
+        if (sanitizedData.achievements !== undefined) {
+            updateData.achievements = sanitizedData.achievements;
         }
-        if (validatedData.researchPapers !== undefined) {
-            updateData.researchPapers = validatedData.researchPapers;
+        if (sanitizedData.researchPapers !== undefined) {
+            updateData.researchPapers = sanitizedData.researchPapers;
         }
-        if (validatedData.softSkills !== undefined) {
-            updateData.softSkills = validatedData.softSkills;
+        if (sanitizedData.softSkills !== undefined) {
+            updateData.softSkills = sanitizedData.softSkills;
         }
 
         if (Object.keys(updateData).length === 0) {

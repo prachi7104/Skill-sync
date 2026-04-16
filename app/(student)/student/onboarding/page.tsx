@@ -21,6 +21,7 @@ import { useStudent } from "@/app/(student)/providers/student-provider";
 import { cn } from "@/lib/utils";
 import { UPES_BRANCHES, normalizeBranch } from "@/lib/constants/branches";
 import { extractTextFromResume, cleanResumeText } from "@/lib/resume/text-extractor";
+import { sanitizeProfilePayload } from "@/lib/profile/sanitize";
 
 type StepKey = "identity" | "academics" | "skills" | "projects" | "experience" | "extras";
 
@@ -410,10 +411,11 @@ export default function OnboardingPage() {
       setSaveState("saving");
       try {
         const patch = buildPatch(activeStep, form);
+        const sanitized = sanitizeProfilePayload(patch);
         const res = await fetch("/api/student/profile", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(patch),
+          body: JSON.stringify(sanitized),
         });
         if (!res.ok) throw new Error("save-failed");
         setSaveState("saved");

@@ -1,10 +1,10 @@
 'use client';
 
 import { UseFormReturn, UseFieldArrayReturn } from 'react-hook-form';
-import { FormField, FormControl, FormItem } from '@/components/ui/form';
+import { FormField, FormControl, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2, X, AlertCircle } from 'lucide-react';
 import type { StudentProfileInput, skillSchema } from '@/lib/validations/student-profile';
 import { z } from 'zod';
 
@@ -103,10 +103,27 @@ export default function TabSkills({
         </div>
         
         <div className='space-y-3 mb-4'>
-          {skillFields.map((field, idx) => (
+          {skillFields.map((field, idx) => {
+            const nameError = form.formState.errors.skills?.[idx]?.name;
+            const hasError = !!nameError;
+            return (
             <div key={field.id} className='flex items-start gap-2 w-full'>
               <FormField control={form.control} name={`skills.${idx}.name`} render={({field: f}) => (
-                <FormItem className='flex-1 lg:w-auto'><FormControl><Input className={inputClass} placeholder='React, Python, etc.' {...f} value={f.value ?? ''}/></FormControl></FormItem>
+                <FormItem className='flex-1 lg:w-auto'><FormControl>
+                  <div className='relative'>
+                    <Input 
+                      className={`${inputClass} ${hasError ? 'border-destructive bg-destructive/5' : ''}`} 
+                      placeholder='React, Python, etc.' 
+                      {...f} 
+                      value={f.value ?? ''}
+                    />
+                    {hasError && (
+                      <AlertCircle className='absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-destructive' />
+                    )}
+                  </div>
+                </FormControl>
+                {hasError && <FormMessage className='text-xs mt-1' />}
+                </FormItem>
               )} />
               
               <FormField control={form.control} name={`skills.${idx}.proficiency` as const} render={({field: f}) => (
@@ -134,7 +151,8 @@ export default function TabSkills({
                 <Trash2 className='w-4 h-4' />
               </button>
             </div>
-          ))}
+            );
+          })}
         </div>
         
         <button type='button' onClick={() => appendSkill({ name: '', proficiency: 3, category: '' })} className='inline-flex items-center gap-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors'>
