@@ -93,11 +93,13 @@ export async function POST(
       );
     }
 
-    // Queue the ranking job
+    // Queue the ranking job — mark as 'processing' to prevent cron from grabbing it
+    // during the inline execution attempt. If inline fails, we reset to 'pending'.
     const [job] = await db
       .insert(jobs)
       .values({
         type: "rank_students",
+        status: "processing",
         payload: { driveId },
         priority: 8,
       })
@@ -130,8 +132,13 @@ export async function POST(
         { status: 200 }
       );
     } catch (rankingError) {
-      // Fall back to async queue — cron will pick it up
-      console.error("[rank] Inline ranking failed, queued for async:", rankingError);
+      // Inline failed — reset to pending so cron picks it up
+      await db.update(jobs)
+        .set({ status: "pending", updatedAt: new Date() })
+        .where(eq(jobs.id, job.id))
+        .catch(() => {}); // non-fatal
+
+      console.error("[rank] Inline ranking failed, reset to pending for cron:", rankingError);
       return NextResponse.json(
         { message: "Ranking queued. Results will be available within 5 minutes.", jobId: job.id },
         { status: 202 }
