@@ -4,12 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Check,
   Lock,
-  ChevronRight,
   Upload,
   Loader2,
-  AlertCircle,
   CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +19,17 @@ import { cn } from "@/lib/utils";
 import { UPES_BRANCHES, normalizeBranch } from "@/lib/constants/branches";
 import { extractTextFromResume, cleanResumeText } from "@/lib/resume/text-extractor";
 import { sanitizeProfilePayload } from "@/lib/profile/sanitize";
+import {
+  OnboardingActions,
+  OnboardingHeader,
+  OnboardingCard,
+  OnboardingFieldGroup,
+  OnboardingInput,
+  OnboardingLayout,
+  OnboardingProgressBar,
+} from "@/components/student/onboarding";
+import type { OnboardingStep } from "@/components/student/onboarding/onboarding-layout";
+import { Briefcase, FolderKanban, GraduationCap, Trophy, User, Zap } from "lucide-react";
 
 type StepKey = "identity" | "academics" | "skills" | "projects" | "experience" | "extras";
 
@@ -404,6 +412,20 @@ export default function OnboardingPage() {
     return true;
   }
 
+  const onboardingSteps = useMemo<OnboardingStep[]>(
+    () =>
+      stepStates.map((step, idx) => ({
+        key: step.key,
+        label: step.label,
+        description: step.description,
+        completed: step.done,
+        active: activeStep === step.key,
+        locked: !isStepUnlocked(idx),
+        required: step.required.length > 0,
+      })),
+    [activeStep, stepStates],
+  );
+
   useEffect(() => {
     if (!isUserChangeRef.current) return;
 
@@ -735,13 +757,15 @@ export default function OnboardingPage() {
 
   async function handleNext() {
     if (isSubmittingStep) return;
+    if (isCurrentStepInvalid) return;
     setNavActionState("next");
     try {
       const patch = buildPatch(activeStep, form);
+      const sanitized = sanitizeProfilePayload(patch);
       await fetch("/api/student/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
+        body: JSON.stringify(sanitized),
       }).catch(() => {});
 
       const nextIndex = currentStepIndex + 1;
@@ -755,14 +779,16 @@ export default function OnboardingPage() {
 
   async function handleFinish() {
     if (isSubmittingStep) return;
+    if (!allRequired) return;
     setNavActionState("finish");
     try {
       // 1. Save the final step
       const patch = buildPatch(activeStep, form);
+      const sanitized = sanitizeProfilePayload(patch);
       await fetch("/api/student/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
+        body: JSON.stringify(sanitized),
       }).catch(() => {});
 
       // 2. Force Next.js to re-run the server layout and re-fetch initialStudent
@@ -803,153 +829,64 @@ export default function OnboardingPage() {
         }
         .autofill-flash { animation: autofill-glow 1.5s ease-out; }
       `}</style>
-      <div className="header-glass flex items-center justify-between border-b border-border px-6 py-3">
-        <div className="flex items-center gap-3">
-          <span className="text-xl font-black text-foreground">
-            Skill<span className="text-primary">Sync</span>
-          </span>
-          <span className="text-muted-foreground">.</span>
-          <span className="text-sm text-muted-foreground">Profile Setup</span>
+      <OnboardingHeader
+        title="SkillSync Profile Setup"
+        subtitle="Complete your profile to unlock opportunities"
+        saveState={saveState}
+      />
+
+      <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mb-6 rounded-xl border border-border/60 bg-card/60 p-4 shadow-sm backdrop-blur-sm">
+          <OnboardingProgressBar
+            currentStep={currentStepIndex}
+            totalSteps={STEPS.length}
+            steps={onboardingSteps.map((step) => ({
+              key: step.key,
+              label: step.label,
+              completed: step.completed,
+              locked: step.locked,
+            }))}
+            onStepClick={(stepIndex) => {
+              if (!isStepUnlocked(stepIndex)) {
+                setGateWarning("Please enter your Roll Number first");
+                setTimeout(() => setGateWarning(""), 3000);
+                return;
+              }
+              setGateWarning("");
+              setActiveStep(STEPS[stepIndex].key);
+            }}
+          />
         </div>
-        <div className="flex items-center gap-3 text-xs">
-          {saveState === "saving" && (
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> Saving...
-            </span>
-          )}
-          {saveState === "saved" && (
-            <span className="flex items-center gap-1 text-success">
-              <CheckCircle2 className="h-3 w-3" /> Saved
-            </span>
-          )}
-          {saveState === "error" && (
-            <span className="flex items-center gap-1 text-destructive">
-              <AlertCircle className="h-3 w-3" /> Save failed
-            </span>
-          )}
-        </div>
-      </div>
 
-      <div className="mx-auto flex w-full max-w-6xl gap-6 px-4 py-6 sm:px-6 lg:gap-10 lg:px-8 lg:py-8">
-        <aside className="hidden w-56 shrink-0 md:block">
-          <div className="sticky top-8 space-y-1">
-            <p className="mb-4 px-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">Progress</p>
-            {STEPS.map((step, i) => {
-              const unlocked = isStepUnlocked(i);
-              const done = stepStates[i].done;
-              const active = activeStep === step.key;
-              const isGatingStep = step.key === "identity" && !done;
-
-              return (
-                <Button
-                  key={step.key}
-                  type="button"
-                  onClick={() => {
-                    if (unlocked) {
-                      setGateWarning("");
-                      setActiveStep(step.key);
-                    } else {
-                      setGateWarning("Please enter your Roll Number first");
-                      setTimeout(() => setGateWarning(""), 3000);
-                    }
-                  }}
-                  className={cn(
-                    "w-full rounded-xl border px-3 py-3 text-left transition-all",
-                    "flex items-center gap-3",
-                    active
-                      ? "border-primary/30 bg-primary/20"
-                      : unlocked
-                        ? "border-transparent hover:bg-muted/60"
-                        : "cursor-not-allowed border-transparent opacity-40",
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "h-7 w-7 shrink-0 rounded-full text-xs font-bold",
-                      "flex items-center justify-center transition-all",
-                      done
-                        ? "bg-success/10 text-foreground"
-                        : active
-                          ? "bg-primary text-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-background"
-                          : unlocked
-                            ? "bg-card text-muted-foreground"
-                            : "bg-muted/50 text-muted-foreground",
-                    )}
-                  >
-                    {done ? <Check className="h-3.5 w-3.5" /> : !unlocked ? <Lock className="h-3 w-3" /> : i + 1}
-                  </div>
-
-                  <div className="min-w-0">
-                    <p
-                      className={cn(
-                        "truncate text-sm font-semibold",
-                        active ? "text-foreground" : unlocked ? "text-muted-foreground" : "text-muted-foreground",
-                      )}
-                    >
-                      {step.label}
-                    </p>
-                    {isGatingStep && (
-                      <p className="mt-0.5 flex items-center gap-1 text-[10px] text-warning">
-                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-warning/10" />
-                        Required
-                      </p>
-                    )}
-                    {step.required.length > 0 && !done && !isGatingStep && (
-                      <p className="mt-0.5 text-[10px] text-destructive">Required</p>
-                    )}
-                    {done && <p className="mt-0.5 text-[10px] text-success">Complete</p>}
-                  </div>
-                </Button>
-              );
-            })}
-
-            {gateWarning && (
-              <div className="mt-2 rounded-md border border-warning/20 bg-warning/10 px-3 py-2 text-xs text-warning">
-                {gateWarning}
-              </div>
-            )}
-            <div className="absolute bottom-4 left-[1.85rem] top-[4.5rem] -z-10 w-px bg-muted/50" />
+        {gateWarning && (
+          <div className="mb-4 rounded-md border border-warning/20 bg-warning/10 px-3 py-2 text-sm text-warning">
+            {gateWarning}
           </div>
-        </aside>
+        )}
 
-        <main className="min-w-0 flex-1 pb-[calc(theme(spacing.8)+max(env(safe-area-inset-bottom),0px))]">
-          <section className='relative mb-6 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/5 via-card to-card p-4 sm:p-5'>
-            <div className='pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent' />
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
-                Step {currentStepIndex + 1} of {STEPS.length}
-              </p>
-              <p className="text-[11px] font-semibold text-primary">
-                {STEPS[currentStepIndex]?.label}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {STEPS.map((step, i) => (
-                <div
-                  key={step.key}
-                  className={cn(
-                    "h-1.5 flex-1 rounded-full transition-all duration-300",
-                    i <= currentStepIndex ? "bg-primary" : "bg-muted",
-                  )}
-                />
-              ))}
-            </div>
-          </section>
-
-          <div className="mb-6">
-            <h2 className="text-xl font-black tracking-tight text-foreground sm:text-2xl">
-              {STEPS[currentStepIndex]?.label}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">{STEPS[currentStepIndex]?.description}</p>
-          </div>
-
+        <OnboardingLayout
+          steps={onboardingSteps}
+          currentStepKey={activeStep}
+          showProgress={false}
+          onStepClick={(stepKey) => {
+            const stepIndex = STEPS.findIndex((step) => step.key === stepKey);
+            if (!isStepUnlocked(stepIndex)) {
+              setGateWarning("Please enter your Roll Number first");
+              setTimeout(() => setGateWarning(""), 3000);
+              return;
+            }
+            setGateWarning("");
+            setActiveStep(stepKey as StepKey);
+          }}
+        >
           {autofillBanner && activeStep === "identity" && (
             <div className="mb-4 flex items-center gap-2 rounded-xl border border-success/20 bg-success/10 px-4 py-3 text-sm text-success">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
-              ✓ Profile autofilled from your resume. Review and continue.
+              Profile autofilled from your resume. Review and continue.
             </div>
           )}
-          <div className="space-y-6 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+
+          <div className="space-y-6 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6 lg:p-8">
             {activeStep === "identity" && (
               <IdentityStep
                 form={form}
@@ -976,62 +913,24 @@ export default function OnboardingPage() {
             {activeStep === "extras" && <ExtrasStep form={form} setField={setField} />}
           </div>
 
-          <div className="mt-6 flex items-center justify-between">
-            <Button
-              type="button"
-              onClick={() => {
-                const prev = currentStepIndex - 1;
-                if (prev >= 0) setActiveStep(STEPS[prev].key);
-              }}
-              disabled={currentStepIndex === 0 || isSubmittingStep}
-              className="text-sm text-muted-foreground transition-all hover:text-foreground disabled:opacity-0"
-            >
-              Back
-            </Button>
+          <OnboardingActions
+            onPrevious={() => {
+              const prev = currentStepIndex - 1;
+              if (prev >= 0) setActiveStep(STEPS[prev].key);
+            }}
+            onNext={currentStepIndex < STEPS.length - 1 ? handleNext : undefined}
+            onComplete={currentStepIndex === STEPS.length - 1 ? handleFinish : undefined}
+            canGoPrevious={currentStepIndex > 0}
+            canGoNext={!isCurrentStepInvalid && !isSubmittingStep}
+            isLoading={isSubmittingStep}
+            isFinal={currentStepIndex === STEPS.length - 1}
+            showSkip={false}
+          />
 
-            <div className="flex items-center gap-3">
-              {currentStepIndex < STEPS.length - 1 ? (
-                <div className="flex flex-col items-end gap-1">
-                  <Button
-                    onClick={handleNext}
-                    disabled={isSubmittingStep || isCurrentStepInvalid}
-                    className="bg-primary px-6 font-bold text-foreground hover:bg-primary/90"
-                  >
-                    {navActionState === "next" ? (
-                      <>
-                        <Loader2 className="mr-1 h-4 w-4 animate-spin" aria-hidden="true" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        Save & Continue
-                        <ChevronRight className="ml-1 h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                  {activeStep === "identity" && !form.rollNo.trim() && (
-                    <p className="text-[11px] text-warning">Roll Number is required to proceed</p>
-                  )}
-                </div>
-              ) : (
-                <Button
-                  onClick={handleFinish}
-                  disabled={isSubmittingStep || !allRequired}
-                  className="bg-success/10 px-6 font-bold text-foreground hover:bg-success/20"
-                >
-                  {navActionState === "finish" ? (
-                    <>
-                      <Loader2 className="mr-1 h-4 w-4 animate-spin" aria-hidden="true" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Complete Setup"
-                  )}
-                </Button>
-              )}
-            </div>
-          </div>
-        </main>
+          {activeStep === "identity" && !form.rollNo.trim() && (
+            <p className="mt-2 text-xs text-warning">Roll Number is required to proceed.</p>
+          )}
+        </OnboardingLayout>
       </div>
     </div>
   );
@@ -1083,7 +982,13 @@ function IdentityStep({
   const autofillClass = autofillVersion > 0 ? "autofill-flash" : "";
 
   return (
-    <div className="space-y-6">
+    <OnboardingCard
+      title="Personal Information"
+      description="Add your university identifiers and contact details to unlock the rest of onboarding."
+      icon={<User className="h-6 w-6" />}
+      required
+    >
+      <div className="space-y-6">
       <div
         className={cn(
           "rounded-md border-2 border-dashed p-5 transition-all",
@@ -1176,12 +1081,15 @@ function IdentityStep({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium text-foreground">
+      <OnboardingFieldGroup cols={2}>
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-foreground" htmlFor="sap-id-readonly">
             SAP ID <span className="text-muted-foreground text-xs ml-1">(auto-filled from university email)</span>
           </Label>
-          <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2.5">
+          <div
+            id="sap-id-readonly"
+            className="flex items-center gap-2 rounded-lg border border-input bg-background px-4 py-2.5 md:py-3"
+          >
             <span className="text-sm font-mono text-foreground flex-1">
               {form.sapId || <span className="text-muted-foreground italic">Deriving from email...</span>}
             </span>
@@ -1193,48 +1101,46 @@ function IdentityStep({
             </p>
           )}
         </div>
-        <FormField label="Roll Number" required hint="R followed by 10 digits, e.g. R2142212345">
-          <Input
-            value={form.rollNo}
-            onChange={(e) => setField("rollNo", e.target.value)}
-            onFocus={(e) => {
-              setTimeout(() => {
-                e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              }, 300);
-            }}
-            placeholder="R2142212345"
-            className={cn("border-border bg-muted/50 text-foreground", autofillClass)}
-          />
-        </FormField>
-        <FormField label="Phone">
-          <Input
-            value={form.phone}
-            onChange={(e) => setField("phone", e.target.value)}
-            placeholder="+91 98765 43210"
-            className="border-border bg-muted/50 text-foreground"
-          />
-        </FormField>
-        <FormField label="LinkedIn">
-          <Input
-            value={form.linkedin}
-            onChange={(e) => setField("linkedin", e.target.value)}
-            placeholder="linkedin.com/in/your-name"
-            className="border-border bg-muted/50 text-foreground"
-          />
-        </FormField>
-        <FormField label="Portfolio / GitHub" className="sm:col-span-2">
-          <Input
-            value={form.portfolio}
-            onChange={(e) => setField("portfolio", e.target.value)}
-            placeholder="github.com/your-username or yourportfolio.dev"
-            className="border-border bg-muted/50 text-foreground"
-          />
-        </FormField>
-      </div>
+        <OnboardingInput
+          value={form.rollNo}
+          onChange={(e) => setField("rollNo", e.target.value)}
+          onFocus={(e) => {
+            setTimeout(() => {
+              e.target.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 300);
+          }}
+          label="Roll Number"
+          required
+          helperText="R followed by 10 digits, e.g. R2142212345"
+          placeholder="R2142212345"
+          className={autofillClass}
+        />
+        <OnboardingInput
+          value={form.phone}
+          onChange={(e) => setField("phone", e.target.value)}
+          label="Phone"
+          placeholder="+91 98765 43210"
+        />
+        <OnboardingInput
+          value={form.linkedin}
+          onChange={(e) => setField("linkedin", e.target.value)}
+          label="LinkedIn"
+          placeholder="linkedin.com/in/your-name"
+        />
+      </OnboardingFieldGroup>
+      <OnboardingFieldGroup cols={1}>
+        <OnboardingInput
+          value={form.portfolio}
+          onChange={(e) => setField("portfolio", e.target.value)}
+          label="Portfolio / GitHub"
+          placeholder="github.com/your-username or yourportfolio.dev"
+        />
+      </OnboardingFieldGroup>
       <p className="text-xs text-muted-foreground mt-2">
         Fill your Roll Number to unlock all other tabs. SAP ID is derived automatically from your university email.
       </p>
-    </div>
+      </div>
+    </OnboardingCard>
   );
 }
 
@@ -1248,10 +1154,15 @@ function AcademicsStep({
   student: Record<string, unknown> | null;
 }) {
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <FormField label="CGPA" required hint="0.0 to 10.0">
-          <Input
+    <OnboardingCard
+      title="Academic Details"
+      description="Add your academic profile exactly as recorded by the university."
+      icon={<GraduationCap className="h-6 w-6" />}
+      required
+    >
+      <div className="space-y-6">
+        <OnboardingFieldGroup cols={3}>
+          <OnboardingInput
             type="number"
             min="0"
             max="10"
@@ -1260,41 +1171,50 @@ function AcademicsStep({
             onChange={(e) => setField("cgpa", e.target.value)}
             onFocus={(e) => {
               setTimeout(() => {
-                e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                e.target.scrollIntoView({ behavior: "smooth", block: "center" });
               }, 300);
             }}
+            label="CGPA"
+            required
+            helperText="0.0 to 10.0"
             placeholder="8.5"
-            className="border-border bg-muted/50 text-foreground"
           />
-        </FormField>
 
-        <FormField label="Branch" required>
-          <select
-            value={form.branch}
-            onChange={(e) => setField("branch", e.target.value)}
-            className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
-          >
-            <option value="">Select branch</option>
-            {UPES_BRANCHES.map((branchOption) => (
-              <option key={branchOption.value} value={branchOption.value}>
-                {branchOption.label}
-              </option>
-            ))}
-            <option value="Other">Other</option>
-          </select>
-        </FormField>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-foreground" htmlFor="branch-select-onboarding">
+              Branch <span className="text-destructive ml-1">*</span>
+            </Label>
+            <select
+              id="branch-select-onboarding"
+              value={form.branch}
+              onChange={(e) => setField("branch", e.target.value)}
+              className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm text-foreground transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent md:py-3"
+            >
+              <option value="">Select branch</option>
+              {UPES_BRANCHES.map((branchOption) => (
+                <option key={branchOption.value} value={branchOption.value}>
+                  {branchOption.label}
+                </option>
+              ))}
+              <option value="Other">Other</option>
+            </select>
+          </div>
 
-        <FormField label="Batch Year" required hint="Year of graduation - cannot be changed after saving">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-foreground" htmlFor="batch-year-select-onboarding">
+              Batch Year <span className="text-destructive ml-1">*</span>
+            </Label>
           {student?.batchYear ? (
-            <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2.5">
+            <div className="flex items-center gap-2 rounded-lg border border-input bg-background px-4 py-2.5 md:py-3">
               <span className="text-sm text-foreground flex-1">{String(student.batchYear)}</span>
               <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
             </div>
           ) : (
             <select
+              id="batch-year-select-onboarding"
               value={form.batchYear}
               onChange={(e) => setField("batchYear", e.target.value)}
-              className="w-full bg-muted/50 border border-border text-foreground rounded-md px-3 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+              className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm text-foreground transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent md:py-3"
             >
               <option value="">Select year</option>
               {BATCH_YEARS.map((y) => (
@@ -1304,13 +1224,20 @@ function AcademicsStep({
               ))}
             </select>
           )}
-        </FormField>
+            <p className="text-xs text-muted-foreground">Year of graduation, cannot be changed after saving.</p>
+          </div>
+        </OnboardingFieldGroup>
 
-        <FormField label="Semester">
+        <OnboardingFieldGroup cols={3}>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-foreground" htmlFor="semester-select-onboarding">
+              Semester
+            </Label>
           <select
+            id="semester-select-onboarding"
             value={form.semester}
             onChange={(e) => setField("semester", e.target.value)}
-            className="w-full rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+            className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm text-foreground transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent md:py-3"
           >
             <option value="">Select</option>
             {SEMESTERS.map((s) => (
@@ -1319,35 +1246,35 @@ function AcademicsStep({
               </option>
             ))}
           </select>
-        </FormField>
+          </div>
 
-        <FormField label="10th %" required hint="Percentage (0 to 100)">
-          <Input
+          <OnboardingInput
             type="number"
             min="0"
             max="100"
             step="0.1"
             value={form.tenthPercentage}
             onChange={(e) => setField("tenthPercentage", e.target.value)}
+            label="10th %"
+            required
+            helperText="Percentage (0 to 100)"
             placeholder="85.5"
-            className="border-border bg-muted/50 text-foreground"
           />
-        </FormField>
-
-        <FormField label="12th %" required hint="Percentage (0 to 100)">
-          <Input
+          <OnboardingInput
             type="number"
             min="0"
             max="100"
             step="0.1"
             value={form.twelfthPercentage}
             onChange={(e) => setField("twelfthPercentage", e.target.value)}
+            label="12th %"
+            required
+            helperText="Percentage (0 to 100)"
             placeholder="87.0"
-            className="border-border bg-muted/50 text-foreground"
           />
-        </FormField>
+        </OnboardingFieldGroup>
       </div>
-    </div>
+    </OnboardingCard>
   );
 }
 
@@ -1361,8 +1288,14 @@ function SkillsStep({
   autofillVersion: number;
 }) {
   return (
-    <div className="space-y-6">
-      <FormField label="Technical Skills" hint="Type and press Enter/comma. Resume autofill can populate this.">
+    <OnboardingCard
+      title="Skills And Expertise"
+      description="Add high-signal technical and soft skills to improve matching quality."
+      icon={<Zap className="h-6 w-6" />}
+    >
+      <div className="space-y-6">
+      <div className="space-y-2">
+        <Label className="text-sm font-medium text-foreground">Technical Skills</Label>
         <TagInput
           key={autofillVersion}
           tags={form.skills}
@@ -1371,19 +1304,24 @@ function SkillsStep({
           maxTags={40}
           className={autofillVersion > 0 ? "autofill-flash" : ""}
         />
-      </FormField>
+        <p className="text-xs text-muted-foreground">Type and press Enter/comma. Resume autofill can populate this.</p>
+      </div>
       <p className="text-xs text-muted-foreground">
         Skills are used directly for embeddings and ranking. Prefer specific skills like React.js, PostgreSQL, or
         TensorFlow.
       </p>
-      <FormField label="Soft Skills" hint="Communication, leadership, teamwork...">
+
+      <div className="space-y-2">
+        <Label className="text-sm font-medium text-foreground">Soft Skills</Label>
         <TagInput
           tags={form.softSkills}
           onChange={(tags) => setField("softSkills", tags)}
           placeholder="Communication, Leadership..."
         />
-      </FormField>
-    </div>
+        <p className="text-xs text-muted-foreground">Communication, leadership, teamwork...</p>
+      </div>
+      </div>
+    </OnboardingCard>
   );
 }
 
@@ -1424,7 +1362,12 @@ function ProjectsStep({
   }
 
   return (
-    <div className="space-y-4">
+    <OnboardingCard
+      title="Projects"
+      description="Showcase your best academic, personal, and team projects."
+      icon={<FolderKanban className="h-6 w-6" />}
+    >
+      <div className="space-y-4">
       {form.projects.length === 0 && (
         <div className="rounded-md border border-dashed border-border p-8 text-center">
           <p className="text-sm text-muted-foreground">No projects yet. Add your best projects here.</p>
@@ -1435,7 +1378,7 @@ function ProjectsStep({
       )}
 
       {form.projects.map((p, idx) => (
-        <div key={p.id} className="space-y-3 rounded-md border border-border bg-muted/50/30 p-4">
+        <div key={p.id} className="space-y-3 rounded-xl border border-border bg-muted/40 p-4 md:p-5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold uppercase text-muted-foreground">Project {idx + 1}</p>
             <Button
@@ -1446,12 +1389,14 @@ function ProjectsStep({
               Remove
             </Button>
           </div>
-          <Input
-            value={p.title}
-            onChange={(e) => updateProject(p.id, { title: e.target.value })}
-            placeholder="Project title"
-            className="border-border bg-muted/50 text-foreground"
-          />
+          <OnboardingFieldGroup cols={1}>
+            <OnboardingInput
+              value={p.title}
+              onChange={(e) => updateProject(p.id, { title: e.target.value })}
+              label="Project Title"
+              placeholder="Project title"
+            />
+          </OnboardingFieldGroup>
           <Textarea
             value={p.description}
             onChange={(e) => updateProject(p.id, { description: e.target.value })}
@@ -1459,17 +1404,22 @@ function ProjectsStep({
             rows={2}
             className="resize-none border-border bg-muted/50 text-sm text-foreground"
           />
-          <TagInput
-            tags={p.techStack}
-            onChange={(tags) => updateProject(p.id, { techStack: tags })}
-            placeholder="React, Node.js, PostgreSQL..."
-          />
-          <Input
-            value={p.githubUrl}
-            onChange={(e) => updateProject(p.id, { githubUrl: e.target.value })}
-            placeholder="GitHub or live URL"
-            className="border-border bg-muted/50 text-sm text-foreground"
-          />
+          <OnboardingFieldGroup cols={2}>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-foreground">Tech Stack</Label>
+              <TagInput
+                tags={p.techStack}
+                onChange={(tags) => updateProject(p.id, { techStack: tags })}
+                placeholder="React, Node.js, PostgreSQL..."
+              />
+            </div>
+            <OnboardingInput
+              value={p.githubUrl}
+              onChange={(e) => updateProject(p.id, { githubUrl: e.target.value })}
+              label="Project URL"
+              placeholder="GitHub or live URL"
+            />
+          </OnboardingFieldGroup>
         </div>
       ))}
 
@@ -1480,7 +1430,8 @@ function ProjectsStep({
       >
         + Add Project
       </Button>
-    </div>
+      </div>
+    </OnboardingCard>
   );
 }
 
@@ -1521,7 +1472,12 @@ function ExperienceStep({
   }
 
   return (
-    <div className="space-y-4">
+    <OnboardingCard
+      title="Experience"
+      description="Add internships, part-time roles, or freelance work with measurable impact."
+      icon={<Briefcase className="h-6 w-6" />}
+    >
+      <div className="space-y-4">
       {form.experience.length === 0 && (
         <div className="rounded-md border border-dashed border-border p-8 text-center">
           <p className="text-sm text-muted-foreground">No experience yet. Add internships, part-time, or freelance work.</p>
@@ -1529,7 +1485,7 @@ function ExperienceStep({
       )}
 
       {form.experience.map((e, idx) => (
-        <div key={e.id} className="space-y-3 rounded-md border border-border bg-muted/50/30 p-4">
+        <div key={e.id} className="space-y-3 rounded-xl border border-border bg-muted/40 p-4 md:p-5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold uppercase text-muted-foreground">Experience {idx + 1}</p>
             <Button
@@ -1540,34 +1496,34 @@ function ExperienceStep({
               Remove
             </Button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Input
+          <OnboardingFieldGroup cols={2}>
+            <OnboardingInput
               value={e.company}
               onChange={(ev) => updateExp(e.id, { company: ev.target.value })}
+              label="Company"
               placeholder="Company name"
-              className="border-border bg-muted/50 text-foreground"
             />
-            <Input
+            <OnboardingInput
               value={e.role}
               onChange={(ev) => updateExp(e.id, { role: ev.target.value })}
+              label="Role"
               placeholder="Role / Designation"
-              className="border-border bg-muted/50 text-foreground"
             />
-            <Input
+            <OnboardingInput
               type="month"
               value={e.startDate}
               onChange={(ev) => updateExp(e.id, { startDate: ev.target.value })}
-              className="border-border bg-muted/50 text-foreground"
+              label="Start Date"
             />
             {!e.isPresent && (
-              <Input
+              <OnboardingInput
                 type="month"
                 value={e.endDate}
                 onChange={(ev) => updateExp(e.id, { endDate: ev.target.value })}
-                className="border-border bg-muted/50 text-foreground"
+                label="End Date"
               />
             )}
-          </div>
+          </OnboardingFieldGroup>
           <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
             <input
               type="checkbox"
@@ -1594,7 +1550,8 @@ function ExperienceStep({
       >
         + Add Experience
       </Button>
-    </div>
+      </div>
+    </OnboardingCard>
   );
 }
 
@@ -1606,7 +1563,12 @@ function ExtrasStep({
   setField: <K extends keyof ProfileForm>(k: K, v: ProfileForm[K]) => void;
 }) {
   return (
-    <div className="space-y-8">
+    <OnboardingCard
+      title="Achievements And Profiles"
+      description="Add certifications, coding profiles, research, and standout achievements."
+      icon={<Trophy className="h-6 w-6" />}
+    >
+      <div className="space-y-8">
       <div className="space-y-3">
         <h3 className="text-sm font-bold text-muted-foreground">
           Certifications <span className="text-xs font-normal text-muted-foreground">(optional)</span>
@@ -1839,6 +1801,7 @@ function ExtrasStep({
           />
         </FormField>
       </div>
-    </div>
+      </div>
+    </OnboardingCard>
   );
 }
