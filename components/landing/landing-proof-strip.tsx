@@ -1,6 +1,6 @@
 import React from 'react';
 
-const companies = ['Microsoft', 'Amazon', 'Deloitte', 'Infosys', 'Accenture', 'TCS'];
+const targetCompanies = ['Microsoft', 'Amazon', 'Deloitte', 'Infosys', 'Accenture', 'TCS'];
 
 export default function LandingProofStrip() {
   return (
@@ -8,9 +8,9 @@ export default function LandingProofStrip() {
       <div className='mx-auto max-w-[1200px]'>
         <div className='mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3'>
           {[
-            { value: '2,400+', label: 'Students' },
-            { value: '180+', label: 'Drives' },
-            { value: '60+', label: 'Companies' },
+            { value: 'Pilot', label: 'In Progress' },
+            { value: 'AI-Powered', label: 'Ranking Engine' },
+            { value: 'Multi-College', label: 'Architecture' },
           ].map((item) => (
             <div key={item.label} className='rounded-2xl border border-border bg-card p-5 shadow-sm'>
               <p className='text-2xl font-black tracking-tight text-foreground'>{item.value}</p>
@@ -22,8 +22,11 @@ export default function LandingProofStrip() {
         </div>
 
         <div className='rounded-2xl border border-border bg-card p-5 shadow-sm'>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            Target Recruiting Partners
+          </p>
           <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6'>
-            {companies.map((company) => (
+            {targetCompanies.map((company) => (
               <div
                 key={company}
                 className='rounded-xl border border-border bg-background px-3 py-3 text-center text-sm font-semibold text-foreground'

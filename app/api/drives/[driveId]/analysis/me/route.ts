@@ -116,6 +116,7 @@ export async function GET(
       resumeImpact: row.resumeDiffJson,
       interviewPrep: row.interviewQuestionsJson,
       analysisGeneratedAt: row.analysisGeneratedAt,
+      source: "template",
     });
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -206,6 +207,7 @@ export async function POST(
       resumeImpact,
       interviewPrep,
       analysisGeneratedAt: now.toISOString(),
+      source: "template",
     });
   } catch (error) {
     if (isRedirectError(error)) throw error;

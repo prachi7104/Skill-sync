@@ -5,9 +5,11 @@
  *
  * Server-side enforcement of free-tier sandbox usage limits.
  *
- * Limits (hardcoded):
- *   Daily:   5 sandbox runs
- *   Monthly: 30 sandbox runs
+ * Limits (defaults, overridable per-college via sandbox_config):
+ *   Student Daily:   3 sandbox runs
+ *   Student Monthly: 20 sandbox runs
+ *   Faculty Daily:   10 sandbox runs
+ *   Faculty Monthly: 100 sandbox runs
  *
  * Reset logic:
  *   Daily counter resets when the current UTC date differs from sandboxResetDate.
