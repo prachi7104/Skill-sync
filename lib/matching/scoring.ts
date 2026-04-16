@@ -190,7 +190,7 @@ export function computeSkillOverlap(
   overlapRatio: number;
 } {
   if (requiredSkills.length === 0) {
-    return { matchedSkills: [], missingSkills: [], overlapRatio: 0 };
+    return { matchedSkills: [], missingSkills: [], overlapRatio: 1 };
   }
 
   const normalizedStudentSkills = studentSkills.map((s) => s.toLowerCase().trim());
