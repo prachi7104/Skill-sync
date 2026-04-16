@@ -984,8 +984,8 @@ export const authOptions: NextAuthOptions = {
   },
   
   pages: {
-    signIn: '/login',
-    error: '/login',
+    signIn: '/',
+    error: '/',
   },
   
   session: {
@@ -1004,7 +1004,7 @@ const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
 ```
 
-5. Create login page (`app/login/page.tsx`):
+5. Create login page (`app/page.tsx`):
 ```typescript
 'use client';
 
@@ -1062,9 +1062,9 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
     
-    // Redirect to login if not authenticated
+    // Redirect to root auth page if not authenticated
     if (!token) {
-      return NextResponse.redirect(new URL('/login', req.url));
+      return NextResponse.redirect(new URL('/', req.url));
     }
     
     // Role-based access control
@@ -1129,7 +1129,7 @@ export default function RootLayout({ children }) {
 ```
 
 **Verification:**
-- Accessing `/student` without login → Redirects to `/login`
+- Accessing `/student` without login → Redirects to `/`
 - Faculty user accessing `/student` → Redirects to `/unauthorized`
 
 ---
@@ -1239,7 +1239,7 @@ export function useRequireAuth() {
   
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/login');
+      router.push('/');
     }
   }, [isLoading, isAuthenticated, router]);
   

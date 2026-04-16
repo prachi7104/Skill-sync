@@ -10,15 +10,15 @@ import { useEffect, useState } from "react";
  * Purpose:
  *  - Renders children with identical markup during SSR AND first client render
  *    (avoids hydration mismatch).
- *  - After mount, checks session and redirects unauthenticated users to /login
+ *  - After mount, checks session and redirects unauthenticated users to /
  *    for protected routes.
  *  - Never branches JSX based on auth state during the hydration-critical
  *    first render.
  *
- * Public routes (login, unauthorized, root) are excluded from the redirect.
+ * Public routes (root, unauthorized, API) are excluded from the redirect.
  */
 
-const PUBLIC_PATHS = ["/login", "/unauthorized", "/api"];
+const PUBLIC_PATHS = ["/unauthorized", "/api"];
 
 function isPublicPath(pathname: string): boolean {
     if (pathname === "/") return true;
@@ -40,7 +40,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         if (status === "loading") return;
 
         if (status === "unauthenticated" && !isPublicPath(pathname)) {
-            router.replace("/login?callbackUrl=" + encodeURIComponent(pathname));
+            router.replace("/?callbackUrl=" + encodeURIComponent(pathname));
         }
     }, [mounted, status, pathname, router]);
 

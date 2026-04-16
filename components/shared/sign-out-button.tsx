@@ -13,7 +13,7 @@ export default function SignOutButton() {
     });
 
     if (!confirmed) return;
-    signOut({ callbackUrl: "/login" });
+    signOut({ callbackUrl: "/" });
   }
 
   return (

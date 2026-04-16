@@ -12,10 +12,10 @@ import { test, expect } from "@playwright/test";
 
 test("student is forced through onboarding before dashboard access", async ({ page }) => {
   // TODO: replace with real login helper once test auth wiring is enabled.
-  await page.goto("/login");
+  await page.goto("http://127.0.0.1:3000/");
 
   // Placeholder assertion keeps spec valid while auth bootstrap is wired.
-  await expect(page).toHaveURL(/\/login/);
+  await expect(page).toHaveURL(/\/$/);
 
   // Intended end-state assertions after wiring:
   // 1) Direct visit to /student/dashboard redirects to /student/onboarding

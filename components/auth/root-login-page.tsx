@@ -4,8 +4,8 @@ import { signIn } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import LoginFormPanel from '@/components/auth/login-form-panel';
-import LoginBrandPanel from '@/components/auth/login-brand-panel';
+import LoginFormPanel from "@/components/auth/login-form-panel";
+import LoginBrandPanel from "@/components/auth/login-brand-panel";
 
 const AUTH_ERRORS: Record<string, string> = {
   AccessDenied: "Access denied. Your account is not authorized.",
@@ -21,7 +21,7 @@ function LoginForm() {
   const errorType = searchParams.get("error");
 
   const [errorMessage, setErrorMessage] = useState<string | null>(
-    errorType ? (AUTH_ERRORS[errorType] ?? AUTH_ERRORS.Default) : null
+    errorType ? (AUTH_ERRORS[errorType] ?? AUTH_ERRORS.Default) : null,
   );
   const [isStudentLoading, setIsStudentLoading] = useState(false);
   const [isStaffLoading, setIsStaffLoading] = useState(false);
@@ -32,7 +32,7 @@ function LoginForm() {
 
   useEffect(() => {
     if (errorType) {
-      const timer = setTimeout(() => router.replace("/login"), 6000);
+      const timer = setTimeout(() => router.replace("/"), 6000);
       return () => clearTimeout(timer);
     }
   }, [errorType, router]);
@@ -78,13 +78,13 @@ function LoginForm() {
   };
 
   return (
-    <div className='relative min-h-screen overflow-x-clip bg-background font-sans text-foreground'>
-      <div className='pointer-events-none absolute inset-0 -z-10'>
-        <div className='absolute -top-24 left-[15%] h-64 w-64 rounded-full bg-primary/10 blur-3xl' />
-        <div className='absolute bottom-0 right-[10%] h-72 w-72 rounded-full bg-muted/60 blur-3xl' />
+    <div className="relative min-h-screen overflow-x-clip bg-background font-sans text-foreground">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-24 left-[15%] h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute bottom-0 right-[10%] h-72 w-72 rounded-full bg-muted/60 blur-3xl" />
       </div>
 
-      <div className='grid min-h-screen grid-cols-1 md:grid-cols-[1fr_320px] lg:grid-cols-[1.05fr_0.95fr]'>
+      <div className="grid min-h-screen grid-cols-1 md:grid-cols-[1fr_320px] lg:grid-cols-[1.05fr_0.95fr]">
         <LoginFormPanel
           errorMessage={errorMessage}
           isStudentLoading={isStudentLoading}
@@ -95,10 +95,13 @@ function LoginForm() {
           showPassword={showPassword}
           onStudentLogin={handleStudentLogin}
           onShowStaffForm={() => setShowStaffForm(true)}
-          onHideStaffForm={() => { setShowStaffForm(false); setErrorMessage(null); }}
+          onHideStaffForm={() => {
+            setShowStaffForm(false);
+            setErrorMessage(null);
+          }}
           onStaffEmailChange={(v) => setStaffEmail(v)}
           onStaffPasswordChange={(v) => setStaffPassword(v)}
-          onTogglePassword={() => setShowPassword(v => !v)}
+          onTogglePassword={() => setShowPassword((v) => !v)}
           onStaffSubmit={handleStaffLogin}
           onDismissError={() => setErrorMessage(null)}
         />
@@ -108,13 +111,15 @@ function LoginForm() {
   );
 }
 
-export default function LoginPage() {
+export default function RootLoginPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-10 w-10 animate-spin text-primary opacity-20" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <Loader2 className="h-10 w-10 animate-spin text-primary opacity-20" />
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

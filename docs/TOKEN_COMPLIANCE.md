@@ -22,12 +22,10 @@ a Tailwind utility class that maps to that token.
 | Accent/highlight | `bg-accent` | `bg-zinc-100`, `bg-blue-50` |
 | Primary brand | `bg-primary`, `text-primary` | `bg-blue-500`, `text-blue-500`, etc. |
 
-## Landing page EXCEPTION
+## Route-specific EXCEPTION
 
-The public landing page (`app/page.tsx`, `components/landing/`) is exempt
-from this rule for components that intentionally do NOT use the app design
-system (they use a separate visual language for marketing). Even so, they
-must use `dark:` variants consistently.
+No route is currently exempt from token compliance. All UI surfaces must use
+the shared design token system.
 
 ## How to add a new color
 

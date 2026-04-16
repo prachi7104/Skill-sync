@@ -26,7 +26,7 @@ export function useAuth() {
 
 /**
  * Enforces authentication in a Client Component.
- * Redirects to /login if the user is not authenticated.
+ * Redirects to / if the user is not authenticated.
  * Returns the loading state to allow showing a spinner while ensuring auth.
  */
 export function useRequireAuth() {
@@ -35,7 +35,7 @@ export function useRequireAuth() {
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
-            router.push("/login?callbackUrl=" + window.location.pathname);
+            router.push("/?callbackUrl=" + window.location.pathname);
         }
     }, [isLoading, isAuthenticated, router]);
 
@@ -45,7 +45,7 @@ export function useRequireAuth() {
 /**
  * Enforces specific roles in a Client Component.
  * Redirects to /unauthorized if the user lacks the required role.
- * Also enforces authentication (redirects to /login if not logged in).
+ * Also enforces authentication (redirects to / if not logged in).
  *
  * @param allowedRoles Array of allowed roles (e.g., ['admin'])
  */
@@ -57,7 +57,7 @@ export function useRequireRole(allowedRoles: string[]) {
         if (isLoading) return;
 
         if (!isAuthenticated) {
-            router.push("/login?callbackUrl=" + window.location.pathname);
+            router.push("/?callbackUrl=" + window.location.pathname);
             return;
         }
 

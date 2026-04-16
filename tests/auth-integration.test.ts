@@ -69,9 +69,9 @@ async function simulateSignIn(
             await mockDb.insert("students").values({ id: newUser.id });
             return true;
         }
-        return "/login?error=NotAuthorized";
+        return "/?error=NotAuthorized";
     } catch {
-        return "/login?error=DatabaseError";
+        return "/?error=DatabaseError";
     }
 }
 
@@ -147,7 +147,7 @@ describe("Auth Integration", () => {
 
             const result = await simulateSignIn({ email: "external@gmail.com" });
 
-            expect(result).toBe("/login?error=NotAuthorized");
+            expect(result).toBe("/?error=NotAuthorized");
         });
 
         it("should return DatabaseError when DB throws", async () => {
@@ -155,7 +155,7 @@ describe("Auth Integration", () => {
 
             const result = await simulateSignIn({ email: "error@test.com" });
 
-            expect(result).toBe("/login?error=DatabaseError");
+            expect(result).toBe("/?error=DatabaseError");
         });
     });
 

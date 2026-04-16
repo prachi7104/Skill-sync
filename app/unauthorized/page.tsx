@@ -33,10 +33,10 @@ export default function UnauthorizedPage() {
             className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-md bg-primary text-sm font-bold text-white transition-colors hover:bg-primary/90"
           >
             <Home size={15} aria-hidden="true" />
-            Go to Home
+            Go to Login
           </Link>
           <Link
-            href="/login"
+            href="/"
             className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-md border border-border text-sm font-semibold text-foreground transition-colors hover:bg-muted"
           >
             <LogIn size={15} aria-hidden="true" />

@@ -208,7 +208,7 @@ export const authOptions: NextAuthOptions = {
 
         if (!college) {
           // Unknown domain not in DB — deny sign-in
-          return "/login?error=NotAuthorized";
+          return "/?error=NotAuthorized";
         }
 
         // Auto-create student account with college linkage
@@ -232,7 +232,7 @@ export const authOptions: NextAuthOptions = {
         return true;
       } catch (error) {
         console.error("[auth] signIn error:", error);
-        return "/login?error=DatabaseError";
+        return "/?error=DatabaseError";
       }
     },
 
@@ -316,5 +316,5 @@ export const authOptions: NextAuthOptions = {
     },
   },
 
-  pages: { signIn: "/login", error: "/login" },
+  pages: { signIn: "/", error: "/" },
 };

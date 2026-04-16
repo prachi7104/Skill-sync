@@ -74,13 +74,13 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 }
 
 /**
- * Enforces authentication. Redirects to /login if not logged in.
+ * Enforces authentication. Redirects to / if not logged in.
  * Use this in Server Components (layouts, pages).
  */
 export async function requireAuth(): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) {
-    redirect("/login");
+    redirect("/");
   }
   return user;
 }

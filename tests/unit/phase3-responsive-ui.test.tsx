@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import LandingFooterStrip from "@/components/landing/landing-footer-strip";
 import MarkdownRenderer from "@/components/shared/markdown-renderer";
 import RankingsTable from "@/components/faculty/rankings-table";
 
@@ -13,14 +12,6 @@ describe("Phase 3 responsive UI", () => {
     expect(container.firstElementChild?.className).toContain("sm:prose-base");
     expect(container.firstElementChild?.className).toContain("lg:prose-lg");
     expect(container.firstElementChild?.className).toContain("prose-pre:overflow-x-auto");
-  });
-
-  it("landing footer uses token-driven foreground colors", () => {
-    const { container } = render(<LandingFooterStrip />);
-
-    expect(container.querySelector("footer")?.className).toContain("bg-background");
-    expect(screen.getByText("2,400+").className).toContain("text-foreground");
-    expect(screen.getByText("Companies").className).toContain("text-muted-foreground");
   });
 
   it("rankings table renders mobile and desktop wrappers", () => {
