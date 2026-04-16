@@ -18,9 +18,12 @@ export async function GET(req: NextRequest) {
       .where(and(eq(jobs.status, "processing"), lt(jobs.updatedAt, new Date(Date.now() - 3600_000))))
       .returning({ id: jobs.id });
 
-    // Delete completed jobs older than 7 days
+    // Delete completed/failed jobs older than 7 days
     const deleted = await db.delete(jobs)
-      .where(and(eq(jobs.status, "completed"), lt(jobs.updatedAt, new Date(Date.now() - 7 * 86400_000))))
+      .where(and(
+        sql`${jobs.status} IN ('completed', 'failed')`,
+        lt(jobs.updatedAt, new Date(Date.now() - 7 * 86400_000))
+      ))
       .returning({ id: jobs.id });
 
     // Hard reset sandbox daily counters
@@ -31,9 +34,6 @@ export async function GET(req: NextRequest) {
 
     // Clean up stale AI rate limit windows (older than 24h)
     await db.execute(sql`DELETE FROM ai_rate_limits WHERE window_start < NOW() - INTERVAL '24 hours'`);
-
-    // Clean up completed/failed jobs older than 7 days
-    await db.execute(sql`DELETE FROM jobs WHERE status IN ('completed','failed') AND updated_at < NOW() - INTERVAL '7 days'`);
 
     // Auto-deactivate drives past their deadline
     const expired = await db.execute(sql`

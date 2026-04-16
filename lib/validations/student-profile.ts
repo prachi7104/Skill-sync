@@ -112,6 +112,20 @@ export const studentProfileSchema = z.object({
         .optional()
         .nullable(),
 
+    // Contact fields
+    phone: z.string()
+        .max(20, "Phone must be ≤ 20 characters")
+        .regex(/^\+?[\d\s\-()]+$/, "Phone must contain only digits, spaces, hyphens, parentheses, and optional leading +")
+        .optional()
+        .nullable(),
+
+    linkedin: z.string()
+        .max(500, "LinkedIn URL must be ≤ 500 characters")
+        .url("Must be a valid URL")
+        .optional()
+        .nullable()
+        .or(z.literal("")),
+
     // Academic fields (Optional)
     tenthPercentage: z
         .number({ required_error: "10th Percentage is required" })

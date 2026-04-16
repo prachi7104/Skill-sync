@@ -5,6 +5,13 @@ import { db } from "@/lib/db";
 import { drives, rankings, jobs } from "@/lib/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { isRedirectError } from "next/dist/client/components/redirect";
+import { z } from "zod";
+
+const patchDriveSchema = z.object({
+  isActive: z.boolean().optional(),
+  deadline: z.string().datetime().nullable().optional(),
+  rankingsVisible: z.boolean().optional(),
+}).strict();
 
 // Admin only. Permanently deletes a drive and associated rankings/jobs.
 export async function DELETE(
@@ -88,12 +95,22 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await req.json() as { isActive?: boolean; deadline?: string | null };
+    const raw = await req.json();
+    const parsed = patchDriveSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const body = parsed.data;
+
     const updateData: Record<string, unknown> = { updatedAt: new Date() };
     if (body.isActive !== undefined) updateData.isActive = body.isActive;
     if (body.deadline !== undefined) {
       updateData.deadline = body.deadline ? new Date(body.deadline) : null;
     }
+    if (body.rankingsVisible !== undefined) updateData.rankingsVisible = body.rankingsVisible;
 
     const [updated] = await db
       .update(drives)

@@ -114,6 +114,14 @@ export async function PATCH(req: NextRequest) {
             updateData.batchYear = validatedData.batchYear;
         }
 
+        // Contact fields
+        if (validatedData.phone !== undefined) {
+            updateData.phone = validatedData.phone;
+        }
+        if (validatedData.linkedin !== undefined) {
+            updateData.linkedin = validatedData.linkedin;
+        }
+
         // Array fields
         if (validatedData.skills !== undefined) {
             updateData.skills = validatedData.skills;
