@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Lock,
@@ -10,7 +9,6 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TagInput } from "@/components/ui/tag-input";
@@ -936,32 +934,6 @@ export default function OnboardingPage() {
   );
 }
 
-function FormField({
-  label,
-  required,
-  hint,
-  className,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  hint?: string;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className={cn("space-y-2", className)}>
-      <Label className="text-[13px] font-semibold text-foreground">
-        {label}
-        {required && <span className="ml-1 text-destructive">*</span>}
-        {!required && <span className="ml-1 text-xs text-muted-foreground">(optional)</span>}
-      </Label>
-      {children}
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-    </div>
-  );
-}
-
 function IdentityStep({
   form,
   setField,
@@ -1398,11 +1370,13 @@ function ProjectsStep({
             />
           </OnboardingFieldGroup>
           <Textarea
+            id={`project-description-${p.id}`}
             value={p.description}
             onChange={(e) => updateProject(p.id, { description: e.target.value })}
             placeholder="Brief description of what you built and your role"
             rows={2}
             className="resize-none border-border bg-muted/50 text-sm text-foreground"
+            aria-label="Project description"
           />
           <OnboardingFieldGroup cols={2}>
             <div className="space-y-2">
@@ -1524,8 +1498,12 @@ function ExperienceStep({
               />
             )}
           </OnboardingFieldGroup>
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+          <label
+            htmlFor={`experience-current-${e.id}`}
+            className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground"
+          >
             <input
+              id={`experience-current-${e.id}`}
               type="checkbox"
               checked={e.isPresent}
               onChange={(ev) => updateExp(e.id, { isPresent: ev.target.checked, endDate: "" })}
@@ -1534,11 +1512,13 @@ function ExperienceStep({
             Currently working here
           </label>
           <Textarea
+            id={`experience-description-${e.id}`}
             value={e.description}
             onChange={(ev) => updateExp(e.id, { description: ev.target.value })}
             placeholder="What you did, technologies used, outcomes"
             rows={2}
             className="resize-none border-border bg-muted/50 text-sm text-foreground"
+            aria-label="Experience description"
           />
         </div>
       ))}
@@ -1574,8 +1554,8 @@ function ExtrasStep({
           Certifications <span className="text-xs font-normal text-muted-foreground">(optional)</span>
         </h3>
         {form.certifications.map((c, i) => (
-          <div key={c.id} className="grid grid-cols-3 items-center gap-2">
-            <Input
+          <div key={c.id} className="grid grid-cols-1 items-center gap-2 md:grid-cols-3">
+            <OnboardingInput
               value={c.title}
               onChange={(e) =>
                 setField(
@@ -1583,10 +1563,10 @@ function ExtrasStep({
                   form.certifications.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)),
                 )
               }
+              label="Title"
               placeholder="Certification name"
-              className="border-border bg-muted/50 text-sm text-foreground"
             />
-            <Input
+            <OnboardingInput
               value={c.issuer}
               onChange={(e) =>
                 setField(
@@ -1594,11 +1574,11 @@ function ExtrasStep({
                   form.certifications.map((x, j) => (j === i ? { ...x, issuer: e.target.value } : x)),
                 )
               }
+              label="Issuer"
               placeholder="Issuer"
-              className="border-border bg-muted/50 text-sm text-foreground"
             />
             <div className="flex gap-2">
-              <Input
+              <OnboardingInput
                 value={c.year}
                 onChange={(e) =>
                   setField(
@@ -1606,8 +1586,8 @@ function ExtrasStep({
                     form.certifications.map((x, j) => (j === i ? { ...x, year: e.target.value } : x)),
                   )
                 }
+                label="Year"
                 placeholder="Year"
-                className="border-border bg-muted/50 text-sm text-foreground"
               />
               <Button
                 type="button"
@@ -1618,8 +1598,9 @@ function ExtrasStep({
                   )
                 }
                 className="px-2 text-xs text-destructive hover:text-destructive"
+                aria-label={`Remove certification ${i + 1}`}
               >
-                X
+                Remove
               </Button>
             </div>
           </div>
@@ -1643,8 +1624,11 @@ function ExtrasStep({
           Coding Profiles <span className="text-xs font-normal text-muted-foreground">(optional)</span>
         </h3>
         {form.codingProfiles.map((c, i) => (
-          <div key={c.id} className="grid grid-cols-3 items-center gap-2">
+          <div key={c.id} className="grid grid-cols-1 items-center gap-2 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor={`coding-platform-${c.id}`} className="text-sm font-medium text-foreground">Platform</Label>
             <select
+              id={`coding-platform-${c.id}`}
               value={c.platform}
               onChange={(e) =>
                 setField(
@@ -1652,7 +1636,7 @@ function ExtrasStep({
                   form.codingProfiles.map((x, j) => (j === i ? { ...x, platform: e.target.value } : x)),
                 )
               }
-              className="rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-foreground"
+              className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm text-foreground transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent md:py-3"
             >
               <option value="">Platform</option>
               {[
@@ -1668,7 +1652,8 @@ function ExtrasStep({
                 </option>
               ))}
             </select>
-            <Input
+            </div>
+            <OnboardingInput
               value={c.username}
               onChange={(e) =>
                 setField(
@@ -1676,11 +1661,11 @@ function ExtrasStep({
                   form.codingProfiles.map((x, j) => (j === i ? { ...x, username: e.target.value } : x)),
                 )
               }
+              label="Username"
               placeholder="Username"
-              className="border-border bg-muted/50 text-sm text-foreground"
             />
             <div className="flex gap-2">
-              <Input
+              <OnboardingInput
                 value={c.url}
                 onChange={(e) =>
                   setField(
@@ -1688,8 +1673,8 @@ function ExtrasStep({
                     form.codingProfiles.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)),
                   )
                 }
+                label="Profile URL"
                 placeholder="Profile URL"
-                className="border-border bg-muted/50 text-sm text-foreground"
               />
               <Button
                 type="button"
@@ -1700,8 +1685,9 @@ function ExtrasStep({
                   )
                 }
                 className="px-2 text-xs text-destructive"
+                aria-label={`Remove coding profile ${i + 1}`}
               >
-                X
+                Remove
               </Button>
             </div>
           </div>
@@ -1727,7 +1713,7 @@ function ExtrasStep({
         {form.researchPapers.map((r, i) => (
           <div key={r.id} className="space-y-2 rounded-md border border-border bg-muted/50/20 p-3">
             <div className="flex gap-2">
-              <Input
+              <OnboardingInput
                 value={r.title}
                 onChange={(e) =>
                   setField(
@@ -1735,8 +1721,9 @@ function ExtrasStep({
                     form.researchPapers.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)),
                   )
                 }
+                label="Paper Title"
                 placeholder="Paper title"
-                className="flex-1 border-border bg-muted/50 text-sm text-foreground"
+                className="flex-1"
               />
               <Button
                 type="button"
@@ -1747,12 +1734,13 @@ function ExtrasStep({
                   )
                 }
                 className="px-2 text-xs text-destructive"
+                aria-label={`Remove research paper ${i + 1}`}
               >
-                X
+                Remove
               </Button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Input
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              <OnboardingInput
                 value={r.journal}
                 onChange={(e) =>
                   setField(
@@ -1760,10 +1748,10 @@ function ExtrasStep({
                     form.researchPapers.map((x, j) => (j === i ? { ...x, journal: e.target.value } : x)),
                   )
                 }
+                label="Journal / Conference"
                 placeholder="Journal or Conference"
-                className="border-border bg-muted/50 text-sm text-foreground"
               />
-              <Input
+              <OnboardingInput
                 value={r.year}
                 onChange={(e) =>
                   setField(
@@ -1771,8 +1759,8 @@ function ExtrasStep({
                     form.researchPapers.map((x, j) => (j === i ? { ...x, year: e.target.value } : x)),
                   )
                 }
+                label="Year"
                 placeholder="Year"
-                className="border-border bg-muted/50 text-sm text-foreground"
               />
             </div>
           </div>
@@ -1792,14 +1780,15 @@ function ExtrasStep({
       </div>
 
       <div className="space-y-2">
-        <FormField label="Achievements" hint="One achievement per line.">
-          <Textarea
-            value={form.achievements}
-            onChange={(e) => setField("achievements", e.target.value)}
-            rows={4}
-            className="border-border bg-muted/50 text-sm text-foreground"
-          />
-        </FormField>
+        <Label htmlFor="achievements-onboarding" className="text-sm font-medium text-foreground">Achievements</Label>
+        <Textarea
+          id="achievements-onboarding"
+          value={form.achievements}
+          onChange={(e) => setField("achievements", e.target.value)}
+          rows={4}
+          className="border-border bg-muted/50 text-sm text-foreground"
+        />
+        <p className="text-xs text-muted-foreground">One achievement per line.</p>
       </div>
       </div>
     </OnboardingCard>
