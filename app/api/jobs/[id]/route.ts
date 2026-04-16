@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { jobs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -18,6 +19,7 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
+        await requireAuth();
 
         if (!id) {
             return NextResponse.json(

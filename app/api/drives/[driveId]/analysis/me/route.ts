@@ -74,6 +74,28 @@ export async function GET(
   try {
     const user = await requireRole(["student"]);
 
+    // Check drive exists and rankings are visible
+    const [drive] = await db
+      .select({ rankingsVisible: drives.rankingsVisible, collegeId: drives.collegeId })
+      .from(drives)
+      .where(eq(drives.id, params.driveId))
+      .limit(1);
+
+    if (!drive) {
+      return NextResponse.json({ message: "Drive not found" }, { status: 404 });
+    }
+
+    if (!user.collegeId || drive.collegeId !== user.collegeId) {
+      return NextResponse.json({ message: "Drive not found" }, { status: 404 });
+    }
+
+    if (!drive.rankingsVisible) {
+      return NextResponse.json(
+        { message: "Rankings for this drive have not been published yet" },
+        { status: 403 }
+      );
+    }
+
     const [row] = await db
       .select({
         rankingId: rankings.id,
@@ -107,6 +129,28 @@ export async function POST(
 ) {
   try {
     const user = await requireRole(["student"]);
+
+    // Check drive exists and rankings are visible
+    const [drive] = await db
+      .select({ rankingsVisible: drives.rankingsVisible, collegeId: drives.collegeId })
+      .from(drives)
+      .where(eq(drives.id, params.driveId))
+      .limit(1);
+
+    if (!drive) {
+      return NextResponse.json({ message: "Drive not found" }, { status: 404 });
+    }
+
+    if (!user.collegeId || drive.collegeId !== user.collegeId) {
+      return NextResponse.json({ message: "Drive not found" }, { status: 404 });
+    }
+
+    if (!drive.rankingsVisible) {
+      return NextResponse.json(
+        { message: "Rankings for this drive have not been published yet" },
+        { status: 403 }
+      );
+    }
 
     const [row] = await db
       .select({

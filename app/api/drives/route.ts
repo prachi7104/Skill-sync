@@ -15,7 +15,7 @@ const createDriveSchema = z.object({
   location: z.string().max(255).optional().nullable(),
   packageOffered: z.string().max(100).optional().nullable(),
   seasonId: z.string().uuid().optional().nullable(),
-  rankingsVisible: z.boolean().optional().default(true),
+  rankingsVisible: z.boolean().optional().default(false),
   placementType: z.enum(["placement", "internship", "ppo", "other"]).optional().default("placement"),
   rawJd: z.string()
     .min(50, "Job description must be at least 50 characters")

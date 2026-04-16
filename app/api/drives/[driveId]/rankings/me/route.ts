@@ -64,6 +64,7 @@ export async function GET(
         company: drives.company,
         roleTitle: drives.roleTitle,
         collegeId: drives.collegeId,
+        rankingsVisible: drives.rankingsVisible,
       })
       .from(drives)
       .where(eq(drives.id, driveId))
@@ -80,6 +81,14 @@ export async function GET(
       return NextResponse.json(
         { error: "Drive not found" },
         { status: 404 },
+      );
+    }
+
+    // Enforce rankingsVisible — students cannot access rankings that faculty has not published
+    if (!drive.rankingsVisible) {
+      return NextResponse.json(
+        { error: "Rankings for this drive have not been published yet" },
+        { status: 403 }
       );
     }
 

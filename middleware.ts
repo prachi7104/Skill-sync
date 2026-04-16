@@ -111,5 +111,8 @@ export const config = {
         "/api/faculty/:path*",
         "/api/student/:path*",
         "/api/drives/:path*",
+        "/api/jobs/:path*",
+        "/api/resources/:path*",
+        "/api/seasons/:path*",
     ],
 };
