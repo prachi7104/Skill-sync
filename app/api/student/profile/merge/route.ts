@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireStudentApiPolicyAccess, isOnboardingRequiredError } from "@/lib/auth/helpers";
 import { eq } from "drizzle-orm";
 import { computeCompleteness } from "@/lib/profile/completeness";
 import { mapParsedResumeToProfile, type ParsedResumeData } from "@/lib/resume/ai-parser";
@@ -53,7 +53,7 @@ function mergeKeepExistingFirst<T>(
 
 export async function POST(req: NextRequest) {
     try {
-        const { user, profile } = await requireStudentProfile();
+        const { user, profile } = await requireStudentApiPolicyAccess("/api/student/profile/merge");
 
         const body = await req.json() as MergeSectionRequest;
         const mode = body.mode === "replace" ? "replace" : "merge";
@@ -231,6 +231,12 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         if (isRedirectError(error)) throw error;
+        if (isOnboardingRequiredError(error)) {
+            return NextResponse.json(
+                { message: error.message, code: "ONBOARDING_REQUIRED" },
+                { status: error.status },
+            );
+        }
         console.error("Merge failed:", error);
         return NextResponse.json(
             { message: "Internal server error during merge" },

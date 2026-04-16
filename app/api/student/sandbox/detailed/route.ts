@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { isOnboardingRequiredError, requireStudentApiPolicyAccess } from "@/lib/auth/helpers";
 import { enforceProfileGate, enforceDetailedAnalysisLimits, incrementDetailedAnalysisUsage, GuardrailViolation } from "@/lib/guardrails";
 import { parseResumeWithAI } from "@/lib/resume/ai-parser";
 import { performDetailedAnalysis } from "@/lib/ats/detailed-analysis";
@@ -17,7 +17,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
     try {
         // 1. Auth + profile
-        const { profile: student } = await requireStudentProfile();
+        const { profile: student } = await requireStudentApiPolicyAccess("/api/student/sandbox/detailed");
 
         // 2. Profile gate (must meet placement profile requirements)
         await enforceProfileGate(student.id);
@@ -114,6 +114,9 @@ export async function POST(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         if (isRedirectError(error)) throw error;
+        if (isOnboardingRequiredError(error)) {
+            return NextResponse.json({ error: error.message, code: "ONBOARDING_REQUIRED" }, { status: error.status });
+        }
         console.error("Detailed Analysis Error:", error);
         return NextResponse.json({ error: "Analysis failed. Please try again." }, { status: 500 });
     }

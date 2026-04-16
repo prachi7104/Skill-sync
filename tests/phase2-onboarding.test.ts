@@ -1,27 +1,36 @@
 import { describe, it, expect } from "vitest";
+import { computeOnboardingProgress } from "@/lib/utils/onboarding";
 
 describe("Onboarding required check", () => {
-  function isOnboardingRequired(profile: Record<string, unknown>): boolean {
-    return !profile.sapId ||
-      !profile.rollNo ||
-      !profile.cgpa ||
-      !profile.branch ||
-      !profile.batchYear ||
-      typeof profile.tenthPercentage !== "number" ||
-      typeof profile.twelfthPercentage !== "number";
-  }
-
-  it("requires onboarding when any required field is missing", () => {
-    expect(isOnboardingRequired({ sapId: "500125613" })).toBe(true);
+  it("requires onboarding when required fields are missing", () => {
+    const { onboardingRequired } = computeOnboardingProgress({ rollNo: "R2142231769" });
+    expect(onboardingRequired).toBe(true);
   });
 
-  it("does not require onboarding when all 7 fields are set", () => {
+  it("does not require onboarding when required fields are set", () => {
     const complete = {
-      sapId: "500125613", rollNo: "R2142231769",
+      rollNo: "R2142231769",
       cgpa: 8.66, branch: "Computer Science", batchYear: 2027,
       tenthPercentage: 85, twelfthPercentage: 87,
     };
-    expect(isOnboardingRequired(complete)).toBe(false);
+    const { onboardingRequired } = computeOnboardingProgress(complete);
+    expect(onboardingRequired).toBe(false);
+  });
+
+  it("does not block onboarding completion when sapId is absent", () => {
+    const completeWithoutSap = {
+      rollNo: "R2142231769",
+      cgpa: 8.66,
+      branch: "Computer Science",
+      batchYear: 2027,
+      tenthPercentage: 85,
+      twelfthPercentage: 87,
+      sapId: null,
+    };
+
+    const { onboardingRequired, progress } = computeOnboardingProgress(completeWithoutSap);
+    expect(onboardingRequired).toBe(false);
+    expect(progress).toBe(100);
   });
 });
 

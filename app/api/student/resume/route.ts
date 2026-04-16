@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import { db } from "@/lib/db";
 import { students, jobs } from "@/lib/db/schema";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireStudentApiPolicyAccess, isOnboardingRequiredError } from "@/lib/auth/helpers";
 import { eq, and, sql } from "drizzle-orm";
 import { processResumeParseJobs } from "@/lib/workers/parse-resume";
 import { logger } from "@/lib/logger";
@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
     try {
         // 1. Auth Check
-        const { user, profile } = await requireStudentProfile();
+        const { user, profile } = await requireStudentApiPolicyAccess("/api/student/resume");
         const previousResumeUrl = profile.resumeUrl;
 
         if (
@@ -184,49 +184,50 @@ export async function POST(req: NextRequest) {
         // can attempt server-side extraction when client-side text is missing.
         // We include resumeText if present, otherwise null and the worker will fetch the file.
         if (shouldQueue) {
-            // Check for existing pending parse job for this student (dedup)
-            const existingJob = await db.query.jobs.findFirst({
-                where: and(
-                    eq(jobs.type, "parse_resume"),
-                    eq(jobs.status, "pending"),
-                    sql`${jobs.payload}->>'studentId' = ${user.id}`,
-                ),
-            });
+            const payload = {
+                studentId: user.id,
+                resumeText: resumeText && resumeText.length >= 50 ? resumeText : null,
+                resumeUrl,
+                mimeType: file.type,
+            };
 
-            if (existingJob) {
-                // Update existing pending job with new text
-                await db
-                    .update(jobs)
-                    .set({
-                        payload: {
-                            studentId: user.id,
-                            resumeText: resumeText && resumeText.length >= 50 ? resumeText : null,
-                            resumeUrl,
-                            mimeType: file.type,
-                        },
-                        updatedAt: new Date(),
-                    })
-                    .where(eq(jobs.id, existingJob.id));
-                jobId = existingJob.id;
-                logger.info(`[Resume API] Updated existing job ${jobId} for student ${user.id}`);
-            } else {
-                // Insert new job (payload.resumeText may be null)
-                const [newJob] = await db
-                    .insert(jobs)
-                    .values({
-                        type: "parse_resume",
-                        status: "pending",
-                        priority: 7, // Resume parsing is high priority
-                        payload: {
-                            studentId: user.id,
-                            resumeText: resumeText && resumeText.length >= 50 ? resumeText : null,
-                            resumeUrl,
-                            mimeType: file.type,
-                        },
-                    })
-                    .returning({ id: jobs.id });
-                jobId = newJob.id;
+            // Atomic insert: only creates a pending parse_resume if one doesn't already exist.
+            const inserted = await db.execute(sql`
+                INSERT INTO jobs (type, status, priority, payload)
+                SELECT 'parse_resume', 'pending', 7, ${JSON.stringify(payload)}::jsonb
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM jobs
+                    WHERE type = 'parse_resume'
+                      AND status = 'pending'
+                      AND payload->>'studentId' = ${user.id}
+                )
+                RETURNING id
+            `) as unknown as Array<{ id: string }>;
+
+            if (inserted[0]?.id) {
+                jobId = inserted[0].id;
                 logger.info(`[Resume API] Enqueued new job ${jobId} for student ${user.id}`);
+            } else {
+                const existingJob = await db.query.jobs.findFirst({
+                    where: and(
+                        eq(jobs.type, "parse_resume"),
+                        eq(jobs.status, "pending"),
+                        sql`${jobs.payload}->>'studentId' = ${user.id}`,
+                    ),
+                });
+
+                if (existingJob) {
+                    await db
+                        .update(jobs)
+                        .set({
+                            payload,
+                            updatedAt: new Date(),
+                        })
+                        .where(eq(jobs.id, existingJob.id));
+                    jobId = existingJob.id;
+                    logger.info(`[Resume API] Updated existing job ${jobId} for student ${user.id}`);
+                }
             }
             // Fire-and-forget: trigger worker immediately so the job is processed
             // without waiting for the external cron. Errors are caught silently.
@@ -258,6 +259,9 @@ export async function POST(req: NextRequest) {
 
     } catch (error: unknown) {
         if (isRedirectError(error)) throw error;
+        if (isOnboardingRequiredError(error)) {
+            return NextResponse.json({ success: false, error: error.message, code: "ONBOARDING_REQUIRED" }, { status: error.status });
+        }
         console.error("Resume upload failed:", error);
         const message = error instanceof Error ? error.message : "Internal server error during upload";
         return NextResponse.json(

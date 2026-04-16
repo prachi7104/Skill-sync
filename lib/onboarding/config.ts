@@ -1,16 +1,24 @@
 /**
- * Onboarding routing has been simplified to a single tabbed page.
- * Legacy step constants remain only for backward compatibility.
+ * Onboarding is rendered on a single tabbed page for steps 0-9.
+ * Step 10 indicates completion and routes to dashboard.
  */
 export const ONBOARDING_STEP_ROUTES: Record<number, string> = {
-    0: "/student/onboarding/welcome",
+    0: "/student/onboarding",
     1: "/student/onboarding",
+    2: "/student/onboarding",
+    3: "/student/onboarding",
+    4: "/student/onboarding",
+    5: "/student/onboarding",
+    6: "/student/onboarding",
+    7: "/student/onboarding",
+    8: "/student/onboarding",
+    9: "/student/onboarding",
 };
 
 /**
- * Legacy constant retained for compatibility with older code.
+ * Step index used by server actions when onboarding is complete.
  */
-export const TOTAL_ONBOARDING_STEPS = 1;
+export const TOTAL_ONBOARDING_STEPS = 10;
 
 /**
  * Get the route for a given onboarding step.
@@ -34,5 +42,5 @@ export function getNextStep(currentStep: number): number {
  * Check if a step is the final review step.
  */
 export function isReviewStep(_step: number): boolean {
-    return false;
+    return _step === 9;
 }

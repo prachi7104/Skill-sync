@@ -4,6 +4,10 @@ import { db } from "@/lib/db";
 import { students } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { computeOnboardingProgress } from "@/lib/utils/onboarding";
+import {
+  resolveStudentApiOnboardingPolicy,
+} from "@/lib/onboarding/api-policy";
 
 /**
  * Lightweight user object derived purely from the signed JWT cookie.
@@ -17,6 +21,25 @@ export type SessionUser = {
   role: "student" | "faculty" | "admin";
   collegeId: string | null;
 };
+
+export {
+  STUDENT_API_ONBOARDING_POLICY_MATRIX,
+  resolveStudentApiOnboardingPolicy,
+} from "@/lib/onboarding/api-policy";
+
+export class OnboardingRequiredError extends Error {
+  status: number;
+
+  constructor(message = "Complete onboarding first") {
+    super(message);
+    this.name = "OnboardingRequiredError";
+    this.status = 403;
+  }
+}
+
+export function isOnboardingRequiredError(error: unknown): error is OnboardingRequiredError {
+  return error instanceof OnboardingRequiredError;
+}
 
 /**
  * Reads the current user from the JWT session without hitting the database.
@@ -99,6 +122,28 @@ export async function requireStudentProfile() {
     redirect("/student/onboarding");
   }
   return { user, profile };
+}
+
+/**
+ * Enforces student API access according to the onboarding policy matrix.
+ * Uses DB-fresh profile state to avoid stale JWT gating edge-cases.
+ */
+export async function requireStudentApiPolicyAccess(pathname: string) {
+  const { user, profile } = await requireStudentProfile();
+  const policy = resolveStudentApiOnboardingPolicy(pathname);
+  const { onboardingRequired, progress } = computeOnboardingProgress(profile);
+
+  if (policy === "require-complete" && onboardingRequired) {
+    throw new OnboardingRequiredError();
+  }
+
+  return {
+    user,
+    profile,
+    onboardingRequired,
+    onboardingProgress: progress,
+    policy,
+  };
 }
 
 /**

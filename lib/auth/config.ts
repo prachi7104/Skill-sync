@@ -26,6 +26,31 @@ function deriveSapFromEmail(email: string): string | null {
   return prefix + padded;
 }
 
+async function isStudentOnboardingComplete(userId: string): Promise<boolean> {
+  const profile = await db.query.students.findFirst({
+    where: eq(students.id, userId),
+    columns: {
+      rollNo: true,
+      cgpa: true,
+      branch: true,
+      batchYear: true,
+      tenthPercentage: true,
+      twelfthPercentage: true,
+    },
+  });
+
+  if (!profile) return false;
+
+  return Boolean(
+    profile.rollNo &&
+      typeof profile.cgpa === "number" &&
+      profile.branch &&
+      typeof profile.batchYear === "number" &&
+      typeof profile.tenthPercentage === "number" &&
+      typeof profile.twelfthPercentage === "number",
+  );
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     // ── Provider 1: Microsoft OAuth (students only) ─────────────────────
@@ -224,6 +249,10 @@ export const authOptions: NextAuthOptions = {
           token.name = dbUser.name;
           token.email = dbUser.email;
           token.collegeId = dbUser.collegeId ?? "";
+          token.onboardingComplete =
+            dbUser.role === "student"
+              ? await isStudentOnboardingComplete(dbUser.id)
+              : true;
           token.roleCheckedAt = Date.now();
         }
       }
@@ -238,6 +267,10 @@ export const authOptions: NextAuthOptions = {
           if (fresh) {
             token.role = fresh.role;
             token.collegeId = fresh.collegeId ?? "";
+            token.onboardingComplete =
+              fresh.role === "student"
+                ? await isStudentOnboardingComplete(token.id as string)
+                : true;
             token.roleCheckedAt = Date.now();
           }
         } catch {}
@@ -255,6 +288,10 @@ export const authOptions: NextAuthOptions = {
           if (fresh) {
             token.role = fresh.role;
             token.collegeId = fresh.collegeId ?? "";
+            token.onboardingComplete =
+              fresh.role === "student"
+                ? await isStudentOnboardingComplete(token.id as string)
+                : true;
             token.roleCheckedAt = Date.now();
           }
         } catch {}

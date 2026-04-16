@@ -1,4 +1,6 @@
 import { getCachedSession } from "@/lib/auth/session-cache";
+import { getStudentProfile } from "@/lib/auth/helpers";
+import { computeOnboardingProgress } from "@/lib/utils/onboarding";
 import { redirect } from "next/navigation";
 import LandingHeader from "@/components/landing/landing-header";
 import LandingHero from "@/components/landing/landing-hero";
@@ -16,6 +18,17 @@ export default async function Home() {
   if (session?.user?.role) {
     switch (session.user.role) {
       case "student":
+        if (!session.user.id) {
+          redirect("/student/onboarding");
+        }
+        const profile = await getStudentProfile(session.user.id);
+        if (!profile) {
+          redirect("/student/onboarding");
+        }
+        const { onboardingRequired } = computeOnboardingProgress(profile);
+        if (onboardingRequired) {
+          redirect("/student/onboarding");
+        }
         redirect("/student/dashboard");
       case "faculty":
         redirect("/faculty");

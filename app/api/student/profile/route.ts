@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole, requireStudentProfile } from "@/lib/auth/helpers";
+import {
+    isOnboardingRequiredError,
+    requireStudentApiPolicyAccess,
+    requireRole,
+} from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { jobs, students } from "@/lib/db/schema";
 import { isRedirectError } from "next/dist/client/components/redirect";
@@ -56,7 +60,7 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
     try {
-        const { user, profile } = await requireStudentProfile();
+        const { user, profile } = await requireStudentApiPolicyAccess("/api/student/profile");
 
         // Parse Body
         const body = await req.json();
@@ -249,6 +253,12 @@ export async function PATCH(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         if (isRedirectError(error)) throw error;
+        if (isOnboardingRequiredError(error)) {
+            return NextResponse.json(
+                { success: false, error: error.message, code: "ONBOARDING_REQUIRED" },
+                { status: error.status }
+            );
+        }
         if (error instanceof z.ZodError) {
             return NextResponse.json(
                 { success: false, error: "Validation failed", errors: error.errors },

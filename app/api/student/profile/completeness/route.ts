@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireStudentApiPolicyAccess, isOnboardingRequiredError } from "@/lib/auth/helpers";
 import { computeCompleteness } from "@/lib/profile/completeness";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const { user, profile } = await requireStudentProfile();
+    const { user, profile } = await requireStudentApiPolicyAccess("/api/student/profile/completeness");
 
     const result = computeCompleteness({
       ...profile,
@@ -43,6 +43,9 @@ export async function GET() {
     });
   } catch (error) {
     if (isRedirectError(error)) throw error;
+    if (isOnboardingRequiredError(error)) {
+      return NextResponse.json({ success: false, error: error.message, code: "ONBOARDING_REQUIRED" }, { status: error.status });
+    }
     return NextResponse.json({ success: false, error: "Failed to compute completeness" }, { status: 500 });
   }
 }

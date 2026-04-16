@@ -18,6 +18,6 @@ describe("DB Test Route — safety (MAJ-01)", () => {
     const justSelect = routeSource.includes("SELECT 1") || routeSource.includes("SELECT NOW()");
 
     // At least one safety mechanism must be present
-    expect(usesTransaction || noInsert).toBe(true);
+    expect(usesTransaction || noInsert || justSelect).toBe(true);
   });
 });

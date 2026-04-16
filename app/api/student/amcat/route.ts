@@ -3,12 +3,12 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
-import { requireRole } from "@/lib/auth/helpers";
+import { isOnboardingRequiredError, requireStudentApiPolicyAccess } from "@/lib/auth/helpers";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
 export async function GET() {
   try {
-    const user = await requireRole(["student"]);
+    const { user } = await requireStudentApiPolicyAccess("/api/student/amcat");
 
     if (!user.collegeId) {
       return NextResponse.json({ hasAmcat: false });
@@ -55,6 +55,9 @@ export async function GET() {
     return NextResponse.json({ hasAmcat: true, ...result });
   } catch (error: unknown) {
     if (isRedirectError(error)) throw error;
+    if (isOnboardingRequiredError(error)) {
+      return NextResponse.json({ hasAmcat: false, error: error.message, code: "ONBOARDING_REQUIRED" }, { status: error.status });
+    }
     return NextResponse.json({ hasAmcat: false, error: "Unable to fetch AMCAT data" }, { status: 500 });
   }
 }

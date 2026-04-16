@@ -36,7 +36,7 @@ const STEPS: StepDef[] = [
     key: "identity",
     label: "Personal",
     description: "Your university IDs and contact",
-    required: ["sapId", "rollNo"],
+    required: ["rollNo"],
   },
   {
     key: "academics",
@@ -791,17 +791,17 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/20 text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Autofill highlight animation */}
       <style>{`
         @keyframes autofill-glow {
-          0% { box-shadow: 0 0 0 0 rgba(90, 119, 223, 0.4); }
-          50% { box-shadow: 0 0 0 3px rgba(90, 119, 223, 0.2); }
-          100% { box-shadow: 0 0 0 0 rgba(90, 119, 223, 0); }
+          0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.36); }
+          50% { box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18); }
+          100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
         }
         .autofill-flash { animation: autofill-glow 1.5s ease-out; }
       `}</style>
-      <div className="flex items-center justify-between border-b border-border bg-card px-6 py-3 backdrop-blur">
+      <div className="header-glass flex items-center justify-between border-b border-border px-6 py-3">
         <div className="flex items-center gap-3">
           <span className="text-xl font-black text-foreground">
             Skill<span className="text-primary">Sync</span>
@@ -828,7 +828,7 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-5xl gap-8 px-4 py-8">
+      <div className="mx-auto flex w-full max-w-6xl gap-6 px-4 py-6 sm:px-6 lg:gap-10 lg:px-8 lg:py-8">
         <aside className="hidden w-56 shrink-0 md:block">
           <div className="sticky top-8 space-y-1">
             <p className="mb-4 px-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">Progress</p>
@@ -852,12 +852,12 @@ export default function OnboardingPage() {
                     }
                   }}
                   className={cn(
-                    "w-full rounded-md border px-3 py-3 text-left transition-all",
+                    "w-full rounded-xl border px-3 py-3 text-left transition-all",
                     "flex items-center gap-3",
                     active
                       ? "border-primary/30 bg-primary/20"
                       : unlocked
-                        ? "border-transparent hover:bg-muted/50/60"
+                        ? "border-transparent hover:bg-muted/60"
                         : "cursor-not-allowed border-transparent opacity-40",
                   )}
                 >
@@ -911,7 +911,8 @@ export default function OnboardingPage() {
         </aside>
 
         <main className="min-w-0 flex-1 pb-[calc(theme(spacing.8)+max(env(safe-area-inset-bottom),0px))]">
-          <div className="mb-6">
+          <section className='relative mb-6 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/5 via-card to-card p-4 sm:p-5'>
+            <div className='pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent' />
             <div className="mb-3 flex items-center justify-between">
               <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
                 Step {currentStepIndex + 1} of {STEPS.length}
@@ -931,22 +932,22 @@ export default function OnboardingPage() {
                 />
               ))}
             </div>
-          </div>
+          </section>
 
           <div className="mb-6">
-            <h2 className="text-lg font-black tracking-tight text-foreground">
+            <h2 className="text-xl font-black tracking-tight text-foreground sm:text-2xl">
               {STEPS[currentStepIndex]?.label}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">{STEPS[currentStepIndex]?.description}</p>
           </div>
 
           {autofillBanner && activeStep === "identity" && (
-            <div className="flex items-center gap-2 rounded-md border border-success/20 bg-success/10 px-4 py-3 text-sm text-success">
+            <div className="mb-4 flex items-center gap-2 rounded-xl border border-success/20 bg-success/10 px-4 py-3 text-sm text-success">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               ✓ Profile autofilled from your resume. Review and continue.
             </div>
           )}
-          <div className="space-y-6 rounded-lg border border-border bg-card p-6 shadow-lg">
+          <div className="space-y-6 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
             {activeStep === "identity" && (
               <IdentityStep
                 form={form}
@@ -1014,7 +1015,7 @@ export default function OnboardingPage() {
                 <Button
                   onClick={handleFinish}
                   disabled={isSubmittingStep || !allRequired}
-                  className="bg-success/10 px-6 font-bold text-foreground hover:bg-success/10"
+                  className="bg-success/10 px-6 font-bold text-foreground hover:bg-success/20"
                 >
                   {navActionState === "finish" ? (
                     <>
@@ -1049,7 +1050,7 @@ function FormField({
 }) {
   return (
     <div className={cn("space-y-2", className)}>
-      <Label className="text-sm font-medium text-foreground">
+      <Label className="text-[13px] font-semibold text-foreground">
         {label}
         {required && <span className="ml-1 text-destructive">*</span>}
         {!required && <span className="ml-1 text-xs text-muted-foreground">(optional)</span>}
@@ -1160,7 +1161,7 @@ function IdentityStep({
         </p>
       )}
 
-      <div className="space-y-3 rounded-md border border-border bg-muted/50/40 p-4">
+      <div className="space-y-3 rounded-md border border-border bg-muted/40 p-4">
         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Account Info (from Microsoft)</p>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -1229,7 +1230,7 @@ function IdentityStep({
         </FormField>
       </div>
       <p className="text-xs text-muted-foreground mt-2">
-        Fill your Roll Number to unlock all other tabs.
+        Fill your Roll Number to unlock all other tabs. SAP ID is derived automatically from your university email.
       </p>
     </div>
   );

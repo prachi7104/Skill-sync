@@ -18,6 +18,22 @@ async function loadPatchRoute() {
   }));
 
   vi.doMock("@/lib/auth/helpers", () => ({
+    requireStudentApiPolicyAccess: vi.fn().mockResolvedValue({
+      user: {
+        id: "student-1",
+        name: "Student One",
+        email: "student1@stu.upes.ac.in",
+      },
+      profile: {
+        sapId: null,
+        batchYear: null,
+        profileCompleteness: 40,
+      },
+      onboardingRequired: false,
+      onboardingProgress: 100,
+      policy: "allow-during-onboarding",
+    }),
+    isOnboardingRequiredError: vi.fn().mockReturnValue(false),
     requireStudentProfile: vi.fn().mockResolvedValue({
       user: {
         id: "student-1",

@@ -35,7 +35,7 @@ export default function StudentSidebarNav() {
         const handleBlockedClick = () => {
           const returnTo = link.href;
           toast.info('Complete your profile setup first', {
-            description: 'Fill in your SAP ID, roll number, academic details to unlock all features.',
+            description: 'Fill in your roll number and academic details to unlock all features.',
             action: {
               label: 'Go to Onboarding',
               onClick: () =>

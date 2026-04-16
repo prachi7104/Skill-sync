@@ -20,6 +20,27 @@ async function loadPostRoute(options?: {
     };
 
   vi.doMock("@/lib/auth/helpers", () => ({
+    requireStudentApiPolicyAccess: vi.fn().mockImplementation(async () => {
+      if (!mockUser || !mockProfile) {
+        const err = Object.assign(new Error("Complete onboarding first"), {
+          name: "OnboardingRequiredError",
+          status: 403,
+        });
+        throw err;
+      }
+      return {
+        user: mockUser,
+        profile: mockProfile,
+        onboardingRequired: false,
+        onboardingProgress: 100,
+        policy: "require-complete",
+      };
+    }),
+    isOnboardingRequiredError: vi.fn((error: unknown) => {
+      if (!error || typeof error !== "object") return false;
+      const withName = error as { name?: string; status?: number };
+      return withName.name === "OnboardingRequiredError" || withName.status === 403;
+    }),
     getCurrentUser: vi.fn().mockResolvedValue(mockUser),
     getStudentProfile: vi.fn().mockResolvedValue(mockProfile),
     requireStudentProfile: vi.fn(),

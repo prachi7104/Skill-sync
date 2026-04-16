@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireStudentApiPolicyAccess, isOnboardingRequiredError } from "@/lib/auth/helpers";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
 cloudinary.config({
@@ -37,7 +37,7 @@ function extensionFromMime(mime: string | null | undefined): string {
 
 export async function GET() {
     try {
-        const { profile } = await requireStudentProfile();
+        const { profile } = await requireStudentApiPolicyAccess("/api/student/resume/download");
 
         if (!profile.resumeUrl) {
             return NextResponse.json({ error: "No resume uploaded" }, { status: 404 });
@@ -87,6 +87,12 @@ export async function GET() {
         return response;
     } catch (error) {
         if (isRedirectError(error)) throw error;
+        if (isOnboardingRequiredError(error)) {
+            return NextResponse.json(
+                { error: error.message, code: "ONBOARDING_REQUIRED" },
+                { status: error.status },
+            );
+        }
         console.error("[Resume Download] Failed to generate signed URL:", error);
         return NextResponse.json(
             { error: "Failed to generate resume download link" },

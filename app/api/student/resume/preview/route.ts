@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { requireStudentApiPolicyAccess, isOnboardingRequiredError } from "@/lib/auth/helpers";
 import { parseResumeWithAI, mapParsedResumeToProfile } from "@/lib/resume/ai-parser";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
@@ -55,7 +55,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 // ── POST Handler ────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
-    const { user } = await requireStudentProfile();
+    const { user } = await requireStudentApiPolicyAccess("/api/student/resume/preview");
 
     // Rate limit check
     if (!checkRateLimit(user.id)) {
@@ -106,6 +106,12 @@ export async function POST(req: NextRequest) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (isRedirectError(error)) throw error;
+    if (isOnboardingRequiredError(error)) {
+      return NextResponse.json(
+        { success: false, error: error.message, code: "ONBOARDING_REQUIRED" },
+        { status: error.status },
+      );
+    }
     console.error("[Preview] Failed:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Preview failed" },

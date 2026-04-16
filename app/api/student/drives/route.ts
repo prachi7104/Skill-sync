@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { isRedirectError } from "next/dist/client/components/redirect";
-import { requireStudentProfile } from "@/lib/auth/helpers";
+import { isOnboardingRequiredError, requireStudentApiPolicyAccess } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { drives, students } from "@/lib/db/schema";
 import { filterEligibleDrives } from "@/lib/business/eligibility";
@@ -9,7 +9,7 @@ import { filterEligibleDrives } from "@/lib/business/eligibility";
 // Backward-compatible endpoint retained for older clients.
 export async function GET(req: NextRequest) {
   try {
-    const { user } = await requireStudentProfile();
+    const { user } = await requireStudentApiPolicyAccess("/api/student/drives");
 
     const url = new URL(req.url);
     const activeOnly = url.searchParams.get("active") !== "false";
@@ -51,6 +51,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ drives: serialized });
   } catch (err: unknown) {
     if (isRedirectError(err)) throw err;
+    if (isOnboardingRequiredError(err)) {
+      return NextResponse.json({ error: err.message, code: "ONBOARDING_REQUIRED" }, { status: err.status });
+    }
     const message = err instanceof Error ? err.message : "Internal server error";
 
     if (message.includes("Unauthorized") || message.includes("Forbidden")) {

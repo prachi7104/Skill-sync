@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
 import { getRouter } from "@/lib/antigravity/instance";
-import { getCurrentUser, getStudentProfile, requireStudentProfile } from "@/lib/auth/helpers";
+import {
+  isOnboardingRequiredError,
+  requireStudentApiPolicyAccess,
+} from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import type { ParsedJD } from "@/lib/db/schema";
 import { drives } from "@/lib/db/schema";
@@ -21,7 +24,7 @@ type ChatMessage = {
 
 export async function GET(req: Request) {
   try {
-    const { user, profile } = await requireStudentProfile();
+    const { user, profile } = await requireStudentApiPolicyAccess("/api/student/career-coach");
     const redis = getRedis();
     const refresh = new URL(req.url).searchParams.get("refresh") === "1";
 
@@ -157,6 +160,9 @@ Return ONLY valid JSON:
     return NextResponse.json(response);
   } catch (error) {
     if (isRedirectError(error)) throw error;
+    if (isOnboardingRequiredError(error)) {
+      return NextResponse.json({ error: error.message, retryable: false, code: "ONBOARDING_REQUIRED" }, { status: error.status });
+    }
     return NextResponse.json({ error: "Failed to build career coach", retryable: true }, { status: 503 });
   }
 }
@@ -173,15 +179,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
-    const user = await getCurrentUser();
-    if (!user || user.role !== "student") {
-      return NextResponse.json({ error: "Student access required" }, { status: 403 });
-    }
-
-    const profile = await getStudentProfile(user.id);
-    if (!profile) {
-      return NextResponse.json({ error: "Complete onboarding first" }, { status: 403 });
-    }
+    const { profile } = await requireStudentApiPolicyAccess("/api/student/career-coach");
 
     const history = (Array.isArray(body?.history) ? body?.history : [])
       .filter((item): item is ChatMessage => (
@@ -229,6 +227,9 @@ Guidelines:
     return NextResponse.json({ reply, role: "assistant" });
   } catch (error) {
     if (isRedirectError(error)) throw error;
+    if (isOnboardingRequiredError(error)) {
+      return NextResponse.json({ error: error.message, code: "ONBOARDING_REQUIRED" }, { status: error.status });
+    }
     return NextResponse.json({ error: "Failed to get career advice" }, { status: 500 });
   }
 }

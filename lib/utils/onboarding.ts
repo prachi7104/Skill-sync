@@ -1,5 +1,4 @@
 type OnboardingProfile = Partial<{
-  sapId: string | null;
   rollNo: string | null;
   cgpa: number | null;
   branch: string | null;
@@ -9,7 +8,6 @@ type OnboardingProfile = Partial<{
 }>;
 
 const fieldCheckers: Array<(profile: OnboardingProfile | undefined) => boolean> = [
-  (profile) => Boolean(profile?.sapId),
   (profile) => Boolean(profile?.rollNo),
   (profile) => typeof profile?.cgpa === "number",
   (profile) => Boolean(profile?.branch),

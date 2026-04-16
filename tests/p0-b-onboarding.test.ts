@@ -176,31 +176,31 @@ describe("Two-track resume upload state machine", () => {
 
 describe("Identity gate — Continue button disabled logic", () => {
   function isIdentityComplete(form: { sapId: string; rollNo: string }): boolean {
-    return form.sapId.trim() !== "" && form.rollNo.trim() !== "";
+    return form.rollNo.trim() !== "";
   }
 
   function isContinueDisabled(stepRequired: string[], stepDone: boolean): boolean {
     return stepRequired.length > 0 && !stepDone;
   }
 
-  it("disables Continue when sapId is empty", () => {
+  it("keeps Continue enabled when sapId is empty but rollNo is present", () => {
     const done = isIdentityComplete({ sapId: "", rollNo: "R2142212345" });
-    expect(isContinueDisabled(["sapId", "rollNo"], done)).toBe(true);
+    expect(isContinueDisabled(["rollNo"], done)).toBe(false);
   });
 
   it("disables Continue when rollNo is empty", () => {
     const done = isIdentityComplete({ sapId: "500125613", rollNo: "" });
-    expect(isContinueDisabled(["sapId", "rollNo"], done)).toBe(true);
+    expect(isContinueDisabled(["rollNo"], done)).toBe(true);
   });
 
   it("disables Continue when both are empty", () => {
     const done = isIdentityComplete({ sapId: "", rollNo: "" });
-    expect(isContinueDisabled(["sapId", "rollNo"], done)).toBe(true);
+    expect(isContinueDisabled(["rollNo"], done)).toBe(true);
   });
 
-  it("enables Continue when both sapId and rollNo are filled", () => {
+  it("enables Continue when rollNo is filled", () => {
     const done = isIdentityComplete({ sapId: "500125613", rollNo: "R2142212345" });
-    expect(isContinueDisabled(["sapId", "rollNo"], done)).toBe(false);
+    expect(isContinueDisabled(["rollNo"], done)).toBe(false);
   });
 });
 

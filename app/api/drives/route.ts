@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { drives, jobs, students, rankings, seasons } from "@/lib/db/schema";
-import { hasComponent, requireRole, requireStudentProfile } from "@/lib/auth/helpers";
+import {
+  hasComponent,
+  isOnboardingRequiredError,
+  requireRole,
+  requireStudentApiPolicyAccess,
+} from "@/lib/auth/helpers";
 import { and, eq, ilike, or } from "drizzle-orm";
 import { z } from "zod";
 import { isRedirectError } from "next/dist/client/components/redirect";
@@ -144,10 +149,13 @@ export async function GET(req: NextRequest) {
     } catch {
       // Not faculty/admin — try student
       try {
-        const result = await requireStudentProfile();
+        const result = await requireStudentApiPolicyAccess("/api/student/drives");
         user = result.user;
         isStudent = true;
-      } catch {
+      } catch (error) {
+        if (isOnboardingRequiredError(error)) {
+          return NextResponse.json({ message: error.message, code: "ONBOARDING_REQUIRED" }, { status: error.status });
+        }
         return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
       }
     }
@@ -229,6 +237,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ drives: filteredDrives.slice(0, limit) });
   } catch (err: unknown) {
     if (isRedirectError(err)) throw err;
+    if (isOnboardingRequiredError(err)) {
+      return NextResponse.json({ message: err.message, code: "ONBOARDING_REQUIRED" }, { status: err.status });
+    }
     console.error("[api/drives] GET error:", err);
     return NextResponse.json(
       { message: "Internal server error" },

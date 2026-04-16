@@ -53,6 +53,29 @@ async function loadMergeRoute(options?: { withParsedResume?: boolean }) {
   }));
 
   vi.doMock("@/lib/auth/helpers", () => ({
+    requireStudentApiPolicyAccess: vi.fn().mockResolvedValue({
+      user: { id: "student-1", name: "Student", email: "student@stu.upes.ac.in" },
+      profile: {
+        parsedResumeJson: options?.withParsedResume === false ? null : { raw: true },
+        skills: [{ name: "React", proficiency: 5 }],
+        projects: [{ title: "Old Project", description: "legacy", techStack: [] }],
+        workExperience: [{ company: "Old Co", role: "Dev", description: "legacy", startDate: "2023-01" }],
+        codingProfiles: [{ platform: "GitHub", username: "olduser", url: "https://github.com/olduser" }],
+        certifications: [{ title: "Old Cert", issuer: "Org" }],
+        researchPapers: [{ title: "Old Paper" }],
+        achievements: [{ title: "Old Achievement" }],
+        softSkills: ["Teamwork"],
+        phone: null,
+        linkedin: null,
+        tenthPercentage: null,
+        twelfthPercentage: null,
+        cgpa: null,
+      },
+      onboardingRequired: false,
+      onboardingProgress: 100,
+      policy: "allow-during-onboarding",
+    }),
+    isOnboardingRequiredError: vi.fn().mockReturnValue(false),
     requireStudentProfile: vi.fn().mockResolvedValue({
       user: { id: "student-1", name: "Student", email: "student@stu.upes.ac.in" },
       profile: {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { isRedirectError } from "next/dist/client/components/redirect";
 
-import { requireRole } from "@/lib/auth/helpers";
+import { isOnboardingRequiredError, requireStudentApiPolicyAccess } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ export async function POST(
   { params }: { params: { experienceId: string } },
 ) {
   try {
-    const user = await requireRole(["student"]);
+    const { user } = await requireStudentApiPolicyAccess("/api/student/experiences");
 
     const [existingVote] = await db.execute(sql`
       SELECT id
@@ -52,6 +52,9 @@ export async function POST(
     return NextResponse.json({ success: true, helpfulCount: updated?.helpful_count ?? 0, hasVoted: !existingVote });
   } catch (error) {
     if (isRedirectError(error)) throw error;
+    if (isOnboardingRequiredError(error)) {
+      return NextResponse.json({ error: error.message, code: "ONBOARDING_REQUIRED" }, { status: error.status });
+    }
     return NextResponse.json({ error: "Failed to update helpful vote" }, { status: 500 });
   }
 }

@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 
 import { requireRole, getStudentProfile } from "@/lib/auth/helpers";
 import Link from "next/link";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import SignOutButton from "@/components/shared/sign-out-button";
 import { StudentProvider } from "@/app/(student)/providers/student-provider";
 import { db } from "@/lib/db";
@@ -81,6 +83,19 @@ export default async function StudentLayout({
     }
 
     const { progress: onboardingProgress, onboardingRequired } = computeOnboardingProgress(profile);
+    const pathname = headers().get("x-student-path") ?? "/student/dashboard";
+    const isOnboardingPath = pathname === "/student/onboarding" || pathname.startsWith("/student/onboarding?") || pathname.startsWith("/student/onboarding/");
+
+    if (onboardingRequired && !isOnboardingPath) {
+        const returnTo = pathname.startsWith("/student/dashboard") ? "" : `?returnTo=${encodeURIComponent(pathname)}`;
+        redirect(`/student/onboarding${returnTo}`);
+    }
+
+    if (!onboardingRequired && isOnboardingPath) {
+        redirect("/student/dashboard");
+    }
+
+    const isOnboardingShell = onboardingRequired && isOnboardingPath;
 
     return (
         <StudentProvider
@@ -89,6 +104,30 @@ export default async function StudentLayout({
             onboardingRequired={onboardingRequired}
             onboardingProgress={onboardingProgress}
         >
+            {isOnboardingShell ? (
+                <div className='min-h-screen bg-background flex flex-col font-sans text-foreground antialiased'>
+                    <header className='h-14 shrink-0 sticky top-0 z-50 header-glass flex items-center justify-between px-4 sm:px-6'>
+                        <Link
+                            href='/student/onboarding'
+                            className='font-sans text-lg font-black tracking-tight text-foreground select-none'
+                        >
+                            Skill<span className='text-primary'>Sync</span>
+                        </Link>
+                        <div className='flex items-center gap-2 sm:gap-3'>
+                            <span className='hidden md:block text-[13px] font-medium text-muted-foreground'>
+                                {user.name}
+                                <span className='text-primary/60 font-normal ml-1'>(student)</span>
+                            </span>
+                            <ThemeToggle />
+                            <SignOutButton />
+                        </div>
+                    </header>
+
+                    <main className='flex-1 overflow-y-auto scroll-smooth'>
+                        {children}
+                    </main>
+                </div>
+            ) : (
             <div className='h-screen bg-background flex flex-col font-sans text-foreground antialiased'>
 
                 {/* ── Header ── */}
@@ -136,6 +175,7 @@ export default async function StudentLayout({
                 </div>
                 <BottomTabBar userRole='student' userName={user.name ?? ''} />
             </div>
+            )}
         </StudentProvider>
     );
 }

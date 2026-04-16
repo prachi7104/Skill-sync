@@ -113,7 +113,7 @@ describe("Student Onboarding Flow", () => {
         uploadCalled = true;
         // Verify upload endpoint receives file
         expect(options.body).toBeDefined();
-        return new Response(JSON.stringify({ success: true }), { status: 200 });
+        return new Response(JSON.stringify({ success: true }), { status: 202 });
       } else if (url.includes("/api/student/resume/preview")) {
         previewCalled = true;
         // Verify preview endpoint receives text

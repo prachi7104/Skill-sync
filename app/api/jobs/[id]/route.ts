@@ -19,7 +19,7 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
-        await requireAuth();
+        const user = await requireAuth();
 
         if (!id) {
             return NextResponse.json(
@@ -37,6 +37,20 @@ export async function GET(
                 { error: "Job not found" },
                 { status: 404 },
             );
+        }
+
+        if (user.role === "student") {
+            const payload = (job.payload ?? {}) as Record<string, unknown>;
+            const payloadStudentId = typeof payload.studentId === "string" ? payload.studentId : null;
+            const payloadTargetId = typeof payload.targetId === "string" ? payload.targetId : null;
+            const isOwned = payloadStudentId === user.id || payloadTargetId === user.id;
+
+            if (!isOwned) {
+                return NextResponse.json(
+                    { error: "Forbidden" },
+                    { status: 403 },
+                );
+            }
         }
 
         return NextResponse.json({

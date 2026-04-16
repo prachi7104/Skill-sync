@@ -82,6 +82,26 @@ export default withAuth(
             return logResponse(NextResponse.next());
         }
 
+        // Force students through onboarding before entering the student workspace.
+        if (path.startsWith("/student")) {
+            if (role !== "student") {
+                return logResponse(
+                    NextResponse.redirect(new URL("/unauthorized", req.url), 307),
+                    "non-student accessing /student route"
+                );
+            }
+
+            const requestHeaders = new Headers(req.headers);
+            requestHeaders.set("x-student-path", `${path}${req.nextUrl.search}`);
+            return logResponse(
+                NextResponse.next({
+                    request: {
+                        headers: requestHeaders,
+                    },
+                }),
+            );
+        }
+
         // Default: allow
         return logResponse(NextResponse.next());
     },
@@ -114,5 +134,6 @@ export const config = {
         "/api/jobs/:path*",
         "/api/resources/:path*",
         "/api/seasons/:path*",
+        "/student/:path*",
     ],
 };

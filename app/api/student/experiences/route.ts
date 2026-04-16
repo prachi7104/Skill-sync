@@ -5,7 +5,10 @@ import { z } from "zod";
 
 import { getRouter } from "@/lib/antigravity/instance";
 import { sanitizeInput } from "@/lib/antigravity/sanitize";
-import { requireRole, requireStudentProfile } from "@/lib/auth/helpers";
+import {
+  isOnboardingRequiredError,
+  requireStudentApiPolicyAccess,
+} from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
 import { normalizeCompanyName } from "@/lib/content-utils";
 
@@ -26,7 +29,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireRole(["student"]);
+    const { user } = await requireStudentApiPolicyAccess("/api/student/experiences");
     if (!user.collegeId) {
       return NextResponse.json({ error: "College not found" }, { status: 400 });
     }
@@ -174,13 +177,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ canSubmit, companies });
   } catch (error) {
     if (isRedirectError(error)) throw error;
+    if (isOnboardingRequiredError(error)) {
+      return NextResponse.json({ error: error.message, code: "ONBOARDING_REQUIRED" }, { status: error.status });
+    }
     return NextResponse.json({ error: "Failed to load company experiences" }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { user, profile } = await requireStudentProfile();
+    const { user, profile } = await requireStudentApiPolicyAccess("/api/student/experiences");
     if (!user.collegeId) {
       return NextResponse.json({ error: "College not found" }, { status: 400 });
     }
@@ -270,6 +276,9 @@ Return ONLY valid JSON: {"score": 0.0-1.0, "flag": true/false, "reason": "brief 
     return NextResponse.json({ success: true, status, message });
   } catch (error) {
     if (isRedirectError(error)) throw error;
+    if (isOnboardingRequiredError(error)) {
+      return NextResponse.json({ error: error.message, code: "ONBOARDING_REQUIRED" }, { status: error.status });
+    }
     return NextResponse.json({ error: "Failed to submit experience" }, { status: 500 });
   }
 }
