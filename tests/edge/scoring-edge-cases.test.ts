@@ -3,7 +3,6 @@ import {
   checkEligibility,
   computeSkillOverlap,
   computeSemanticScore,
-  computeStructuredScore,
   computeMatchScore,
   computeAllScores,
   round2,

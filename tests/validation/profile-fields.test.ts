@@ -28,7 +28,7 @@ describe("Student profile schema — phone/linkedin (MIN-02)", () => {
   });
 
   it("schema MUST reject phone with invalid format", () => {
-    const result = studentProfileSchema.partial().safeParse({
+    studentProfileSchema.partial().safeParse({
       phone: "not-a-phone",
     });
 
