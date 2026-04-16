@@ -13,7 +13,7 @@ export function deriveSapFromEmailPublic(email: string): string | null {
     const match = username.match(/\.(\d+)$/);
     if (!match) return null;
     const digits = match[1];
-    const padded = digits.padStart(6, "0");
+    const padded = digits.slice(-6).padStart(6, "0");
     const prefix = digits.length >= 6 ? "500" : "590";
     return prefix + padded;
 }
