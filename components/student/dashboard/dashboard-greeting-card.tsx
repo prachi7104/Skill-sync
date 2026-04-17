@@ -4,19 +4,21 @@ import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface DashboardGreetingCardProps {
   studentName: string;
   progressPercent: number;
   onboardingRequired: boolean;
+  className?: string;
 }
 
 
-export default function DashboardGreetingCard({ studentName, progressPercent, onboardingRequired }: DashboardGreetingCardProps) {
+export default function DashboardGreetingCard({ studentName, progressPercent, onboardingRequired, className }: DashboardGreetingCardProps) {
   const firstName = studentName.trim().split(/\s+/)[0] || 'Student';
 
   return (
-    <div className='flex min-h-[220px] flex-col gap-5 rounded-2xl border border-border bg-card/95 p-5 sm:min-h-[240px] sm:p-6 xl:min-h-[260px]'>
+    <div className={cn('flex min-h-[220px] flex-col gap-5 rounded-2xl border border-border bg-card/95 p-5 sm:min-h-[240px] sm:p-6 xl:min-h-[260px]', className)}>
       <div className='flex items-start justify-between gap-3'>
         <div>
           <p className='mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground'>Welcome back</p>

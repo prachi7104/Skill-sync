@@ -27,7 +27,11 @@ type CareerCoachPayload = {
   cached?: boolean;
 };
 
-export default function DashboardCareerCoachCard() {
+interface DashboardCareerCoachCardProps {
+  className?: string;
+}
+
+export default function DashboardCareerCoachCard({ className }: DashboardCareerCoachCardProps) {
   const [payload, setPayload] = useState<CareerCoachPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -78,7 +82,7 @@ export default function DashboardCareerCoachCard() {
   const topSkills = payload?.priority_skills ?? [];
 
   return (
-    <section className='flex min-h-[260px] flex-col rounded-2xl border border-border bg-card/95 p-5 sm:min-h-[300px] sm:p-6 xl:min-h-[320px]'>
+    <section className={cn('flex min-h-[260px] flex-col rounded-2xl border border-border bg-card/95 p-5 sm:min-h-[300px] sm:p-6 xl:min-h-[320px]', className)}>
       <div className='mb-4 flex items-start justify-between gap-3'>
         <div className='flex items-center gap-2'>
           <div className='flex h-9 w-9 items-center justify-center rounded-md bg-primary/10'>
@@ -92,45 +96,47 @@ export default function DashboardCareerCoachCard() {
         <Badge variant='info' className='text-[11px] font-semibold'>Live guidance</Badge>
       </div>
 
-      {loading ? (
-        <div className='flex min-h-[180px] items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 text-muted-foreground'>
-          <Loader2 className='h-5 w-5 animate-spin text-primary' aria-hidden='true' />
-          <span className='sr-only'>Loading career coach insights</span>
-        </div>
-      ) : payload && !errorText ? (
-        <div className='space-y-4'>
-          <div className='rounded-xl border border-border bg-background/40 p-4'>
-            <p className='text-sm font-semibold text-foreground'>
-              {payload.summary || payload.amcat_tip || 'Your roadmap is ready.'}
-            </p>
-            {payload.amcat_tip ? (
-              <p className='mt-2 text-xs leading-relaxed text-muted-foreground'>{payload.amcat_tip}</p>
+      <div className='min-h-0 flex-1 xl:overflow-y-auto xl:pr-1'>
+        {loading ? (
+          <div className='flex min-h-[180px] items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 text-muted-foreground'>
+            <Loader2 className='h-5 w-5 animate-spin text-primary' aria-hidden='true' />
+            <span className='sr-only'>Loading career coach insights</span>
+          </div>
+        ) : payload && !errorText ? (
+          <div className='space-y-4'>
+            <div className='rounded-xl border border-border bg-background/40 p-4'>
+              <p className='text-sm font-semibold text-foreground'>
+                {payload.summary || payload.amcat_tip || 'Your roadmap is ready.'}
+              </p>
+              {payload.amcat_tip ? (
+                <p className='mt-2 text-xs leading-relaxed text-muted-foreground'>{payload.amcat_tip}</p>
+              ) : null}
+            </div>
+
+            {topSkills.length > 0 ? (
+              <div className='space-y-2'>
+                {topSkills.slice(0, 3).map((skill, index) => (
+                  <div key={skill.skill} className='rounded-xl border border-border bg-background/40 p-3'>
+                    <div className='flex items-start justify-between gap-3'>
+                      <div>
+                        <p className='text-sm font-bold text-foreground'>{skill.skill}</p>
+                        <p className='mt-1 text-xs leading-relaxed text-muted-foreground'>{skill.why_critical}</p>
+                      </div>
+                      <Badge variant={index === 0 ? 'warning' : 'neutral'} className='text-[10px] font-semibold'>
+                        <Target size={10} className='mr-1' /> {index === 0 ? 'Highest' : 'Next'}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : null}
           </div>
-
-          {topSkills.length > 0 ? (
-            <div className='space-y-2'>
-              {topSkills.slice(0, 3).map((skill, index) => (
-                <div key={skill.skill} className='rounded-xl border border-border bg-background/40 p-3'>
-                  <div className='flex items-start justify-between gap-3'>
-                    <div>
-                      <p className='text-sm font-bold text-foreground'>{skill.skill}</p>
-                      <p className='mt-1 text-xs leading-relaxed text-muted-foreground'>{skill.why_critical}</p>
-                    </div>
-                    <Badge variant={index === 0 ? 'warning' : 'neutral'} className='text-[10px] font-semibold'>
-                      <Target size={10} className='mr-1' /> {index === 0 ? 'Highest' : 'Next'}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      ) : (
-        <div className='rounded-xl border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground'>
-          {errorText || 'Career coach guidance is not available yet.'}
-        </div>
-      )}
+        ) : (
+          <div className='rounded-xl border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground'>
+            {errorText || 'Career coach guidance is not available yet.'}
+          </div>
+        )}
+      </div>
 
       <Link
         href='/student/career-coach'

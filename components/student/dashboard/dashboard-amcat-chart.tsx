@@ -15,6 +15,7 @@ import { useRef } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { StatusCard } from '@/components/ui/status-card';
+import { cn } from '@/lib/utils';
 
 interface DashboardAMCATChartProps {
   history: {
@@ -39,6 +40,7 @@ interface DashboardAMCATChartProps {
     test_date: string | null;
   } | null;
   studentName: string;
+  className?: string;
 }
 
 const SECTION_BREAKDOWN = [
@@ -49,7 +51,7 @@ const SECTION_BREAKDOWN = [
   { key: 'quant_score', label: 'Quant' },
 ] as const;
 
-export default function DashboardAMCATChart({ history, latest, studentName }: DashboardAMCATChartProps) {
+export default function DashboardAMCATChart({ history, latest, studentName, className }: DashboardAMCATChartProps) {
   const prefersReducedMotion = useReducedMotion();
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
@@ -92,7 +94,7 @@ export default function DashboardAMCATChart({ history, latest, studentName }: Da
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={!prefersReducedMotion ? { rotateX, rotateY, transformPerspective: 800 } : undefined}
-      className='flex min-h-[320px] flex-col rounded-2xl border border-border bg-card/95 p-5 sm:min-h-[340px] sm:p-6 xl:min-h-[440px]'
+      className={cn('flex min-h-[320px] flex-col rounded-2xl border border-border bg-card/95 p-5 sm:min-h-[340px] sm:p-6 xl:min-h-[440px]', className)}
     >
       <div className='mb-5 flex flex-wrap items-start justify-between gap-3'>
         <div className='flex items-center gap-2'>
@@ -123,7 +125,7 @@ export default function DashboardAMCATChart({ history, latest, studentName }: Da
         ) : null}
       </div>
 
-      <div className='min-h-0 flex-1'>
+      <div className='min-h-0 flex-1 xl:overflow-y-auto xl:pr-1'>
         {hasLatest ? (
           <>
             {hasTrend ? (

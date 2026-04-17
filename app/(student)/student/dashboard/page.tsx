@@ -65,41 +65,54 @@ async function StudentDashboardContent() {
 
   return (
     <div className='space-y-5 text-foreground sm:space-y-6'>
-      <section className='relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/5 via-card to-card p-5 sm:p-7'>
-        <div className='pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent' />
-        <PageHeader
-          className='border-0 bg-transparent p-0'
-          eyebrow='Student Dashboard'
-          title='Your placement activity at a glance'
-          description='Track AMCAT performance, active drives, profile readiness, and personalized guidance in one workspace.'
-          actions={
-            <div className='flex flex-wrap gap-2'>
-              {[
-                { href: '/student/sandbox', label: 'AI Sandbox', icon: BarChart3 },
-                { href: '/student/career-coach', label: 'Career Coach', icon: Sparkles },
-                { href: '/student/leaderboard', label: 'Leaderboard', icon: Trophy },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className='inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-background/70 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground transition-colors duration-150 hover:border-primary/30 hover:bg-primary/5'
-                  >
-                    <Icon size={13} className='text-primary' />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          }
+      <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] xl:[--top-row-h:clamp(18rem,34vh,22rem)]'>
+        <section className='relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/5 via-card to-card p-5 sm:p-7 xl:h-[var(--top-row-h)]'>
+          <div className='pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent' />
+          <PageHeader
+            className='border-0 bg-transparent p-0'
+            eyebrow='Student Dashboard'
+            title='Your placement activity at a glance'
+            description='Track AMCAT performance, active drives, profile readiness, and personalized guidance in one workspace.'
+            actions={
+              <div className='flex flex-wrap gap-2'>
+                {[
+                  { href: '/student/sandbox', label: 'AI Sandbox', icon: BarChart3 },
+                  { href: '/student/career-coach', label: 'Career Coach', icon: Sparkles },
+                  { href: '/student/leaderboard', label: 'Leaderboard', icon: Trophy },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className='inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-background/70 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground transition-colors duration-150 hover:border-primary/30 hover:bg-primary/5'
+                    >
+                      <Icon size={13} className='text-primary' />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            }
+          />
+        </section>
+
+        <DashboardGreetingCard
+          className='xl:h-[var(--top-row-h)] xl:min-h-0'
+          studentName={user.name ?? 'Student'}
+          progressPercent={profileCompleteness}
+          onboardingRequired={onboardingRequired}
         />
-      </section>
+      </div>
 
       {/* Onboarding card — only when incomplete */}
       {onboardingRequired && (
         <DashboardOnboardingCard progress={onboardingProgress} />
       )}
+
+      <div className='xl:hidden'>
+        <DashboardLeaderboardCard latest={latestAmcat} />
+      </div>
 
       {/* Stats row — 4 metric chips */}
       <DashboardStatsRow
@@ -109,32 +122,28 @@ async function StudentDashboardContent() {
         profileCompletion={profileCompleteness}
       />
 
-      <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]'>
-        <div>
+      <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] xl:[--main-row-h:clamp(24rem,42vh,32rem)]'>
+        <div className='xl:h-[var(--main-row-h)]'>
           <DashboardAMCATChart
+            className='xl:h-full xl:min-h-0'
             history={amcatHistory}
             latest={latestAmcat}
             studentName={user.name ?? 'Student'}
           />
         </div>
 
-        <div className='space-y-4 xl:self-start'>
-          <DashboardLeaderboardCard latest={latestAmcat} />
-          <DashboardGreetingCard
-            studentName={user.name ?? 'Student'}
-            progressPercent={profileCompleteness}
-            onboardingRequired={onboardingRequired}
-          />
+        <div className='hidden xl:block xl:h-[var(--main-row-h)]'>
+          <DashboardLeaderboardCard className='xl:h-full xl:min-h-0' latest={latestAmcat} />
         </div>
       </div>
 
-      <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)]'>
-        <div>
-          <DashboardDrivesPanel />
+      <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)] xl:[--bottom-row-h:clamp(22rem,38vh,28rem)]'>
+        <div className='xl:h-[var(--bottom-row-h)]'>
+          <DashboardDrivesPanel className='xl:h-full xl:min-h-0' />
         </div>
 
-        <div className='xl:self-start'>
-          <DashboardCareerCoachCard />
+        <div className='xl:h-[var(--bottom-row-h)]'>
+          <DashboardCareerCoachCard className='xl:h-full xl:min-h-0' />
         </div>
       </div>
     </div>

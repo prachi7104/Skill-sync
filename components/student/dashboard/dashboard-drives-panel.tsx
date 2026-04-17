@@ -28,7 +28,11 @@ interface ApiDrive {
   } | null;
 }
 
-export default function DashboardDrivesPanel() {
+interface DashboardDrivesPanelProps {
+  className?: string;
+}
+
+export default function DashboardDrivesPanel({ className }: DashboardDrivesPanelProps) {
   const [drives, setDrives] = useState<Drive[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -59,7 +63,7 @@ export default function DashboardDrivesPanel() {
   }, []);
 
   return (
-    <div className='flex min-h-[280px] flex-col rounded-2xl border border-border bg-card/95 p-5 sm:min-h-[320px] sm:p-6 xl:min-h-[360px]'>
+    <div className={cn('flex min-h-[280px] flex-col rounded-2xl border border-border bg-card/95 p-5 sm:min-h-[320px] sm:p-6 xl:min-h-[360px]', className)}>
       <div className='mb-4 flex items-center justify-between gap-3'>
         <div className='flex items-center gap-2'>
           <div className='flex h-9 w-9 items-center justify-center rounded-md bg-success/10'>
@@ -77,7 +81,7 @@ export default function DashboardDrivesPanel() {
         ) : null}
       </div>
 
-      <div className='space-y-2'>
+      <div className='min-h-0 flex-1 space-y-2 xl:overflow-y-auto xl:pr-1'>
         {loading ? (
           <div role='status' aria-label='Loading drives' aria-busy='true' className='space-y-2'>
             {[1, 2, 3].map((i) => (
