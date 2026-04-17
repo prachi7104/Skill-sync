@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -339,7 +339,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                 </DialogContent>
             </Dialog>
 
-            <div className='max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4 pb-24 md:pb-8 animate-in fade-in duration-700'>
+            <div className='mx-auto max-w-4xl animate-in space-y-4 px-4 py-6 fade-in duration-700 sm:px-6'>
                 {/* Header */}
                 <ProfileHeader
                     name={user.name}
@@ -364,6 +364,9 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                     <Form {...form}>
                     <AnimatePresence mode='wait' initial={false}>
                         <motion.div
+                        id={`profile-tabpanel-${defaultTab}`}
+                        role='tabpanel'
+                        aria-labelledby={`profile-tab-${defaultTab}`}
                         key={defaultTab}
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -410,7 +413,6 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                             isEditing={isEditing}
                             resumeUrl={profile.resumeUrl}
                             resumeFilename={profile.resumeFilename}
-                            resumeMime={profile.resumeMime}
                             resumeDownloadUrl={resumeDownloadUrl}
                             resumeDownloadLabel={resumeDownloadLabel}
                             isUploading={isUploading}

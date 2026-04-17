@@ -107,9 +107,9 @@ export default function TabSkills({
             const nameError = form.formState.errors.skills?.[idx]?.name;
             const hasError = !!nameError;
             return (
-            <div key={field.id} className='flex items-start gap-2 w-full'>
+            <div key={field.id} className='flex w-full flex-col gap-2 sm:flex-row sm:items-start'>
               <FormField control={form.control} name={`skills.${idx}.name`} render={({field: f}) => (
-                <FormItem className='flex-1 lg:w-auto'><FormControl>
+                <FormItem className='w-full sm:flex-1'><FormControl>
                   <div className='relative'>
                     <Input 
                       className={`${inputClass} ${hasError ? 'border-destructive bg-destructive/5' : ''}`} 
@@ -127,7 +127,7 @@ export default function TabSkills({
               )} />
               
               <FormField control={form.control} name={`skills.${idx}.proficiency` as const} render={({field: f}) => (
-                <FormItem className='w-24 sm:w-32'>
+                <FormItem className='w-full sm:w-32'>
                   <Select onValueChange={(v) => f.onChange(parseInt(v))} value={f.value?.toString() ?? ''}>
                     <FormControl>
                       <SelectTrigger className={inputClass}>
@@ -144,10 +144,10 @@ export default function TabSkills({
               )} />
 
               <FormField control={form.control} name={`skills.${idx}.category` as const} render={({field: f}) => (
-                <FormItem className='w-24 sm:w-48'><FormControl><Input className={inputClass} placeholder='e.g. Frontend' {...f} value={f.value ?? ''}/></FormControl></FormItem>
+                <FormItem className='w-full sm:w-48'><FormControl><Input className={inputClass} placeholder='e.g. Frontend' {...f} value={f.value ?? ''}/></FormControl></FormItem>
               )} />
 
-              <button type='button' onClick={() => removeSkill(idx)} className='h-9 w-9 flex items-center justify-center bg-destructive/10 text-destructive rounded shrink-0 transition-colors hover:bg-destructive hover:text-white'>
+              <button type='button' onClick={() => removeSkill(idx)} className='h-9 w-9 self-end rounded bg-destructive/10 text-destructive transition-colors hover:bg-destructive hover:text-white sm:self-auto'>
                 <Trash2 className='w-4 h-4' />
               </button>
             </div>

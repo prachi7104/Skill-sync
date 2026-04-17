@@ -59,7 +59,7 @@ export default function MobileSidebarOverlay({ children, label }: MobileSidebarO
           exit={{ x: -260 }}
           transition={{ duration, ease: [0.4, 0, 0.2, 1] }}
           className='md:hidden fixed top-0 left-0 h-full w-[260px] z-[60] flex flex-col bg-sidebar border-r border-sidebar-border'
-          style={{ paddingTop: 'max(env(safe-area-inset-top), 0px)' }}
+          style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}
           role='dialog'
           aria-modal='true'
           aria-label={label ?? 'Navigation menu'}

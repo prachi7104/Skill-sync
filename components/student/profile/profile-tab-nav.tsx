@@ -19,19 +19,25 @@ const TABS: { id: ProfileTab; label: string; icon: React.ElementType }[] = [
 
 export default function ProfileTabNav({ active, onChange }: ProfileTabNavProps) {
   return (
-    <div className='flex items-end gap-0 border-b border-border overflow-x-auto scrollbar-none'>
+    <div className='grid grid-cols-4 items-stretch border-b border-border' role='tablist' aria-label='Profile sections'>
       {TABS.map(({ id, label, icon: Icon }) => (
         <button
           key={id}
           onClick={() => onChange(id)}
-          className={`relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
+          id={`profile-tab-${id}`}
+          type='button'
+          role='tab'
+          aria-selected={active === id}
+          aria-controls={`profile-tabpanel-${id}`}
+          tabIndex={active === id ? 0 : -1}
+          className={`relative flex min-w-0 flex-col items-center justify-center gap-1 px-2 py-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:flex-row sm:gap-2 sm:px-4 sm:py-3 sm:text-sm ${
             active === id
               ? 'text-foreground'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           <Icon size={14} className='shrink-0' />
-          <span className='inline text-[11px] sm:text-sm'>{label}</span>
+          <span className='max-w-full truncate text-[11px] sm:text-sm'>{label}</span>
           {active === id && (
             <motion.div
               layoutId='profile-tab-indicator'

@@ -64,7 +64,7 @@
     --sidebar:              60 5% 97%;     /* #F7F7F5 — warm off-white */
     --sidebar-surface:      60 5% 93%;     /* hover bg */
     --sidebar-fg:           0 0% 12%;      /* matches --foreground */
-    --sidebar-fg-muted:     0 0% 45%;      /* matches --muted-foreground */
+    --sidebar-fg-muted:     0 0% 42%;      /* tightened for WCAG contrast on warm off-white */
     --sidebar-primary:      230 100% 15%;  /* matches --primary */
     --sidebar-primary-hover: 230 100% 10%;
     --sidebar-border:       0 0% 90%;      /* ultra-faint, matches --border */
@@ -94,7 +94,7 @@
 
     /* Apple system blue — high-energy against black */
     --primary:            210 100% 60%;    /* #3399FF */
-    --primary-foreground: 0 0% 100%;
+    --primary-foreground: 0 0% 9%;      /* dark text improves contrast on bright blue in dark mode */
     --primary-hover:      210 100% 70%;    /* #66B2FF — lighter on hover */
 
     /* Elevated surfaces */
@@ -130,7 +130,7 @@
     --sidebar:              240 5% 6%;     /* #0D0D0F */
     --sidebar-surface:      240 5% 12%;    /* hover bg */
     --sidebar-fg:           0 0% 85%;      /* #D9D9D9 */
-    --sidebar-fg-muted:     240 5% 50%;    /* #7A7A81 */
+    --sidebar-fg-muted:     240 5% 52%;    /* slightly brighter to meet WCAG contrast */
     --sidebar-primary:      210 100% 60%;  /* matches --primary */
     --sidebar-primary-hover: 210 100% 70%;
     --sidebar-border:       0 0% 15%;

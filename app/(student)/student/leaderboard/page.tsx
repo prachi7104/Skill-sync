@@ -181,7 +181,7 @@ export default function StudentLeaderboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 pb-32 pt-6 text-foreground animate-in fade-in duration-500 sm:px-6 md:p-10">
+    <div className="mx-auto max-w-6xl space-y-8 px-4 pt-6 text-foreground animate-in fade-in duration-500 sm:px-6 md:px-10 md:pt-10">
       <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>

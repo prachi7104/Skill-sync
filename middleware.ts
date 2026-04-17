@@ -122,7 +122,7 @@ export default withAuth(
  * - /api/cron/* (Uses own secret)
  * - /api/db-test (Development endpoint)
  * - /_next/* (Next.js internals)
- * - /, /unauthorized (Public pages)
+ * - /login, /unauthorized (Public pages)
  */
 export const config = {
     matcher: [

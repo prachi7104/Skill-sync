@@ -58,13 +58,13 @@ export default function ProfileHeader({
 
         {/* Name + metadata */}
         <div className='flex-1 min-w-0'>
-          <div className='flex items-start justify-between gap-4'>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4'>
             <div>
               <h2 className='text-xl font-semibold text-foreground leading-tight'>{name}</h2>
               <p className='text-sm text-muted-foreground mt-0.5'>{email}</p>
             </div>
             {/* Completion badge */}
-            <span className={`text-sm font-bold shrink-0 ${completenessColor}`}>
+            <span className={`text-sm font-bold shrink-0 whitespace-nowrap ${completenessColor}`}>
               {completeness}% complete
             </span>
           </div>
@@ -96,11 +96,11 @@ export default function ProfileHeader({
       </div>
 
       {/* Action buttons — full width row below on mobile */}
-      <div className='flex items-center gap-2 mt-4 pt-4 border-t border-border'>
+      <div className='mt-4 flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center'>
         {!isEditing ? (
           <button
             onClick={onEdit}
-            className='inline-flex items-center gap-2 h-8 px-3 rounded text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-colors'
+            className='inline-flex h-8 w-full items-center justify-center gap-2 rounded bg-primary px-3 text-sm font-medium text-white transition-colors hover:bg-primary/90 sm:w-auto'
           >
             <Pencil size={13} /> Edit Profile
           </button>
@@ -109,7 +109,7 @@ export default function ProfileHeader({
             <button
               onClick={onSave}
               disabled={isLoading}
-              className='inline-flex items-center gap-2 h-8 px-3 rounded text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-colors'
+              className='inline-flex h-8 w-full items-center justify-center gap-2 rounded bg-primary px-3 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50 sm:w-auto'
             >
               {isLoading ? <Loader2 size={13} className='animate-spin' /> : <Save size={13} />}
               Save Changes
@@ -117,7 +117,7 @@ export default function ProfileHeader({
             <button
               onClick={onCancel}
               disabled={isLoading}
-              className='inline-flex items-center gap-2 h-8 px-3 rounded text-sm font-medium border border-border text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors'
+              className='inline-flex h-8 w-full items-center justify-center gap-2 rounded border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground sm:w-auto'
             >
               <X size={13} /> Cancel
             </button>

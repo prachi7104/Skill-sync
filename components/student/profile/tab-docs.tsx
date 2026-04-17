@@ -23,7 +23,6 @@ interface TabDocsProps {
   isEditing: boolean;
   resumeUrl?: string | null;
   resumeFilename?: string | null;
-  resumeMime?: string | null;
   resumeDownloadUrl: string | null;
   resumeDownloadLabel: string;
   isUploading: boolean;
@@ -98,11 +97,11 @@ export default function TabDocs({
           )}
         </div>
         {resumeUrl ? (
-          <div className='flex items-center justify-between'>
-            <p className='text-sm font-medium text-foreground truncate'>{resumeFilename || 'resume'}</p>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+            <p className='min-w-0 text-sm font-medium text-foreground truncate'>{resumeFilename || 'resume'}</p>
             {resumeDownloadUrl && (
               <a href={resumeDownloadUrl} target='_blank' rel='noreferrer'
-                className='inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline'>
+                className='inline-flex items-center gap-1.5 self-start text-xs font-medium text-primary hover:underline sm:self-auto'>
                 <Download size={11} /> {resumeDownloadLabel}
               </a>
             )}
@@ -145,7 +144,7 @@ export default function TabDocs({
             {certFields.map((field, idx) => (
               <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-lg relative space-y-4'>
                 <button type='button' onClick={() => removeCert(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2 md:pr-12'>
                   <FormField control={form.control} name={`certifications.${idx}.title`} render={({field: f, fieldState}) => <FormItem><FormControl><Input className={`${inputClass}${fieldState.error ? ' border-destructive' : ''}`} placeholder='Title *' {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                   <FormField control={form.control} name={`certifications.${idx}.issuer`} render={({field: f, fieldState}) => <FormItem><FormControl><Input className={`${inputClass}${fieldState.error ? ' border-destructive' : ''}`} placeholder='Issuer *' {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                   <FormField control={form.control} name={`certifications.${idx}.dateIssued`} render={({field: f}) => <FormItem><FormControl><Input type='month' className={inputClass} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
@@ -191,7 +190,7 @@ export default function TabDocs({
             {codingFields.map((field, idx) => (
               <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-lg relative space-y-4'>
                 <button type='button' onClick={() => removeCoding(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2 md:pr-12'>
                   <FormField control={form.control} name={`codingProfiles.${idx}.platform`} render={({field: f, fieldState}) => <FormItem><FormControl><Input className={`${inputClass}${fieldState.error ? ' border-destructive' : ''}`} placeholder='Platform * (e.g. GitHub, LeetCode)' {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                   <FormField control={form.control} name={`codingProfiles.${idx}.username`} render={({field: f, fieldState}) => <FormItem><FormControl><Input className={`${inputClass}${fieldState.error ? ' border-destructive' : ''}`} placeholder='Username *' {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                   <div className='md:col-span-2'>
@@ -234,7 +233,7 @@ export default function TabDocs({
             {achievementFields.map((field, idx) => (
               <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-lg relative space-y-4'>
                 <button type='button' onClick={() => removeAchievement(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2 md:pr-12'>
                   <FormField control={form.control} name={`achievements.${idx}.title`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Title' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                   <FormField control={form.control} name={`achievements.${idx}.issuer`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Issuer/Organization' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                   <div className='md:col-span-2'>
@@ -285,7 +284,7 @@ export default function TabDocs({
             {researchFields.map((field, idx) => (
               <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-lg relative space-y-4'>
                 <button type='button' onClick={() => removeResearch(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mr-8'>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2 md:pr-12'>
                   <FormField control={form.control} name={`researchPapers.${idx}.title`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Paper Title' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                   <FormField control={form.control} name={`researchPapers.${idx}.datePublished`} render={({field: f}) => <FormItem><FormControl><Input type='month' className={inputClass} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                   <div className='md:col-span-2'>

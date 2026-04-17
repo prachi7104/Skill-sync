@@ -63,7 +63,7 @@ async function StudentDrivesContent() {
   });
 
   return (
-    <div className='mx-auto max-w-6xl space-y-5 px-4 py-6 pb-24 text-foreground sm:px-6 md:pb-8'>
+    <div className='mx-auto max-w-6xl space-y-5 px-4 py-6 text-foreground sm:px-6'>
       <section className='rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6'>
         <div className='flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
           <div className='max-w-2xl'>

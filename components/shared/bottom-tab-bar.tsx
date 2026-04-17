@@ -108,7 +108,7 @@ export default function BottomTabBar({ userRole, userName }: BottomTabBarProps) 
       {/* Tab Bar — mobile only */}
       <nav
         className='md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-[0_-2px_8px_rgba(0,0,0,0.06)]'
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
         aria-label='Mobile navigation'
       >
         <div className={cn(
