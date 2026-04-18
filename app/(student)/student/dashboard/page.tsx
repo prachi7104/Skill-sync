@@ -65,7 +65,7 @@ async function StudentDashboardContent() {
 
   return (
     <div className='space-y-5 text-foreground sm:space-y-6'>
-      <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] xl:[--top-row-h:clamp(18rem,34vh,22rem)]'>
+      <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(320px,1.2fr)] xl:[--top-row-h:clamp(18rem,34vh,22rem)]'>
         <section className='relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/5 via-card to-card p-5 sm:p-7 xl:order-2 xl:h-[var(--top-row-h)]'>
           <div className='pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent' />
           <PageHeader

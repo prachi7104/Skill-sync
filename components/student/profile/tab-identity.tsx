@@ -59,7 +59,7 @@ export default function TabIdentity({ form, isEditing, profile, batchYears }: Ta
   if (!isEditing) {
     return (
       <div className='space-y-4'>
-        <h3 className='text-xs font-semibold text-muted-foreground uppercase tracking-widest'>Academic Details</h3>
+        <h3 className='text-sm font-bold text-foreground uppercase tracking-wider'>Academic Details</h3>
         <div className='grid grid-cols-1 gap-3 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'>
           <StatCell label='SAP ID' value={profile.sapId} />
           <StatCell label='Roll Number' value={profile.rollNo} />

@@ -60,7 +60,7 @@ export default function ProfileHeader({
         <div className='flex-1 min-w-0'>
           <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4'>
             <div>
-              <h2 className='text-xl font-semibold text-foreground leading-tight'>{name}</h2>
+              <h2 className='text-2xl font-bold text-foreground leading-tight'>{name}</h2>
               <p className='text-sm text-muted-foreground mt-0.5'>{email}</p>
             </div>
             {/* Completion badge */}
@@ -70,24 +70,24 @@ export default function ProfileHeader({
           </div>
 
           {/* Metadata pills */}
-          <div className='flex flex-wrap gap-2 mt-3'>
+          <div className='flex flex-wrap gap-2 mt-4'>
             {sapId && (
-              <span className='inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground bg-muted/60 border border-border rounded px-2.5 py-1'>
+              <span className='inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/60 border border-border/50 rounded px-2.5 py-1.5'>
                 <Hash size={10} /> SAP {sapId}
               </span>
             )}
             {rollNo && (
-              <span className='inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground bg-muted/60 border border-border rounded px-2.5 py-1'>
+              <span className='inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/60 border border-border/50 rounded px-2.5 py-1.5'>
                 <Hash size={10} /> {rollNo}
               </span>
             )}
             {branch && (
-              <span className='inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground bg-muted/60 border border-border rounded px-2.5 py-1'>
+              <span className='inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/60 border border-border/50 rounded px-2.5 py-1.5'>
                 {branch}
               </span>
             )}
             {batchYear && (
-              <span className='inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground bg-muted/60 border border-border rounded px-2.5 py-1'>
+              <span className='inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/60 border border-border/50 rounded px-2.5 py-1.5'>
                 <Calendar size={10} /> Batch {batchYear}
               </span>
             )}
