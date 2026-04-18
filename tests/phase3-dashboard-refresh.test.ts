@@ -21,6 +21,50 @@ describe("Phase 3 — Dashboard Refresh After Onboarding", () => {
     expect(refreshPos).toBeLessThan(pushPos); // refresh BEFORE push
   });
 
+  it("T1b: handleFinish requires all 6 steps to be reviewed before redirect", async () => {
+    // Verify the new stepsReviewed logic exists
+    const fs = await import("fs");
+    const source = fs.readFileSync(
+      "app/(student)/student/onboarding/page.tsx", "utf-8"
+    );
+    // Check for stepsReviewed state initialization
+    expect(source).toContain("stepsReviewed");
+    expect(source).toContain("useState<Set<StepKey>>(new Set())");
+    
+    // Check that handleFinish contains the new guard logic
+    // Looking for the allStepsReviewed check pattern
+    expect(source).toContain("const allStepsReviewed = STEPS.every");
+    expect(source).toContain("if (!allStepsReviewed) return");
+  });
+
+  it("T1c: handleNext marks each step as reviewed before advancing", async () => {
+    // Verify handleNext adds step to stepsReviewed
+    const fs = await import("fs");
+    const source = fs.readFileSync(
+      "app/(student)/student/onboarding/page.tsx", "utf-8"
+    );
+    const handleStart = source.indexOf("async function handleNext");
+    const handleEnd = source.indexOf("} finally", handleStart) + 20;
+    const handleNextSection = source.substring(handleStart, handleEnd);
+    expect(handleNextSection).toContain("setStepsReviewed");
+    expect(handleNextSection).toContain("activeStep");
+  });
+
+  it("T1d: auto-redirect useEffect removed (no early redirect after required fields filled)", async () => {
+    // Verify the problematic auto-redirect is removed
+    const fs = await import("fs");
+    const source = fs.readFileSync(
+      "app/(student)/student/onboarding/page.tsx", "utf-8"
+    );
+    // Should NOT have useEffect that redirects on allRequired
+    const badPattern = `useEffect(() => {
+    if (!allRequired) return;
+    const target = returnTo ?? "/student/dashboard";
+    router.replace(target);
+  }, [allRequired, returnTo, router]);`;
+    expect(source).not.toContain(badPattern);
+  });
+
   it("T2: shouldRedirect is false when student has sapId only", () => {
     // Simulate the new shouldRedirect logic
     const student = {

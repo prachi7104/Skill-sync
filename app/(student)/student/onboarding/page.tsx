@@ -361,6 +361,7 @@ export default function OnboardingPage() {
   const [resumeStatusText, setResumeStatusText] = useState("");
   const [autofillBanner, setAutofillBanner] = useState(false);
   const [gateWarning, setGateWarning] = useState("");
+  const [stepsReviewed, setStepsReviewed] = useState<Set<StepKey>>(new Set());
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollDeadlineRef = useRef(0);
 
@@ -390,12 +391,6 @@ export default function OnboardingPage() {
   const allRequired = stepStates
     .filter((s) => s.required.length > 0)
     .every((s) => s.done);
-
-  useEffect(() => {
-    if (!allRequired) return;
-    const target = returnTo ?? "/student/dashboard";
-    router.replace(target);
-  }, [allRequired, returnTo, router]);
 
   const currentStepIndex = STEPS.findIndex((s) => s.key === activeStep);
   const isCurrentStepInvalid = activeStep === "identity"
@@ -758,6 +753,9 @@ export default function OnboardingPage() {
     if (isCurrentStepInvalid) return;
     setNavActionState("next");
     try {
+      // Mark current step as reviewed
+      setStepsReviewed((prev) => new Set([...prev, activeStep]));
+
       const patch = buildPatch(activeStep, form);
       const sanitized = sanitizeProfilePayload(patch);
       await fetch("/api/student/profile", {
@@ -777,9 +775,19 @@ export default function OnboardingPage() {
 
   async function handleFinish() {
     if (isSubmittingStep) return;
-    if (!allRequired) return;
     setNavActionState("finish");
     try {
+      // Mark final step as reviewed
+      const newReviewed = new Set([...stepsReviewed, activeStep]);
+      setStepsReviewed(newReviewed);
+
+      // Verify all 6 steps have been reviewed
+      const allStepsReviewed = STEPS.every((s) => newReviewed.has(s.key));
+      if (!allStepsReviewed) return;
+
+      // Verify all required fields are filled
+      if (!allRequired) return;
+
       // 1. Save the final step
       const patch = buildPatch(activeStep, form);
       const sanitized = sanitizeProfilePayload(patch);
