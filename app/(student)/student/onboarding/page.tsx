@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Lock,
   Upload,
@@ -347,8 +347,6 @@ const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
 export default function OnboardingPage() {
   const { student, isLoading, refresh } = useStudent();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
 
   const [activeStep, setActiveStep] = useState<StepKey>("identity");
   const [form, setForm] = useState<ProfileForm>(() =>
