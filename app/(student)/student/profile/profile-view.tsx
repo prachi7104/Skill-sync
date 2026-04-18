@@ -339,7 +339,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                 </DialogContent>
             </Dialog>
 
-            <div className='mx-auto max-w-4xl animate-in space-y-4 px-4 py-6 fade-in duration-700 sm:px-6'>
+            <div className='mx-auto w-full md:max-w-4xl lg:max-w-6xl animate-in space-y-3 md:space-y-4 px-0 md:px-4 py-0 md:py-6 fade-in duration-700'>
                 {/* Header */}
                 <ProfileHeader
                     name={user.name}
@@ -357,7 +357,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                 />
 
                 {/* Tab navigation */}
-                <div className='bg-card border border-border rounded-lg overflow-hidden'>
+                <div className='bg-transparent md:bg-card border-b md:border md:border-border rounded-none md:rounded-lg overflow-hidden'>
                     <ProfileTabNav active={defaultTab} onChange={handleTabChange} />
 
                     {/* Tab content */}
@@ -372,7 +372,7 @@ export default function ProfileView({ user, profile }: ProfileViewProps) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.15 }}
-                        className='p-5 sm:p-6'
+                        className='p-4 md:p-6'
                         >
                         {defaultTab === 'identity' && (
                             <TabIdentity

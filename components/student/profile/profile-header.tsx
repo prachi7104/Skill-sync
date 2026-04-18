@@ -34,7 +34,7 @@ export default function ProfileHeader({
     completeness >= 50 ? 'text-warning' : 'text-destructive';
 
   return (
-    <div className='bg-card border border-border rounded-lg p-5 sm:p-6'>
+    <div className='bg-transparent md:bg-card border-0 md:border md:border-border rounded-none md:rounded-lg p-4 md:p-6'>
       <div className='flex flex-col sm:flex-row items-start sm:items-center gap-5'>
 
         {/* Avatar + Ring */}

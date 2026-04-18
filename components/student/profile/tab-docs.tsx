@@ -78,7 +78,7 @@ export default function TabDocs({
     <div className='space-y-10'>
       
       {/* Resume Section */}
-      <div className='bg-muted/40 border border-border rounded-lg p-4'>
+      <div className='pb-4 border-b border-border'>
         <div className='flex items-center justify-between mb-3'>
           <h4 className='text-xs font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2'>
             <FileText size={12} /> Resume
@@ -120,12 +120,12 @@ export default function TabDocs({
         </div>
 
         {!isEditing ? (
-          <div className='space-y-3'>
+          <div className='space-y-3 divide-y divide-border'>
             {(!profile.certifications || profile.certifications.length === 0) ? (
               <p className='text-xs text-muted-foreground italic'>No certifications added.</p>
             ) : (
               profile.certifications.map((cert: Certification, i: number) => (
-                <div key={i} className='bg-muted/40 border border-border rounded-lg p-4 flex justify-between items-center'>
+                <div key={i} className='py-3 first:pt-0 flex justify-between items-start'>
                   <div>
                     <h4 className='text-sm font-semibold text-foreground'>{cert.title}</h4>
                     <p className='text-xs text-muted-foreground mt-1'>{cert.issuer} • {cert.dateIssued}</p>
@@ -142,9 +142,9 @@ export default function TabDocs({
         ) : (
           <div className='space-y-4'>
             {certFields.map((field, idx) => (
-              <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-lg relative space-y-4'>
-                <button type='button' onClick={() => removeCert(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-2 md:pr-12'>
+              <div key={field.id} className='p-5 md:bg-muted/20 md:border md:border-border md:rounded-lg relative space-y-4'>
+                <button type='button' onClick={() => removeCert(idx)} className='absolute -top-2 -right-2 md:top-4 md:right-4 md:relative md:float-right text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <FormField control={form.control} name={`certifications.${idx}.title`} render={({field: f, fieldState}) => <FormItem><FormControl><Input className={`${inputClass}${fieldState.error ? ' border-destructive' : ''}`} placeholder='Title *' {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                   <FormField control={form.control} name={`certifications.${idx}.issuer`} render={({field: f, fieldState}) => <FormItem><FormControl><Input className={`${inputClass}${fieldState.error ? ' border-destructive' : ''}`} placeholder='Issuer *' {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                   <FormField control={form.control} name={`certifications.${idx}.dateIssued`} render={({field: f}) => <FormItem><FormControl><Input type='month' className={inputClass} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />

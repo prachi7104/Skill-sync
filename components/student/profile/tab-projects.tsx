@@ -49,14 +49,14 @@ export default function TabProjects({
           ) : (
             <div className='space-y-3'>
               {profile.workExperience.map((exp: WorkExperience, i: number) => (
-                <div key={i} className='bg-muted/40 border border-border rounded-lg p-4'>
+                <div key={i} className='pt-4 border-t border-border first:border-t-0 first:pt-0'>
                   <div className='flex justify-between items-start'>
                     <div>
                       <h4 className='text-sm font-semibold text-foreground'>{exp.company}</h4>
                       <p className='text-xs text-muted-foreground mt-0.5'>{exp.role}</p>
                     </div>
                   </div>
-                  <div className='text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1.5'>
+                  <div className='text-xs text-muted-foreground mt-1.5 flex items-center gap-1.5'>
                     <span>{exp.startDate} {exp.endDate ? `- ${exp.endDate}` : '- Present'}</span>
                     {exp.location && (
                       <>
@@ -83,9 +83,9 @@ export default function TabProjects({
           {(!profile.projects || profile.projects.length === 0) ? (
             <p className='text-sm text-muted-foreground italic'>No projects added.</p>
           ) : (
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               {profile.projects.map((p: Project, i: number) => (
-                <div key={i} className='bg-muted/40 border border-border rounded-lg p-4 flex flex-col'>
+                <div key={i} className='flex flex-col'>
                   <div className='flex justify-between items-start mb-2'>
                     <h4 className='text-sm font-semibold text-foreground leading-tight'>{p.title}</h4>
                     {p.url && (
@@ -100,9 +100,9 @@ export default function TabProjects({
                   )}
                   
                   {p.techStack && p.techStack.length > 0 && (
-                    <div className='flex flex-wrap gap-1 mt-3 pt-3 border-t border-border/50 auto-mt'>
+                    <div className='flex flex-wrap gap-1 mt-3 pt-3 border-t border-border/50'>
                       {p.techStack.map((tech: string, techIdx: number) => (
-                        <span key={techIdx} className='bg-muted border border-border rounded px-2 py-0.5 text-[10px] font-medium text-foreground'>
+                        <span key={techIdx} className='bg-muted/40 border border-border/50 rounded px-2 py-0.5 text-[10px] font-medium text-foreground'>
                           {tech}
                         </span>
                       ))}
@@ -127,9 +127,9 @@ export default function TabProjects({
         
         <div className='space-y-4 mb-4'>
           {workFields.map((field, idx) => (
-            <div key={field.id} className='p-6 bg-muted/20 border border-border rounded-lg relative space-y-4'>
+            <div key={field.id} className='p-6 bg-muted/20 md:border md:border-border md:rounded-lg relative space-y-4'>
               <button type='button' onClick={() => removeWork(idx)} className='absolute top-4 right-4 p-2 bg-destructive/10 text-destructive rounded-md hover:bg-destructive hover:text-white transition-colors'><Trash2 className='w-4 h-4' /></button>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2 md:pr-12'>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                 <FormField control={form.control} name={`workExperience.${idx}.role`} render={({field: f, fieldState}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Role *</FormLabel><FormControl><Input className={`${inputClass} h-9 text-sm${fieldState.error ? ' border-destructive' : ''}`} {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                 <FormField control={form.control} name={`workExperience.${idx}.company`} render={({field: f, fieldState}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Company *</FormLabel><FormControl><Input className={`${inputClass} h-9 text-sm${fieldState.error ? ' border-destructive' : ''}`} {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                 <FormField control={form.control} name={`workExperience.${idx}.startDate`} render={({field: f}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Start Date</FormLabel><FormControl><Input type='month' className={inputClass + " h-9 text-sm"} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />

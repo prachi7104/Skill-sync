@@ -30,7 +30,7 @@ export default function ProfileTabNav({ active, onChange }: ProfileTabNavProps) 
           aria-selected={active === id}
           aria-controls={`profile-tabpanel-${id}`}
           tabIndex={active === id ? 0 : -1}
-          className={`relative flex min-w-0 flex-col items-center justify-center gap-1 px-2 py-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:flex-row sm:gap-2 sm:px-4 sm:py-3 sm:text-sm ${
+          className={`relative flex min-w-0 flex-col items-center justify-center gap-1 px-2 py-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:flex-row sm:gap-2 sm:px-4 sm:py-3.5 sm:text-sm ${
             active === id
               ? 'text-foreground'
               : 'text-muted-foreground hover:text-foreground'
