@@ -50,7 +50,7 @@ export default function TabSkills({
     return (
       <div className='space-y-6'>
         <div>
-          <h3 className='text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3'>Technical Skills</h3>
+          <h3 className='text-sm font-bold text-foreground uppercase tracking-wider mb-3'>Technical Skills</h3>
           {(!profile.skills || profile.skills.length === 0) ? (
             <p className='text-sm text-muted-foreground italic'>No skills added yet.</p>
           ) : (
@@ -74,7 +74,7 @@ export default function TabSkills({
         </div>
 
         <div>
-          <h3 className='text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3'>Soft Skills</h3>
+          <h3 className='text-sm font-bold text-foreground uppercase tracking-wider mb-3'>Soft Skills</h3>
           {(!profile.softSkills || profile.softSkills.length === 0) ? (
             <p className='text-sm text-muted-foreground italic'>No soft skills added yet.</p>
           ) : (
@@ -99,7 +99,7 @@ export default function TabSkills({
       {/* Technical Skills Edit */}
       <div>
         <div className='flex items-center justify-between mb-4'>
-          <h3 className='text-xs font-semibold text-muted-foreground uppercase tracking-widest'>Technical Skills</h3>
+          <h3 className='text-sm font-bold text-foreground uppercase tracking-wider'>Technical Skills</h3>
         </div>
         
         <div className='space-y-3 mb-4'>
@@ -162,7 +162,7 @@ export default function TabSkills({
 
       {/* Soft Skills Edit */}
       <div>
-        <h3 className='text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4'>Soft Skills</h3>
+        <h3 className='text-sm font-bold text-foreground uppercase tracking-wider mb-4'>Soft Skills</h3>
         
         <div className='flex flex-wrap gap-2 mb-3'>
           {(form.watch('softSkills') || []).map((skill: string, idx: number) => (

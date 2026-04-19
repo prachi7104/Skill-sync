@@ -42,7 +42,7 @@ export default function TabProjects({
         <div>
           <div className='flex items-center gap-2 mb-4'>
             <Briefcase className='w-4 h-4 text-primary' />
-            <h3 className='text-xs font-semibold text-foreground tracking-widest uppercase'>Work Experience</h3>
+            <h3 className='text-sm font-bold text-foreground tracking-wider uppercase'>Work Experience</h3>
           </div>
           {(!profile.workExperience || profile.workExperience.length === 0) ? (
             <p className='text-sm text-muted-foreground italic'>No work experience added.</p>
@@ -78,7 +78,7 @@ export default function TabProjects({
         <div>
           <div className='flex items-center gap-2 mb-4'>
             <FolderOpen className='w-4 h-4 text-primary' />
-            <h3 className='text-xs font-semibold text-foreground tracking-widest uppercase'>Projects</h3>
+            <h3 className='text-sm font-bold text-foreground tracking-wider uppercase'>Projects</h3>
           </div>
           {(!profile.projects || profile.projects.length === 0) ? (
             <p className='text-sm text-muted-foreground italic'>No projects added.</p>
@@ -122,7 +122,7 @@ export default function TabProjects({
       {/* Work Experience Edit Container */}
       <div>
         <div className='flex items-center justify-between mb-4'>
-          <h3 className='text-xs font-semibold text-muted-foreground uppercase tracking-widest'>Work Experience</h3>
+          <h3 className='text-sm font-bold text-foreground uppercase tracking-wider'>Work Experience</h3>
         </div>
         
         <div className='space-y-4 mb-4'>
@@ -151,14 +151,14 @@ export default function TabProjects({
       {/* Projects Edit Container */}
       <div>
         <div className='flex items-center justify-between mb-4'>
-          <h3 className='text-xs font-semibold text-muted-foreground uppercase tracking-widest'>Projects</h3>
+          <h3 className='text-sm font-bold text-foreground uppercase tracking-wider'>Projects</h3>
         </div>
 
         <div className='space-y-4 mb-4'>
           {projectFields.map((field, idx) => (
-            <div key={field.id} className='p-6 bg-muted/20 border border-border rounded-lg relative space-y-4'>
+            <div key={field.id} className='p-6 bg-muted/20 md:border md:border-border md:rounded-lg relative space-y-4'>
               <button type='button' onClick={() => removeProject(idx)} className='absolute top-4 right-4 p-2 bg-destructive/10 text-destructive rounded-md hover:bg-destructive hover:text-white transition-colors'><Trash2 className='w-4 h-4' /></button>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2 md:pr-12'>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                 <FormField control={form.control} name={`projects.${idx}.title`} render={({field: f, fieldState}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>Title *</FormLabel><FormControl><Input className={`${inputClass} h-9 text-sm${fieldState.error ? ' border-destructive' : ''}`} {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                 <FormField control={form.control} name={`projects.${idx}.url`} render={({field: f}) => <FormItem><FormLabel className='text-xs text-muted-foreground font-bold uppercase'>URL (optional)</FormLabel><FormControl><Input className={inputClass + " h-9 text-sm"} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                 <div className='md:col-span-2'>

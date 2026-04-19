@@ -80,7 +80,7 @@ export default function TabDocs({
       {/* Resume Section */}
       <div className='pb-4 border-b border-border'>
         <div className='flex items-center justify-between mb-3'>
-          <h4 className='text-xs font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2'>
+          <h4 className='text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2'>
             <FileText size={12} /> Resume
           </h4>
           {isEditing && (
@@ -114,7 +114,7 @@ export default function TabDocs({
       {/* Certifications Container */}
       <div>
         <div className='flex items-center justify-between mb-4'>
-          <h3 className='text-xs font-semibold text-foreground flex items-center gap-2 uppercase tracking-widest'>
+          <h3 className='text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-wider'>
             <Award className='w-4 h-4 text-warning' /> Certifications
           </h3>
         </div>
@@ -162,18 +162,18 @@ export default function TabDocs({
       {/* Coding Profiles Container */}
       <div>
         <div className='flex items-center justify-between mb-4'>
-          <h3 className='text-xs font-semibold text-foreground flex items-center gap-2 uppercase tracking-widest'>
+          <h3 className='text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-wider'>
             <Code2 className='w-4 h-4 text-info' /> Coding Profiles
           </h3>
         </div>
 
         {!isEditing ? (
-          <div className='space-y-3'>
+          <div className='space-y-3 divide-y divide-border'>
             {(!profile.codingProfiles || profile.codingProfiles.length === 0) ? (
               <p className='text-xs text-muted-foreground italic'>No profiles linked.</p>
             ) : (
               profile.codingProfiles.map((cp: CodingProfile, i: number) => (
-                <div key={i} className='bg-muted/40 border border-border rounded-lg p-4'>
+                <div key={i} className='py-3 first:pt-0'>
                   <a href={cp.url || '#'} target='_blank' rel='noreferrer' className='flex items-center justify-between group'>
                     <div>
                       <h4 className='text-sm font-semibold text-foreground group-hover:text-primary transition-colors'>{cp.platform}</h4>
@@ -188,9 +188,9 @@ export default function TabDocs({
         ) : (
           <div className='space-y-4'>
             {codingFields.map((field, idx) => (
-              <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-lg relative space-y-4'>
+              <div key={field.id} className='p-5 md:bg-muted/20 md:border md:border-border md:rounded-lg relative space-y-4'>
                 <button type='button' onClick={() => removeCoding(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-2 md:pr-12'>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <FormField control={form.control} name={`codingProfiles.${idx}.platform`} render={({field: f, fieldState}) => <FormItem><FormControl><Input className={`${inputClass}${fieldState.error ? ' border-destructive' : ''}`} placeholder='Platform * (e.g. GitHub, LeetCode)' {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                   <FormField control={form.control} name={`codingProfiles.${idx}.username`} render={({field: f, fieldState}) => <FormItem><FormControl><Input className={`${inputClass}${fieldState.error ? ' border-destructive' : ''}`} placeholder='Username *' {...f} value={f.value ?? ''}/></FormControl><FormMessage className='text-xs' /></FormItem>} />
                   <div className='md:col-span-2'>
@@ -209,18 +209,18 @@ export default function TabDocs({
       {/* Achievements Container */}
       <div>
         <div className='flex items-center justify-between mb-4'>
-          <h3 className='text-xs font-semibold text-foreground flex items-center gap-2 uppercase tracking-widest'>
+          <h3 className='text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-wider'>
             <Trophy className='w-4 h-4 text-warning' /> Achievements
           </h3>
         </div>
 
         {!isEditing ? (
-          <div className='space-y-3'>
+          <div className='space-y-3 divide-y divide-border'>
             {(!profile.achievements || profile.achievements.length === 0) ? (
               <p className='text-xs text-muted-foreground italic'>No achievements added.</p>
             ) : (
               profile.achievements.map((ach: Achievement, i: number) => (
-                <div key={i} className='bg-muted/40 border border-border rounded-lg p-4'>
+                <div key={i} className='py-3 first:pt-0'>
                   <h4 className='text-sm font-semibold text-foreground'>{ach.title}</h4>
                   <p className='text-[11px] text-muted-foreground mt-1 mb-2 uppercase tracking-wide'>{ach.issuer} • {ach.date}</p>
                   <p className='text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap'>{ach.description}</p>
@@ -231,9 +231,9 @@ export default function TabDocs({
         ) : (
           <div className='space-y-4'>
             {achievementFields.map((field, idx) => (
-              <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-lg relative space-y-4'>
+              <div key={field.id} className='p-5 md:bg-muted/20 md:border md:border-border md:rounded-lg relative space-y-4'>
                 <button type='button' onClick={() => removeAchievement(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-2 md:pr-12'>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <FormField control={form.control} name={`achievements.${idx}.title`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Title' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                   <FormField control={form.control} name={`achievements.${idx}.issuer`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Issuer/Organization' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                   <div className='md:col-span-2'>
@@ -253,18 +253,18 @@ export default function TabDocs({
       {/* Research Papers Container */}
       <div>
         <div className='flex items-center justify-between mb-4'>
-          <h3 className='text-xs font-semibold text-foreground flex items-center gap-2 uppercase tracking-widest'>
+          <h3 className='text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-wider'>
             <BookOpen className='w-4 h-4 text-info' /> Research Papers
           </h3>
         </div>
 
         {!isEditing ? (
-          <div className='space-y-3'>
+          <div className='space-y-3 divide-y divide-border'>
             {(!profile.researchPapers || profile.researchPapers.length === 0) ? (
               <p className='text-xs text-muted-foreground italic'>No research papers added.</p>
             ) : (
               profile.researchPapers.map((paper: ResearchPaper, i: number) => (
-                <div key={i} className='bg-muted/40 border border-border rounded-lg p-4'>
+                <div key={i} className='py-3 first:pt-0'>
                   <div className='flex justify-between items-start mb-2'>
                     <h4 className='text-sm font-semibold text-foreground'>{paper.title}</h4>
                     {paper.url && (
@@ -282,9 +282,9 @@ export default function TabDocs({
         ) : (
           <div className='space-y-4'>
             {researchFields.map((field, idx) => (
-              <div key={field.id} className='p-5 bg-muted/20 border border-border rounded-lg relative space-y-4'>
+              <div key={field.id} className='p-5 md:bg-muted/20 md:border md:border-border md:rounded-lg relative space-y-4'>
                 <button type='button' onClick={() => removeResearch(idx)} className='absolute top-4 right-4 text-destructive p-2 hover:bg-destructive/10 rounded-md transition-colors'><Trash2 className='w-4 h-4' /></button>
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-2 md:pr-12'>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <FormField control={form.control} name={`researchPapers.${idx}.title`} render={({field: f}) => <FormItem><FormControl><Input className={inputClass} placeholder='Paper Title' {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                   <FormField control={form.control} name={`researchPapers.${idx}.datePublished`} render={({field: f}) => <FormItem><FormControl><Input type='month' className={inputClass} {...f} value={f.value ?? ''}/></FormControl></FormItem>} />
                   <div className='md:col-span-2'>

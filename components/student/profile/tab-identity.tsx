@@ -76,7 +76,7 @@ export default function TabIdentity({ form, isEditing, profile, batchYears }: Ta
 
   return (
     <div className='space-y-6'>
-      <h3 className='text-xs font-semibold text-muted-foreground uppercase tracking-widest'>Academic Details</h3>
+      <h3 className='text-sm font-bold text-foreground uppercase tracking-wider'>Academic Details</h3>
 
       <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
         {/* SAP ID — locked once set, derived from college email */}
