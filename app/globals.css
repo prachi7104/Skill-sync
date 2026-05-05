@@ -93,17 +93,17 @@
     --popover-foreground: 0 0% 100%;
 
     /* Apple system blue — high-energy against black */
-    --primary:            210 100% 60%;    /* #3399FF */
-    --primary-foreground: 0 0% 9%;      /* dark text improves contrast on bright blue in dark mode */
-    --primary-hover:      210 100% 70%;    /* #66B2FF — lighter on hover */
+    --primary:            210 100% 55%;    /* slightly deeper blue for white-text contrast */
+    --primary-foreground: 0 0% 100%;      /* use white text on primary in dark mode for accessibility */
+    --primary-hover:      210 100% 63%;    /* hover remains brighter but still accessible */
 
     /* Elevated surfaces */
-    --secondary:          240 5% 15%;      /* #222226 */
+    --secondary:          240 5% 22%;      /* lift secondary for better visibility */
     --secondary-foreground: 0 0% 100%;
 
     /* Muted */
     --muted:              240 5% 12%;      /* #1A1A1E */
-    --muted-foreground:   240 5% 60%;      /* #99999E — aggressively muted hierarchy */
+    --muted-foreground:   240 5% 65%;      /* slightly brighter muted text for legibility */
 
     /* Accent */
     --accent:             240 5% 18%;      /* #282830 */
@@ -167,6 +167,25 @@
     --tw-shadow: 0 0 #0000;
     box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
   }
+
+  /* Semantic background utilities to ensure consistent dark-mode contrast */
+  .bg-semantic-primary { background-color: hsl(var(--primary) / 0.25); }
+  .dark .bg-semantic-primary { background-color: hsl(var(--primary) / 0.4); }
+
+  .bg-semantic-success { background-color: hsl(var(--success) / 0.25); }
+  .dark .bg-semantic-success { background-color: hsl(var(--success) / 0.4); }
+
+  .bg-semantic-warning { background-color: hsl(var(--warning) / 0.25); }
+  .dark .bg-semantic-warning { background-color: hsl(var(--warning) / 0.4); }
+
+  .bg-semantic-destructive { background-color: hsl(var(--destructive) / 0.25); }
+  .dark .bg-semantic-destructive { background-color: hsl(var(--destructive) / 0.4); }
+
+  .text-semantic-primary { color: hsl(var(--primary)); }
+  .dark .text-semantic-primary { color: hsl(var(--primary-foreground)); }
+
+  .text-semantic-success { color: hsl(var(--success)); }
+  .dark .text-semantic-success { color: hsl(var(--success-foreground)); }
 
   /* ─────────────────────────────────────────────────────────────────────────
      Glass header utility

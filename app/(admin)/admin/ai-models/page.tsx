@@ -44,7 +44,7 @@ const TASK_TYPE_LABELS: Record<string, string> = {
 };
 
 const PROVIDER_COLORS = {
-  google: "bg-primary/15 text-primary border-primary/20",
+  google: "bg-primary/25 text-primary-foreground border-primary/40",
   groq: "bg-warning/15 text-warning border-warning/20",
 };
 
@@ -304,7 +304,7 @@ export default function AIModelsPage() {
             <button
               onClick={() => pingModel(model)}
               disabled={pinging === model.id}
-              className="text-[10px] font-bold px-2 py-1 rounded border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all disabled:opacity-50"
+              className="text-[10px] font-bold px-2 py-1 rounded border border-primary/40 bg-primary/25 text-primary-foreground hover:bg-primary/30 transition-all disabled:opacity-50"
             >
               {pinging === model.id ? <Activity className="w-3 h-3 animate-pulse" /> : "Ping"}
             </button>
@@ -313,7 +313,7 @@ export default function AIModelsPage() {
               disabled={savingModelId === model.id}
               className={`text-[10px] font-bold px-2 py-1 rounded transition-all ${
                 model.is_active
-                  ? "bg-success/10 text-success hover:bg-success/20"
+                  ? "bg-success/25 text-success-foreground hover:bg-success/30"
                   : "bg-card text-muted-foreground hover:bg-muted border border-border"
               }`}
             >
@@ -324,7 +324,7 @@ export default function AIModelsPage() {
               disabled={savingModelId === model.id}
               className={`text-[10px] font-bold px-2 py-1 rounded transition-all ${
                 model.is_deprecated
-                  ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                  ? "bg-destructive/25 text-destructive-foreground hover:bg-destructive/30"
                   : "bg-card text-muted-foreground hover:bg-muted border border-border"
               }`}
             >
@@ -333,7 +333,7 @@ export default function AIModelsPage() {
             <button
               onClick={() => deleteModel(model)}
               disabled={deletingModelId === model.id}
-              className="text-[10px] font-bold px-2 py-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all disabled:opacity-50"
+              className="text-[10px] font-bold px-2 py-1 rounded bg-destructive/25 text-destructive-foreground hover:bg-destructive/30 transition-all disabled:opacity-50"
             >
               <Trash2 className="w-3 h-3" />
             </button>

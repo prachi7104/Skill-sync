@@ -87,9 +87,9 @@ function getTimeAgo(date: Date): string {
 
 function Metric({ label, value, status }: { label: string; value: string; status?: "ok" | "warning" | "error" | "neutral" }) {
   const statusClass = {
-    ok: "bg-success/10 text-success border-success/20",
-    warning: "bg-warning/10 text-warning border-warning/20",
-    error: "bg-destructive/10 text-destructive border-destructive/20",
+    ok: "bg-success/25 text-success-foreground border-success/40",
+    warning: "bg-warning/25 text-warning-foreground border-warning/40",
+    error: "bg-destructive/25 text-destructive-foreground border-destructive/40",
     neutral: "bg-muted text-muted-foreground border-border",
   };
 

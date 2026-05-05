@@ -61,7 +61,7 @@ export function DriveActionButtons({ driveId, isActive }: { driveId: string; isA
           title={isActive ? "Deactivate drive" : "Activate drive"}
           className={`p-2 rounded-lg text-xs font-bold transition-all ${
             isActive
-              ? "bg-warning/10 text-warning hover:bg-warning/20"
+              ? "bg-warning/25 text-warning-foreground hover:bg-warning/30"
               : "bg-card text-muted-foreground hover:bg-muted"
           }`}
         >
@@ -72,7 +72,7 @@ export function DriveActionButtons({ driveId, isActive }: { driveId: string; isA
           disabled={deleting}
           aria-label="Permanently delete drive"
           title="Permanently delete drive"
-          className="p-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+          className="p-2 rounded-lg bg-destructive/25 text-destructive-foreground hover:bg-destructive/30 transition-all"
         >
           {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
         </button>

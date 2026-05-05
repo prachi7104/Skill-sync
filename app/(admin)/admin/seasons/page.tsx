@@ -204,7 +204,7 @@ export default function AdminSeasonsPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-bold text-foreground">{row.name}</h3>
-                  {row.isActive ? <Badge className="bg-success/10 text-success border border-success/20">ACTIVE</Badge> : null}
+                  {row.isActive ? <Badge className="bg-success/25 text-success-foreground border border-success/40">ACTIVE</Badge> : null}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {row.startsAt ? new Date(row.startsAt).toLocaleDateString() : "No start date"}
@@ -223,7 +223,7 @@ export default function AdminSeasonsPage() {
                   </Button>
                 )}
                 {!row.isActive ? (
-                  <Button variant="outline" className="border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/15" onClick={() => deleteSeason(row)}>
+                  <Button variant="outline" className="border-destructive/40 bg-destructive/25 text-destructive-foreground hover:bg-destructive/30" onClick={() => deleteSeason(row)}>
                     Delete
                   </Button>
                 ) : null}

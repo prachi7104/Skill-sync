@@ -196,8 +196,8 @@ export default async function AdminMasterDashboard() {
                 </p>
               </div>
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                drive.ranking_status === "completed" ? "bg-success/10 text-success" :
-                drive.ranking_status === "processing" ? "bg-primary/15 text-primary" :
+                drive.ranking_status === "completed" ? "bg-success/25 text-success-foreground" :
+                drive.ranking_status === "processing" ? "bg-primary/25 text-primary-foreground" :
                 "bg-card text-muted-foreground"
               }`}>
                 {drive.ranking_status}

@@ -61,9 +61,9 @@ type MyRank = {
 } | null;
 
 const badgeStyles: Record<string, string> = {
-  alpha: "bg-success/10 text-success border-success/20",
-  beta: "bg-warning/10 text-warning border-warning/20",
-  gamma: "bg-destructive/10 text-destructive border-destructive/20",
+  alpha: "bg-success/25 text-success-foreground border-success/40",
+  beta: "bg-warning/25 text-warning-foreground border-warning/40",
+  gamma: "bg-destructive/25 text-destructive-foreground border-destructive/40",
 };
 
 export default function StudentLeaderboardPage() {

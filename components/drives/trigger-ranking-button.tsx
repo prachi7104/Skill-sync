@@ -122,7 +122,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (!jdReady) {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 border-violet-500/20 bg-violet-500/10 text-violet-400">
+            <Button variant="outline" size="sm" disabled className="gap-2 border-border bg-muted text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Analyzing JD... (~3 min)
             </Button>
@@ -139,9 +139,9 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (state === "already_processing") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 border-primary/30 bg-primary/10 text-primary">
+            <Button variant="outline" size="sm" disabled className="gap-2 border-primary/50 bg-primary/25 text-foreground">
                 <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/10 opacity-75"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/25 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
                 In queue
@@ -151,7 +151,7 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
 
     if (state === "queued") {
         return (
-            <Button variant="outline" size="sm" disabled className="gap-2 border-success/20 bg-success/10 text-success">
+            <Button variant="outline" size="sm" disabled className="gap-2 border-success/50 bg-success/30 text-success-foreground">
                 Queued <CheckCircle2 className="h-4 w-4" />
             </Button>
         );
@@ -191,17 +191,17 @@ export function TriggerRankingButton({ driveId, initialStatus, jdReady }: Trigge
                 </span>
             )}
             {embeddingCheck && !embeddingCheck.loading && embeddingCheck.withEmbedding < embeddingCheck.total && (
-                <div className="mt-2 w-full rounded-lg border border-warning/20 bg-warning/10 p-3 text-left">
-                    <p className="text-sm font-medium text-warning">
+                <div className="mt-2 w-full rounded-lg border border-warning/40 bg-warning/25 p-3 text-left">
+                    <p className="text-sm font-medium text-foreground">
                         {embeddingCheck.total - embeddingCheck.withEmbedding} of {embeddingCheck.total} eligible students have no embedding yet.
                     </p>
-                    <p className="mt-1 text-xs text-warning/70">
+                    <p className="mt-1 text-xs text-warning/80">
                         These students will be skipped in ranking. You can queue their embeddings now and retry shortly.
                     </p>
                     <button
                         type="button"
                         onClick={queueMissingEmbeddings}
-                        className="mt-2 text-xs text-warning underline hover:text-warning"
+                        className="mt-2 text-xs text-warning underline hover:text-warning-foreground"
                     >
                         Queue missing embeddings now
                     </button>

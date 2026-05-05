@@ -150,7 +150,7 @@ export default async function FacultyDrivesPage({ searchParams }: { searchParams
             const statusConfig = {
               ranked: { label: "RANKED", className: "text-success bg-success/10 border-success/20" },
               processing: { label: "PROCESSING", className: "text-primary bg-primary/10 border-primary/30" },
-              jd_analyzing: { label: "JD ANALYZING", className: "text-violet-400 bg-violet-500/10 border-violet-500/20" },
+              jd_analyzing: { label: "JD ANALYZING", className: "text-foreground bg-muted/40 border-border" },
               pending: { label: "PENDING", className: "text-warning bg-warning/10 border-warning/20" },
               closed: { label: "CLOSED", className: "text-muted-foreground bg-card border-border" },
             };

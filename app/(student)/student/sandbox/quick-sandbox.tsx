@@ -111,12 +111,12 @@ export default function QuickSandbox() {
     const inputClass = "bg-muted/20 border-border text-foreground rounded-md focus:ring-primary";
 
     const REC_STYLE: Record<string, string> = {
-        "STRONG MATCH": "bg-success/10 text-success border-success/20",
-      "GOOD MATCH": "bg-primary/15 text-primary border-primary/20",
-        "MODERATE MATCH": "bg-warning/10 text-warning border-warning/20",
-      "WEAK MATCH": "bg-warning/15 text-warning border-warning/20",
-        "REJECT": "bg-destructive/10 text-destructive border-destructive/20",
-        "Ineligible": "bg-destructive/10 text-destructive border-destructive/20",
+        "STRONG MATCH": "bg-success/25 text-success-foreground border-success/40",
+      "GOOD MATCH": "bg-primary/25 text-primary-foreground border-primary/40",
+        "MODERATE MATCH": "bg-warning/25 text-warning-foreground border-warning/40",
+      "WEAK MATCH": "bg-warning/20 text-warning-foreground border-warning/40",
+        "REJECT": "bg-destructive/25 text-destructive-foreground border-destructive/40",
+        "Ineligible": "bg-destructive/25 text-destructive-foreground border-destructive/40",
     };
 
     return (
@@ -341,9 +341,9 @@ function ResultSectionV2({ result, REC_STYLE }: { result: SandboxResult; REC_STY
                             className={cn(
                               "inline-flex rounded-md border px-2.5 py-1 text-xs font-bold uppercase tracking-wider",
                               priority === "Critical"
-                                ? "border-destructive/30 bg-destructive/10 text-destructive"
-                                : priority === "Medium"
-                                  ? "border-warning/30 bg-warning/10 text-warning"
+                                ? "border-destructive/40 bg-destructive/25 text-destructive-foreground"
+                                  : priority === "Medium"
+                                    ? "border-warning/40 bg-warning/25 text-warning-foreground"
                                   : "border-border bg-muted text-muted-foreground"
                             )}
                             role="status"

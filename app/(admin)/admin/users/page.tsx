@@ -61,17 +61,17 @@ const ROLE_CONFIG = {
   admin: {
     label: "Admin",
     icon: ShieldCheck,
-    badge: "bg-destructive/10 text-destructive border-destructive/20",
+    badge: "bg-destructive/25 text-destructive-foreground border-destructive/40",
   },
   faculty: {
     label: "Faculty",
     icon: UserPlus,
-    badge: "bg-primary/10 text-primary border-primary/20",
+    badge: "bg-primary/25 text-primary-foreground border-primary/40",
   },
   student: {
     label: "Student",
     icon: GraduationCap,
-    badge: "bg-success/10 text-success border-success/20",
+    badge: "bg-success/25 text-success-foreground border-success/40",
   },
 };
 

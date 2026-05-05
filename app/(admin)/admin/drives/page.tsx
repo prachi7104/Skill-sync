@@ -174,10 +174,10 @@ export default async function AdminDrivesPage({ searchParams }: { searchParams: 
             else if (stats && stats.count > 0) status = "ranked";
 
             const statusConfig = {
-              ranked: { label: "RANKED", className: "text-success bg-success/10 border-success/20" },
-              processing: { label: "PROCESSING", className: "text-primary bg-primary/10 border-primary/30" },
-              jd_analyzing: { label: "JD ANALYZING", className: "text-warning bg-warning/10 border-warning/20" },
-              pending: { label: "PENDING", className: "text-warning bg-warning/10 border-warning/20" },
+              ranked: { label: "RANKED", className: "text-success-foreground bg-success/25 border-success/40" },
+              processing: { label: "PROCESSING", className: "text-primary-foreground bg-primary/25 border-primary/40" },
+              jd_analyzing: { label: "JD ANALYZING", className: "text-warning-foreground bg-warning/25 border-warning/40" },
+              pending: { label: "PENDING", className: "text-warning-foreground bg-warning/25 border-warning/40" },
               closed: { label: "CLOSED", className: "text-muted-foreground bg-background border-border" },
             };
 

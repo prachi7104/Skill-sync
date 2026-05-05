@@ -14,14 +14,14 @@ import { cn } from "@/lib/utils";
 // Helpers
 function getActivityLabel(type: string, status: string) {
     if (status === "completed") {
-        if (type === "rank_students") return { text: "Rankings ready", color: "bg-success/10" };
-        if (type === "enhance_jd") return { text: "JD enhanced", color: "bg-success/10" };
-        if (type === "generate_embedding") return { text: "Embedding done", color: "bg-success/10" };
-        return { text: "Job completed", color: "bg-success/10" };
+        if (type === "rank_students") return { text: "Rankings ready", color: "bg-success/25 text-success-foreground" };
+        if (type === "enhance_jd") return { text: "JD enhanced", color: "bg-success/25 text-success-foreground" };
+        if (type === "generate_embedding") return { text: "Embedding done", color: "bg-success/25 text-success-foreground" };
+        return { text: "Job completed", color: "bg-success/25 text-success-foreground" };
     }
-    if (status === "processing") return { text: "Processing...", color: "bg-primary/20 text-primary" };
-    if (status === "failed") return { text: "Job failed", color: "bg-destructive/10 text-destructive" };
-    return { text: "Queued", color: "bg-warning/10 text-warning" };
+    if (status === "processing") return { text: "Processing...", color: "bg-primary/25 text-primary-foreground" };
+    if (status === "failed") return { text: "Job failed", color: "bg-destructive/25 text-destructive-foreground" };
+    return { text: "Queued", color: "bg-warning/25 text-warning-foreground" };
 }
 
 
@@ -179,12 +179,12 @@ export default async function FacultyDashboardPage({
                                         <tr key={drive.id} className="transition-colors hover:bg-muted/30">
                                             <td className="p-4">
                                                 <Link href={`/faculty/drives/${drive.id}/rankings`} className="flex items-center space-x-3">
-                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[10px] font-bold uppercase text-primary">{drive.company.slice(0,2)}</div>
+                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/25 text-[10px] font-bold uppercase text-primary-foreground">{drive.company.slice(0,2)}</div>
                                                     <div><p className="text-sm font-bold text-foreground">{drive.company}</p><p className="text-[10px] font-medium text-muted-foreground uppercase mt-0.5">{drive.roleTitle}</p></div>
                                                 </Link>
                                             </td>
                                             <td className="p-4 text-center">
-                                                <span className={cn("rounded px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border", drive.isActive ? "border-success/20 bg-success/10 text-success" : "border-border bg-background text-muted-foreground")}>
+                                                <span className={cn("rounded px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border", drive.isActive ? "border-success/40 bg-success/25 text-success-foreground" : "border-border bg-background text-muted-foreground") }>
                                                     {drive.isActive ? "Active" : "Closed"}
                                                 </span>
                                             </td>

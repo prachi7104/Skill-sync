@@ -91,13 +91,13 @@ function timeAgoLabel(iso: string | undefined, cached: boolean): string {
 function resourceTypeClass(type?: string): string {
   switch ((type ?? "").toLowerCase()) {
     case "youtube":
-      return "bg-destructive/10 text-destructive border-destructive/20";
+      return "bg-destructive/25 text-destructive-foreground border-destructive/40";
     case "github":
       return "bg-muted text-foreground border-border";
     case "docs":
-      return "bg-primary/15 text-primary border-primary/30";
+      return "bg-primary/25 text-primary-foreground border-primary/40";
     case "course":
-      return "bg-success/10 text-success border-success/20";
+      return "bg-success/25 text-success-foreground border-success/40";
     default:
       return "bg-muted/50 text-foreground border-border";
   }

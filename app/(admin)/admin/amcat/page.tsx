@@ -98,9 +98,9 @@ const defaultThresholds = {
 };
 
 function categoryClass(category: string) {
-  if (category === "alpha") return "bg-success/10 text-success border-success/20";
-  if (category === "beta") return "bg-warning/10 text-warning border-warning/20";
-  return "bg-destructive/10 text-destructive border-destructive/20";
+  if (category === "alpha") return "bg-success/25 text-success-foreground border-success/40";
+  if (category === "beta") return "bg-warning/25 text-warning-foreground border-warning/40";
+  return "bg-destructive/25 text-destructive-foreground border-destructive/40";
 }
 
 async function safeReadJson(res: Response): Promise<ApiResponse> {

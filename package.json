@@ -13,6 +13,7 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test": "vitest",
+    "test:visual": "playwright test",
     "test:ui": "vitest --ui",
     "drizzle:generate": "echo 'Use DRIZZLE_MIGRATIONS_ENABLED=true npx drizzle-kit generate locally only'",
     "drizzle:push": "echo 'BLOCKED: Apply schema changes manually via Supabase SQL Editor'",
