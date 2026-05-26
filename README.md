@@ -34,6 +34,184 @@ SkillSync’s backbone is the **Antigravity Router**, an intelligent fallback sy
 
 ---
 
+## 🗺️ System Diagrams
+
+### 1. High-Level Architecture
+```mermaid
+flowchart TB
+    subgraph Clients
+        C_Web[Web Client - React/Next.js]
+        C_Mob[Mobile Client - Responsive]
+    end
+
+    subgraph Next.js Server App Router
+        API[API Routes / Server Actions]
+        RSC[React Server Components]
+        Cron[Cron Endpoints - Vercel]
+    end
+
+    subgraph Database Supabase
+        DB[(PostgreSQL)]
+        Vector[pgvector]
+        JobsTable[(Jobs Queue Table)]
+    end
+
+    subgraph External Services
+        Auth[NextAuth - Azure AD / Credentials]
+        Store[Cloudinary - Resume PDFs]
+        Redis[Upstash Redis - Rate Limiting]
+        AI[Antigravity Router - Groq / Gemini]
+    end
+
+    C_Web <-->|HTTP/JSON| API
+    C_Web <-->|Fetch| RSC
+    C_Mob <-->|HTTP/JSON| API
+    
+    API <--> Auth
+    API <--> Store
+    API <--> Redis
+    API --> JobsTable
+    
+    RSC --> DB
+    
+    Cron --> JobsTable
+    Cron <--> AI
+    AI --> Vector
+```
+
+### 2. Primary Use Case Diagram
+```mermaid
+flowchart LR
+    %% Actors
+    Student([Student])
+    Faculty([Faculty / Admin])
+    
+    %% Use Cases
+    subgraph SkillSync Platform
+        UC_Auth[Login / SSO]
+        UC_Profile[Manage Profile & Skills]
+        UC_Resume[Upload Resume for AI Parsing]
+        UC_Dash[View Dashboard & AMCAT]
+        UC_Drive[Create & Manage Drives]
+        UC_Rank[Rank & Match Students]
+    end
+    
+    Student --> UC_Auth
+    Student --> UC_Profile
+    Student --> UC_Resume
+    Student --> UC_Dash
+    
+    Faculty --> UC_Auth
+    Faculty --> UC_Drive
+    Faculty --> UC_Rank
+```
+
+### 3. Database Entity Relationship (ER) Diagram
+```mermaid
+erDiagram
+    colleges ||--o{ users : "hosts"
+    users ||--o| students : "is-a"
+    users ||--o| staff_profiles : "is-a"
+    colleges ||--o{ drives : "owns"
+    students ||--o{ rankings : "receives"
+    drives ||--o{ rankings : "generates"
+    
+    users {
+        uuid id PK
+        string role "student, faculty, admin"
+        uuid college_id FK
+    }
+    students {
+        uuid id PK,FK
+        jsonb skills
+        vector embedding "768-dim"
+    }
+    drives {
+        uuid id PK
+        jsonb parsed_jd
+        vector jd_embedding "768-dim"
+    }
+    rankings {
+        uuid student_id FK
+        uuid drive_id FK
+        float match_score
+        jsonb explanation
+    }
+    jobs {
+        uuid id PK
+        string type "parse_resume, etc"
+        jsonb payload
+    }
+```
+
+### 4. Frontend Component Architecture
+```mermaid
+flowchart TD
+    Root[Root Layout - Providers]
+    
+    subgraph Route Groups
+        Admin[(admin)]
+        Faculty[(faculty)]
+        Student[(student)]
+    end
+    
+    Root --> Admin
+    Root --> Faculty
+    Root --> Student
+    
+    subgraph Student Layout Shell
+        Top[Top Header]
+        Side[Sidebar Shell - Desktop]
+        Bottom[Bottom Tab Bar - Mobile]
+    end
+    
+    Student --> Top
+    Student --> Side
+    Student --> Bottom
+    
+    subgraph State Management
+        Zustand[(Zustand - useProfileStore)]
+        Context[(React Context - StudentProvider)]
+    end
+    
+    subgraph Key Pages
+        Dash[Dashboard Page]
+        Prof[Profile Page]
+        Onb[Onboarding Flow]
+    end
+    
+    Student --> Dash
+    Student --> Prof
+    Student --> Onb
+    
+    Context --> Dash
+    Zustand --> Prof
+```
+
+### 5. AI Background Job Pipeline (Sequence Diagram)
+```mermaid
+sequenceDiagram
+    actor User
+    participant NextJS as Next.js API
+    participant DB as Jobs Table
+    participant Cron as Vercel Cron
+    participant AI as Antigravity Router
+    
+    User->>NextJS: Upload Resume
+    NextJS->>DB: Insert 'parse_resume' job
+    NextJS-->>User: Return status (Pending)
+    
+    loop Every minute
+        Cron->>DB: Poll for pending jobs
+        DB-->>Cron: Return 'parse_resume'
+        Cron->>AI: Send Resume text
+        AI-->>Cron: Return Structured JSON
+        Cron->>DB: Update student profile & mark job 'completed'
+    end
+```
+
+---
+
 ## 🛠️ Technological Foundation
 
 | Layer | Technology |
