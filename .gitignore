@@ -70,3 +70,12 @@ debug_amcat.ts
 !/drizzle/meta/
 /drizzle/meta/*
 !/drizzle/meta/_journal.json
+
+# internal audits, handbooks, and scratch tools (local only)
+MVP_40_SUBPHASES.md
+.codesage/
+SkillSync_Engineering_Interview_Handbook.*
+codesage_audit.js
+audit_*.js
+process-*.js
+file_list.txt
