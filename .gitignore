@@ -25,12 +25,17 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 
-# local env files
-.env*.local
+# local env files — every .env variant stays local; only the placeholder examples are tracked
 .env
-.env.production
-.env.development
-.env.production.template
+.env.*
+!.env.example
+!.env.production.template.example
+
+# other local secret material
+*.key
+*.p12
+*.pfx
+.secrets/
 
 # vercel
 .vercel
