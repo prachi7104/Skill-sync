@@ -36,5 +36,21 @@ export default async function Home() {
     }
   }
 
+  // A guest-only demo deployment has no institutional sign-in of its own: send
+  // visitors (including "Back" and "Exit demo") to the institutional site.
+  const institutionalSite = institutionalSiteUrl();
+  if (institutionalSite && guestAccessEnabled()) redirect(institutionalSite);
+
   return <RootLoginPage guestDemoEnabled={guestAccessEnabled()} />;
+}
+
+function institutionalSiteUrl(): string | null {
+  const raw = process.env.INSTITUTIONAL_SITE_URL?.trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
