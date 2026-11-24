@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Loader2, AlertCircle, ChevronRight, Eye, EyeOff, Lock, LogIn } from 'lucide-react';
+import { Loader2, AlertCircle, ChevronRight, Eye, EyeOff, Lock, LogIn, PlayCircle } from 'lucide-react';
 import { APP_FULL_NAME } from '@/lib/constants/branding';
 
 export interface LoginFormPanelProps {
@@ -21,6 +21,8 @@ export interface LoginFormPanelProps {
   onTogglePassword: () => void;
   onStaffSubmit: (e: React.FormEvent) => void;
   onDismissError: () => void;
+  /** Public guest demo URL; the "Try Guest Mode" entry is shown only when set. */
+  guestDemoUrl?: string | null;
 }
 
 const container = {
@@ -55,6 +57,7 @@ export default function LoginFormPanel({
   onTogglePassword,
   onStaffSubmit,
   onDismissError,
+  guestDemoUrl = null,
 }: LoginFormPanelProps) {
   const shouldAnimate = !useReducedMotion();
   const staffEmailRef = useRef<HTMLInputElement | null>(null);
@@ -270,6 +273,32 @@ export default function LoginFormPanel({
               )}
             </AnimatePresence>
           </motion.div>
+
+          {/* 4c. Guest demo entry — no account needed */}
+          {guestDemoUrl && (
+            <motion.div variants={item} className='pt-3'>
+              <div className='mb-3 flex items-center gap-3' aria-hidden='true'>
+                <span className='h-px flex-1 bg-border' />
+                <span className='text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground'>No account?</span>
+                <span className='h-px flex-1 bg-border' />
+              </div>
+              <a
+                href={guestDemoUrl}
+                className='group flex w-full items-center justify-between rounded-lg bg-primary px-5 py-4 text-primary-foreground transition-colors duration-150 hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+              >
+                <div className='flex items-center gap-4'>
+                  <PlayCircle size={22} className='shrink-0' aria-hidden='true' />
+                  <div className='text-left'>
+                    <p className='text-sm font-bold'>Try Guest Mode</p>
+                    <p className='mt-0.5 text-[11px] font-medium opacity-85'>
+                      Explore as a student or recruiter with fictional data
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight size={18} className='transition-transform duration-150 group-hover:translate-x-0.5' aria-hidden='true' />
+              </a>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* 5. Footnote */}
