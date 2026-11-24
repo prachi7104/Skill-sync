@@ -15,7 +15,7 @@ const AUTH_ERRORS: Record<string, string> = {
   Default: "An authentication error occurred. Please try again.",
 };
 
-function LoginForm() {
+function LoginForm({ guestDemoEnabled }: { guestDemoEnabled: boolean }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const errorType = searchParams.get("error");
@@ -104,6 +104,7 @@ function LoginForm() {
           onTogglePassword={() => setShowPassword((v) => !v)}
           onStaffSubmit={handleStaffLogin}
           onDismissError={() => setErrorMessage(null)}
+          guestDemoEnabled={guestDemoEnabled}
         />
         <LoginBrandPanel />
       </div>
@@ -111,7 +112,7 @@ function LoginForm() {
   );
 }
 
-export default function RootLoginPage() {
+export default function RootLoginPage({ guestDemoEnabled = false }: { guestDemoEnabled?: boolean }) {
   return (
     <Suspense
       fallback={
@@ -120,7 +121,7 @@ export default function RootLoginPage() {
         </div>
       }
     >
-      <LoginForm />
+      <LoginForm guestDemoEnabled={guestDemoEnabled} />
     </Suspense>
   );
 }

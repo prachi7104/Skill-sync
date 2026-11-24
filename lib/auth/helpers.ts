@@ -53,6 +53,8 @@ export function isOnboardingRequiredError(error: unknown): error is OnboardingRe
 const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const session = await getCachedSession();
   if (!session?.user?.id || !session?.user?.role) return null;
+  // Guest-mode sessions are never institutional users.
+  if (session.user.isGuest) return null;
   return {
     id: session.user.id,
     email: session.user.email!,

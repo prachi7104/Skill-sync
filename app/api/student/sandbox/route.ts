@@ -177,6 +177,10 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.email) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+    // Guest-mode sessions are never institutional users (the middleware also blocks them).
+    if (session.user.isGuest) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
 
     const [authUser] = await db
       .select({

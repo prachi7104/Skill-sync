@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, TaskType } from "@google/generative-ai";
+import { EMBEDDING_MODEL } from "@/lib/ai/models";
 
-export const EMBEDDING_DIMENSION = 768;
+export const EMBEDDING_DIMENSION = EMBEDDING_MODEL.dimensions;
 
 function normalizeEmbedding(vec: number[]): number[] {
   const norm = Math.sqrt(vec.reduce((sum, v) => sum + v * v, 0));
@@ -19,7 +20,8 @@ function normalizeEmbedding(vec: number[]): number[] {
  */
 export async function generateEmbedding(
   text: string,
-  _type: "profile" | "jd" = "profile"
+  _type: "profile" | "jd" = "profile",
+  request?: { timeout: number; signal?: AbortSignal },
 ): Promise<number[]> {
   if (!text || text.trim().length === 0) return [];
   const cleaned = text.replace(/\s+/g, " ").trim().slice(0, 8000);
@@ -29,12 +31,12 @@ export async function generateEmbedding(
   if (googleKey) {
     try {
       const genAI = new GoogleGenerativeAI(googleKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
+      const model = genAI.getGenerativeModel({ model: EMBEDDING_MODEL.id() });
       const result = await model.embedContent({
         content: { role: "user", parts: [{ text: cleaned }] },
         taskType: TaskType.RETRIEVAL_DOCUMENT,
         // No outputDimensionality — let the model return its native 3072 dims
-      });
+      }, request);
       const vec = result.embedding.values;
       // Truncate to 768: MRL technique makes prefix truncation safe (Google docs confirm this)
       const truncated = vec.length > 768 ? vec.slice(0, 768) : vec;
@@ -43,6 +45,7 @@ export async function generateEmbedding(
       }
       return normalizeEmbedding(truncated);
     } catch (err) {
+      if (request) throw new Error("Embedding provider unavailable");
       const msg = err instanceof Error ? err.message : String(err);
       console.warn("[embeddings] Gemini failed:", msg);
       // Re-throw so the worker captures the real error instead of seeing zeros

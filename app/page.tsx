@@ -3,9 +3,16 @@ import { getStudentProfile } from "@/lib/auth/helpers";
 import { computeOnboardingProgress } from "@/lib/utils/onboarding";
 import { redirect } from "next/navigation";
 import RootLoginPage from "@/components/auth/root-login-page";
+import { guestAccessEnabled } from "@/lib/demo/config";
+
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const session = await getCachedSession();
+
+  if (session?.user?.isGuest) {
+    redirect(session.user.role === "faculty" ? "/guest/recruiter" : "/guest/student");
+  }
 
   if (session?.user?.role) {
     switch (session.user.role) {
@@ -29,5 +36,5 @@ export default async function Home() {
     }
   }
 
-  return <RootLoginPage />;
+  return <RootLoginPage guestDemoEnabled={guestAccessEnabled()} />;
 }

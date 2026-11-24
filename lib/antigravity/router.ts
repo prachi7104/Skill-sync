@@ -15,7 +15,7 @@
  * Providers:
  *   - Google Generative AI (Gemini, Gemma)
  *   - Groq (LLaMA, GPT-OSS, Prompt Guard)
- *   - Google Embedding API (text-embedding-004)
+ *   - Google Embedding API (model from lib/ai/models.ts)
  *
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
@@ -25,6 +25,7 @@ import Groq from "groq-sdk";
 import { logger } from "@/lib/logger";
 import { AntigravityModelCache } from "./model-cache";
 import { checkAndIncrementRateLimit } from "./db-rate-limiter";
+import { AI_MODELS, EMBEDDING_MODEL, geminiThinkingConfig } from "@/lib/ai/models";
 
 // ============================================================================
 // MODEL REGISTRY & CONFIGURATION
@@ -54,340 +55,45 @@ export interface ModelRegistryEntry {
   jsonModeSupported?: boolean;
 }
 
+// Code defaults, used when the ai_models table has no active rows for a task.
+// Model IDs come from lib/ai/models.ts (live-qualified 2026-11-23, env-overridable).
+// Removed: gemini-2.0-flash (shut down 2026-06-01), gemini-2.5-flash/pro (deprecated,
+// shutdown 2026-12-01), gemma-3-* (no longer served), llama-3.x / qwen3-32b on Groq
+// (shut down 2026-07/08), text-embedding-004.
+const caps = (structured: boolean): ModelCapabilities => ({
+  longContext: true, structured, vision: false, functionCalling: false, json: structured,
+});
+
 export const MODEL_REGISTRY: Record<string, ModelRegistryEntry> = {
-  // TIER 1: Primary Models (Fast, Long-Context, Free-Tier Friendly)
-  gemini_2_0_flash: {
-    id: "gemini-2.0-flash",
-    provider: "google",
-    tier: 1,
-    rpm: 15,
-    rpd: 1500,
-    tpm: 1000000,
-    contextWindow: 1000000,
-    latency: 600,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: true,
-      functionCalling: true,
-      json: true,
-    },
-    jsonModeSupported: true,
+  gemini_fast: {
+    id: AI_MODELS.geminiFast().id, provider: "google", tier: 1, rpm: 15, rpd: 1500,
+    contextWindow: 1_000_000, latency: 1500, capabilities: caps(true), jsonModeSupported: true,
   },
-
-  // GEMINI PRO & 3.0 FAMILY
-  gemini_2_5_pro: {
-    id: "gemini-2.5-pro",
-    provider: "google",
-    tier: 1,
-    rpm: 15,
-    rpd: 1500,
-    tpm: "unlimited", // NEW FIELD
-    contextWindow: 2000000,
-    latency: 800,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: true,
-      functionCalling: true,
-      json: true,
-    },
-    jsonModeSupported: true,
+  gemini_advanced: {
+    id: AI_MODELS.geminiAdvanced().id, provider: "google", tier: 1, rpm: 10, rpd: 500,
+    contextWindow: 1_000_000, latency: 6000, capabilities: caps(true), jsonModeSupported: true,
   },
-
-  gemini_2_5_flash_lite: {
-    id: "gemini-2.5-flash-lite",
-    provider: "google",
-    tier: 1,
-    rpm: 15,
-    rpd: 1500,
-    contextWindow: 1000000,
-    latency: 400,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: false,
-      functionCalling: false,
-      json: true,
-    },
+  gemini_fallback: {
+    id: AI_MODELS.geminiFallback().id, provider: "google", tier: 2, rpm: 15, rpd: 1000,
+    contextWindow: 1_000_000, latency: 1500, capabilities: caps(true), jsonModeSupported: true,
   },
-
-  gemini_2_5_flash: {
-    id: "gemini-2.5-flash",
-    provider: "google",
-    tier: 1,
-    rpm: 15,
-    rpd: 1500,
-    contextWindow: 1000000,
-    latency: 500,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: true,
-      functionCalling: true,
-      json: true,
-    },
+  groq_fast: {
+    id: AI_MODELS.groqFast().id, provider: "groq", tier: 2, rpm: 30, rpd: 1000,
+    contextWindow: 131_072, latency: 1500, capabilities: caps(true), jsonModeSupported: true,
   },
-
-  // GEMMA 3 FAMILY (As requested)
-  gemma_3_27b: {
-    id: "gemma-3-27b-it",
-    provider: "google",
-    tier: 2,
-    rpm: 30,
-    rpd: 14400, // CORRECT VALUE
-    tpm: 15000,
-    contextWindow: 8192, // Standardizing to known limit or safe default
-    latency: 800,
-    capabilities: {
-      longContext: false, // 8k isn't considered "long" in this system (usually >32k)
-      structured: true,
-      vision: true,
-      functionCalling: false,
-      json: false, // Can parse but no native mode
-    },
-    jsonModeSupported: false, // CRITICAL
+  groq_advanced: {
+    id: AI_MODELS.groqAdvanced().id, provider: "groq", tier: 2, rpm: 30, rpd: 1000,
+    contextWindow: 131_072, latency: 3000, capabilities: caps(true), jsonModeSupported: true,
   },
-
-  gemma_3_12b: {
-    id: "gemma-3-12b-it",
-    provider: "google",
-    tier: 2,
-    rpm: 30,
-    rpd: 14400,
-    tpm: 15000,
-    contextWindow: 8192,
-    latency: 600,
-    capabilities: {
-      longContext: false,
-      structured: true,
-      vision: true,
-      functionCalling: false,
-      json: false,
-    },
-    jsonModeSupported: false,
-  },
-
-  gemma_3_4b: {
-    id: "gemma-3-4b-it",
-    provider: "google",
-    tier: 3,
-    rpm: 30,
-    rpd: 14400,
-    tpm: 15000,
-    contextWindow: 8192,
-    latency: 300,
-    capabilities: {
-      longContext: false,
-      structured: true,
-      vision: true,
-      functionCalling: false,
-      json: false,
-    },
-    jsonModeSupported: false,
-  },
-
-  gemma_3_1b: {
-    id: "gemma-3-1b-it",
-    provider: "google",
-    tier: 3,
-    rpm: 30,
-    rpd: 500,
-    contextWindow: 8192,
-    latency: 150,
-    capabilities: {
-      longContext: false,
-      structured: false, // Smaller models struggle with complex JSON
-      vision: true,
-      functionCalling: false,
-      json: true,
-    },
-    jsonModeSupported: false,
-  },
-
-  gemma_3_270m: {
-    id: "gemma-3-270m-it",
-    provider: "google",
-    tier: 3,
-    rpm: 30,
-    rpd: 500,
-    contextWindow: 8192,
-    latency: 100,
-    capabilities: {
-      longContext: false,
-      structured: false,
-      vision: true, // Assuming vision capabilities across the family
-      functionCalling: false,
-      json: false, // Too small for reliable JSON
-    },
-    jsonModeSupported: false,
-  },
-
-  // GROQ HIGH-CAPACITY MODELS (500K TPD each)
-  groq_llama_4_scout: {
-    id: "meta-llama/llama-4-scout-17b-16e-instruct",
-    provider: "groq",
-    tier: 1, // PRIMARY TIER - high capacity + quality
-    rpm: 30,
-    rpd: 500000, // 500K tokens/day
-    contextWindow: 128000,
-    latency: 500,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: false,
-      functionCalling: true,
-      json: true,
-    },
-    jsonModeSupported: true,
-  },
-
-  groq_llama_4_maverick: {
-    id: "meta-llama/llama-4-maverick-17b-128e-instruct",
-    provider: "groq",
-    tier: 1,
-    rpm: 30,
-    rpd: 500000,
-    contextWindow: 128000,
-    latency: 600,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: false,
-      functionCalling: true,
-      json: true,
-    },
-    jsonModeSupported: true,
-  },
-
-  groq_qwen_32b: {
-    id: "qwen/qwen3-32b",
-    provider: "groq",
-    tier: 1,
-    rpm: 60,
-    rpd: 500000,
-    contextWindow: 32768,
-    latency: 400,
-    capabilities: {
-      longContext: true,
-      structured: true,
-      vision: false,
-      functionCalling: false,
-      json: true,
-    },
-    jsonModeSupported: true,
-  },
-
-  // TIER 2: Secondary / Specialized Models (Groq Llama)
-  groq_llama_3_3_70b: {
-    id: "llama-3.3-70b-versatile",
-    provider: "groq",
-    tier: 2,
-    rpm: 30,
-    rpd: 14400,
-    contextWindow: 32768,
-    latency: 400,
-    capabilities: {
-      longContext: false,
-      structured: true,
-      vision: false,
-      functionCalling: true,
-      json: true,
-    },
-    jsonModeSupported: true,
-  },
-
-  groq_llama_3_1_8b: {
-    id: "llama-3.1-8b-instant",
-    provider: "groq",
-    tier: 2,
-    rpm: 30,
-    rpd: 14400,
-    contextWindow: 8000,
-    latency: 250,
-    capabilities: {
-      longContext: false,
-      structured: true,
-      vision: false,
-      functionCalling: true,
-      json: true,
-    },
-    jsonModeSupported: true,
-  },
-
-  // FALLBACK / SPECIALTY
-  groq_gpt_oss_120b: {
-    id: "openai/gpt-oss-120b",
-    provider: "groq",
-    tier: 2,
-    rpm: 30,
-    rpd: 200000,
-    contextWindow: 8192,
-    latency: 800,
-    capabilities: {
-      longContext: false,
-      structured: true,
-      vision: false,
-      functionCalling: false,
-      json: true,
-    },
-    jsonModeSupported: true,
-  },
-
-  groq_gpt_oss_20b: {
-    id: "openai/gpt-oss-20b",
-    provider: "groq",
-    tier: 2,
-    rpm: 30,
-    rpd: 200000,
-    contextWindow: 8192,
-    latency: 400,
-    capabilities: {
-      longContext: false,
-      structured: true,
-      vision: false,
-      functionCalling: false,
-      json: true,
-    },
-    jsonModeSupported: true,
-  },
-
-  // GUARD
   groq_prompt_guard: {
-    id: "llama-3.1-8b-instant",
-    provider: "groq",
-    tier: 1,
-    rpm: 100,
-    rpd: 100000,
-    contextWindow: 2048,
-    latency: 150,
-    capabilities: {
-      longContext: false,
-      structured: false,
-      vision: false,
-      functionCalling: false,
-      json: false,
-    },
+    id: "meta-llama/llama-prompt-guard-2-86m", provider: "groq", tier: 3, rpm: 30, rpd: 14400,
+    contextWindow: 512, latency: 150, capabilities: { ...caps(false), longContext: false },
+    jsonModeSupported: false,
   },
-
-  // EMBEDDINGS
   gemini_embedding: {
-    id: "text-embedding-004", // Gemini free tier: 1500 RPM, 768-dim output
-    provider: "google",
-    tier: 1,
-    rpm: 1500,
-    rpd: 100000,
-    contextWindow: 2048,
-    latency: 200,
-    capabilities: {
-      longContext: false,
-      structured: false,
-      vision: false,
-      functionCalling: false,
-      json: false,
-    },
+    id: EMBEDDING_MODEL.id(), provider: "google", tier: 1, rpm: 1500, rpd: "unlimited",
+    latency: 800, capabilities: { ...caps(false), longContext: false },
   },
-
 };
 
 export interface TaskDefinition {
@@ -401,22 +107,7 @@ export interface TaskDefinition {
 export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   // Resume Processing — Groq/Gemma first for JSON tasks, Gemini for explanations only
   parse_resume_full: {
-    priority: [
-      // High-capacity Groq first
-      "groq_llama_4_scout",
-      "groq_llama_4_maverick",
-      "groq_qwen_32b",
-      "groq_llama_3_3_70b",
-      // Gemini unlimited TPM
-      "gemini_2_5_pro",
-      "gemini_3_pro",
-      // Gemma (manual JSON extraction)
-      "gemma_3_27b",
-      "gemma_3_12b",
-      // Flash models
-      "gemini_2_5_flash",
-      "gemini_3_flash",
-    ],
+    priority: ["gemini_fast", "gemini_fallback", "groq_fast"],
     requiresLongContext: true,
     requiresStructured: true,
     maxLatency: 60000, // 60s
@@ -424,7 +115,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
 
   parse_resume_fast: {
-    priority: ["groq_llama_4_scout", "groq_llama_3_1_8b", "gemma_3_27b", "gemini_2_5_flash_lite"],
+    priority: ["gemini_fast", "gemini_fallback", "groq_fast"],
     requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 10000, // 10s
@@ -433,7 +124,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
 
   // Content Generation
   generate_questions: {
-    priority: ["gemini_2_0_flash", "groq_llama_4_scout", "groq_llama_3_3_70b"],
+    priority: ["gemini_advanced", "gemini_fast", "groq_advanced"],
     requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 15000,
@@ -441,13 +132,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
 
   enhance_jd: {
-    priority: [
-      "groq_llama_4_scout",
-      "groq_qwen_32b",
-      "gemini_2_5_pro",
-      "groq_llama_3_3_70b",
-      "gemma_3_27b",
-    ],
+    priority: ["gemini_fast", "gemini_fallback", "groq_fast"],
     requiresLongContext: false, // JD is usually short enough
     requiresStructured: true,
     maxLatency: 20000,
@@ -455,14 +140,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
 
   parse_jd_advanced: {
-    priority: [
-      "groq_llama_4_scout",
-      "groq_qwen_32b",
-      "groq_llama_3_3_70b",
-      "gemini_2_5_pro",
-      "gemma_3_27b",
-      "gemini_2_5_flash",
-    ],
+    priority: ["gemini_fast", "gemini_fallback", "groq_fast"],
     requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 30000,
@@ -471,7 +149,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
 
   // Utility
   sanitize_input: {
-    priority: ["groq_prompt_guard", "groq_llama_3_1_8b"],
+    priority: ["groq_prompt_guard"],
     requiresLongContext: false,
     requiresStructured: false,
     maxLatency: 200,
@@ -484,7 +162,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
     requiresLongContext: false,
     requiresStructured: false,
     maxLatency: 3000,
-    description: "Generate profile embedding vector via Gemini text-embedding-004",
+    description: "Generate profile embedding vector via Gemini embedding model",
   },
 
   embed_jd: {
@@ -492,11 +170,11 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
     requiresLongContext: false,
     requiresStructured: false,
     maxLatency: 3000,
-    description: "Generate JD embedding via Gemini text-embedding-004",
+    description: "Generate JD embedding via Gemini embedding model",
   },
 
   sandbox_feedback: {
-    priority: ["groq_llama_4_scout", "groq_qwen_32b", "gemini_2_0_flash", "groq_llama_3_3_70b"],
+    priority: ["gemini_advanced", "gemini_fast", "groq_advanced"],
     requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 20000,
@@ -504,7 +182,7 @@ export const TASK_DEFINITIONS: Record<string, TaskDefinition> = {
   },
 
   career_advice: {
-    priority: ["groq_llama_4_scout", "groq_qwen_32b", "groq_llama_3_3_70b", "gemini_2_0_flash"],
+    priority: ["gemini_advanced", "gemini_fast", "groq_advanced"],
     requiresLongContext: false,
     requiresStructured: true,
     maxLatency: 25000,
@@ -943,6 +621,8 @@ export class AntigravityRouter {
             supportsJsonMode && {
             responseMimeType: "application/json",
           }),
+          // Thinking adds large latency; use the lowest setting this model generation accepts.
+          ...({ thinkingConfig: geminiThinkingConfig(modelId) } as object),
         },
         ...(options.systemPrompt && {
           systemInstruction: supportsJsonMode

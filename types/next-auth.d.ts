@@ -8,12 +8,16 @@ declare module "next-auth" {
             id: string;
             role: "student" | "faculty" | "admin";
             collegeId: string;
+            /** True for anonymous guest-mode sessions (never institutional). */
+            isGuest?: boolean;
         } & DefaultSession["user"];
     }
 
     interface User extends DefaultUser {
         role?: "student" | "faculty" | "admin";
         collegeId?: string;
+        isGuest?: boolean;
+        guestExpiresAt?: number;
     }
 }
 
@@ -22,5 +26,7 @@ declare module "next-auth/jwt" {
         id: string;
         role: "student" | "faculty" | "admin";
         collegeId: string;
+        isGuest?: boolean;
+        guestExpiresAt?: number;
     }
 }

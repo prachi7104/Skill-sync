@@ -32,6 +32,8 @@ import {
   jsonb,
   customType,
   unique,
+  uniqueIndex,
+  check,
   index,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
@@ -61,6 +63,8 @@ const vector = customType<{ data: number[]; driverParam: string }>({
       .map(Number);
   },
 });
+
+const bytea = customType<{ data: Buffer; driverParam: Buffer }>({ dataType: () => "bytea" });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Enums
@@ -413,6 +417,46 @@ export const students = pgTable("students", {
 // Purpose: Each row is a placement drive (job opening) created by faculty/admin.
 // The JD goes through a pipeline: raw → AI-enhanced → parsed → embedded.
 // Eligibility filters determine which students can be ranked against it.
+
+// ── Guest mode (scripts/sql-editor/guest-mode.sql) ───────────────────────────
+// Each guest visit is a throwaway college. These tables hang off it with
+// ON DELETE CASCADE; RLS is enabled with no policies (server-only access).
+
+export const demoWorkspaces = pgTable("demo_workspaces", {
+  collegeId: uuid("college_id").primaryKey().references(() => colleges.id, { onDelete: "cascade" }),
+  studentUserId: uuid("student_user_id").notNull(),
+  recruiterUserId: uuid("recruiter_user_id").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  expires: index("idx_demo_workspaces_expires").on(table.expiresAt),
+}));
+
+export const demoResumeFiles = pgTable("demo_resume_files", {
+  studentId: uuid("student_id").primaryKey().references(() => students.id, { onDelete: "cascade" }),
+  collegeId: uuid("college_id").notNull().references(() => colleges.id, { onDelete: "cascade" }),
+  filename: varchar("filename", { length: 255 }).notNull(),
+  mime: varchar("mime", { length: 120 }).notNull(),
+  data: bytea("data").notNull(),
+  uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  size: check("demo_resume_size", sql`octet_length(${table.data}) between 1 and 2097152`),
+}));
+
+export const demoResumeJobs = pgTable("demo_resume_jobs", {
+  id: uuid("id").primaryKey(),
+  studentId: uuid("student_id").notNull().references(() => students.id, { onDelete: "cascade" }),
+  collegeId: uuid("college_id").notNull().references(() => colleges.id, { onDelete: "cascade" }),
+  status: varchar("status", { length: 20 }).notNull(),
+  stage: varchar("stage", { length: 40 }),
+  error: text("error"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  validStatus: check("demo_resume_job_status", sql`${table.status} in ('processing', 'failed', 'completed')`),
+  activeStudent: uniqueIndex("demo_resume_one_processing_per_student").on(table.studentId)
+    .where(sql`${table.status} = 'processing'`),
+}));
 
 export const drives = pgTable("drives", {
   /** Primary key. */

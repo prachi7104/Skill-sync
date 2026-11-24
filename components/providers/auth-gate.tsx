@@ -15,10 +15,11 @@ import { useEffect, useState } from "react";
  *  - Never branches JSX based on auth state during the hydration-critical
  *    first render.
  *
- * Public routes (root, unauthorized, API) are excluded from the redirect.
+ * Public routes (root, unauthorized, API, guest mode) are excluded from the redirect.
+ * Guest pages enforce their own session on the server.
  */
 
-const PUBLIC_PATHS = ["/unauthorized", "/api"];
+const PUBLIC_PATHS = ["/unauthorized", "/api", "/guest"];
 
 function isPublicPath(pathname: string): boolean {
     if (pathname === "/") return true;

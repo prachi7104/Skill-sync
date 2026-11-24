@@ -6,18 +6,16 @@
  *     causing a silent fallback to the regex parser.  Resume uploads are already
  *     gated by auth + file-type validation, so the guard is unnecessary here.
  *
- * STRICT Fallback Policy — Only approved models:
- *   1. gemini-2.0-flash           (Google — fastest, primary)
- *   2. gemini-2.5-flash-lite    (Google — lighter fallback)
- *   3. gemini-2.5-flash         (Google — robust)
- *   4. gemma-3-27b              (Google — complex reasoning)
- *   5. llama-3.3-70b-versatile  (Groq  — throughput fallback)
- *   6. Regex fallback           (last resort)
+ * Fallback policy — models come from lib/ai/models.ts (env-overridable):
+ *   1. Gemini fast      (default gemini-3.5-flash-lite)
+ *   2. Gemini fallback  (default gemini-2.5-flash-lite)
+ *   3. Groq fast        (default openai/gpt-oss-20b, used only with a valid GROQ_API_KEY)
+ *   4. Regex fallback   (last resort)
  *
- * Timeouts: 10s Google tier-1, 8s Groq, 20s heavy models (Gemma/GPT-OSS).
  * Retry: 1 retry with 300ms jitter on 5xx/timeout, then next fallback.
  */
 
+import { AI_MODELS, geminiThinkingConfig } from "@/lib/ai/models";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import Groq from "groq-sdk";
 import { env } from "@/lib/env";
@@ -46,13 +44,13 @@ interface ModelDef {
     timeoutMs: number;
 }
 
+// Verified 2026-11-23 (see lib/ai/models.ts). The previous chain used
+// llama-3.3-70b-versatile (Groq, shut down 2026-08-16), gemma-3-27b-it (no longer
+// served) and gemini-2.0-flash (shut down 2026-06-01).
 const MODEL_CHAIN: ModelDef[] = [
-    // Groq/Gemma first for text-to-JSON tasks (Gemini reserved for explanations)
-    { id: "llama-3.3-70b-versatile", provider: "groq", label: "Groq Llama 3.3 70B", timeoutMs: 15_000 },
-    { id: "gemma-3-27b-it", provider: "google", label: "Gemma 3 27B", timeoutMs: 25_000 },
-    // Gemini as fallback only
-    { id: "gemini-2.0-flash", provider: "google", label: "Gemini 2.0 Flash", timeoutMs: 10_000 },
-    { id: "gemini-2.5-flash-lite", provider: "google", label: "Gemini 2.5 Flash Lite", timeoutMs: 10_000 },
+    { ...AI_MODELS.geminiFast(), label: "Gemini fast" },
+    { ...AI_MODELS.geminiFallback(), label: "Gemini fallback" },
+    { ...AI_MODELS.groqFast(), label: "Groq fast" },
 ];
 
 // ============================================================================
@@ -243,6 +241,8 @@ async function callGemini(modelId: string, resumeText: string): Promise<string> 
             temperature: 0.1,
             maxOutputTokens: 4096,
             responseMimeType: "application/json",
+            // Thinking adds large latency; use the lowest setting this model generation accepts.
+            ...({ thinkingConfig: geminiThinkingConfig(modelId) } as object),
         },
         systemInstruction: SYSTEM_PROMPT,
     });
@@ -263,7 +263,7 @@ async function callGroq(modelId: string, resumeText: string): Promise<string> {
             { role: "user", content: `Parse this resume and extract all structured data:\n\n${resumeText}` },
         ],
         temperature: 0.1,
-        max_tokens: 4096,
+        max_completion_tokens: 4096,
         response_format: { type: "json_object" as const },
     });
 
@@ -456,6 +456,20 @@ function parseWithRegex(resumeText: string): ParsedResumeData {
 // ============================================================================
 // MAIN ENTRY — parseResumeWithAI
 // ============================================================================
+
+/** Resume-parsing instructions, shared with guest mode's model chain. */
+export const RESUME_PARSER_SYSTEM_PROMPT = SYSTEM_PROMPT;
+
+/**
+ * Validates raw model output as parsed resume data. Throws when the output is not
+ * JSON or carries too little information to be a real extraction.
+ */
+export function validateParsedResumeOutput(response: string): ParsedResumeData {
+    const json = extractJSON(response);
+    const parsed = json ? validateAndBuild(json) : null;
+    if (!parsed || qualityScore(parsed) < 30) throw new Error("The model could not extract enough resume information");
+    return parsed;
+}
 
 /**
  * Parse resume text using direct AI calls with multi-model fallback + validation.

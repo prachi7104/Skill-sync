@@ -1,6 +1,8 @@
 
 import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+import { guestAccessEnabled, isGuestAllowedPath } from "@/lib/demo/config";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 
 /**
  * Optimized Middleware — guards ONLY protected API routes.
@@ -11,7 +13,7 @@ import { NextResponse } from "next/server";
  * - Warns on 403 forbidden access attempts (security monitoring)
  * - Errors on 500+ (debugging)
  */
-export default withAuth(
+const institutionalMiddleware = withAuth(
     function middleware(req) {
         const start = Date.now();
         const token = req.nextauth.token;
@@ -107,33 +109,59 @@ export default withAuth(
     },
     {
         callbacks: {
+            // Guest tokens never reach here (blocked below); require a real user id.
             authorized: ({ token }) => {
-                return !!token;
+                return !!token?.id && token.isGuest !== true;
             },
         },
     }
 );
 
+// The routes the institutional withAuth guard has always covered, kept in the
+// matcher form they had when they were the middleware matcher.
+const institutionalPaths = [
+    "/api/admin/:path*",
+    "/api/faculty/:path*",
+    "/api/student/:path*",
+    "/api/drives/:path*",
+    "/api/jobs/:path*",
+    "/api/resources/:path*",
+    "/api/seasons/:path*",
+    "/student/:path*",
+].map((matcher) => matcher.slice(0, -"/:path*".length));
 
 /**
- * Matcher configuration - ONLY runs on protected API routes.
- * Excludes:
- * - /api/auth/* (NextAuth endpoints - public)
- * - /api/cron/* (Uses own secret)
- * - /api/db-test (Development endpoint)
- * - /_next/* (Next.js internals)
- * - /login, /unauthorized (Public pages)
+ * Site-wide entry point.
+ * - Guest-mode sessions are confined to an allowlist (/guest, /api/demo, /api/auth):
+ *   every institutional page or API answers 403/redirect for them, independent of
+ *   any per-route role check.
+ * - /guest pages 404 unless ENABLE_GUEST_ACCESS=true.
+ * - Institutional protected routes keep their existing withAuth guard.
  */
+export default async function middleware(req: NextRequest, event: NextFetchEvent) {
+    const path = req.nextUrl.pathname;
+    const isGuestPage = path === "/guest" || path.startsWith("/guest/");
+    if ((isGuestPage || path.startsWith("/api/demo/")) && !guestAccessEnabled()) {
+        return new NextResponse(null, { status: 404 });
+    }
+
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET }).catch(() => null);
+    if (token?.isGuest && !isGuestAllowedPath(path)) {
+        console.warn(JSON.stringify({ level: "warn", msg: "Guest blocked from institutional route", context: { path, method: req.method } }));
+        if (path.startsWith("/api/")) {
+            return NextResponse.json({ error: "Guest sessions cannot access institutional features." }, { status: 403 });
+        }
+        const portal = token.role === "faculty" ? "recruiter" : "student";
+        return NextResponse.redirect(new URL(`/guest/${portal}`, req.url), 307);
+    }
+
+    if (institutionalPaths.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) {
+        return institutionalMiddleware(req as Parameters<typeof institutionalMiddleware>[0], event);
+    }
+    return NextResponse.next();
+}
+
 export const config = {
-    matcher: [
-        // Only protected API routes
-        "/api/admin/:path*",
-        "/api/faculty/:path*",
-        "/api/student/:path*",
-        "/api/drives/:path*",
-        "/api/jobs/:path*",
-        "/api/resources/:path*",
-        "/api/seasons/:path*",
-        "/student/:path*",
-    ],
+    // Everything except build assets, so guest confinement covers every page and API.
+    matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

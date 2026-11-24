@@ -443,6 +443,17 @@ If you detect:
 // ============================================================================
 
 
+/** JD-parsing instructions, shared with guest mode's model chain. */
+export const JD_PARSER_PROMPT = JD_PARSER_SYSTEM_PROMPT;
+
+/** Validates raw model output as a structured JD; throws on incomplete output. */
+export function validateStructuredJDOutput(response: string): StructuredJD {
+  const cleaned = response.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
+  const parsed = JSON.parse(cleaned) as StructuredJD;
+  if (!parsed?.requirements || !parsed.role_metadata) throw new Error("The model returned an incomplete job description");
+  return validateAndFillDefaults(parsed);
+}
+
 export async function parseJD(rawJd: string, titleHint?: string, companyHint?: string): Promise<StructuredJD> {
   if (!rawJd || rawJd.length < 50) {
     throw new Error("JD text too short to process");

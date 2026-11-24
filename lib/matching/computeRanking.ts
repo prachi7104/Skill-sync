@@ -39,7 +39,7 @@ import type {
   CodingProfile,
   Certification,
 } from "@/lib/db/schema";
-import { eq, asc, sql } from "drizzle-orm";
+import { and, eq, asc, sql } from "drizzle-orm";
 import {
   generateEmbedding,
   composeStudentEmbeddingText,
@@ -141,6 +141,7 @@ async function fetchDrive(driveId: string) {
  */
 async function fetchAllStudentsForCollege(
   collegeId: string,
+  demo?: { studentId?: string },
 ): Promise<StudentForRanking[]> {
   const results = await db
     .select({
@@ -161,7 +162,12 @@ async function fetchAllStudentsForCollege(
       profileCompleteness: students.profileCompleteness,
     })
     .from(students)
-    .where(eq(students.collegeId, collegeId))
+    .where(and(eq(students.collegeId, collegeId), demo ? sql`exists (
+      select 1 from ${users} where ${users.id} = ${students.id}
+      and ${users.collegeId} = ${collegeId}
+      and (${users.email} like ${`candidate-%@${collegeId}.demo.invalid`}
+        or (${users.id} = ${demo.studentId ?? null} and ${users.email} = ${`student@${collegeId}.demo.invalid`}))
+    )` : undefined))
     .orderBy(asc(students.createdAt));
 
   return results.map((s) => ({
@@ -343,6 +349,7 @@ function tokenize(text: string): string[] {
  */
 export async function computeRanking(
   driveId: string,
+  demo?: { collegeId: string; studentId?: string },
 ): Promise<RankingComputationResult> {
   const errors: string[] = [];
   const computeStart = Date.now();
@@ -352,7 +359,7 @@ export async function computeRanking(
 
   // 1. Fetch drive
   const drive = await fetchDrive(driveId);
-  if (!drive) {
+  if (!drive || (demo && drive.collegeId !== demo.collegeId)) {
     throw new Error(`Drive not found: ${driveId}`);
   }
 
@@ -372,7 +379,7 @@ export async function computeRanking(
   }
 
   // 3. Fetch all students in the same college
-  let allStudents = await fetchAllStudentsForCollege(driveCollegeId);
+  let allStudents = await fetchAllStudentsForCollege(driveCollegeId, demo);
   logger.info(`[Ranking] Total students in college: ${allStudents.length}`);
   const totalStudentsFetched = allStudents.length;
 
@@ -419,7 +426,11 @@ export async function computeRanking(
   const embeddingResults = await Promise.allSettled(
     allStudents.map((student) =>
       limit(async () => {
-        const emb = await ensureStudentEmbedding(student);
+        // Guest workspaces never generate embeddings during ranking: fixtures ship
+        // precomputed vectors and uploads embed during resume processing.
+        const emb = demo
+          ? (student.embedding?.length === 768 ? student.embedding : null)
+          : await ensureStudentEmbedding(student);
         return { student, embedding: emb };
       }),
     ),

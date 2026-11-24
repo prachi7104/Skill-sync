@@ -13,6 +13,10 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  // Guest-mode sessions are never institutional users (the middleware also blocks them).
+  if (session.user.isGuest) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   if (session.user.role === "student") {
     return NextResponse.json(

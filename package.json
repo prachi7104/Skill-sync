@@ -16,6 +16,7 @@
     "test:visual": "playwright test",
     "test:ui": "vitest --ui",
     "drizzle:generate": "echo 'Use DRIZZLE_MIGRATIONS_ENABLED=true npx drizzle-kit generate locally only'",
+    "demo:schema:print": "drizzle-kit export --schema ./lib/db/schema.ts --dialect postgresql",
     "drizzle:push": "echo 'BLOCKED: Apply schema changes manually via Supabase SQL Editor'",
     "db:index": "npx tsx scripts/apply-indexes.ts",
     "db:analyze": "npx tsx scripts/analyze-queries.ts",
@@ -84,6 +85,8 @@
     "zustand": "^4.4.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.17",
+    "@electric-sql/pglite-socket": "^0.2.20",
     "@next/bundle-analyzer": "^16.1.6",
     "@playwright/test": "^1.59.1",
     "@testing-library/jest-dom": "^6.1.5",

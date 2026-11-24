@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { users, students } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { guestAccessEnabled } from "@/lib/demo/config";
+import { applyGuestJwt, GUEST_PROVIDER, guestCredentialsProvider } from "@/lib/demo/guest-auth";
 import {
   MICROSOFT_CLIENT_ID,
   MICROSOFT_CLIENT_SECRET,
@@ -117,6 +119,14 @@ export const authOptions: NextAuthOptions = {
         };
       },
     }),
+
+    // ── Provider 3: Anonymous guest mode (fictional, isolated workspaces) ──
+    // Registered only when ENABLE_GUEST_ACCESS=true. Guests get a throwaway
+    // college; middleware confines guest tokens to /guest and /api/demo.
+    ...(guestAccessEnabled() ? [guestCredentialsProvider({
+      provision: async (kind) => (await import("@/lib/demo/workspace")).provisionDemoWorkspace(kind),
+      switchTo: async (kind, current) => (await import("@/lib/demo/workspace")).switchDemoIdentity(kind, current),
+    })] : []),
   ],
 
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
@@ -126,6 +136,9 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }) {
       // Staff Credentials provider — user already validated in authorize()
       if (account?.provider === "staff-credentials") return true;
+
+      // Guest provider — identity was provisioned in authorize(); never touches institutional rows.
+      if (account?.provider === GUEST_PROVIDER) return guestAccessEnabled() && user.isGuest === true;
 
       // Microsoft OAuth flow
       if (!user.email) return false;
@@ -237,6 +250,11 @@ export const authOptions: NextAuthOptions = {
     },
 
     async jwt({ token, user }) {
+      // Guest tokens skip every institutional lookup and lapse at their workspace expiry.
+      if (user?.isGuest || token.isGuest) {
+        const guest = guestAccessEnabled() ? applyGuestJwt(token, user) : null;
+        return guest ?? ({} as typeof token);
+      }
       if (user) {
         const normalizedEmail = user.email!.toLowerCase().trim();
         const dbUser = await db.query.users.findFirst({
@@ -300,6 +318,15 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
+      if (token?.isGuest) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.name = token.name as string;
+        session.user.collegeId = token.collegeId;
+        session.user.isGuest = true;
+        session.expires = new Date(token.guestExpiresAt as number).toISOString();
+        return session;
+      }
       if (token) {
         session.user.id = token.id as string;
         session.user.role = token.role as "student" | "faculty" | "admin";

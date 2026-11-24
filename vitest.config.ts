@@ -13,7 +13,7 @@ export default defineConfig({
         include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
         exclude: ['**/node_modules/**', '**/.next/**', '**/coverage/**'],
         testTimeout: 10000,
-        setupFiles: './tests/setup.ts',
+        setupFiles: path.resolve(__dirname, 'tests/setup.ts'),
         alias: {
             '@': path.resolve(__dirname, './'),
             'server-only': path.resolve(__dirname, './server-only/index.js'),

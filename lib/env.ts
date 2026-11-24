@@ -7,6 +7,8 @@
  * fail fast at startup instead of silently at runtime.
  */
 
+import { checkSupabaseKeys, supabasePublishableKey, supabaseSecretKey } from "./supabase-keys";
+
 function requireEnv(key: string): string {
   const value = process.env[key];
   if (!value) {
@@ -58,9 +60,21 @@ export const CLOUDINARY_API_KEY = requireEnv("CLOUDINARY_API_KEY");
 export const CLOUDINARY_API_SECRET = requireEnv("CLOUDINARY_API_SECRET");
 
 // ── Supabase ────────────────────────────────────────────────────────────────
+// Not used by the app today (Drizzle connects through DATABASE_URL and sign-in is
+// NextAuth). Only the current key formats are read; see lib/supabase-keys.ts.
 export const SUPABASE_URL = optionalEnv("NEXT_PUBLIC_SUPABASE_URL");
-export const SUPABASE_ANON_KEY = optionalEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
-export const SUPABASE_SERVICE_ROLE_KEY = optionalEnv("SUPABASE_SERVICE_ROLE_KEY");
+export const SUPABASE_PUBLISHABLE_KEY = supabasePublishableKey() ?? "";
+export const SUPABASE_SECRET_KEY = supabaseSecretKey() ?? "";
+
+{
+  const { fatal } = checkSupabaseKeys();
+  if (fatal.length > 0) {
+    // Fail the build so the misconfiguration never deploys; at runtime, report
+    // without taking institutional sign-in down. Names only, never values.
+    if (process.env.NEXT_PHASE === "phase-production-build") throw new Error(fatal.join(" "));
+    console.error(`[env] ${fatal.join(" ")}`);
+  }
+}
 
 // ── Cron Jobs ────────────────────────────────────────────────────────────────
 export const CRON_SECRET = requireEnv("CRON_SECRET");
@@ -95,7 +109,7 @@ export const env = {
   CLOUDINARY_API_KEY,
   CLOUDINARY_API_SECRET,
   SUPABASE_URL,
-  SUPABASE_ANON_KEY,
+  SUPABASE_PUBLISHABLE_KEY,
   GROQ_API_KEY,
   MISTRAL_API_KEY,
   GOOGLE_GENERATIVE_AI_API_KEY,

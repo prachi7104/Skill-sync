@@ -5,10 +5,8 @@
  */
 
 const requiredEnvVars = [
-  // Supabase
-  'NEXT_PUBLIC_SUPABASE_URL',
-  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-  'SUPABASE_SERVICE_ROLE_KEY',
+  // Supabase API keys are optional: the app reaches Postgres through DATABASE_URL.
+  // If set, they must use the current formats (see lib/supabase-keys.ts).
 
   // Authentication
   'MICROSOFT_CLIENT_ID',

@@ -43,6 +43,14 @@ class QueryLogger implements LogWriter {
 }
 const queryLogger = new DefaultLogger({ writer: new QueryLogger() });
 
+function isLoopbackDatabase(url: string): boolean {
+  try {
+    return ["127.0.0.1", "localhost", "::1"].includes(new URL(url).hostname.replace(/^\[|\]$/g, ""));
+  } catch {
+    return false;
+  }
+}
+
 function getDrizzleDb(): ReturnType<typeof drizzle<typeof schema>> {
   if (globalThis._drizzleDb) return globalThis._drizzleDb;
 
@@ -57,7 +65,8 @@ function getDrizzleDb(): ReturnType<typeof drizzle<typeof schema>> {
       max: MAX_POOL_SIZE,
       idle_timeout: 20,
       connect_timeout: 10,
-      ssl: "require",
+      // TLS for every hosted database; only a loopback one (local dev, PGlite tests) may skip it.
+      ssl: isLoopbackDatabase(url) ? false : "require",
       connection: {
         application_name: "skillsync_app",
         statement_timeout: 30000,
@@ -103,7 +112,8 @@ export async function getDbStats() {
     const client = postgres(url, {
       prepare: false,
       max: 1,
-      ssl: "require",
+      // TLS for every hosted database; only a loopback one (local dev, PGlite tests) may skip it.
+      ssl: isLoopbackDatabase(url) ? false : "require",
       connection: { application_name: "skillsync_app" },
     });
 
