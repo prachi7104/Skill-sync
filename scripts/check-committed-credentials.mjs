@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Fails when a tracked file contains something that looks like a real credential.
  *

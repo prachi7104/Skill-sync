@@ -29,5 +29,17 @@ export default async function Home() {
     }
   }
 
-  return <RootLoginPage />;
+  return <RootLoginPage guestDemoUrl={guestDemoUrl()} />;
+}
+
+/** The public guest demo (a separate deployment). The entry is hidden unless this is a valid https URL. */
+function guestDemoUrl(): string | null {
+  const raw = process.env.GUEST_DEMO_URL?.trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
